@@ -7,6 +7,8 @@ import mathutils
 import math
 import bmesh
 import os, sys
+import statistics, random
+import collections
 from bpy.props import *
 from . constants import *
 from . helpers import *
@@ -15,9 +17,132 @@ from . autorail import *
 # PROPERTIES
 #############################################
 update_triggered_by_ui_updater = False
+BSPNode = collections.namedtuple("BSPNode", "split_point split_axis left right")
+BSPLeaf = collections.namedtuple("BSPLeaf", "faces")
+
 
 # METHODS
 #############################################
+def _resolve_face_terrain_type(ob, bm, face):
+    ttl = bm.faces.layers.int.get("terrain_type")
+    tt = 0
+    if not ttl or face[ttl] == AUTORAIL_AUTO:
+        if face.material_index >= 0 and len(ob.material_slots):
+            face_material = ob.material_slots[face.material_index].material
+            if face_material:
+                tt = TERRAIN_TYPES.index(face_material.thug_material_props.terrain_type)
+    else:
+        tt = face[ttl]
+    return tt
+
+def make_bsp_tree(ob, faces):
+    def vv(vert):
+        return to_thug_coords(ob.matrix_world * vert.co)
+
+    def inner(faces, split_axis, level, cant_split=set()):
+        # print(level)
+        # split_axis = 0
+        if len(faces) <= 50: # or split_axis in cant_split:
+            return BSPLeaf(faces)
+
+        best_duplis = float("inf")
+        best_point = None
+        best_left = None
+        best_right = None
+        best_axis = None
+
+        for split_axis in range(3):
+            if split_axis in cant_split: continue
+            split_point = statistics.median(
+                vv(vert)[split_axis] for face in random.sample(faces, min(20, len(faces))) for vert in face.verts)
+            """
+            split_point = statistics.median(
+                vv(vert)[split_axis] for face in faces for vert in face.verts)
+            """
+            split_point = int(split_point * 16.0) * 0.0625
+
+            left_faces = []
+            right_faces = []
+
+            duplis = 0
+            for face in faces:
+                left = False
+                right = False
+                for vert in face.verts:
+                    if vv(vert)[split_axis] < split_point:
+                        left = True
+                    if vv(vert)[split_axis] >= split_point:
+                        right = True
+                if left:
+                    left_faces.append(face)
+                if right:
+                    right_faces.append(face)
+                if left and right:
+                    duplis += 1
+
+            if duplis < best_duplis:
+                best_left = left_faces
+                best_right = right_faces
+                best_axis = split_axis
+                best_duplis = duplis
+                best_point = split_point
+
+        left_faces = best_left
+        right_faces = best_right
+        split_axis = best_axis
+        duplis = best_duplis
+        split_point = best_point
+
+        if duplis >= (len(faces) // 2):
+            return BSPLeaf(faces)
+
+        # print(len(faces), len(left_faces), len(right_faces), duplis, split_axis, level)
+
+        return BSPNode(
+            split_point,
+            split_axis,
+            inner(left_faces,
+                (split_axis + 1) % 3,
+                level + 1,
+                (cant_split | set([split_axis]) if len(left_faces) == len(faces) else cant_split)),
+            inner(right_faces,
+                (split_axis + 1) % 3,
+                level + 1,
+                (cant_split | set([split_axis]) if len(right_faces) == len(faces) else cant_split))
+             #,
+        )
+
+    return inner(faces, 0, 0)
+
+
+def iter_tree(tree):
+    yield tree
+    if isinstance(tree, BSPLeaf):
+        return
+    yield from iter_tree(tree.left)
+    yield from iter_tree(tree.right)
+
+
+def tree_to_list(tree):
+    index = 0
+    indices = {id(tree): index}
+    l = [tree]
+    stack = [tree]
+    while stack:
+        tree = stack.pop(0)
+        if isinstance(tree, BSPNode):
+            index += 1
+            indices[id(tree.left)] = index
+            l.append(tree.left)
+            stack.append(tree.left)
+            index += 1
+            indices[id(tree.right)] = index
+            l.append(tree.right)
+            stack.append(tree.right)
+    return l, indices
+
+
+
 def update_collision_flag_mesh(wm, context, flag):
     global update_triggered_by_ui_updater
     if update_triggered_by_ui_updater:

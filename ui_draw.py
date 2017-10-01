@@ -10,6 +10,8 @@ from . constants import *
 from . scene_props import *
 from . material import *
 from . collision import *
+from . export_thug1 import *
+from . export_thug2 import *
 
 # PROPERTIES
 #############################################
@@ -216,11 +218,11 @@ def export_menu_func(self, context):
 #----------------------------------------------------------------------------------
 def register_menus():
     bpy.types.INFO_MT_file_import.append(import_menu_func)
-    bpy.types.INFO_MT_file_import.append(export_menu_func)
+    bpy.types.INFO_MT_file_export.append(export_menu_func)
 #----------------------------------------------------------------------------------
 def unregister_menus():
     bpy.types.INFO_MT_file_import.remove(import_menu_func)
-    bpy.types.INFO_MT_file_import.remove(export_menu_func)
+    bpy.types.INFO_MT_file_export.remove(export_menu_func)
 #----------------------------------------------------------------------------------
 def register_props():
     __init_wm_props()

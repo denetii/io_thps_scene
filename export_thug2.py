@@ -10,7 +10,7 @@ from bpy.props import *
 from . helpers import *
 from . material import *
 from bpy_extras.io_utils import ExportHelper
-
+from . export_shared import *
 
 # METHODS
 #############################################

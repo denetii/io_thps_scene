@@ -1,16 +1,28 @@
-
+import bpy
 import struct
 import mathutils
 import math
-from . constants import CRCTable
+import logging
+from . constants import *
+
+__reload_order_index__ = -42
 
 # PROPERTIES
 #############################################
 global_export_scale = 1
+LOG = logging.getLogger(ADDON_NAME)
 
 
 # METHODS
 #############################################
+def get_index(seq, value, key=lambda x: x, default=-1):
+    i = 0
+    for item in seq:
+        if key(item) == value:
+            return i
+        i += 1
+    return default
+
 def swizzle_axis(val, mask):
     bit = 1
     result = 0
@@ -43,6 +55,94 @@ def swizzle(data, width, height, bitCount, depth, unswizzle):
                 outdata[a + i] = data[b + i]
     return outdata
 
+
+def _need_to_flip_normals(ob):
+    negatives = 0
+    while ob:
+        for val in ob.scale:
+            if val < 0:
+                negatives += 1
+        ob = ob.parent
+    return negatives % 2 == 1
+
+def _flip_normals(ob):
+    bpy.context.scene.objects.active = ob
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.flip_normals()
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+def _make_temp_obj(data):
+    return bpy.data.objects.new("~THUG TEMPORARY OBJECT~", data)
+
+#----------------------------------------------------------------------------------
+def get_sphere_from_bbox(bbox):
+    bbox_min, bbox_max = bbox
+
+    sphere_x = (bbox_min[0] + bbox_max[0]) / 2.0
+    sphere_y = (bbox_min[1] + bbox_max[1]) / 2.0
+    sphere_z = (bbox_min[2] + bbox_max[2]) / 2.0
+    sphere_radius = (
+        (sphere_x - bbox_min[0]) ** 2 +
+        (sphere_y - bbox_min[1]) ** 2 +
+        (sphere_z - bbox_min[2]) ** 2) ** 0.5
+
+    return (sphere_x, sphere_y, sphere_z, sphere_radius)
+
+
+#----------------------------------------------------------------------------------
+def get_bbox2(vertices, matrix=mathutils.Matrix.Identity(4), is_park_editor=False):
+    min_x = float("inf")
+    min_y = float("inf")
+    min_z = float("inf")
+    max_x = -float("inf")
+    max_y = -float("inf")
+    max_z = -float("inf")
+    for v in vertices:
+        v = to_thug_coords(matrix * v.co)
+        # v = v.co
+        min_x = min(v[0], min_x)
+        min_y = min(v[1], min_y)
+        min_z = min(v[2], min_z)
+        max_x = max(v[0], max_x)
+        max_y = max(v[1], max_y)
+        max_z = max(v[2], max_z)
+        
+    # bounding box is calculated differently for park dictionaries!
+    if is_park_editor: 
+        print("bounding box was: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
+        new_min_x = (min_x / 60.0)
+        new_min_z = (min_z / 60.0)
+        new_max_x = (max_x / 60.0)
+        new_max_z = (max_z / 60.0)
+        
+        if new_min_x < 0: min_x = float(round(new_min_x) * 60);
+        else: min_x = float(round(new_min_x) * 60);
+        if new_min_z < 0: min_z = float(round(new_min_z) * 60);
+        else: min_z = float(round(new_min_z) * 60);
+        
+        if new_max_x < 0: max_x = float(round(new_max_x) * 60);
+        else: max_x = float(round(new_max_x) * 60);
+        if new_max_z < 0: max_z = float(round(new_max_z) * 60);
+        else: max_z = float(round(new_max_z) * 60);
+        
+        # Fix bounding boxes that aren't aligned at center
+        if (max_x + min_x) > 0: min_x = (max_x * -1.0)
+        elif (max_x + min_x) < 0: max_x = (min_x * -1.0)
+        if (max_z + min_z) > 0: min_z = (max_z * -1.0)
+        elif (max_z + min_z) < 0: max_z = (min_z * -1.0)
+        
+        # This handles half-size dimensions
+        #if (min_x + min_z) % 120 != 0:
+        #    if(min_x != min_z and min_x > min_z): min_x -= 60
+        #    else: min_z -= 60
+        #if (max_x + max_z) % 120 != 0:
+        #    if(max_x != max_z and max_x > max_z): max_z += 60
+        #    else: max_x += 60
+            
+        min_y = 0.0
+        print("NEW bounding box is: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
+    return ((min_x, min_y, min_z, 1.0), (max_x, max_y, max_z, 1.0))
 
 def to_thug_coords(v):
     return (v[0] * global_export_scale, v[2] * global_export_scale, -v[1] * global_export_scale)

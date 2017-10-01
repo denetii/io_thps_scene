@@ -6,10 +6,19 @@ import bmesh
 import struct
 import mathutils
 import math
+from . import helpers, collision, prefs, material, autosplit
 from bpy.props import *
+from . prefs import *
+from . autosplit import *
 from . helpers import *
+from . collision import *
 from . material import *
 from . constants import *
+from . qb import *
+from . export_thug1 import export_scn_sectors
+
+class ExportError(Exception):
+    pass
 
 
 # METHODS
@@ -19,7 +28,7 @@ def do_export(operator, context, target_game):
     import subprocess, shutil, datetime
 
     addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
-    base_files_dir_error = _get_base_files_dir_error(addon_prefs)
+    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Aborting export.".format(base_files_dir_error))
         return {"CANCELLED"}
@@ -65,7 +74,7 @@ def do_export(operator, context, target_game):
         LOG.setLevel(logging.DEBUG)
 
         if self.generate_col_file or self.generate_scn_file or self.generate_scripts_files:
-            orig_objects, temporary_objects = _prepare_autosplit_objects(operator, context,target_game)
+            orig_objects, temporary_objects = autosplit._prepare_autosplit_objects(operator, context,target_game)
 
         if target_game == "THUG1":
             path = j(directory, "Levels/" + filename)
@@ -200,7 +209,7 @@ def do_export(operator, context, target_game):
         global_export_scale = 1
         LOG.removeHandler(logging_fh)
         LOG.removeHandler(logging_ch)
-        _cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)
+        autosplit._cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)
     return {'FINISHED'}
 
 #----------------------------------------------------------------------------------
@@ -349,7 +358,7 @@ def export_col(filename, directory, target_game, operator=None):
     bm = bmesh.new()
     def triang(o):
         final_mesh = o.to_mesh(bpy.context.scene, True, 'PREVIEW')
-        if _need_to_flip_normals(o):
+        if helpers._need_to_flip_normals(o):
             temporary_object = _make_temp_obj(final_mesh)
             try:
                 bpy.context.scene.objects.link(temporary_object)
@@ -474,7 +483,7 @@ def export_col(filename, directory, target_game, operator=None):
             # bm.verts.ensure_lookup_table()
             for face in bm.faces:
                 w("H", face[cfl] if cfl else 0)
-                tt = _resolve_face_terrain_type(o, bm, face)
+                tt = collision._resolve_face_terrain_type(o, bm, face)
                 w("H", tt)
                 for vert in face.verts:
                     w("H", vert.index)
@@ -573,179 +582,7 @@ def export_col(filename, directory, target_game, operator=None):
 
     bm.free()
 
-#----------------------------------------------------------------------------------
-def get_all_compressed_mipmaps(image, compression_type, mm_offset):
-    import bgl, math
-    from contextlib import ExitStack
-    assert image.channels == 4
-    assert compression_type in (1, 5)
 
-    uncompressed_data = get_all_mipmaps(image, mm_offset)
-    if not uncompressed_data: return []
-
-    images = []
-
-    with ExitStack() as stack:
-        texture_id = bgl.Buffer(bgl.GL_INT, 1)
-
-        bgl.glGenTextures(1, texture_id)
-        stack.callback(bgl.glDeleteTextures, 1, texture_id)
-
-        img_width, img_height = image.size
-        texture_data = bgl.Buffer(bgl.GL_BYTE, img_width * img_height * 4)
-        try:
-            level_img_width = img_width
-            level_img_height = img_height
-            for level, (uncomp_w, uncomp_h, uncompressed_pixels) in enumerate(uncompressed_data):
-                texture_data[0:len(uncompressed_pixels)] = uncompressed_pixels
-
-                bgl.glBindTexture(bgl.GL_TEXTURE_2D, texture_id[0])
-                bgl.glTexImage2D(
-                    bgl.GL_TEXTURE_2D,
-                    level,
-                    COMPRESSED_RGBA_S3TC_DXT1_EXT if compression_type == 1 else COMPRESSED_RGBA_S3TC_DXT5_EXT,
-                    uncomp_w, #level_img_width,
-                    uncomp_h, #level_img_height,
-                    0,
-                    bgl.GL_RGBA,
-                    bgl.GL_UNSIGNED_BYTE,
-                    texture_data)
-
-                level_img_width /= 2.0
-                level_img_width = math.ceil(level_img_width)
-                level_img_height /= 2.0
-                level_img_height = math.ceil(level_img_height)
-
-            level = 0
-            while level < 16:
-                # LOG.debug('')
-                buf = bgl.Buffer(bgl.GL_INT, 1)
-                bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_WIDTH, buf)
-                width = buf[0]
-                # LOG.debug(width)
-                if width < 8: break
-                bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_HEIGHT, buf)
-                height = buf[0]
-                if height < 8: break
-                bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_COMPRESSED_IMAGE_SIZE, buf)
-                # buf_size = width * height * 4
-                buf_size = buf[0]
-                del buf
-                # LOG.debug(buf_size)
-                buf = bgl.Buffer(bgl.GL_BYTE, buf_size)
-                bgl.glGetCompressedTexImage(bgl.GL_TEXTURE_2D, level, buf)
-                images.append((width, height, buf))
-                if level == 0:
-                    pass # LOG.debug(images[0][:16])
-                # del buf
-                level += 1
-        finally:
-            del texture_data
-        return images
-
-
-#----------------------------------------------------------------------------------
-def get_all_mipmaps(image, mm_offset = 0):
-    import bgl
-    images = []
-
-    image.gl_load()
-    image_id = image.bindcode[0]
-    if image_id == 0:
-        return images
-    level = mm_offset # denetii - change this to shift the largest exported size down
-    bgl.glBindTexture(bgl.GL_TEXTURE_2D, image_id)
-    while level < 16:
-        # LOG.debug('')
-        buf = bgl.Buffer(bgl.GL_INT, 1)
-        bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_WIDTH, buf)
-        width = buf[0]
-        # LOG.debug(width)
-        if width < 8: break
-        bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_HEIGHT, buf)
-        height = buf[0]
-        if height < 8: break
-        del buf
-        buf_size = width * height * 4
-        # LOG.debug(buf_size)
-        buf = bgl.Buffer(bgl.GL_BYTE, buf_size)
-        bgl.glGetTexImage(bgl.GL_TEXTURE_2D, level, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buf)
-        images.append((width, height, buf))
-        if level == 0:
-            pass # LOG.debug(images[0][:16])
-        # del buf
-        level += 1
-    return images
-
-
-#----------------------------------------------------------------------------------
-def get_sphere_from_bbox(bbox):
-    bbox_min, bbox_max = bbox
-
-    sphere_x = (bbox_min[0] + bbox_max[0]) / 2.0
-    sphere_y = (bbox_min[1] + bbox_max[1]) / 2.0
-    sphere_z = (bbox_min[2] + bbox_max[2]) / 2.0
-    sphere_radius = (
-        (sphere_x - bbox_min[0]) ** 2 +
-        (sphere_y - bbox_min[1]) ** 2 +
-        (sphere_z - bbox_min[2]) ** 2) ** 0.5
-
-    return (sphere_x, sphere_y, sphere_z, sphere_radius)
-
-
-#----------------------------------------------------------------------------------
-def get_bbox2(vertices, matrix=mathutils.Matrix.Identity(4), is_park_editor=False):
-    min_x = float("inf")
-    min_y = float("inf")
-    min_z = float("inf")
-    max_x = -float("inf")
-    max_y = -float("inf")
-    max_z = -float("inf")
-    for v in vertices:
-        v = to_thug_coords(matrix * v.co)
-        # v = v.co
-        min_x = min(v[0], min_x)
-        min_y = min(v[1], min_y)
-        min_z = min(v[2], min_z)
-        max_x = max(v[0], max_x)
-        max_y = max(v[1], max_y)
-        max_z = max(v[2], max_z)
-        
-    # bounding box is calculated differently for park dictionaries!
-    if is_park_editor: 
-        print("bounding box was: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
-        new_min_x = (min_x / 60.0)
-        new_min_z = (min_z / 60.0)
-        new_max_x = (max_x / 60.0)
-        new_max_z = (max_z / 60.0)
-        
-        if new_min_x < 0: min_x = float(round(new_min_x) * 60);
-        else: min_x = float(round(new_min_x) * 60);
-        if new_min_z < 0: min_z = float(round(new_min_z) * 60);
-        else: min_z = float(round(new_min_z) * 60);
-        
-        if new_max_x < 0: max_x = float(round(new_max_x) * 60);
-        else: max_x = float(round(new_max_x) * 60);
-        if new_max_z < 0: max_z = float(round(new_max_z) * 60);
-        else: max_z = float(round(new_max_z) * 60);
-        
-        # Fix bounding boxes that aren't aligned at center
-        if (max_x + min_x) > 0: min_x = (max_x * -1.0)
-        elif (max_x + min_x) < 0: max_x = (min_x * -1.0)
-        if (max_z + min_z) > 0: min_z = (max_z * -1.0)
-        elif (max_z + min_z) < 0: max_z = (min_z * -1.0)
-        
-        # This handles half-size dimensions
-        #if (min_x + min_z) % 120 != 0:
-        #    if(min_x != min_z and min_x > min_z): min_x -= 60
-        #    else: min_z -= 60
-        #if (max_x + max_z) % 120 != 0:
-        #    if(max_x != max_z and max_x > max_z): max_z += 60
-        #    else: max_x += 60
-            
-        min_y = 0.0
-        print("NEW bounding box is: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
-    return ((min_x, min_y, min_z, 1.0), (max_x, max_y, max_z, 1.0))
 
 #----------------------------------------------------------------------------------
 def calc_alignment_diff(offset, alignment):
@@ -753,3 +590,108 @@ def calc_alignment_diff(offset, alignment):
     if offset % alignment == 0:
         return 0
     return alignment - (offset % alignment)
+
+
+
+# OPERATORS
+#############################################
+class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
+    bl_idname = "export.scene_to_thug_xbx"
+    bl_label = "Scene to THUG1 level files"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def report(self, category, message):
+        LOG.debug("OP: {}: {}".format(category, message))
+        super().report(category, message)
+
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+
+    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
+    use_vc_hack = BoolProperty(name="Vertex color hack"
+        , description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+        , default=False)
+    autosplit_everything = BoolProperty(name="Autosplit All"
+        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
+        , default=False)
+    is_park_editor = BoolProperty(
+        name="Is Park Editor",
+        description="Use this option when exporting a park editor dictionary.",
+        default=False)
+    generate_tex_file = BoolProperty(
+        name="Generate a .tex file",
+        default=True)
+    generate_scn_file = BoolProperty(
+        name="Generate a .scn file",
+        default=True)
+    pack_scn = BoolProperty(
+        name="Pack the scene .pre",
+        default=True)
+    generate_col_file = BoolProperty(
+        name="Generate a .col file",
+        default=True)
+    pack_col = BoolProperty(
+        name="Pack the col .pre",
+        default=True)
+    generate_scripts_files = BoolProperty(
+        name="Generate scripts",
+        default=True)
+    pack_scripts = BoolProperty(
+        name="Pack the scripts .pre",
+        default=True)
+
+#    filepath = StringProperty()
+    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
+    export_scale = FloatProperty(name="Export scale", default=1)
+    mipmap_offset = IntProperty(
+        name="Mipmap offset",
+        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
+        min=0, max=4, default=0)
+
+    def execute(self, context):
+        return do_export(self, context, "THUG1")
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}
+        
+#----------------------------------------------------------------------------------
+class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
+    bl_idname = "export.scene_to_thug_model"
+    bl_label = "Scene to THUG1 model"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def report(self, category, message):
+        LOG.debug("OP: {}: {}".format(category, message))
+        super().report(category, message)
+
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+
+    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=True)
+    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
+    use_vc_hack = BoolProperty(name="Vertex color hack"
+        , description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+        , default=False)
+    autosplit_everything = BoolProperty(name="Autosplit All"
+        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
+        , default=False)
+    generate_scripts_files = BoolProperty(
+        name="Generate scripts",
+        default=True)
+    export_scale = FloatProperty(name="Export scale", default=1)
+    mipmap_offset = IntProperty(
+        name="Mipmap offset",
+        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
+        min=0, max=4, default=0)
+        
+    def execute(self, context):
+        return do_export_model(self, context, "THUG1")
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}

@@ -13,6 +13,19 @@ from . tex import *
 
 # METHODS
 #############################################
+def _ensure_default_material_exists():
+    if "_THUG_DEFAULT_MATERIAL_" in bpy.data.materials:
+        return
+
+    default_mat = bpy.data.materials.new(name="_THUG_DEFAULT_MATERIAL_")
+
+    if "_THUG_DEFAULT_MATERIAL_TEXTURE_" not in bpy.data.textures:
+        texture = bpy.data.textures.new("_THUG_DEFAULT_MATERIAL_TEXTURE_", "NONE")
+        texture.thug_material_pass_props.color = (0.5, 0.5, 0.5)
+
+    tex_slot = default_mat.texture_slots.add()
+    tex_slot.texture = bpy.data.textures["_THUG_DEFAULT_MATERIAL_TEXTURE_"]
+
 def _thug_material_pass_props_color_updated(self, context):
     from bl_ui.properties_material import active_node_mat
     if not context or not context.object:
@@ -180,6 +193,129 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 p("    l: {}", r.f32())
             else:
                 r.read("4I")
+
+
+
+def export_materials(output_file, target_game, operator=None):
+    def w(fmt, *args):
+        output_file.write(struct.pack(fmt, *args))
+
+    # out_objects = [o for o in bpy.data.objects if o.type == "MESH"]
+    # out_materials = {o.active_material for o in out_objects if o.active_material}
+
+    _ensure_default_material_exists()
+
+    out_materials = bpy.data.materials[:]
+
+    num_materials = len(out_materials)
+    w("I", num_materials)
+    for m in out_materials:
+        LOG.debug("writing material: {}".format(m.name))
+
+        #denetii - only include texture slots that affect the diffuse color in the Blender material
+        passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
+        if len(passes) > 4:
+            if operator:
+                operator.report(
+                    {"WARNING"},
+                    "Material {} has more than 4 passes (enabled texture slots). Using only the first 4.".format(m.name))
+            passes = passes[:4]
+        if not passes and m.name != "_THUG_DEFAULT_MATERIAL_":
+            if operator:
+                operator.report({"WARNING"}, "Material {} has no passes (enabled texture slots). Using it's diffuse color.".format(m.name))
+                passes = [None]
+
+        checksum = crc_from_string(bytes(m.name, 'ascii'))
+        w("I", checksum)  # material checksum
+        w("I", checksum)  # material name checksum
+        mprops = m.thug_material_props
+        w("I", len(passes) or 1)  # material passes
+        w("I", mprops.alpha_cutoff)  # alpha cutoff (actually an unsigned byte)
+        w("?", mprops.sorted)  # sorted?
+        w("f", mprops.draw_order)  # draw order
+        w("?", mprops.single_sided)  # single sided
+        w("?", mprops.no_backface_culling)  # no backface culling
+        w("i", mprops.z_bias)  # z-bias
+
+        grassify = False
+        w("?", grassify)  # grassify
+        if grassify:  # if grassify
+            w("f", 1.0)  # grass height
+            w("i", 1)  # grass layers
+
+        w("f", mprops.specular_power)  # specular power
+        if mprops.specular_power > 0.0:
+            w("3f", *mprops.specular_color)  # specular color
+
+        # using_default_texture = not passes
+
+        for texture in passes:
+            pprops = texture and texture.thug_material_pass_props
+            tex_checksum = 0
+            if texture and hasattr(texture, 'image') and texture.image:
+                tex_checksum = crc_from_string(bytes(texture.image.name, 'ascii'))
+
+            w("I", tex_checksum)  # texture checksum
+            pass_flags = 0 # MATFLAG_SMOOTH
+            if tex_checksum and pprops.pf_textured:
+                pass_flags |= MATFLAG_TEXTURED
+            if pprops and pprops.has_uv_wibbles:
+                pass_flags |= MATFLAG_UV_WIBBLE
+            if (pprops and
+                pprops.has_animated_texture and
+                len(pprops.animated_texture.keyframes)):
+                pass_flags |= MATFLAG_PASS_TEXTURE_ANIMATES
+            if pprops and pprops.pf_transparent:
+                pass_flags |= MATFLAG_TRANSPARENT
+            if pprops and pprops.ignore_vertex_alpha:
+                pass_flags |= MATFLAG_PASS_IGNORE_VERTEX_ALPHA
+            if pprops and pprops.pf_decal:
+                pass_flags |= MATFLAG_DECAL
+            if pprops and pprops.pf_smooth:
+                pass_flags |= MATFLAG_SMOOTH
+            if pprops and pprops.pf_environment:
+                pass_flags |= MATFLAG_ENVIRONMENT
+                
+            w("I", pass_flags)  # flags # 4132
+            w("?", True)  # has color flag; seems to be ignored
+            w("3f",  *(pprops.color if pprops else m.diffuse_color / 2.0))  # color
+
+            # alpha register values, first u32 - a BLEND_MODE, second u32 - fixed alpha (clipped to u8)
+            # w("Q", 5)
+            w("I", globals()[pprops.blend_mode] if pprops else vBLEND_MODE_DIFFUSE)
+            w("I", pprops.blend_fixed_alpha if pprops else 0)
+
+            w("I", 0 if (not pprops) or pprops.u_addressing == "Repeat" else 1)  # u adressing (wrap, clamp, etc)
+            w("I", 0 if (not pprops) or pprops.v_addressing == "Repeat" else 1)  # v adressing
+            w("2f", *(pprops.envmap_multiples if pprops else (3.0, 3.0)))  # envmap multiples
+            w("I", 65540)  # filtering mode
+
+            # uv wibbles
+            if pprops and pass_flags & MATFLAG_UV_WIBBLE:
+                w("2f", *pprops.uv_wibbles.uv_velocity)
+                w("2f", *pprops.uv_wibbles.uv_frequency)
+                w("2f", *pprops.uv_wibbles.uv_amplitude)
+                w("2f", *pprops.uv_wibbles.uv_phase)
+
+            # vertex color wibbles
+
+            # anims
+            if pass_flags & MATFLAG_PASS_TEXTURE_ANIMATES:
+                at = pprops.animated_texture
+                w("i", len(at.keyframes))
+                w("i", at.period)
+                w("i", at.iterations)
+                w("i", at.phase)
+                for keyframe in at.keyframes:
+                    w("I", keyframe.time)
+                    w("I", crc_from_string(bytes(keyframe.image, 'ascii')))
+
+            w("I", 1)  # MMAG
+            w("I", 4)  # MMIN
+            w("f", -8.0)  # K
+            w("f", -8.0)  # L
+
+
 
 #----------------------------------------------------------------------------------
 def _material_pass_settings_draw(self, context):

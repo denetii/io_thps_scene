@@ -2,12 +2,118 @@
 # THPS TEX (.tex) IMPORT/EXPORT
 #############################################
 import bpy
+import os
+import struct
 from bpy.props import *
 from . constants import *
-from . helpers import Reader, Printer
+from . helpers import *
 
 # METHODS
 #############################################
+def get_all_compressed_mipmaps(image, compression_type, mm_offset):
+    import bgl, math
+    from contextlib import ExitStack
+    assert image.channels == 4
+    assert compression_type in (1, 5)
+
+    uncompressed_data = get_all_mipmaps(image, mm_offset)
+    if not uncompressed_data: return []
+
+    images = []
+
+    with ExitStack() as stack:
+        texture_id = bgl.Buffer(bgl.GL_INT, 1)
+
+        bgl.glGenTextures(1, texture_id)
+        stack.callback(bgl.glDeleteTextures, 1, texture_id)
+
+        img_width, img_height = image.size
+        texture_data = bgl.Buffer(bgl.GL_BYTE, img_width * img_height * 4)
+        try:
+            level_img_width = img_width
+            level_img_height = img_height
+            for level, (uncomp_w, uncomp_h, uncompressed_pixels) in enumerate(uncompressed_data):
+                texture_data[0:len(uncompressed_pixels)] = uncompressed_pixels
+
+                bgl.glBindTexture(bgl.GL_TEXTURE_2D, texture_id[0])
+                bgl.glTexImage2D(
+                    bgl.GL_TEXTURE_2D,
+                    level,
+                    COMPRESSED_RGBA_S3TC_DXT1_EXT if compression_type == 1 else COMPRESSED_RGBA_S3TC_DXT5_EXT,
+                    uncomp_w, #level_img_width,
+                    uncomp_h, #level_img_height,
+                    0,
+                    bgl.GL_RGBA,
+                    bgl.GL_UNSIGNED_BYTE,
+                    texture_data)
+
+                level_img_width /= 2.0
+                level_img_width = math.ceil(level_img_width)
+                level_img_height /= 2.0
+                level_img_height = math.ceil(level_img_height)
+
+            level = 0
+            while level < 16:
+                # LOG.debug('')
+                buf = bgl.Buffer(bgl.GL_INT, 1)
+                bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_WIDTH, buf)
+                width = buf[0]
+                # LOG.debug(width)
+                if width < 8: break
+                bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_HEIGHT, buf)
+                height = buf[0]
+                if height < 8: break
+                bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_COMPRESSED_IMAGE_SIZE, buf)
+                # buf_size = width * height * 4
+                buf_size = buf[0]
+                del buf
+                # LOG.debug(buf_size)
+                buf = bgl.Buffer(bgl.GL_BYTE, buf_size)
+                bgl.glGetCompressedTexImage(bgl.GL_TEXTURE_2D, level, buf)
+                images.append((width, height, buf))
+                if level == 0:
+                    pass # LOG.debug(images[0][:16])
+                # del buf
+                level += 1
+        finally:
+            del texture_data
+        return images
+
+
+#----------------------------------------------------------------------------------
+def get_all_mipmaps(image, mm_offset = 0):
+    import bgl
+    images = []
+
+    image.gl_load()
+    image_id = image.bindcode[0]
+    if image_id == 0:
+        return images
+    level = mm_offset # denetii - change this to shift the largest exported size down
+    bgl.glBindTexture(bgl.GL_TEXTURE_2D, image_id)
+    while level < 16:
+        # LOG.debug('')
+        buf = bgl.Buffer(bgl.GL_INT, 1)
+        bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_WIDTH, buf)
+        width = buf[0]
+        # LOG.debug(width)
+        if width < 8: break
+        bgl.glGetTexLevelParameteriv(bgl.GL_TEXTURE_2D, level, bgl.GL_TEXTURE_HEIGHT, buf)
+        height = buf[0]
+        if height < 8: break
+        del buf
+        buf_size = width * height * 4
+        # LOG.debug(buf_size)
+        buf = bgl.Buffer(bgl.GL_BYTE, buf_size)
+        bgl.glGetTexImage(bgl.GL_TEXTURE_2D, level, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buf)
+        images.append((width, height, buf))
+        if level == 0:
+            pass # LOG.debug(images[0][:16])
+        # del buf
+        level += 1
+    return images
+
+
 def read_tex(reader, printer):
     import bgl
     global name_format

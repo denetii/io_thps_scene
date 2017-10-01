@@ -1,7 +1,24 @@
 import bpy
 from bpy.props import *
 import bgl
+import os
 from . constants import *
+__reload_order_index__ = -20
+
+# METHODS
+#############################################
+def _get_base_files_dir_error(prefs):
+    self = prefs
+    base_files_dir_error = None
+    if not os.path.exists(self.base_files_dir):
+        base_files_dir_error = "The path doesn't exist."
+    elif not os.path.exists(os.path.join(self.base_files_dir, "roq.exe")):
+        base_files_dir_error = "The folder doesn't contain the roq compiler."
+    elif not all(os.path.exists(os.path.join(self.base_files_dir, "default_sky", sky_file))
+                 for sky_file in
+                 ["THUG_sky.scn.xbx", "THUG_sky.tex.xbx", "THUG2_sky.scn.xbx", "THUG2_sky.tex.xbx"]):
+        base_files_dir_error = "The folder doesn't contain the default sky files."
+    return base_files_dir_error
 
 # PROPERTIES
 #############################################
@@ -105,18 +122,3 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         layout.prop(self, "material_settings_tools")
         layout.prop(self, "material_pass_settings_tools")
 
-
-# METHODS
-#############################################
-def _get_base_files_dir_error(prefs):
-    self = prefs
-    base_files_dir_error = None
-    if not os.path.exists(self.base_files_dir):
-        base_files_dir_error = "The path doesn't exist."
-    elif not os.path.exists(os.path.join(self.base_files_dir, "roq.exe")):
-        base_files_dir_error = "The folder doesn't contain the roq compiler."
-    elif not all(os.path.exists(os.path.join(self.base_files_dir, "default_sky", sky_file))
-                 for sky_file in
-                 ["THUG_sky.scn.xbx", "THUG_sky.tex.xbx", "THUG2_sky.scn.xbx", "THUG2_sky.tex.xbx"]):
-        base_files_dir_error = "The folder doesn't contain the default sky files."
-    return base_files_dir_error

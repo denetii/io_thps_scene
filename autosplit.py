@@ -1,7 +1,11 @@
 import bpy
 import bgl
 import bmesh
+import collections
 from bpy.props import *
+from . helpers import *
+
+__reload_order_index__ = -10
 
 # PROPERTIES
 #############################################
@@ -11,9 +15,75 @@ copy_layers2_type_map = {
     bmesh.types.BMLoop: "loops",
     bmesh.types.BMVert: "verts",
 }
+SplitVert = collections.namedtuple("SplitVert", "co uvs vc normal weights")
+
 
 # METHODS
 #############################################
+def get_triangle_strip(mesh, bm, faces, split_verts, flags): # ob):
+    prev_tri = None
+    strip = []
+
+    def idx(loop):
+        return split_verts[get_split_vert_for_loop(mesh, bm, loop, flags)]
+
+    for tri in faces:
+        assert len(tri.verts) == 3
+        assert len(tri.loops) == 3
+        if not prev_tri:
+            strip += [idx(v) for v in tri.loops]
+            prev_tri = tri
+        else:
+            strip += [idx(prev_tri.loops[2]), idx(prev_tri.loops[2])]
+            # strip += [idx(prev_tri.loops[2])]
+            strip += [idx(tri.loops[0]), idx(tri.loops[0])]
+            strip += [idx(tri.loops[1]), idx(tri.loops[2])]
+            prev_tri = tri
+
+    return strip
+
+def get_split_vert_for_loop(mesh, bm, l, flags):
+    if flags & SECFLAGS_HAS_TEXCOORDS:
+        if len(bm.loops.layers.uv):
+            uvs = tuple(l[uv_layer].uv.copy().freeze() for uv_layer in bm.loops.layers.uv.values())
+        else:
+            uvs = (mathutils.Vector((0.0, 0.0)).freeze(),)
+    else:
+        uvs = None
+
+    if len(bm.loops.layers.color) and flags & SECFLAGS_HAS_VERTEX_COLORS:
+        vcs = l[bm.loops.layers.color.active]
+        alpha_layer = bm.loops.layers.color.get("alpha")
+        vcs = (vcs[0], vcs[1], vcs[2], l[alpha_layer].r if alpha_layer else 1.0)
+    else:
+        vcs = None
+
+    deform_layer = bm.verts.layers.deform.active
+    if flags & SECFLAGS_HAS_VERTEX_WEIGHTS:
+        dvert = l.vert[deform_layer]
+        weights = list(sorted(dvert.items(), key=lambda x: -x[1]))[:4]
+        if len(weights) < 4:
+            weights += [(0, 0.0)] * (4 - len(weights))
+        weights = tuple(weights)
+    else:
+        weights = None
+
+    if flags & SECFLAGS_HAS_VERTEX_NORMALS:
+        normal = mesh.loops[l.index].normal.copy().freeze()
+    else:
+        normal = None
+
+    return SplitVert(l.vert.co.copy().freeze(), uvs, vcs, normal, weights)
+
+def make_split_verts(mesh, bm, flags, verts=None):
+    split_verts = collections.OrderedDict()
+    for v in verts if verts is not None else bm.verts:
+        for l in v.link_loops:
+            sv = get_split_vert_for_loop(mesh, bm, l, flags)
+            split_verts.setdefault(sv, len(split_verts))
+    return split_verts
+
+
 def copy_layers(from_bm, to_bm):
     for type_attr in ("faces", "loops", "verts", "edges"):
         type_col = getattr(from_bm, type_attr)

@@ -3,14 +3,16 @@
 #############################################
 import bpy
 import bmesh
+from bpy.props import *
+from bpy_extras.io_utils import ExportHelper
 import struct
 import mathutils
 import math
-from bpy.props import *
+from . import helpers
 from . helpers import *
 from . material import *
-from bpy_extras.io_utils import ExportHelper
-
+from . prefs import *
+from . autosplit import *
 
 # METHODS
 #############################################
@@ -42,14 +44,14 @@ def export_scn_sectors(output_file, operator=None):
         ob.name = "TEMP_OBJECT___"
         try:
             final_mesh = ob.to_mesh(bpy.context.scene, True, 'PREVIEW')
-            temporary_object = _make_temp_obj(final_mesh)
+            temporary_object = helpers._make_temp_obj(final_mesh)
             temporary_object.name = original_object_name
             try:
                 bpy.context.scene.objects.link(temporary_object)
                 temporary_object.matrix_world = ob.matrix_world
 
-                if _need_to_flip_normals(ob):
-                    _flip_normals(temporary_object)
+                if helpers._need_to_flip_normals(ob):
+                    helpers._flip_normals(temporary_object)
 
                 if (operator and
                     operator.generate_vertex_color_shading and
@@ -253,106 +255,3 @@ def export_scn_sectors(output_file, operator=None):
 
 
 
-
-# OPERATORS
-#############################################
-class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
-    bl_idname = "export.scene_to_thug_xbx"
-    bl_label = "Scene to THUG1 level files"
-    # bl_options = {'REGISTER', 'UNDO'}
-
-    def report(self, category, message):
-        LOG.debug("OP: {}: {}".format(category, message))
-        super().report(category, message)
-
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
-
-    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack"
-        , description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
-        , default=False)
-    autosplit_everything = BoolProperty(name="Autosplit All"
-        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
-        , default=False)
-    is_park_editor = BoolProperty(
-        name="Is Park Editor",
-        description="Use this option when exporting a park editor dictionary.",
-        default=False)
-    generate_tex_file = BoolProperty(
-        name="Generate a .tex file",
-        default=True)
-    generate_scn_file = BoolProperty(
-        name="Generate a .scn file",
-        default=True)
-    pack_scn = BoolProperty(
-        name="Pack the scene .pre",
-        default=True)
-    generate_col_file = BoolProperty(
-        name="Generate a .col file",
-        default=True)
-    pack_col = BoolProperty(
-        name="Pack the col .pre",
-        default=True)
-    generate_scripts_files = BoolProperty(
-        name="Generate scripts",
-        default=True)
-    pack_scripts = BoolProperty(
-        name="Pack the scripts .pre",
-        default=True)
-
-#    filepath = StringProperty()
-    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
-    export_scale = FloatProperty(name="Export scale", default=1)
-    mipmap_offset = IntProperty(
-        name="Mipmap offset",
-        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
-        min=0, max=4, default=0)
-
-    def execute(self, context):
-        return do_export(self, context, "THUG1")
-
-    def invoke(self, context, event):
-        wm = bpy.context.window_manager
-        wm.fileselect_add(self)
-
-        return {'RUNNING_MODAL'}
-        
-#----------------------------------------------------------------------------------
-class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
-    bl_idname = "export.scene_to_thug_model"
-    bl_label = "Scene to THUG1 model"
-    # bl_options = {'REGISTER', 'UNDO'}
-
-    def report(self, category, message):
-        LOG.debug("OP: {}: {}".format(category, message))
-        super().report(category, message)
-
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
-
-    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=True)
-    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    use_vc_hack = BoolProperty(name="Vertex color hack"
-        , description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
-        , default=False)
-    autosplit_everything = BoolProperty(name="Autosplit All"
-        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
-        , default=False)
-    generate_scripts_files = BoolProperty(
-        name="Generate scripts",
-        default=True)
-    export_scale = FloatProperty(name="Export scale", default=1)
-    mipmap_offset = IntProperty(
-        name="Mipmap offset",
-        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
-        min=0, max=4, default=0)
-        
-    def execute(self, context):
-        return do_export_model(self, context, "THUG1")
-
-    def invoke(self, context, event):
-        wm = bpy.context.window_manager
-        wm.fileselect_add(self)
-
-        return {'RUNNING_MODAL'}
