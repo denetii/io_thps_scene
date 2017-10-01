@@ -7,7 +7,7 @@ bl_info = {
     "location": "View3D",
     "warning": "This addon is still in development.",
     "wiki_url": "",
-    "category": "Object" }
+    "category": "Import-Export" }
 
 
 import bpy
@@ -21,7 +21,7 @@ from . import developer_utils
 importlib.reload(developer_utils)
 modules = developer_utils.setup_addon_modules(__path__, __name__, "bpy" in locals())
 
-from . ui_draw import register_menus, unregister_menus
+from . ui_draw import *
 
 # Register
 ##################################
@@ -32,10 +32,12 @@ def register():
     try: bpy.utils.register_module(__name__)
     except: traceback.print_exc()
     register_menus()
+    register_props()
     print("Registered {} with {} modules".format(bl_info["name"], len(modules)))
 
 def unregister():
     try: bpy.utils.unregister_module(__name__)
     except: traceback.print_exc()
     unregister_menus()
+    unregister_props()
     print("Unregistered {}".format(bl_info["name"]))

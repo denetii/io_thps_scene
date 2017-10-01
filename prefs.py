@@ -1,11 +1,12 @@
 import bpy
 from bpy.props import *
 import bgl
+from . constants import *
 
 # PROPERTIES
 #############################################
 class THUGAddonPreferences(bpy.types.AddonPreferences):
-    bl_idname = __name__
+    bl_idname = ADDON_NAME
 
     base_files_dir = StringProperty(
         name="Base files directory",

@@ -18,7 +18,7 @@ def do_export(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
 
-    addon_prefs = context.user_preferences.addons[__name__].preferences
+    addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
     base_files_dir_error = _get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Aborting export.".format(base_files_dir_error))

@@ -9,6 +9,8 @@ import os, sys
 from bpy.props import *
 from . constants import *
 from . helpers import *
+from . autorail import *
+from . collision import *
 
 # METHODS
 #############################################
@@ -174,7 +176,7 @@ class THUGObjectSettingsTools(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object and context.user_preferences.addons[__name__].preferences.object_settings_tools
+        return context.object and context.user_preferences.addons[ADDON_NAME].preferences.object_settings_tools
 
     def draw(self, context):
         _thug_object_settings_draw(self, context)

@@ -244,3 +244,4 @@ class THUG2TexToImages(bpy.types.Operator):
         wm.fileselect_add(self)
 
         return {'RUNNING_MODAL'}
+

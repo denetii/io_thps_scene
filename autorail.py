@@ -2,6 +2,13 @@ import bpy
 import bgl
 import bmesh
 from bpy.props import *
+from . collision import update_triggered_by_ui_updater
+from . constants import *
+
+# PROPERTIES
+#############################################
+AUTORAIL_NONE = 0 # -2
+AUTORAIL_AUTO = -1
 
 # METHODS
 #############################################

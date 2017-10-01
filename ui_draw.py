@@ -1,10 +1,15 @@
 import bpy
+from bpy.props import *
 from . import_thps4 import THPS4ScnToScene
 from . import_thug1 import THUG1ScnToScene
 from . import_thug2 import THUG2ScnToScene, THUG2ColToScene
 from . skeleton import THUGImportSkeleton
+from . object import __init_wm_props
 import bgl
-
+from . constants import *
+from . scene_props import *
+from . material import *
+from . collision import *
 
 # PROPERTIES
 #############################################
@@ -94,7 +99,7 @@ def draw_stuff():
             bgl.glEnable(bgl.GL_BLEND)
             bgl.glBlendFunc(bgl.GL_SRC_ALPHA, bgl.GL_ONE_MINUS_SRC_ALPHA);
 
-            prefs = ctx.user_preferences.addons[__name__].preferences
+            prefs = ctx.user_preferences.addons[ADDON_NAME].preferences
 
             bgl.glLineWidth(prefs.line_width)
 
@@ -202,12 +207,20 @@ def import_menu_func(self, context):
     self.layout.operator(THUG1ScnToScene.bl_idname, text=THUG1ScnToScene.bl_label, icon='PLUGIN')
     self.layout.operator(THPS4ScnToScene.bl_idname, text=THPS4ScnToScene.bl_label, icon='PLUGIN')
     self.layout.operator(THUGImportSkeleton.bl_idname, text=THUGImportSkeleton.bl_label, icon='PLUGIN')
+#----------------------------------------------------------------------------------    
+def export_menu_func(self, context):
+    self.layout.operator(SceneToTHUGFiles.bl_idname, text="Scene to THUG1 level files", icon='PLUGIN')
+    self.layout.operator(SceneToTHUGModel.bl_idname, text="Scene to THUG1 model", icon='PLUGIN')
+    self.layout.operator(SceneToTHUG2Files.bl_idname, text="Scene to THUG2 level files", icon='PLUGIN')
+    self.layout.operator(SceneToTHUG2Model.bl_idname, text="Scene to THUG2 model", icon='PLUGIN')
 #----------------------------------------------------------------------------------
 def register_menus():
     bpy.types.INFO_MT_file_import.append(import_menu_func)
+    bpy.types.INFO_MT_file_import.append(export_menu_func)
 #----------------------------------------------------------------------------------
 def unregister_menus():
     bpy.types.INFO_MT_file_import.remove(import_menu_func)
+    bpy.types.INFO_MT_file_import.remove(export_menu_func)
 #----------------------------------------------------------------------------------
 def register_props():
     __init_wm_props()
@@ -333,5 +346,3 @@ def unregister_props():
     if draw_stuff_pre_load_cleanup in bpy.app.handlers.load_pre:
         bpy.app.handlers.load_pre.remove(draw_stuff_pre_load_cleanup)
 
-    bpy.types.INFO_MT_file_import.remove(import_menu_func)
-    bpy.types.INFO_MT_file_export.remove(export_menu_func)

@@ -9,9 +9,24 @@ import os, sys
 from bpy.props import *
 from . constants import *
 from . helpers import *
+from . tex import *
 
 # METHODS
 #############################################
+def _thug_material_pass_props_color_updated(self, context):
+    from bl_ui.properties_material import active_node_mat
+    if not context or not context.object:
+        return
+    mat = context.object.active_material
+    if not mat:
+        return
+    idblock = active_node_mat(mat)
+    r, g, b = self.color
+    idblock.active_texture.factor_red = r * 2
+    idblock.active_texture.factor_green = g * 2
+    idblock.active_texture.factor_blue = b * 2
+
+
 def read_materials(reader, printer, num_materials, directory, operator, output_file=None, texture_map=None, texture_prefix=None):
     import os
     r = reader
@@ -249,6 +264,37 @@ def _material_settings_draw(self, context):
 
 # PROPERTIES
 #############################################
+class THUGImageProps(bpy.types.PropertyGroup):
+    compression_type = EnumProperty(items=(
+        ("DXT1", "DXT1", "DXT1. 1-bit alpha. 1:8 compression for RGBA, 1:6 for RGB."),
+        ("DXT5", "DXT5", "DXT5. Full alpha. 1:4 compression.")),
+    name="Compression Type",
+    default="DXT1")
+#----------------------------------------------------------------------------------
+class THUGAnimatedTextureKeyframesUIList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        split = layout.split(0.33)
+        split.prop(item, "time")
+        split.prop_search(item, "image", bpy.data, "images", text="")
+#----------------------------------------------------------------------------------
+class THUGAnimatedTextureKeyframe(bpy.types.PropertyGroup):
+    time = IntProperty(name="Time", min=0)
+    image = StringProperty(name="Image")
+#----------------------------------------------------------------------------------
+class THUGAnimatedTexture(bpy.types.PropertyGroup):
+    period = IntProperty(name="Period")
+    iterations = IntProperty(name="Iterations")
+    phase = IntProperty(name="Phase")
+
+    keyframes = CollectionProperty(type=THUGAnimatedTextureKeyframe)
+    keyframes_index = IntProperty()
+#----------------------------------------------------------------------------------
+class THUGUVWibbles(bpy.types.PropertyGroup):
+    uv_velocity = FloatVectorProperty(name="UV velocity", size=2, default=(1.0, 1.0), soft_min=-100, soft_max=100)
+    uv_frequency = FloatVectorProperty(name="UV frequency", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_amplitude = FloatVectorProperty(name="UV amplitude", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_phase = FloatVectorProperty(name="UV phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+#----------------------------------------------------------------------------------
 class THUGMaterialSettingsTools(bpy.types.Panel):
     bl_label = "TH Material Settings"
     bl_region_type = "TOOLS"
@@ -257,7 +303,7 @@ class THUGMaterialSettingsTools(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object and context.user_preferences.addons[__name__].preferences.material_settings_tools
+        return context.object and context.user_preferences.addons[ADDON_NAME].preferences.material_settings_tools
 
     def draw(self, context):
         if not context.object: return
@@ -308,7 +354,7 @@ class THUGMaterialPassSettingsTools(bpy.types.Panel):
 
     @classmethod
     def poll(self, context):
-        return context.object and context.user_preferences.addons[__name__].preferences.material_pass_settings_tools
+        return context.object and context.user_preferences.addons[ADDON_NAME].preferences.material_pass_settings_tools
 
     def draw(self, context):
         from bl_ui.properties_material import active_node_mat
@@ -330,3 +376,91 @@ class THUGMaterialPassSettings(bpy.types.Panel):
 
     def draw(self, context):
         _material_pass_settings_draw(self, context)
+
+#----------------------------------------------------------------------------------
+class THUGMaterialProps(bpy.types.PropertyGroup):
+    alpha_cutoff = IntProperty(
+        name="Alpha Cutoff", min=0, max=255, default=1,
+        description="The pixels will alpha lower than this will be discarded.")
+    sorted = BoolProperty(name="Sorted", default=False)
+    draw_order = FloatProperty(
+        name="Draw Order",
+        default=-1.0,
+        description="The lesser the draw order the earlier the texture will be drawn. Used for sorting transparent textures.")
+    single_sided = BoolProperty(name="Single Sided", default=False,
+        description="If the material is not using the Diffuse blend mode this can be toggled to force it to be single sided.")
+    no_backface_culling = BoolProperty(name="No Backface Culling", default=False,
+        description="Makes material with Diffuse blend mode double sided")
+    z_bias = IntProperty(name="Z-Bias", default=0,
+        description="Adjust this value to prevent Z-fighting on overlapping meshes.")
+    specular_power = FloatProperty(name="Specular Power", default=0.0)
+    specular_color = FloatVectorProperty(name="Specular Color", subtype="COLOR", min=0, max=1)
+    terrain_type = EnumProperty(
+        name="Terrain Type",
+        description="The terrain type that will be used for faces using this material when their terrain type is set to \"Auto\".",
+        items=[(tt, tt, tt) for tt in TERRAIN_TYPES])
+
+#----------------------------------------------------------------------------------
+class THUGMaterialPassProps(bpy.types.PropertyGroup):
+    color = FloatVectorProperty(
+        name="Color", subtype="COLOR",
+        default=(0.5, 0.5, 0.5),
+        min=0.0, max=1.0,
+        update=_thug_material_pass_props_color_updated)
+    blend_mode = EnumProperty(items=(
+     ("vBLEND_MODE_DIFFUSE", "DIFFUSE", "( 0 - 0 ) * 0 + Src"),
+     # ( 0 - 0 ) * 0 + Src
+     ("vBLEND_MODE_ADD", "ADD", "( Src - 0 ) * Src + Dst"),
+     # ( Src - 0 ) * Src + Dst
+     ("vBLEND_MODE_ADD_FIXED", "ADD_FIXED", "( Src - 0 ) * Fixed + Dst"),
+     # ( Src - 0 ) * Fixed + Dst
+     ("vBLEND_MODE_SUBTRACT", "SUBTRACT", "( 0 - Src ) * Src + Dst"),
+     # ( 0 - Src ) * Src + Dst
+     ("vBLEND_MODE_SUB_FIXED", "SUB_FIXED", "( 0 - Src ) * Fixed + Dst"),
+     # ( 0 - Src ) * Fixed + Dst
+     ("vBLEND_MODE_BLEND", "BLEND", "( Src * Dst ) * Src + Dst"),
+     # ( Src * Dst ) * Src + Dst
+     ("vBLEND_MODE_BLEND_FIXED", "BLEND_FIXED", "( Src * Dst ) * Fixed + Dst"),
+     # ( Src * Dst ) * Fixed + Dst
+     ("vBLEND_MODE_MODULATE", "MODULATE", "( Dst - 0 ) * Src + 0"),
+     # ( Dst - 0 ) * Src + 0
+     ("vBLEND_MODE_MODULATE_FIXED", "MODULATE_FIXED", "( Dst - 0 ) * Fixed + 0"),
+     # ( Dst - 0 ) * Fixed + 0
+     ("vBLEND_MODE_BRIGHTEN", "BRIGHTEN", "( Dst - 0 ) * Src + Dst"),
+     # ( Dst - 0 ) * Src + Dst
+     ("vBLEND_MODE_BRIGHTEN_FIXED", "BRIGHTEN_FIXED", "( Dst - 0 ) * Fixed + Dst"),
+     # ( Dst - 0 ) * Fixed + Dst
+     ("vBLEND_MODE_GLOSS_MAP", "GLOSS_MAP", ""),                             # Specular = Specular * Src    - special mode for gloss mapping
+     ("vBLEND_MODE_BLEND_PREVIOUS_MASK", "BLEND_PREVIOUS_MASK", ""),                   # ( Src - Dst ) * Dst + Dst
+     ("vBLEND_MODE_BLEND_INVERSE_PREVIOUS_MASK", "BLEND_INVERSE_PREVIOUS_MASK", ""),           # ( Dst - Src ) * Dst + Src
+     ("vBLEND_MODE_MODULATE_COLOR", "MODULATE_COLOR", ""),
+     ("vBLEND_MODE_ONE_INV_SRC_ALPHA", "ONE_INV_SRC_ALPHA", ""),
+    ), name="Blend Mode", default="vBLEND_MODE_DIFFUSE")
+    blend_fixed_alpha = IntProperty(name="Fixed Alpha", min=0, max=255)
+    u_addressing = EnumProperty(items=(
+        ("Repeat", "Repeat", ""),
+        ("Clamp", "Clamp", ""),
+    ), name="U Addressing", default="Repeat")
+    v_addressing = EnumProperty(items=(
+        ("Repeat", "Repeat", ""),
+        ("Clamp", "Clamp", ""),
+    ), name="V Addressing", default="Repeat")
+    
+    pf_textured = BoolProperty(name="Textured", default=True)
+    pf_environment = BoolProperty(name="Environment texture", default=False) 
+    pf_decal = BoolProperty(name="Decal", default=False) 
+    pf_smooth = BoolProperty(name="Smooth", default=True) 
+    pf_transparent = BoolProperty(name="Use Transparency", default=True)
+    ignore_vertex_alpha = BoolProperty(name="Ignore Vertex Alpha", default=False)
+    envmap_multiples = FloatVectorProperty(name="Envmap Multiples", size=2, default=(3.0, 3.0), min=0.1, max=10.0)
+    
+    filtering_mode = IntProperty(name="Filtering Mode", min=0, max=100000)
+    test_passes = IntProperty(name="Material passes (test)", min=0, max=100000)
+    # filtering mode?
+
+    has_uv_wibbles = BoolProperty(name="Has UV Wibbles", default=False)
+    uv_wibbles = PointerProperty(type=THUGUVWibbles)
+
+    has_animated_texture = BoolProperty(name="Has Animated Texture", default=False)
+    animated_texture = PointerProperty(type=THUGAnimatedTexture)
+    

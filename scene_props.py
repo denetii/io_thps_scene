@@ -109,14 +109,6 @@ class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     custom_name = StringProperty(name="Custom Script Name")
     # gap_props = PointerProperty(type=THUGGapProps)
 
-
-class THUGImageProps(bpy.types.PropertyGroup):
-    compression_type = EnumProperty(items=(
-        ("DXT1", "DXT1", "DXT1. 1-bit alpha. 1:8 compression for RGBA, 1:6 for RGB."),
-        ("DXT5", "DXT5", "DXT5. Full alpha. 1:4 compression.")),
-    name="Compression Type",
-    default="DXT1")
-
 class THUGProximNodeProps(bpy.types.PropertyGroup):
     proxim_type = EnumProperty(items=(
         ("Camera", "Camera", ""), 

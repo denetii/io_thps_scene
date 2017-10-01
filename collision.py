@@ -5,10 +5,12 @@ import bpy
 import struct
 import mathutils
 import math
+import bmesh
 import os, sys
 from bpy.props import *
 from . constants import *
 from . helpers import *
+from . autorail import *
 
 # PROPERTIES
 #############################################
