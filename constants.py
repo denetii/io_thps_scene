@@ -289,3 +289,12 @@ THUG_DefaultGameObjects = {
     ,"Flag_Yellow": "gameobjects\\flags\\flag_yellow\\flag_yellow.mdl"
     ,"Flag_Yellow_Base": "gameobjects\\flags\\flag_yellow_base\\flag_yellow_base.mdl"
 }
+
+# Used for collision exporting!
+SIZEOF_SECTOR_HEADER = 8 * 4
+SIZEOF_SECTOR_OBJ = 64
+SIZEOF_FLOAT_VERT = 3 * 4
+SIZEOF_FIXED_VERT = 3 * 2
+SIZEOF_LARGE_FACE = 2 * 2 + 2 * 3
+SIZEOF_SMALL_FACE = 2 * 2 + 1 * 3
+SIZEOF_BSP_NODE = 2 * 4

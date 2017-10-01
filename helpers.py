@@ -69,6 +69,24 @@ def crc_from_string(string):
 def safe_mode_set(mode):
     if bpy.context.mode != mode:
         bpy.ops.object.mode_set(mode=mode)
+#----------------------------------------------------------------------------------
+def is_string_clean(string):
+    import re
+    return re.search(r"[^A-Za-z0-9_]", string) is None
+#----------------------------------------------------------------------------------
+def get_clean_string(string):
+    import re
+    return re.sub(r"[^A-Za-z0-9_]", "_", string)
+#----------------------------------------------------------------------------------
+def get_clean_name(ob):
+    return get_clean_string(ob.name)
+#----------------------------------------------------------------------------------
+def get_scale_matrix(ob):
+    matrix = mathutils.Matrix.Identity(4)
+    matrix[0][0] = ob.scale[0]
+    matrix[1][1] = ob.scale[1]
+    matrix[2][2] = ob.scale[2]
+    return matrix
 
 # CLASSES
 #############################################
