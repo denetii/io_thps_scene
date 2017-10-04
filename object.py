@@ -11,6 +11,7 @@ from . constants import *
 from . helpers import *
 from . autorail import *
 from . collision import *
+from . import scene_props
 
 # METHODS
 #############################################
@@ -39,7 +40,22 @@ def _thug_object_settings_draw(self, context):
             self.layout.row().prop(ob.thug_go_props, "go_type")
             self.layout.row().prop(ob.thug_go_props, "go_model")
             self.layout.row().prop(ob.thug_go_props, "go_suspend")
+        elif ob.thug_empty_props.empty_type == "Pedestrian":
+            self.layout.row().prop(ob.thug_ped_props, "ped_type")
+            self.layout.row().prop(ob.thug_ped_props, "ped_skeleton")
+            self.layout.row().prop(ob.thug_ped_props, "ped_animset")
+            self.layout.row().prop(ob.thug_ped_props, "ped_extra_anims")
         
+    if ob.type == "EMPTY" and ob.thug_empty_props.empty_type in ( "Pedestrian", "Vehicle" ):
+        self.layout.row().prop_search(
+            ob, "thug_rail_connects_to",
+            context.window_manager,
+            "thug_all_rails")
+        if (ob.thug_rail_connects_to and
+                ob.thug_rail_connects_to in bpy.data.objects and
+                bpy.data.objects[ob.thug_rail_connects_to].type != "CURVE"):
+            self.layout.label(text=ob.thug_rail_connects_to + " is not a curve!", icon="ERROR")
+
     if ob.type == "MESH":
         self.layout.row().prop(ob, "thug_object_class")
         self.layout.row().prop(ob, "thug_export_collision")
@@ -79,11 +95,12 @@ def _thug_object_settings_draw(self, context):
                 box.label("Bad cluster name!", icon="ERROR")
                 box.label("Only valid characters are small and large letters")
                 box.label("digits, and underscores.")
-    if (ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Custom")):
+    if (ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom")):
         # context.window_manager.thug_rail_objects = [obj for obj in context.scene.objects if obj.type == "CURVE"]
         if ob.thug_path_type == "Rail":
             self.layout.row().prop(ob, "thug_rail_terrain_type")
         _update_rails_collection(self, context)
+        #_update_pathnodes_collections()
         self.layout.row().prop_search(
             ob, "thug_rail_connects_to",
             context.window_manager,
@@ -98,19 +115,19 @@ def _thug_object_settings_draw(self, context):
 #----------------------------------------------------------------------------------
 def _update_pathnodes_collections():
     for ob in bpy.data.objects:
-        if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Custom"):
+        if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom"):
             tmp_idx = -1
-            if len(ob.data.splines[0]):
+            if len(ob.data.splines):
                 for p in ob.data.splines[0].points:
                     tmp_idx += 1
-                    if len(ob.thug_pathnode_triggers) < (tmp_idx + 1):
+                    if len(ob.data.thug_pathnode_triggers) < (tmp_idx + 1):
                             ob.data.thug_pathnode_triggers.add()
                             
 #----------------------------------------------------------------------------------
 def _update_rails_collection(self, context):
     context.window_manager.thug_all_rails.clear()
     for ob in bpy.data.objects:
-        if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Custom"):
+        if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom"):
             entry = context.window_manager.thug_all_rails.add()
             entry.name = ob.name
 
@@ -118,8 +135,7 @@ def _update_rails_collection(self, context):
 def _update_restart_collection(self, context):
     context.window_manager.thug_all_restarts.clear()
     for ob in bpy.data.objects:
-        if ob.type == "EMPTY" and ob.thug_empty_props.empty_type in (
-            "SingleRestart", "MultiRestart", "TeamRestart", "GenericRestart"):
+        if ob.type == "EMPTY" and ob.thug_empty_props.empty_type in ("Restart"):
             entry = context.window_manager.thug_all_restarts.add()
             entry.name = ob.name
 

@@ -288,7 +288,7 @@ def register_props():
         name="Rail Terrain Type",
         items=[(t, t, t) for t in ["Auto"] + TERRAIN_TYPES],
         default="Auto")
-    bpy.types.Object.thug_rail_connects_to = StringProperty(name="End Connects To")
+    bpy.types.Object.thug_rail_connects_to = StringProperty(name="Linked To", description="Path this object links to (must be a rail/ladder/waypoint).")
 
     bpy.types.Object.thug_triggerscript_props = PointerProperty(type=THUGObjectTriggerScriptProps)
 
@@ -298,6 +298,7 @@ def register_props():
     bpy.types.Object.thug_generic_props = PointerProperty(type=THUGGenericNodeProps)
     bpy.types.Object.thug_restart_props = PointerProperty(type=THUGRestartProps)
     bpy.types.Object.thug_go_props = PointerProperty(type=THUGGameObjectProps)
+    bpy.types.Object.thug_ped_props = PointerProperty(type=THUGPedestrianProps)
     
     bpy.types.Curve.thug_pathnode_triggers = CollectionProperty(type=THUGPathNodeProps)
     

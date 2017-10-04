@@ -292,13 +292,13 @@ def _export_rails(p, c, operator=None):
     obj_rail_node_start_offset_counter = rail_node_counter
     obj_rail_node_start_offsets = {}
     for ob in bpy.data.objects:
-        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder"): continue
+        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): continue
         obj_rail_node_start_offsets[ob] = obj_rail_node_start_offset_counter
         for spline in ob.data.splines:
             obj_rail_node_start_offset_counter += len(spline.points)
 
     for ob in bpy.data.objects:
-        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder"): continue
+        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): continue
         if ob.thug_path_type == "Custom" and ob.thug_node_expansion == "": continue # Path with no class will break the game!
         
         clean_name = get_clean_name(ob)
@@ -327,7 +327,7 @@ def _export_rails(p, c, operator=None):
                     p("\t\t:i {} = {}".format(c("Class"), c("Waypoint")))
                     p("\t\t:i {} = {}".format(c("Type"), c("Default")))
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, ob.rotation_euler[2], 0))))
-                    name = "LadderNode_" + str(rail_node_counter)
+                    name = "Waypoint_" + str(rail_node_counter)
                 elif ob.thug_path_type == "Custom":
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
                     name = "CustomPathNode_" + str(rail_node_counter)

@@ -1,7 +1,195 @@
 import bpy
 import bgl
 from bpy.props import *
-
+    
+thug_ped_profiles = (
+    "random_male_profile",
+    "random_female_profile",
+    "Ped_Skateboard_a",
+    "Ped_MultiStage_Skateboard_A",
+    "Ped_MultiStage_Skateboard_B",
+    "Ped_MultiStage_Skateboard_C",
+    "Ped_MultiStage_A",
+    "Ped_MultiStage_B",
+    "Ped_MultiStage_C",
+    "Ped_F_MultiStage_Skateboard_A",
+    "Ped_F_MultiStage_Skateboard_B",
+    "Ped_F_MultiStage_Skateboard_C",
+    "Ped_F_MultiStage_A",
+    "Ped_F_MultiStage_B",
+    "Ped_F_MultiStage_C",
+    "Ped_Kid_Skateboard_a",
+    "Ped_Skeezo",
+    "Ped_Ralphie",
+    "Ped_Bender",
+    "Ped_Furlow",
+    "Ped_Kozar",
+    "Ped_Hough",
+    "Ped_Meat",
+    "Ped_Jordan",
+    "Ped_Eric",
+    "Ped_Bum_01",
+    "Ped_Crackhead_01",
+    "Ped_Drugdealer_01",
+    "Stocky_scale_info",
+    "Ped_Drugdealer_02",
+    "Ped_Drugdealer_03",
+    "Ped_FactoryWorker_01",
+    "Ped_FactoryWorker_02",
+    "Ped_Security_Train",
+    "Ped_Street_Warrior_01",
+    "Ped_Street_Warrior_02",
+    "Ped_Street_Warrior_03",
+    "Ped_Tombstone",
+    "Ped_Businesswoman_01",
+    "Ped_M_NYPD_01",
+    "Stocky_scale_info",
+    "Ped_F_NYPD_01",
+    "Ped_Construction_Jhammer",
+    "Ped_Construction_Manhole",
+    "Ped_Skater_NY1",
+    "Ped_Skater_NY2",
+    "Ped_Peralta",
+    "Ped_Chef",
+    "Ped_BusinessMan_01",
+    "Ped_BusinessMan_02",
+    "Ped_BusinessMan_03",
+    "Ped_BlkKid_01",
+    "Ped_BlkKid_02",
+    "Ped_BlkKid_03",
+    "Ped_Trooper",
+    "Ped_Todd",
+    "Ped_F_Dancer_01",
+    "Ped_F_Dancer_02",
+    "Ped_Clemens",
+    "Ped_AfroJim",
+    "Ped_Doorman_01",
+    "Stocky_scale_info",
+    "Ped_Deskclerk_01",
+    "Ped_F_Deskclerk_01",
+    "Ped_Leafblower",
+    "Ped_Security_01",
+    "Ped_Security_02",
+    "Ped_Security_03",
+    "Ped_F_Security",
+    "Ped_Gardener_01",
+    "Ped_Gardener_02",
+    "Ped_F_Gardener",
+    "Ped_F_MCeleb",
+    "Ped_F_KGB",
+    "Ped_KGB_01",
+    "Ped_KGB_02",
+    "Ped_RGuard_01",
+    "Ped_RGuard_02",
+    "Ped_F_Babushka",
+    "Ped_Cameraman",
+    "Ped_Official_SC_01",
+    "Ped_Official_SC_02",
+    "Ped_Monsterped_A_01",
+    "Ped_Monsterped_A_01B",
+    "Ped_Monsterped_B_01",
+    "Ped_Monsterped_C_01",
+    "Ped_Monsterped_A_02",
+    "Ped_Monsterped_B_02",
+    "Ped_Monsterped_C_02",
+    "Ped_Monsterped_A_03",
+    "Ped_Monsterped_B_03",
+    "Ped_Monsterped_C_03",
+    "Ped_Monsterped_A_04",
+    "Ped_Monsterped_B_04",
+    "Ped_Monsterped_C_04",
+    "Ped_QBert",
+    "Ped_Video",
+    "Ped_Photo",
+    "Ped_SCJ_Worker",
+    "Ped_SCJ_Judge_01",
+    "Ped_SCJ_Judge_02",
+    "Ped_SCJ_Judge_03",
+    "Ped_SCJ_Judge_04",
+    "Ped_SCJ_Judge_05",
+    "Ped_SCJ_Judge_06",
+    "Ped_Hula",
+    "Ped_Hula2",
+    "Ped_Bartender",
+    "Ped_Film",
+    "Ped_Bikini_1",
+    "Ped_Bikini_2",
+    "Ped_Bikini_3",
+    "Ped_Bride",
+    "Ped_Surfer",
+    "Ped_KISS_Paul",
+    "Ped_KISS_Peter",
+    "Ped_KISS_Ace",
+    "Ped_KISS_Gene",
+    "Ped_Freak_Sledge",
+    "Ped_Freak_Sword",
+    "Skate_KISS_Paul",
+    "Skate_KISS_Peter",
+    "Skate_KISS_Ace",
+    "PedPro_Hawk",
+    "PedPro_Koston",
+    "PedPro_Burnquist",
+    "PedPro_Lasek",
+    "PedPro_Mullen",
+    "PedPro_Muska",
+    "PedPro_Margera",
+    "PedPro_Rodrigez",
+    "PedPro_Reynolds",
+    "PedPro_Vallely",
+    "pedpro_Hawk_profile",
+    "pedpro_Burnquist_profile",
+    "pedpro_Caballero_profile",
+    "pedpro_Campbell_profile",
+    "pedpro_Koston_profile",
+    "pedpro_Glifberg_profile",
+    "pedpro_Lasek_profile",
+    "pedpro_Margera_profile",
+    "pedpro_Mullen_profile",
+    "pedpro_Muska_profile",
+    "pedpro_Reynolds_profile",
+    "pedpro_Rowley_profile",
+    "pedpro_Steamer_profile",
+    "pedpro_Thomas_profile",
+    "pedpro_Neversoft_profile",
+    "Ped_Fratjacket_a",
+    "Ped_FratGuy_a",
+    "Ped_FratGuy_b",
+    "Ped_Basketball_b",
+    "Ped_Basketball_c",
+    "Ped_Basketball_d",
+    "Ped_Tennis_a",
+    "Ped_Tennis_b",
+    "Ped_London_cop_a",
+    "Ped_London_Bikecop_a",
+    "Ped_Protestor_a",
+    "Ped_Protestor_b",
+    "Ped_Protestor_c",
+    "Ped_Skank_a",
+    "Ped_Mechanic_a",
+    "Ped_Fisherman_a",
+    "Ped_Kid_grommit_a",
+    "Ped_Jogger_Female_a",
+    "Ped_Kid_grommit_b",
+    "Ped_DockWorker_a",
+    "Ped_DockWorker_b",
+    "Ped_DockWorker_c",
+    "Ped_Foreman_a",
+    "Ped_Foreman_b",
+    "Ped_DeliveryGuy",
+    "Ped_Stroller_a",
+    "Ped_Zooemployee_b",
+    "Ped_Elephant_Trainer_a",
+    "Ped_Liontamer_a",
+    "Ped_Clown",
+    "Ped_Rasta",
+    "Ped_VanGuy",
+    "Ped_Mob_rifle",
+    "Ped_Kid_a",
+    "Ped_Girl",
+    "Ped_Kid_Balloon_a",
+    "sample_pedestrian_a",
+    "sample_pedestrian_b"
+)
 
 # METHODS
 #############################################
@@ -14,6 +202,27 @@ def _gap_props_end_object_changed(gap_props, context):
 
 # PROPERTIES
 #############################################
+
+#----------------------------------------------------------------------------------
+#- Defines the Class of an empty
+#----------------------------------------------------------------------------------
+class THUGEmptyProps(bpy.types.PropertyGroup):
+    empty_type = EnumProperty(items=(
+        ("None", "None", ""),
+        ("Restart", "Restart", "Player restarts."),
+        ("GenericNode", "Generic Node", "KOTH crown and other objects."),
+        ("Pedestrian", "Pedestrian", "Not currently implemented."),
+        ("Vehicle", "Vehicle", "Not currently implemented."),
+        ("ProximNode", "Proximity Node", "Node that can fire events when objects are inside its radius."),
+        ("GameObject", "Game Object", "CTF Flags, COMBO letters, etc."),
+        ("BouncyObject", "Bouncy Object", "Legacy node type, not used, only for identification in imported levels."),
+        ("Custom", "Custom", ""),
+        ), name="Node Type", default="None")
+
+
+#----------------------------------------------------------------------------------
+#- Currently unused
+#----------------------------------------------------------------------------------
 class THUGGapProps(bpy.types.PropertyGroup):
     flags = {
         "CANCEL_GROUND": 0x00000001,
@@ -95,7 +304,7 @@ class THUGGapProps(bpy.types.PropertyGroup):
         for flag in sorted(self.flags):
             col.prop(self, flag)
 
-
+#----------------------------------------------------------------------------------
 class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     triggerscript_type = EnumProperty(items=(
         ("None", "None", ""),
@@ -109,6 +318,10 @@ class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     custom_name = StringProperty(name="Custom Script Name")
     # gap_props = PointerProperty(type=THUGGapProps)
 
+
+#----------------------------------------------------------------------------------
+#- Proximity node properties
+#----------------------------------------------------------------------------------
 class THUGProximNodeProps(bpy.types.PropertyGroup):
     proxim_type = EnumProperty(items=(
         ("Camera", "Camera", ""), 
@@ -117,12 +330,20 @@ class THUGProximNodeProps(bpy.types.PropertyGroup):
     default="Camera")
     radius = IntProperty(name="Radius", min=0, max=1000000, default=150)
     
+
+#----------------------------------------------------------------------------------
+#- If you know of another thing GenericNode is used for, let me know!
+#----------------------------------------------------------------------------------
 class THUGGenericNodeProps(bpy.types.PropertyGroup):
     generic_type = EnumProperty(items=(
         ("Crown", "KOTH Crown", ""), 
         ("Other", "Other", "")) 
     ,name="Node Type",default="Crown")
     
+
+#----------------------------------------------------------------------------------
+#- Game objects - models with collision that affect gameplay
+#----------------------------------------------------------------------------------
 class THUGGameObjectProps(bpy.types.PropertyGroup):
     go_type = EnumProperty(items=(
         ("Ghost", "Ghost", "No model, used for game logic."), 
@@ -143,13 +364,19 @@ class THUGGameObjectProps(bpy.types.PropertyGroup):
     go_model = StringProperty(name="Model path", description="Path to the model, relative to Data/Models/.")
     go_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion of the object pauses.", min=0, max=1000000, default=0)
     
+#----------------------------------------------------------------------------------
+#- Properties for individual nodes along a path (rail, ladder, waypoints)
+#----------------------------------------------------------------------------------
 class THUGPathNodeProps(bpy.types.PropertyGroup):
     name = StringProperty(name="Node Name")
     script_name = StringProperty(name="TriggerScript Name")
     
     def register():
         print("adding new path node struct")
-    
+        
+#----------------------------------------------------------------------------------
+#- Restart properties
+#----------------------------------------------------------------------------------
 class THUGRestartProps(bpy.types.PropertyGroup):
 
     restart_p1 = BoolProperty(name="Player 1", default=False)
@@ -169,26 +396,210 @@ class THUGRestartProps(bpy.types.PropertyGroup):
         ("CTF", "CTF", "")),
     name="Primary Type", default="Player1")
     restart_name = StringProperty(name="Restart Name", description="Name that appears in restart menu.")
+    
 
-class THUGEmptyProps(bpy.types.PropertyGroup):
-    empty_type = EnumProperty(items=(
-        ("None", "None", ""),
-        ("Restart", "Restart", "Player restarts."),
-        ("GenericNode", "Generic Node", "KOTH crown and other objects."),
-        ("Pedestrian", "Pedestrian", "Not currently implemented."),
-        ("Vehicle", "Vehicle", "Not currently implemented."),
-        ("ProximNode", "Proximity Node", "Node that can fire events when objects are inside its radius."),
-        ("GameObject", "Game Object", "CTF Flags, COMBO letters, etc."),
-        ("BouncyObject", "Bouncy Object", "Legacy node type, not used, only for identification in imported levels."),
-        ("Custom", "Custom", ""),
-        ), name="Node Type", default="None")
+#----------------------------------------------------------------------------------
+#- Pedestrian properties, there's a lot of them!
+#----------------------------------------------------------------------------------
+class THUGPedestrianProps(bpy.types.PropertyGroup):
+    ped_type = EnumProperty(items=(
+        ("Ped_From_Profile", "From Profile", "Generic pedestrian with a skin from a profile."),
+        ("CrowdC_01", "CrowdC_01", "Test")),
+    name="Type", default="Ped_From_Profile")
+    ped_skeleton = EnumProperty(items=(
+        ("THPS5_human", "THPS5 Human", "Most commonly-used skeleton."),
+        ("MonsterPed", "MonsterPed", "Test2")),
+    name="Skeleton", default="THPS5_human")
+    
+    ped_profile = EnumProperty(items=(
+        ("random_male_profile", "random_male_profile", ""),
+        ("random_female_profile", "random_female_profile", ""),
+        ("Ped_Skateboard_a", "Ped_Skateboard_a", ""),
+        ("Ped_MultiStage_Skateboard_A", "Ped_MultiStage_Skateboard_A", ""),
+        ("Ped_MultiStage_Skateboard_B", "Ped_MultiStage_Skateboard_B", ""),
+        ("Ped_MultiStage_Skateboard_C", "Ped_MultiStage_Skateboard_C", ""),
+        ("Ped_MultiStage_A", "Ped_MultiStage_A", ""),
+        ("Ped_MultiStage_B", "Ped_MultiStage_B", ""),
+        ("Ped_MultiStage_C", "Ped_MultiStage_C", ""),
+        ("Ped_F_MultiStage_Skateboard_A", "Ped_F_MultiStage_Skateboard_A", ""),
+        ("Ped_F_MultiStage_Skateboard_B", "Ped_F_MultiStage_Skateboard_B", ""),
+        ("Ped_F_MultiStage_Skateboard_C", "Ped_F_MultiStage_Skateboard_C", ""),
+        ("Ped_F_MultiStage_A", "Ped_F_MultiStage_A", ""),
+        ("Ped_F_MultiStage_B", "Ped_F_MultiStage_B", ""),
+        ("Ped_F_MultiStage_C", "Ped_F_MultiStage_C", ""),
+        ("Ped_Kid_Skateboard_a", "Ped_Kid_Skateboard_a", ""),
+        ("Ped_Skeezo", "Ped_Skeezo", ""),
+        ("Ped_Ralphie", "Ped_Ralphie", ""),
+        ("Ped_Bender", "Ped_Bender", ""),
+        ("Ped_Furlow", "Ped_Furlow", ""),
+        ("Ped_Kozar", "Ped_Kozar", ""),
+        ("Ped_Hough", "Ped_Hough", ""),
+        ("Ped_Meat", "Ped_Meat", ""),
+        ("Ped_Jordan", "Ped_Jordan", ""),
+        ("Ped_Eric", "Ped_Eric", ""),
+        ("Ped_Bum_01", "Ped_Bum_01", ""),
+        ("Ped_Crackhead_01", "Ped_Crackhead_01", ""),
+        ("Ped_Drugdealer_01", "Ped_Drugdealer_01", ""),
+        ("Ped_Drugdealer_02", "Ped_Drugdealer_02", ""),
+        ("Ped_Drugdealer_03", "Ped_Drugdealer_03", ""),
+        ("Ped_FactoryWorker_01", "Ped_FactoryWorker_01", ""),
+        ("Ped_FactoryWorker_02", "Ped_FactoryWorker_02", ""),
+        ("Ped_Security_Train", "Ped_Security_Train", ""),
+        ("Ped_Street_Warrior_01", "Ped_Street_Warrior_01", ""),
+        ("Ped_Street_Warrior_02", "Ped_Street_Warrior_02", ""),
+        ("Ped_Street_Warrior_03", "Ped_Street_Warrior_03", ""),
+        ("Ped_Tombstone", "Ped_Tombstone", ""),
+        ("Ped_Businesswoman_01", "Ped_Businesswoman_01", ""),
+        ("Ped_M_NYPD_01", "Ped_M_NYPD_01", ""),
+        ("Ped_F_NYPD_01", "Ped_F_NYPD_01", ""),
+        ("Ped_Construction_Jhammer", "Ped_Construction_Jhammer", ""),
+        ("Ped_Construction_Manhole", "Ped_Construction_Manhole", ""),
+        ("Ped_Skater_NY1", "Ped_Skater_NY1", ""),
+        ("Ped_Skater_NY2", "Ped_Skater_NY2", ""),
+        ("Ped_Peralta", "Ped_Peralta", ""),
+        ("Ped_Chef", "Ped_Chef", ""),
+        ("Ped_BusinessMan_01", "Ped_BusinessMan_01", ""),
+        ("Ped_BusinessMan_02", "Ped_BusinessMan_02", ""),
+        ("Ped_BusinessMan_03", "Ped_BusinessMan_03", ""),
+        ("Ped_BlkKid_01", "Ped_BlkKid_01", ""),
+        ("Ped_BlkKid_02", "Ped_BlkKid_02", ""),
+        ("Ped_BlkKid_03", "Ped_BlkKid_03", ""),
+        ("Ped_Trooper", "Ped_Trooper", ""),
+        ("Ped_Todd", "Ped_Todd", ""),
+        ("Ped_F_Dancer_01", "Ped_F_Dancer_01", ""),
+        ("Ped_F_Dancer_02", "Ped_F_Dancer_02", ""),
+        ("Ped_Clemens", "Ped_Clemens", ""),
+        ("Ped_AfroJim", "Ped_AfroJim", ""),
+        ("Ped_Doorman_01", "Ped_Doorman_01", ""),
+        ("Ped_Deskclerk_01", "Ped_Deskclerk_01", ""),
+        ("Ped_F_Deskclerk_01", "Ped_F_Deskclerk_01", ""),
+        ("Ped_Leafblower", "Ped_Leafblower", ""),
+        ("Ped_Security_01", "Ped_Security_01", ""),
+        ("Ped_Security_02", "Ped_Security_02", ""),
+        ("Ped_Security_03", "Ped_Security_03", ""),
+        ("Ped_F_Security", "Ped_F_Security", ""),
+        ("Ped_Gardener_01", "Ped_Gardener_01", ""),
+        ("Ped_Gardener_02", "Ped_Gardener_02", ""),
+        ("Ped_F_Gardener", "Ped_F_Gardener", ""),
+        ("Ped_F_MCeleb", "Ped_F_MCeleb", ""),
+        ("Ped_F_KGB", "Ped_F_KGB", ""),
+        ("Ped_KGB_01", "Ped_KGB_01", ""),
+        ("Ped_KGB_02", "Ped_KGB_02", ""),
+        ("Ped_RGuard_01", "Ped_RGuard_01", ""),
+        ("Ped_RGuard_02", "Ped_RGuard_02", ""),
+        ("Ped_F_Babushka", "Ped_F_Babushka", ""),
+        ("Ped_Cameraman", "Ped_Cameraman", ""),
+        ("Ped_Official_SC_01", "Ped_Official_SC_01", ""),
+        ("Ped_Official_SC_02", "Ped_Official_SC_02", ""),
+        ("Ped_Monsterped_A_01", "Ped_Monsterped_A_01", ""),
+        ("Ped_Monsterped_A_01B", "Ped_Monsterped_A_01B", ""),
+        ("Ped_Monsterped_B_01", "Ped_Monsterped_B_01", ""),
+        ("Ped_Monsterped_C_01", "Ped_Monsterped_C_01", ""),
+        ("Ped_Monsterped_A_02", "Ped_Monsterped_A_02", ""),
+        ("Ped_Monsterped_B_02", "Ped_Monsterped_B_02", ""),
+        ("Ped_Monsterped_C_02", "Ped_Monsterped_C_02", ""),
+        ("Ped_Monsterped_A_03", "Ped_Monsterped_A_03", ""),
+        ("Ped_Monsterped_B_03", "Ped_Monsterped_B_03", ""),
+        ("Ped_Monsterped_C_03", "Ped_Monsterped_C_03", ""),
+        ("Ped_Monsterped_A_04", "Ped_Monsterped_A_04", ""),
+        ("Ped_Monsterped_B_04", "Ped_Monsterped_B_04", ""),
+        ("Ped_Monsterped_C_04", "Ped_Monsterped_C_04", ""),
+        ("Ped_QBert", "Ped_QBert", ""),
+        ("Ped_Video", "Ped_Video", ""),
+        ("Ped_Photo", "Ped_Photo", ""),
+        ("Ped_SCJ_Worker", "Ped_SCJ_Worker", ""),
+        ("Ped_SCJ_Judge_01", "Ped_SCJ_Judge_01", ""),
+        ("Ped_SCJ_Judge_02", "Ped_SCJ_Judge_02", ""),
+        ("Ped_SCJ_Judge_03", "Ped_SCJ_Judge_03", ""),
+        ("Ped_SCJ_Judge_04", "Ped_SCJ_Judge_04", ""),
+        ("Ped_SCJ_Judge_05", "Ped_SCJ_Judge_05", ""),
+        ("Ped_SCJ_Judge_06", "Ped_SCJ_Judge_06", ""),
+        ("Ped_Hula", "Ped_Hula", ""),
+        ("Ped_Hula2", "Ped_Hula2", ""),
+        ("Ped_Bartender", "Ped_Bartender", ""),
+        ("Ped_Film", "Ped_Film", ""),
+        ("Ped_Bikini_1", "Ped_Bikini_1", ""),
+        ("Ped_Bikini_2", "Ped_Bikini_2", ""),
+        ("Ped_Bikini_3", "Ped_Bikini_3", ""),
+        ("Ped_Bride", "Ped_Bride", ""),
+        ("Ped_Surfer", "Ped_Surfer", ""),
+        ("Ped_KISS_Paul", "Ped_KISS_Paul", ""),
+        ("Ped_KISS_Peter", "Ped_KISS_Peter", ""),
+        ("Ped_KISS_Ace", "Ped_KISS_Ace", ""),
+        ("Ped_KISS_Gene", "Ped_KISS_Gene", ""),
+        ("Ped_Freak_Sledge", "Ped_Freak_Sledge", ""),
+        ("Ped_Freak_Sword", "Ped_Freak_Sword", ""),
+        ("Skate_KISS_Paul", "Skate_KISS_Paul", ""),
+        ("Skate_KISS_Peter", "Skate_KISS_Peter", ""),
+        ("Skate_KISS_Ace", "Skate_KISS_Ace", ""),
+        ("PedPro_Hawk", "PedPro_Hawk", ""),
+        ("PedPro_Koston", "PedPro_Koston", ""),
+        ("PedPro_Burnquist", "PedPro_Burnquist", ""),
+        ("PedPro_Lasek", "PedPro_Lasek", ""),
+        ("PedPro_Mullen", "PedPro_Mullen", ""),
+        ("PedPro_Muska", "PedPro_Muska", ""),
+        ("PedPro_Margera", "PedPro_Margera", ""),
+        ("PedPro_Rodrigez", "PedPro_Rodrigez", ""),
+        ("PedPro_Reynolds", "PedPro_Reynolds", ""),
+        ("PedPro_Vallely", "PedPro_Vallely", ""),
+        ("pedpro_Hawk_profile", "pedpro_Hawk_profile", ""),
+        ("pedpro_Burnquist_profile", "pedpro_Burnquist_profile", ""),
+        ("pedpro_Caballero_profile", "pedpro_Caballero_profile", ""),
+        ("pedpro_Campbell_profile", "pedpro_Campbell_profile", ""),
+        ("pedpro_Koston_profile", "pedpro_Koston_profile", ""),
+        ("pedpro_Glifberg_profile", "pedpro_Glifberg_profile", ""),
+        ("pedpro_Lasek_profile", "pedpro_Lasek_profile", ""),
+        ("pedpro_Margera_profile", "pedpro_Margera_profile", ""),
+        ("pedpro_Mullen_profile", "pedpro_Mullen_profile", ""),
+        ("pedpro_Muska_profile", "pedpro_Muska_profile", ""),
+        ("pedpro_Reynolds_profile", "pedpro_Reynolds_profile", ""),
+        ("pedpro_Rowley_profile", "pedpro_Rowley_profile", ""),
+        ("pedpro_Steamer_profile", "pedpro_Steamer_profile", ""),
+        ("pedpro_Thomas_profile", "pedpro_Thomas_profile", ""),
+        ("pedpro_Neversoft_profile", "pedpro_Neversoft_profile", ""),
+        ("Ped_Fratjacket_a", "Ped_Fratjacket_a", ""),
+        ("Ped_FratGuy_a", "Ped_FratGuy_a", ""),
+        ("Ped_FratGuy_b", "Ped_FratGuy_b", ""),
+        ("Ped_Basketball_b", "Ped_Basketball_b", ""),
+        ("Ped_Basketball_c", "Ped_Basketball_c", ""),
+        ("Ped_Basketball_d", "Ped_Basketball_d", ""),
+        ("Ped_Tennis_a", "Ped_Tennis_a", ""),
+        ("Ped_Tennis_b", "Ped_Tennis_b", ""),
+        ("Ped_London_cop_a", "Ped_London_cop_a", ""),
+        ("Ped_London_Bikecop_a", "Ped_London_Bikecop_a", ""),
+        ("Ped_Protestor_a", "Ped_Protestor_a", ""),
+        ("Ped_Protestor_b", "Ped_Protestor_b", ""),
+        ("Ped_Protestor_c", "Ped_Protestor_c", ""),
+        ("Ped_Skank_a", "Ped_Skank_a", ""),
+        ("Ped_Mechanic_a", "Ped_Mechanic_a", ""),
+        ("Ped_Fisherman_a", "Ped_Fisherman_a", ""),
+        ("Ped_Kid_grommit_a", "Ped_Kid_grommit_a", ""),
+        ("Ped_Jogger_Female_a", "Ped_Jogger_Female_a", ""),
+        ("Ped_Kid_grommit_b", "Ped_Kid_grommit_b", ""),
+        ("Ped_DockWorker_a", "Ped_DockWorker_a", ""),
+        ("Ped_DockWorker_b", "Ped_DockWorker_b", ""),
+        ("Ped_DockWorker_c", "Ped_DockWorker_c", ""),
+        ("Ped_Foreman_a", "Ped_Foreman_a", ""),
+        ("Ped_Foreman_b", "Ped_Foreman_b", ""),
+        ("Ped_DeliveryGuy", "Ped_DeliveryGuy", ""),
+        ("Ped_Stroller_a", "Ped_Stroller_a", ""),
+        ("Ped_Zooemployee_b", "Ped_Zooemployee_b", ""),
+        ("Ped_Elephant_Trainer_a", "Ped_Elephant_Trainer_a", ""),
+        ("Ped_Liontamer_a", "Ped_Liontamer_a", ""),
+        ("Ped_Clown", "Ped_Clown", ""),
+        ("Ped_Rasta", "Ped_Rasta", ""),
+        ("Ped_VanGuy", "Ped_VanGuy", ""),
+        ("Ped_Mob_rifle", "Ped_Mob_rifle", ""),
+        ("Ped_Kid_a", "Ped_Kid_a", ""),
+        ("Ped_Girl", "Ped_Girl", ""),
+        ("Ped_Kid_Balloon_a", "Ped_Kid_Balloon_a", ""),
+        ("sample_pedestrian_a", "sample_pedestrian_a", ""),
+        ("sample_pedestrian_b", "sample_pedestrian_b", "")),
 
-    #empty_restart_name = StringProperty(name="Restart Name", description="Not currently used.")
-    """
-    restart_singleplayer = BoolProperty(name="Singleplayer Restart", default=True)
-    restart_multiplayer = BoolProperty(name="Multiplayer Restart", default=True)
-    restart_team = BoolProperty(name="Team Restart", default=True)
-    """
+    name="Profile Name", default="random_male_profile")
+    ped_animset = StringProperty(name="Anim Set", description="Anim set to load for this pedestrian. Leave empty to use the default anim set.")
+    ped_extra_anims = StringProperty(name="Extra Anims", description="Additional anim sets to load.")
+
 
 
 
