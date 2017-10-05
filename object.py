@@ -12,6 +12,8 @@ from . helpers import *
 from . autorail import *
 from . collision import *
 from . import scene_props
+from . import qb 
+from . qb import *
 
 # METHODS
 #############################################
@@ -85,8 +87,18 @@ def _thug_object_settings_draw(self, context):
         elif ob.thug_triggerscript_props.triggerscript_type in ("Gap"):
             ob.thug_triggerscript_props.gap_props.draw(self, context)
         elif ob.thug_triggerscript_props.triggerscript_type in ("Custom"):
-            self.layout.row().prop(ob.thug_triggerscript_props, "custom_name")
             
+            box = self.layout.box().column(True)
+            box.row().prop_search(
+                ob.thug_triggerscript_props, "custom_name",
+                bpy.data,
+                "texts")
+            box.row().operator(THUGCreateTriggerScript.bl_idname, THUGCreateTriggerScript.bl_label)
+            if ob.thug_triggerscript_props.custom_name != '' and not ob.thug_triggerscript_props.custom_name.startswith("script_"):
+                box = self.layout.box().column(True)
+                box.label("Bad TriggerScript name!", icon="ERROR")
+                box.label("Name must start with '_script' to be exported.")
+                
         if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type == "Rail"):
             self.layout.row().prop(ob, "thug_is_trickobject")
             self.layout.row().prop(ob, "thug_cluster_name")
@@ -139,47 +151,6 @@ def _update_restart_collection(self, context):
             entry = context.window_manager.thug_all_restarts.add()
             entry.name = ob.name
 
-#----------------------------------------------------------------------------------
-def __init_wm_props():
-    def make_updater(flag):
-        return lambda wm, ctx: update_collision_flag_mesh(wm, ctx, flag)
-
-    FLAG_NAMES = {
-        "mFD_VERT": ("Vert", "Vert. This face is a vert (used for ramps)."),
-        "mFD_WALL_RIDABLE": ("Wallridable", "Wallridable. This face is wallridable"),
-        "mFD_NON_COLLIDABLE": ("Non-Collidable", "Non-Collidable. The skater won't collide with this face. Used for triggers."),
-        "mFD_NO_SKATER_SHADOW": ("No Skater Shadow", "No Skater Shadow"),
-        "mFD_NO_SKATER_SHADOW_WALL": ("No Skater Shadow Wall", "No Skater Shadow Wall"),
-        "mFD_TRIGGER": ("Trigger", "Trigger. The object's TriggerScript will be called when a skater goes through this face. Caution: if the object doesn't have a triggerscript defined the game will crash!"),
-    }
-
-    for ff in SETTABLE_FACE_FLAGS:
-        fns = FLAG_NAMES.get(ff)
-        if fns:
-            fn, fd = fns
-        else:
-            fn = ff
-            fd = ff
-        setattr(bpy.types.WindowManager,
-                "thug_face_" + ff,
-                BoolProperty(name=fn,
-                             description=fd,
-                             update=make_updater(ff)))
-
-    bpy.types.WindowManager.thug_autorail_terrain_type = EnumProperty(
-        name="Autorail Terrain Type",
-        items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]],
-        update=update_autorail_terrain_type)
-
-    bpy.types.WindowManager.thug_face_terrain_type = EnumProperty(
-        name="Terrain Type",
-        items=[(t, t, t) for t in ["Auto"] + TERRAIN_TYPES],
-        update=update_terrain_type_mesh)
-
-    bpy.types.WindowManager.thug_show_face_collision_colors = BoolProperty(
-        name="Colorize faces and edges",
-        description="Colorize faces and edges in the 3D view according to their collision flags and autorail settings.",
-        default=True)
 
 
 # PROPERTIES

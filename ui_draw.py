@@ -4,14 +4,14 @@ from . import_thps4 import THPS4ScnToScene
 from . import_thug1 import THUG1ScnToScene
 from . import_thug2 import THUG2ScnToScene, THUG2ColToScene
 from . skeleton import THUGImportSkeleton
-from . object import __init_wm_props
+from . scene_props import *
 import bgl
 from . constants import *
-from . scene_props import *
 from . material import *
 from . collision import *
 from . export_thug1 import *
 from . export_thug2 import *
+from . import_nodes import *
 
 # PROPERTIES
 #############################################
@@ -223,129 +223,26 @@ def register_menus():
 def unregister_menus():
     bpy.types.INFO_MT_file_import.remove(import_menu_func)
     bpy.types.INFO_MT_file_export.remove(export_menu_func)
+
+
+
+# PANELS
+#############################################
 #----------------------------------------------------------------------------------
-def register_props():
-    __init_wm_props()
-    bpy.types.Object.thug_object_class = EnumProperty(
-        name="Object Class",
-        description="Object Class.",
-        items=[
-            ("LevelGeometry", "LevelGeometry", "LevelGeometry. Use for static geometry."),
-            ("LevelObject", "LevelObject", "LevelObject. Use for dynamic objects.")],
-        default="LevelGeometry")
-    bpy.types.Object.thug_do_autosplit = BoolProperty(
-        name="Autosplit Object on Export",
-        description="Split object into multiple smaller objects of sizes suitable for the THUG engine. Note that this will create multiple objects, which might cause issues with scripting. Using this for LevelObjects or objects used in scripts is not advised.",
-        default=False)
-    bpy.types.Object.thug_node_expansion = StringProperty(
-        name="Node Expansion",
-        description="The struct with this name will be merged to this node's definition in the NodeArray.",
-        default="")
-    bpy.types.Object.thug_do_autosplit_faces_per_subobject = IntProperty(
-        name="Faces Per Subobject",
-        description="The max amount of faces for every created subobject.",
-        default=300, min=50, max=6000)
-    bpy.types.Object.thug_do_autosplit_max_radius = FloatProperty(
-        name="Max Radius",
-        description="The max radius of for every created subobject.",
-        default=2000, min=100, max=5000)
-    """
-    bpy.types.Object.thug_do_autosplit_preserve_normals = BoolProperty(
-        name="Preserve Normals",
-        description="Preserve the normals of the ",
-        default=True)
-    """
-    bpy.types.Object.thug_col_obj_flags = IntProperty()
-    bpy.types.Object.thug_created_at_start = BoolProperty(name="Created At Start", default=True)
-    bpy.types.Object.thug_network_option = EnumProperty(
-        name="Network Options",
-        items=[
-            ("Default", "Default", "Appears in network games."),
-            ("AbsentInNetGames", "Offline Only", "Only appears in single-player."),
-            ("NetEnabled", "Online (Broadcast)", "Appears in network games, events/scripts appear on all clients.")],
-        default="Default")
-    bpy.types.Object.thug_export_collision = BoolProperty(name="Export to Collisions", default=True)
-    bpy.types.Object.thug_export_scene = BoolProperty(name="Export to Scene", default=True)
-    bpy.types.Object.thug_always_export_to_nodearray = BoolProperty(name="Always Export to Nodearray", default=False)
-    bpy.types.Object.thug_occluder = BoolProperty(name="Occluder", description="Occludes (hides) geometry behind this mesh. Used for performance improvements.", default=False)
-    bpy.types.Object.thug_is_trickobject = BoolProperty(
-        name="Is a TrickObject",
-        default=False,
-        description="This must be checked if you want this object to be taggable in Graffiti.")
-    bpy.types.Object.thug_cluster_name = StringProperty(
-        name="TrickObject Cluster",
-        description="The name of the graffiti group this object belongs to. If this is empty and this is a rail with a mesh object parent this will be set to the parent's name. Otherwise it will be set to this object's name.")
-    bpy.types.Object.thug_path_type = EnumProperty(
-        name="Path Type",
-        items=[
-            ("None", "None", "None"),
-            ("Rail", "Rail", "Rail"),
-            ("Ladder", "Ladder", "Ladder"),
-            ("Waypoint", "Waypoint", "Navigation path for pedestrians/vehicles/AI skaters."),
-            ("Custom", "Custom", "Custom")],
-        default="None")
-    bpy.types.Object.thug_rail_terrain_type = EnumProperty(
-        name="Rail Terrain Type",
-        items=[(t, t, t) for t in ["Auto"] + TERRAIN_TYPES],
-        default="Auto")
-    bpy.types.Object.thug_rail_connects_to = StringProperty(name="Linked To", description="Path this object links to (must be a rail/ladder/waypoint).")
+class THUGImportTools(bpy.types.Panel):
+    bl_label = "TH Import Tools"
+    bl_region_type = "TOOLS"
+    bl_space_type = "VIEW_3D"
+    bl_category = "THUG Tools"
 
-    bpy.types.Object.thug_triggerscript_props = PointerProperty(type=THUGObjectTriggerScriptProps)
+    @classmethod
+    def poll(cls, context):
+        return context.user_preferences.addons[ADDON_NAME].preferences.object_settings_tools
 
-    bpy.types.Object.thug_empty_props = PointerProperty(type=THUGEmptyProps)
-    
-    bpy.types.Object.thug_proxim_props = PointerProperty(type=THUGProximNodeProps)
-    bpy.types.Object.thug_generic_props = PointerProperty(type=THUGGenericNodeProps)
-    bpy.types.Object.thug_restart_props = PointerProperty(type=THUGRestartProps)
-    bpy.types.Object.thug_go_props = PointerProperty(type=THUGGameObjectProps)
-    bpy.types.Object.thug_ped_props = PointerProperty(type=THUGPedestrianProps)
-    
-    bpy.types.Curve.thug_pathnode_triggers = CollectionProperty(type=THUGPathNodeProps)
-    
-    bpy.types.Image.thug_image_props = PointerProperty(type=THUGImageProps)
-
-    bpy.types.Material.thug_material_props = PointerProperty(type=THUGMaterialProps)
-    bpy.types.Texture.thug_material_pass_props = PointerProperty(type=THUGMaterialPassProps)
-
-    bpy.types.WindowManager.thug_all_rails = CollectionProperty(type=bpy.types.PropertyGroup)
-    bpy.types.WindowManager.thug_all_restarts = CollectionProperty(type=bpy.types.PropertyGroup)
-
-    # bpy.utils.unregister_class(ExtractRail)
-    # bpy.utils.register_class(ExtractRail)
-    
-    #_update_pathnodes_collections()
-    
-    global draw_handle
-    draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
-    # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)
-    bpy.app.handlers.scene_update_post.append(draw_stuff_post_update)
-    bpy.app.handlers.scene_update_post.append(update_collision_flag_ui_properties)
-
-    bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
-    
-    
-#----------------------------------------------------------------------------------
-def unregister_props():
-    bgl.glDeleteLists(draw_stuff_display_list_id, 1)
-
-    # bpy.utils.unregister_class(ExtractRail)
-
-    global draw_handle
-    if draw_handle:
-        bpy.types.SpaceView3D.draw_handler_remove(draw_handle, 'WINDOW')
-        draw_handle = None
-
-    """
-    if draw_stuff_pre_update in bpy.app.handlers.scene_update_pre:
-        bpy.app.handlers.scene_update_pre.remove(draw_stuff_pre_update)
-    """
-
-    if update_collision_flag_ui_properties in bpy.app.handlers.scene_update_post:
-        bpy.app.handlers.scene_update_post.remove(update_collision_flag_ui_properties)
-
-    if draw_stuff_post_update in bpy.app.handlers.scene_update_post:
-        bpy.app.handlers.scene_update_post.remove(draw_stuff_post_update)
-
-    if draw_stuff_pre_load_cleanup in bpy.app.handlers.load_pre:
-        bpy.app.handlers.load_pre.remove(draw_stuff_pre_load_cleanup)
-
+    def draw(self, context):
+        self.layout.row().operator(THUG2ColToScene.bl_idname, text=THUG2ColToScene.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THUG2ScnToScene.bl_idname, text=THUG2ScnToScene.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THUG1ScnToScene.bl_idname, text=THUG1ScnToScene.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THPS4ScnToScene.bl_idname, text=THPS4ScnToScene.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THUGImportSkeleton.bl_idname, text=THUGImportSkeleton.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THUGImportNodeArray.bl_idname, text=THUGImportNodeArray.bl_label, icon='PLUGIN')

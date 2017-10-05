@@ -763,3 +763,43 @@ def export_model_qb(filename, directory, target_game, operator=None):
     if target_game == "THUG2":
         with open(os.path.join(directory, filename + "_thugpro.qb"), "wb") as outp:
             outp.write(b'\x00')
+
+
+
+def maybe_create_triggerscript(self, context):
+    if context.object.thug_triggerscript_props.custom_name != '':
+        script_name = context.object.thug_triggerscript_props.custom_name
+    else:
+        script_name = "script_" + context.object.name
+        
+    if not script_name in bpy.data.texts:
+        bpy.data.texts.new(script_name)
+    
+    if context.object.thug_triggerscript_props.custom_name == '':
+        context.object.thug_triggerscript_props.custom_name = script_name
+    
+    editor_found = False
+    for area in context.screen.areas:
+        if area.type == "TEXT_EDITOR":
+            editor_found = True
+            break
+
+    if editor_found:
+        area.spaces[0].text = bpy.data.texts[script_name]
+        
+
+
+# OPERATORS
+#############################################
+class THUGCreateTriggerScript(bpy.types.Operator):
+    bl_idname = "io.thug_create_triggerscript"
+    bl_label = "Create/View TriggerScript"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        maybe_create_triggerscript(self, context)
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "OBJECT"

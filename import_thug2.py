@@ -464,7 +464,7 @@ class THUG2ScnToScene(bpy.types.Operator):
 #----------------------------------------------------------------------------------
 class THUG2ColToScene(bpy.types.Operator):
     bl_idname = "io.thug_xbx_col_to_scene"
-    bl_label = "THUG2 Collision (.col.xbx)"
+    bl_label = "THUG1/2 Collision (.col.xbx)"
     # bl_options = {'REGISTER', 'UNDO'}
 
     filter_glob = StringProperty(default="*.col.xbx;*.col", options={"HIDDEN"})

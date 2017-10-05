@@ -22,6 +22,7 @@ importlib.reload(developer_utils)
 modules = developer_utils.setup_addon_modules(__path__, __name__, "bpy" in locals())
 
 from . ui_draw import *
+from . scene_props import *
 
 # Register
 ##################################
