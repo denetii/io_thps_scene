@@ -15,6 +15,15 @@ LOG = logging.getLogger(ADDON_NAME)
 
 # METHODS
 #############################################
+#----------------------------------------------------------------------------------
+#- Auto-creates (if needed) and assigns the given object to a group
+#----------------------------------------------------------------------------------
+def to_group(blender_object, group_name):
+    group = bpy.data.groups.get(group_name, bpy.data.groups.new(group_name))
+    if blender_object.name not in group.objects:
+        group.objects.link(blender_object)
+        
+#----------------------------------------------------------------------------------
 def get_index(seq, value, key=lambda x: x, default=-1):
     i = 0
     for item in seq:

@@ -294,6 +294,7 @@ THUG_DefaultGameObjects = {
     ,"Flag_Green_Base": "gameobjects\\flags\\flag_green_base\\flag_green_base.mdl"
     ,"Flag_Yellow": "gameobjects\\flags\\flag_yellow\\flag_yellow.mdl"
     ,"Flag_Yellow_Base": "gameobjects\\flags\\flag_yellow_base\\flag_yellow_base.mdl"
+    ,"Ghost": "none"
 }
 
 # Used for collision exporting!

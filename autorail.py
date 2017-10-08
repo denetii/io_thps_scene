@@ -325,7 +325,7 @@ def _export_rails(p, c, operator=None):
                     name = "LadderNode_" + str(rail_node_counter)
                 elif ob.thug_path_type == "Waypoint":
                     p("\t\t:i {} = {}".format(c("Class"), c("Waypoint")))
-                    p("\t\t:i {} = {}".format(c("Type"), c("Default")))
+                    #p("\t\t:i {} = {}".format(c("Type"), c("Default")))
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, ob.rotation_euler[2], 0))))
                     name = "Waypoint_" + str(rail_node_counter)
                 elif ob.thug_path_type == "Custom":
@@ -387,7 +387,7 @@ def _export_rails(p, c, operator=None):
                 point_idx += 1
                 rail_node_counter += 1
 
-    return custom_triggerscript_names, generated_scripts
+    return custom_triggerscript_names, generated_scripts, obj_rail_node_start_offsets
 
 
 

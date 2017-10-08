@@ -18,10 +18,12 @@ from . helpers import *
 def blub_int(integer):
     return "%i({},{:08})".format(integer, integer)
 #----------------------------------------------------------------------------------
+def blub_float(value):
+    return "%f({})".format(value)
+#----------------------------------------------------------------------------------
 def blub_str(string):
     return "%s({},\"{}\")".format(len(string), string)
 #----------------------------------------------------------------------------------
-
 def obj_get_reserved_by(obj):
     return None
 
@@ -35,6 +37,7 @@ def obj_get_reserved_by(obj):
 
     return rbo
 
+#----------------------------------------------------------------------------------
 def _generate_script(_ob):
     script_props = _ob.thug_triggerscript_props
     t = script_props.triggerscript_type
@@ -139,6 +142,8 @@ def get_custom_func_code():
     return funcs_code
 
 #----------------------------------------------------------------------------------
+#- Exports the node array to a .qb file!
+#----------------------------------------------------------------------------------
 def export_qb(filename, directory, target_game, operator=None):
     checksums = {}
 
@@ -149,6 +154,7 @@ def export_qb(filename, directory, target_game, operator=None):
             checksums[s] = crc_from_string(bytes(s, 'ascii'))
         return "$" + s + "$"
     i = blub_int
+    f = blub_float
     _string = blub_str
 
     generated_scripts = {}
@@ -162,23 +168,28 @@ def export_qb(filename, directory, target_game, operator=None):
         p = lambda *args, **kwargs: print(*args, **kwargs, file=string_output)
         p("%include \"qb_table.qbi\"")
 
-        custom_script_text = bpy.data.texts.get("THUG_SCRIPTS", None)
-        if custom_script_text:
-            p(custom_script_text.as_string())
+        # Dump all TriggerScript text blocks here!
+        all_triggerscripts = [s for s in bpy.data.texts if s.name.startswith("script_")]
+        for ts in all_triggerscripts:
+            p(":i function $" + ts.name[7:] + "$")
+            p(ts.as_string())
+            p(":i endfunction")
             p("")
-            p("#/ custom script code end")
-            p("")
-
+        p("")
+        p("#/ custom script code end")
+        p("")
+        
+        # Start listing the actual NodeArray...
         if target_game == "THUG2":
             p("$" + filename + "_NodeArray$ =")
         else:
             p("$NodeArray$ =")
         p(":i :a{")
 
-        rail_custom_triggerscript_names, rail_generated_scripts = autorail._export_rails(p, c, operator)
+        rail_custom_triggerscript_names, rail_generated_scripts, rail_node_offsets = autorail._export_rails(p, c, operator)
         custom_triggerscript_names += rail_custom_triggerscript_names
         generated_scripts.update(rail_generated_scripts)
-
+            
         # Used further down to determine if we need to auto-generate restarts of certain types
         has_restart_p1 = False
         has_restart_p2 = False
@@ -199,7 +210,7 @@ def export_qb(filename, directory, target_game, operator=None):
         
         for ob in bpy.data.objects:
             # -----------------------------------------------------------------------------------------------------------
-            # -----------------------------------------------------------------------------------------------------------
+            # - Export node definitions for mesh-based objects (level geometry, level object)
             # -----------------------------------------------------------------------------------------------------------
             if ob.type == "MESH" and not ob.get("thug_autosplit_object_no_export_hack"):
                 is_levelobject = ob.thug_object_class == "LevelObject"
@@ -225,12 +236,13 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 p("\t\t:i {} = {}".format(c("Class"), c("LevelGeometry") if not is_levelobject else c("LevelObject")))
-
                 if ob.thug_occluder:
                     p("\t\t:i {}".format(c("Occluder")))
                 elif ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
-
+                if ob.thug_lightgroup != "None":
+                    p("\t\t:i {} = {}".format(c("LightGroup"), c(ob.thug_lightgroup)))
+                    
                 if getattr(ob, "thug_is_trickobject", False):
                     p("\t\t:i call {} arguments".format(c("TrickObject")))
                     p("\t\t\t{} = {}".format(c("Cluster"),
@@ -239,7 +251,7 @@ def export_qb(filename, directory, target_game, operator=None):
 
                 if ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(ob):
                     if (ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(ob)):
-                        script_name = ob.thug_triggerscript_props.custom_name
+                        script_name = ob.thug_triggerscript_props.custom_name[7:]
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(ob)
@@ -250,12 +262,31 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {}".format(c(ob.thug_node_expansion)))
 
             # -----------------------------------------------------------------------------------------------------------
+            # - Export node definitions for lamps (LevelLights)!
             # -----------------------------------------------------------------------------------------------------------
+            elif ob.type == "LAMP" and ob.data.type == "POINT":
+                clean_name = get_clean_name(ob)
+                p("\t:i :s{")
+                p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
+                p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
+                p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
+                p("\t\t:i {} = {}".format(c("Class"), c("LevelLight")))
+                p("\t\t:i {} = {}".format(c("Brightness"), f(ob.data.energy)))
+                p("\t\t:i {} = {}".format(c("InnerRadius"), f(ob.data.thug_light_props.light_radius[0])))
+                p("\t\t:i {} = {}".format(c("OuterRadius"), f(ob.data.thug_light_props.light_radius[1])))
+                if ob.data.thug_light_props.light_excludeskater:
+                    p("\t\t:i {}".format(c("ExcludeSkater")))
+                if ob.data.thug_light_props.light_excludelevel:
+                    p("\t\t:i {}".format(c("ExcludeLevel")))
+                if ob.thug_node_expansion:
+                    p("\t\t:i {}".format(c(ob.thug_node_expansion)))
+                #p("\t:i :s}")
+                
+            # -----------------------------------------------------------------------------------------------------------
+            # - Export node definitions for empties 
             # -----------------------------------------------------------------------------------------------------------
             elif ob.type == "EMPTY" and ob.thug_empty_props.empty_type != "" and ob.thug_empty_props.empty_type != "None":
-                if ob.thug_empty_props.empty_type == "Pedestrian" or ob.thug_empty_props.empty_type == "Vehicle" or \
-                    ob.thug_empty_props.empty_type == "BouncyObject" or ob.thug_empty_props.empty_type == "GenericNode" or \
-                    ob.thug_empty_props.empty_type == "ProximNode":
+                if ob.thug_empty_props.empty_type == "BouncyObject":
                     continue
                     
                 clean_name = get_clean_name(ob)
@@ -308,18 +339,83 @@ def export_qb(filename, directory, target_game, operator=None):
                         actual_restart_name = auto_restart_name
                     p("\t\t:i {} = {}".format(c("RestartName"), blub_str(actual_restart_name)))
                     
-                if ob.thug_empty_props.empty_type == "ProximNode":
+                # PROXIMITY NODE
+                elif ob.thug_empty_props.empty_type == "ProximNode":
                     p("\t\t:i {} = {}".format(c("Class"), c("ProximNode")))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_proxim_props.proxim_type)))
-                    #p("\t\t:i {}".format(c("ProximObject")))
-                    p("\t\t:i {}".format(c("RenderToViewport")))
-                    p("\t\t:i {}".format(c("SelectRenderOnly")))
-                    p("\t\t:i {} = {}".format(c("Shape"), c("Sphere")))
-                    p("\t\t:i {} = {}".format(c("Radius"), i(ob.thug_proxim_props.radius)))
+                    if ob.thug_proxim_props.proxim_object == True:
+                        p("\t\t:i {}".format(c("ProximObject")))
+                    if ob.thug_proxim_props.proxim_rendertoviewport == True:
+                        p("\t\t:i {}".format(c("RenderToViewport")))
+                    if ob.thug_proxim_props.proxim_selectrenderonly == True:
+                        p("\t\t:i {}".format(c("SelectRenderOnly")))
+                    p("\t\t:i {} = {}".format(c("Shape"), c(ob.thug_proxim_props.proxim_shape)))
+                    p("\t\t:i {} = {}".format(c("Radius"), i(ob.thug_proxim_props.proxim_radius)))
                     
+                # PARTICLE OBJECT NODE
+                elif ob.thug_empty_props.empty_type == "ParticleObject":
+                    p("\t\t:i {} = {}".format(c("Class"), c("ParticleObject")))
+                    p("\t\t:i {} = {}".format(c("Type"), c("Default")))
+                    p("\t\t:i {} = {}".format(c("SuspendDistance"), i(ob.thug_particle_props.particle_suspend)))
+                    p("\t\t:i {} = {}".format(c("BoxDimsStart"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsstart))))
+                    p("\t\t:i {} = {}".format(c("BoxDimsMid"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsmid))))
+                    p("\t\t:i {} = {}".format(c("BoxDimsEnd"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsend))))
+                    if ob.thug_particle_props.particle_usestartpos == True:
+                        p("\t\t:i {}".format(c("UseStartPosition")))
+                        p("\t\t:i {} = {}".format(c("StartPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_startposition))))
+                    p("\t\t:i {} = {}".format(c("MidPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_midposition))))
+                    p("\t\t:i {} = {}".format(c("EndPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_endposition))))
+                    p("\t\t:i {} = {}".format(c("Texture"), blub_str(ob.thug_particle_props.particle_texture)))
+                    if ob.thug_particle_props.particle_usemidpoint == True:
+                        p("\t\t:i {}".format(c("UseMidPoint")))
+                    p("\t\t:i {} = {}".format(c("MidPointPCT"), f(ob.thug_particle_props.particle_midpointpct)))
+                    p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_particle_props.particle_type)))
+                    p("\t\t:i {} = {}".format(c("BlendMode"), c(ob.thug_particle_props.particle_blendmode)))
+                    p("\t\t:i {} = {}".format(c("FixedAlpha"), i(ob.thug_particle_props.particle_fixedalpha)))
+                    p("\t\t:i {} = {}".format(c("AlphaCutoff"), i(ob.thug_particle_props.particle_alphacutoff)))
+                    p("\t\t:i {} = {}".format(c("MaxStreams"), i(ob.thug_particle_props.particle_maxstreams)))
+                    p("\t\t:i {} = {}".format(c("EmitRate"), f(ob.thug_particle_props.particle_emitrate)))
+                    p("\t\t:i {} = {}".format(c("StartRadius"), f(ob.thug_particle_props.particle_radius[0])))
+                    p("\t\t:i {} = {}".format(c("MidRadius"), f(ob.thug_particle_props.particle_radius[1])))
+                    p("\t\t:i {} = {}".format(c("EndRadius"), f(ob.thug_particle_props.particle_radius[2])))
+                    p("\t\t:i {} = {}".format(c("StartRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[0])))
+                    p("\t\t:i {} = {}".format(c("MidRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[1])))
+                    p("\t\t:i {} = {}".format(c("EndRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[2])))
+                    
+                    start_color = [ int(ob.thug_particle_props.particle_startcolor[0] * 256), 
+                                    int(ob.thug_particle_props.particle_startcolor[1] * 256) , 
+                                    int(ob.thug_particle_props.particle_startcolor[2] * 256) , 
+                                    int(ob.thug_particle_props.particle_startcolor[3] * 256) ]
+                    mid_color = [ int(ob.thug_particle_props.particle_midcolor[0] * 256), 
+                                    int(ob.thug_particle_props.particle_midcolor[1] * 256) , 
+                                    int(ob.thug_particle_props.particle_midcolor[2] * 256) , 
+                                    int(ob.thug_particle_props.particle_midcolor[3] * 256) ]
+                    end_color = [ int(ob.thug_particle_props.particle_endcolor[0] * 256), 
+                                    int(ob.thug_particle_props.particle_endcolor[1] * 256) , 
+                                    int(ob.thug_particle_props.particle_endcolor[2] * 256) , 
+                                    int(ob.thug_particle_props.particle_endcolor[3] * 256) ]
+                                    
+                    p("\t\t:i {} = :a{{ {} {} {} :a}}".format(c("StartRGB"),
+                                i(start_color[0]), i(start_color[1]),i(start_color[2])))
+                    p("\t\t:i {} = {}".format(c("StartAlpha"), i(start_color[3])))
+                    p("\t\t:i {} = :a{{ {} {} {} :a}}".format(c("EndRGB"),
+                                i(end_color[0]), i(end_color[1]),i(end_color[2])))
+                    p("\t\t:i {} = {}".format(c("EndAlpha"), i(end_color[3])))
+                    if ob.thug_particle_props.particle_usecolormidtime == True:
+                        p("\t\t:i {}".format(c("UseColorMidTime")))
+                        p("\t\t:i {} = {}".format(c("ColorMidTime"), f(ob.thug_particle_props.particle_colormidtime)))
+                        p("\t\t:i {} = :a{{ {} {} {} :a}}".format(c("MidRGB"),
+                                i(mid_color[0]), i(mid_color[1]),i(mid_color[2])))
+                        p("\t\t:i {} = {}".format(c("MidAlpha"), i(mid_color[3])))
+                                
+                
+                # GAME OBJECT NODE
                 elif ob.thug_empty_props.empty_type == "GameObject":
                     p("\t\t:i {} = {}".format(c("Class"), c("GameObject")))
-                    p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_go_props.go_type)))
+                    if ob.thug_go_props.go_type == "Custom":
+                        p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_go_props.go_type_other)))
+                    else:
+                        p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_go_props.go_type)))
                     
                     if ob.thug_go_props.go_type.startswith("Flag_"):
                         if ob.thug_triggerscript_props.triggerscript_type == "None" or ob.thug_triggerscript_props.custom_name == "":
@@ -331,14 +427,48 @@ def export_qb(filename, directory, target_game, operator=None):
                     #    p("\t\t:i {} = {}".format(c("Model"), c(ob.thug_go_props.go_type)))
                     if ob.thug_go_props.go_type in THUG_DefaultGameObjects:
                         p("\t\t:i {} = {}".format(c("Model"), blub_str(THUG_DefaultGameObjects[ob.thug_go_props.go_type])))
-                    elif ob.thug_go_props.go_type != "Ghost":
-                        raise Exception("Game object " + clean_name + " has no model specified.")
+                    elif ob.thug_go_props.go_type == "Custom":
+                        if ob.thug_go_props.go_model == "":
+                            raise Exception("Game object " + clean_name + " has no model specified.")
+                        else:
+                            p("\t\t:i {} = {}".format(c("Model"), blub_str(ob.thug_go_props.go_model)))
                     p("\t\t:i {} = {}".format(c("SuspendDistance"), i(ob.thug_go_props.go_suspend)))
+                    p("\t\t:i {} = {}".format(c("lod_dist1"), i(1024)))
+                    p("\t\t:i {} = {}".format(c("lod_dist2"), i(2048)))
                     
+                # PEDESTRIAN NODE
+                elif ob.thug_empty_props.empty_type == "Pedestrian":
+                    p("\t\t:i {} = {}".format(c("Class"), c("Pedestrian")))
+                    p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_ped_props.ped_type)))
+                    p("\t\t:i {} = {}".format(c("profile"), c(ob.thug_ped_props.ped_profile)))
+                    p("\t\t:i {} = {}".format(c("SkeletonName"), c(ob.thug_ped_props.ped_skeleton)))
+                    p("\t\t:i {} = {}".format(c("AnimName"), c(ob.thug_ped_props.ped_animset)))
+                    if ob.thug_ped_props.ped_extra_anims != "":
+                        p("\t\t:i {} = {}".format(c("Extra_Anims"), c(ob.thug_ped_props.ped_extra_anims)))
+                    p("\t\t:i {} = {}".format(c("SuspendDistance"), i(ob.thug_ped_props.ped_suspend)))
+                    p("\t\t:i {} = {}".format(c("lod_dist1"), i(1024)))
+                    p("\t\t:i {} = {}".format(c("lod_dist2"), i(2048)))
+                    
+                # VEHICLE NODE
+                elif ob.thug_empty_props.empty_type == "Vehicle":
+                    p("\t\t:i {} = {}".format(c("Class"), c("Vehicle")))
+                    p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_veh_props.veh_type)))
+                    p("\t\t:i {} = {}".format(c("model"), blub_str(ob.thug_veh_props.veh_model)))
+                    p("\t\t:i {} = {}".format(c("SkeletonName"), c(ob.thug_veh_props.veh_skeleton)))
+                    p("\t\t:i {} = {}".format(c("SuspendDistance"), i(ob.thug_veh_props.veh_suspend)))
+                    if ob.thug_veh_props.veh_norail == True:
+                        p("\t\t:i {}".format(c("NoRail")))
+                    if ob.thug_veh_props.veh_noskitch == True:
+                        p("\t\t:i {}".format(c("NoSkitch")))
+                    p("\t\t:i {} = {}".format(c("lod_dist1"), i(1024)))
+                    p("\t\t:i {} = {}".format(c("lod_dist2"), i(2048)))
+                    
+                # GENERIC NODE
                 elif ob.thug_empty_props.empty_type == "GenericNode":
                     p("\t\t:i {} = {}".format(c("Class"), c("GenericNode")))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_generic_props.generic_type)))
-                    
+                
+                # COMMON PROPERTIES
                 if ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
                 if ob.thug_network_option != "Default":
@@ -348,12 +478,22 @@ def export_qb(filename, directory, target_game, operator=None):
                         
                 if ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(ob):
                     if (ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(ob)):
-                        script_name = ob.thug_triggerscript_props.custom_name
+                        script_name = ob.thug_triggerscript_props.custom_name[7:]
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(ob)
                         generated_scripts.setdefault(script_name, script_code)
                     p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
+
+                if ob.thug_rail_connects_to:
+                    if ob.thug_rail_connects_to not in bpy.data.objects:
+                        operator.report({"ERROR"}, "Object {} connects to nonexistent path {}".format(ob.name, ob.thug_rail_connects_to))
+                    else:
+                        connected_to = bpy.data.objects[ob.thug_rail_connects_to]
+                        if connected_to in rail_node_offsets:
+                            p("\t\t:i {} = :a{{{}:a}}".format(
+                                c("Links"),
+                                i(rail_node_offsets[connected_to])))
 
                 if ob.thug_node_expansion:
                     p("\t\t:i {}".format(c(ob.thug_node_expansion)))
@@ -765,12 +905,14 @@ def export_model_qb(filename, directory, target_game, operator=None):
             outp.write(b'\x00')
 
 
-
+#----------------------------------------------------------------------------------
+#- Either switches view to the assigned script, or creates a new one
+#----------------------------------------------------------------------------------
 def maybe_create_triggerscript(self, context):
     if context.object.thug_triggerscript_props.custom_name != '':
         script_name = context.object.thug_triggerscript_props.custom_name
     else:
-        script_name = "script_" + context.object.name
+        script_name = "script_" + context.object.name + "Script"
         
     if not script_name in bpy.data.texts:
         bpy.data.texts.new(script_name)

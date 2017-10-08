@@ -7,6 +7,8 @@ import bmesh
 import struct
 import mathutils
 import math
+from . helpers import *
+
 
 # PROPERTIES
 #############################################
@@ -17,7 +19,9 @@ ncomp = []
 
 # METHODS
 #############################################
-# duh!
+#----------------------------------------------------------------------------------
+#- Returns a node, given the node index
+#----------------------------------------------------------------------------------
 def get_node(index):
     tmp_index = -1
     for node in NodeArray:
@@ -29,6 +33,9 @@ def get_node(index):
         
     raise Exception("Node index " + str(index) + " does not exist.")
 
+#----------------------------------------------------------------------------------
+#- Expands ncomp data into the node
+#----------------------------------------------------------------------------------
 def fill_ncomp_data(node):
     if "ncomp_filled" in node:
         return node
@@ -41,7 +48,9 @@ def fill_ncomp_data(node):
         node["ncomp_filled"] = 1
     return node
     
-# Returns a set of all coordinates for a single rail
+#----------------------------------------------------------------------------------
+#- Returns a set of all coordinates for a single rail
+#----------------------------------------------------------------------------------
 def get_linked_path(node, node_type):
     
     node_index = -1
@@ -49,6 +58,7 @@ def get_linked_path(node, node_type):
     point_coords = []
     point_names = []
     point_triggers = []
+    point_indices = []
     is_circular = False
     
     # If the first RailNode has no links, then it might be a point rail
@@ -112,13 +122,15 @@ def get_linked_path(node, node_type):
                 raise Exception("linked node " + tmp_node["Name"] + " has no position!")
         point_coords.append(tmp_node["Position"])
         point_names.append(tmp_node["Name"])
+        point_indices.append(tmp_node["Index"])
         if "TriggerScript" in tmp_node:
             point_triggers.append(tmp_node["TriggerScript"])
         else:
             point_triggers.append("")
         
-    node_path = [ point_coords, point_names, point_triggers, is_circular ]
+    node_path = [ point_coords, point_names, point_triggers, is_circular, point_indices ]
     return node_path
+        
         
 #----------------------------------------------------------------------------------
 #- Processes the node array found in the 'NodeArray' text block
@@ -130,6 +142,7 @@ def import_nodearray(gamemode):
         
     node_index = -1
     linked_nodes.clear()
+    node_indices = []
     
     # STEP 1 - RENAME OBJECTS TO THEIR PROPER NAMES FROM LEVEL .QB
     level_mesh = [o for o in bpy.data.objects if (o.type == "MESH")]
@@ -151,7 +164,9 @@ def import_nodearray(gamemode):
             ob.thug_export_scene = False
             
 
+    # STEP 2: FIRST PASS OF NODEARRAY
     for node in NodeArray:
+        #print(str(node))
         node_index += 1
         node["Index"] = node_index
         if "Position" not in node:
@@ -162,7 +177,7 @@ def import_nodearray(gamemode):
         if "ncomp" in node:
             node = fill_ncomp_data(node)
             
-        # STEP 2 - GENERATE RAIL NODES
+        # STEP 2A - GENERATE RAIL NODES
         if "Class" in node and ( node["Class"] == "RailNode" or node["Class"] == "Waypoint" or node["Class"] == "ClimbingNode" ):
             if node["Index"] in linked_nodes:
                 print(node["Class"] + " " + node["Name"] + "already used previously")
@@ -202,6 +217,11 @@ def import_nodearray(gamemode):
             if rail_nodes[3] == True: # is_circular = True  
                 polyline.use_endpoint_u = True
                 polyline.use_cyclic_u = True  
+                
+            # Save the node indices of each point in our newly created Path
+            # This lets us resolve links to the specific blender objects later
+            node_indices.append({ 'name': node["Name"], 'indices': rail_nodes[4] })
+            
             # create Object
             curveOB = bpy.data.objects.new(node["Name"], curveData)
             for i, coord in enumerate(rail_nodes[0]):
@@ -227,16 +247,20 @@ def import_nodearray(gamemode):
                         curveOB.thug_rail_terrain_type = str(node["TerrainType"]).replace("TERRAIN_", "")
                     except TypeError:
                         curveOB.thug_rail_terrain_type = "Auto"
+                to_group(curveOB, "RailNodes")
             elif node["Class"] == "Waypoint":
                 curveOB.thug_path_type = "Waypoint"
+                to_group(curveOB, "Waypoints")
                 
             elif node["Class"] == "ClimbingNode":
                 curveOB.thug_path_type = "Ladder"
+                to_group(curveOB, "ClimbingNodes")
             
             else:
                 # The importer is meant for THPS3/4 levels, so ClimbingNodes are not currently implemented
                 # but the paths should still be created for you
                 curveOB.thug_path_type = "Custom"
+                to_group(curveOB, "OtherPathNodes")
                 
             if "TrickObject" in node:
                 curveOB.thug_is_trickobject = True
@@ -251,6 +275,45 @@ def import_nodearray(gamemode):
         # STEP 3 - ATTACH TRIGGERSCRIPTS/FLAGS TO MESH, CREATE EMPTY NODES
         if "Name" in node and "Class" in node:
             node_name = node["Name"]
+            
+            # Proximity nodes generate an empty collision mesh for some reason,
+            # so we have to remove that first or the actual proxim node won't be created
+            if node["Class"] == "ProximNode" and bpy.data.objects.get(node_name):
+                #bpy.data.objects.remove(bpy.data.objects[node_name], True)
+                bpy.data.objects[node_name].name = bpy.data.objects[node_name].name + "_COL"
+                
+            # Create level lights - these are point lamps and not empties
+            if node["Class"] == "LevelLight":
+                lamp_data = bpy.data.lamps.new(name="Lamp_" + node["Name"], type='POINT')
+                if "Brightness" in node:
+                    if node["Brightness"] != 0:
+                        lamp_data.energy = float(node["Brightness"])
+                    else:
+                        lamp_data.energy = 100.0
+                        
+                if "InnerRadius" in node:
+                    lamp_data.thug_light_props.light_radius[0] = float(node["InnerRadius"])
+                if "OuterRadius" in node:
+                    lamp_data.thug_light_props.light_radius[1] = float(node["OuterRadius"])
+                if "Color" in node:
+                    lamp_data.color[0] = float(int(node["Color"][0]) / 256)
+                    lamp_data.color[1] = float(int(node["Color"][1]) / 256)
+                    lamp_data.color[2] = float(int(node["Color"][2]) / 256)
+                if "ExcludeSkater" in node:
+                    lamp_data.thug_light_props.light_excludeskater = True
+                if "ExcludeLevel" in node:
+                    lamp_data.thug_light_props.light_excludelevel = True
+                    
+                ob = bpy.data.objects.new(name=node["Name"], object_data=lamp_data )
+                ob.location[0] = node["Position"][0]
+                if gamemode == 'THAW':
+                    ob.location[1] = -node["Position"][2]
+                else:
+                    ob.location[1] = node["Position"][2]
+                ob.location[2] = node["Position"][1]
+                bpy.context.scene.objects.link( ob )
+                to_group(ob, "LevelLights")
+                continue
             
             # Create object if it doesn't exist (should be vehicles, pedestrians, restarts etc)
             if not bpy.data.objects.get(node_name):
@@ -268,16 +331,23 @@ def import_nodearray(gamemode):
                 elif node["Class"] == "BouncyObject":
                     ob.empty_draw_type = 'CUBE'
                     ob.empty_draw_size = 32
+                    to_group(ob, "BouncyObjects")
+                elif node["Class"] == "ParticleObject":
+                    ob.empty_draw_type = 'IMAGE'
+                    ob.empty_draw_size = 108
+                    to_group(ob, "ParticleObjects")
                 elif node["Class"] == "ProximNode":
                     ob.empty_draw_type = 'SPHERE'
                     if "radius" in node:
                         ob.empty_draw_size = node["radius"]
                     else:
                         ob.empty_draw_size = 150
+                    to_group(ob, "ProximNodes")
                     
                 elif node["Class"] == "GenericNode":
                     ob.empty_draw_type = 'CIRCLE'
                     ob.empty_draw_size = 32
+                    to_group(ob, "GenericNodes")
                 else:
                     ob.empty_draw_type = 'ARROWS'
                     ob.empty_draw_size = 108
@@ -305,6 +375,7 @@ def import_nodearray(gamemode):
                     continue
                 if "Occluder" in node:
                     ob.thug_occluder = True
+                    to_group(ob, "Occluders")
                 if "CreatedAtStart" in node:
                     print("CreatedAtStart")
                     ob.thug_created_at_start = True
@@ -323,7 +394,28 @@ def import_nodearray(gamemode):
                     ob.thug_object_class = "LevelGeometry"
                 elif node["Class"] == "LevelObject":
                     ob.thug_object_class = "LevelObject"
+                    ob.location[0] = node["Position"][0]
+                    # Reposition the LevelObject based on what is in the NodeArray
+                    # When exported it is always at the origin
+                    if gamemode == 'THAW':
+                        ob.location[1] = -node["Position"][2]
+                    else:
+                        ob.location[1] = node["Position"][2]
+                    ob.location[2] = node["Position"][1]
+                    ob.rotation_euler[0] = node["Angles"][0]
+                    if gamemode == 'THAW':
+                        ob.rotation_euler[1] = -node["Angles"][2]
+                    else:
+                        ob.rotation_euler[1] = node["Angles"][2]
+                    ob.rotation_euler[2] = node["Angles"][1]
+                    # Pull the _SCN mesh out and give it the same position
+                    if bpy.data.objects.get(ob.name + "_SCN"):
+                        ob2 = bpy.data.objects.get(ob.name)
+                        ob2.location = ob.location
+                        ob2.rotation_euler = ob.rotation_euler
+                
                 elif node["Class"] == "Restart":
+                    to_group(ob, "Restarts")
                     ob.thug_empty_props.empty_type = "Restart"
                     if "Type" in node:
                         if node["Type"] == "Player1":
@@ -384,21 +476,134 @@ def import_nodearray(gamemode):
                             ob.thug_proxim_props.proxim_type = "Camera"
                             
                     if "radius" in node:
-                        ob.thug_proxim_props.radius = node["radius"]
+                        ob.thug_proxim_props.proxim_radius = node["radius"]
+                    if "Shape" in node:
+                        ob.thug_proxim_props.proxim_shape = node["Shape"]
+                    if "RenderToViewport" in node:
+                        ob.thug_proxim_props.proxim_rendertoviewport = True
+                    if "SelectRenderOnly" in node:
+                        ob.thug_proxim_props.proxim_selectrenderonly = True
+                    if "ProximObject" in node:
+                        ob.thug_proxim_props.proxim_object = True
+                    
+                elif node["Class"] == "ParticleObject":
+                    ob.thug_empty_props.empty_type = "ParticleObject"
+                    ob.rotation_euler[0] = math.radians(90.0)
+                    if "BoxDimsStart" in node:
+                        ob.thug_particle_props.particle_boxdimsstart = node["BoxDimsStart"]
+                    if "BoxDimsMid" in node:
+                        ob.thug_particle_props.particle_boxdimsmid = node["BoxDimsMid"]
+                    if "BoxDimsEnd" in node:
+                        ob.thug_particle_props.particle_boxdimsend = node["BoxDimsEnd"]
+                    if "UseStartPosition" in node:
+                        ob.thug_particle_props.particle_usestartpos = node["UseStartPosition"]
+                    if "StartPosition" in node:
+                        ob.thug_particle_props.particle_startposition = node["StartPosition"]
+                    if "MidPosition" in node:
+                        ob.thug_particle_props.particle_midposition = node["MidPosition"]
+                    if "EndPosition" in node:
+                        ob.thug_particle_props.particle_endposition = node["EndPosition"]
+                    if "Texture" in node:
+                        tmp_texture_name = node["Texture"] #str(crc_from_string(bytes(node["Texture"], 'ascii')))
+                        ob.thug_particle_props.particle_texture = tmp_texture_name
+                        if tmp_texture_name in bpy.data.images:
+                            ob.image = tmp_texture_name
+                    if "Type" in node:
+                        ob.thug_particle_props.particle_type = node["Type"]
+                    if "BlendMode" in node:
+                        ob.thug_particle_props.particle_blendmode = node["BlendMode"]
+                    if "FixedAlpha" in node:
+                        ob.thug_particle_props.particle_fixedalpha = node["FixedAlpha"]
+                    if "AlphaCutoff" in node:
+                        ob.thug_particle_props.particle_alphacutoff = node["AlphaCutoff"]
+                    if "MaxStreams" in node:
+                        ob.thug_particle_props.particle_maxstreams = node["MaxStreams"]
+                    if "SuspendDistance" in node:
+                        ob.thug_particle_props.particle_suspend = node["SuspendDistance"]
+                    if "EmitRate" in node:
+                        ob.thug_particle_props.particle_emitrate = node["EmitRate"]
+                    if "Lifetime" in node:
+                        ob.thug_particle_props.particle_lifetime = node["Lifetime"]
+                    if "UseMidPoint"in node:
+                        ob.thug_particle_props.particle_usemidpoint = node["UseMidPoint"]
+                    if "MidPointPCT" in node:
+                        ob.thug_particle_props.particle_midpointpct = node["MidPointPCT"]
+                    if "StartRadius" in node:
+                        ob.thug_particle_props.particle_radius[0] = node["StartRadius"]
+                    if "MidRadius" in node:
+                        ob.thug_particle_props.particle_radius[1] = node["MidRadius"]
+                    if "EndRadius" in node:
+                        ob.thug_particle_props.particle_radius[2] = node["EndRadius"]
+                    if "StartRadiusSpread" in node:
+                        ob.thug_particle_props.particle_radiusspread[0] = node["StartRadiusSpread"]
+                    if "MidRadiusSpread" in node:
+                        ob.thug_particle_props.particle_radiusspread[1] = node["MidRadiusSpread"]
+                    if "EndRadiusSpread" in node:
+                        ob.thug_particle_props.particle_radiusspread[2] = node["EndRadiusSpread"]
+                    if "StartRGB" in node:
+                        ob.thug_particle_props.particle_startcolor[0] = float(int(node["StartRGB"][0]) / 256)
+                        ob.thug_particle_props.particle_startcolor[1] = float(int(node["StartRGB"][1]) / 256)
+                        ob.thug_particle_props.particle_startcolor[2] = float(int(node["StartRGB"][2]) / 256)
+                    if "StartAlpha" in node:
+                        ob.thug_particle_props.particle_startcolor[3] = float(int(node["StartAlpha"]) / 256)
+                    if "UseColorMidTime" in node:
+                        ob.thug_particle_props.particle_usecolormidtime = node["UseColorMidTime"]
+                    if "ColorMidTime" in node:
+                        ob.thug_particle_props.particle_colormidtime = node["ColorMidTime"]
+                    if "MidRGB" in node:
+                        ob.thug_particle_props.particle_midcolor[0] = float(int(node["MidRGB"][0]) / 256)
+                        ob.thug_particle_props.particle_midcolor[1] = float(int(node["MidRGB"][1]) / 256)
+                        ob.thug_particle_props.particle_midcolor[2] = float(int(node["MidRGB"][2]) / 256)
+                    if "MidAlpha" in node:
+                        ob.thug_particle_props.particle_midcolor[3] = float(int(node["MidAlpha"]) / 256)
+                    if "EndRGB" in node:
+                        ob.thug_particle_props.particle_endcolor[0] = float(int(node["EndRGB"][0]) / 256)
+                        ob.thug_particle_props.particle_endcolor[1] = float(int(node["EndRGB"][1]) / 256)
+                        ob.thug_particle_props.particle_endcolor[2] = float(int(node["EndRGB"][2]) / 256)
+                    if "EndAlpha" in node:
+                        ob.thug_particle_props.particle_endcolor[3] = float(int(node["EndAlpha"]) / 256)
                     
                 elif node["Class"] == "Pedestrian":
+                    to_group(ob, "Pedestrians")
                     ob.thug_empty_props.empty_type = "Pedestrian"
-                    # more stuff goes here later!
+                    if "Type" in node:
+                        ob.thug_ped_props.ped_type = node["Type"]
+                    if "profile" in node:
+                        ob.thug_ped_props.ped_profile = node["profile"]
+                    if "SuspendDistance" in node:
+                        ob.thug_ped_props.ped_suspend = node["SuspendDistance"]
+                    if "AnimName" in node:
+                        ob.thug_ped_props.ped_animset = node["AnimName"]
+                    if "Extra_Anims" in node:
+                        ob.thug_ped_props.ped_extra_anims = node["Extra_Anims"]
+                    if "SkeletonName" in node:
+                        ob.thug_ped_props.ped_skeleton = node["SkeletonName"]
                     
                 elif node["Class"] == "Vehicle":
+                    to_group(ob, "Vehicles")
                     ob.thug_empty_props.empty_type = "Vehicle"
+                    if "Type" in node:
+                        ob.thug_veh_props.veh_type = node["Type"]
+                    if "model" in node:
+                        ob.thug_veh_props.veh_model = node["model"]
+                    if "SkeletonName" in node:
+                        ob.thug_veh_props.veh_skeleton = node["SkeletonName"]
+                    if "SuspendDistance" in node:
+                        ob.thug_veh_props.veh_suspend = node["SuspendDistance"]
+                    if "NoRail" in node:
+                        ob.thug_veh_props.veh_norail = True
+                    if "NoSkitch" in node:
+                        ob.thug_veh_props.veh_noskitch = True
                     # more stuff goes here later!
                     
                 elif node["Class"] == "GameObject":
                     try:
                         ob.thug_empty_props.empty_type = "GameObject"
                         if "Type" in node:
-                            ob.thug_go_props.go_type = node["Type"]
+                            ob.thug_go_props.go_type = "Custom"
+                            ob.thug_go_props.go_type_other = node["Type"]
+                        if "model" in node:
+                            ob.thug_go_props.go_model = node["model"]
                         if "Model" in node:
                             ob.thug_go_props.go_model = node["Model"]
                         if "SuspendDistance" in node:
@@ -421,20 +626,32 @@ def import_nodearray(gamemode):
                     
                 if "TriggerScript" in node:
                     ob.thug_triggerscript_props.triggerscript_type = "Custom"
-                    ob.thug_triggerscript_props.custom_name = node["TriggerScript"]
-                    script_text = bpy.data.texts.get("THUG_SCRIPTS", None)
+                    ob.thug_triggerscript_props.custom_name = "script_" + node["TriggerScript"]
+                    script_text = bpy.data.texts.get("script_" + node["TriggerScript"], None)
                     if not script_text:
-                        script_text = bpy.data.texts.new(name="THUG_SCRIPTS")
+                        script_text = bpy.data.texts.new(name="script_" + node["TriggerScript"])
                         
-                    script_text.write(":i function $" + node["TriggerScript"] + "$\n")
-                    script_text.write(":i endfunction\n")
+                    #script_text.write(":i function $" + node["TriggerScript"] + "$\n")
+                    #script_text.write(":i endfunction\n")
                     
                 if "TrickObject" in node:
                     ob.thug_is_trickobject = True
                 if "Cluster" in node:
                     ob.thug_cluster_name = node["Cluster"]
-                
+     
+    # STEP 4 - SECOND PASS OF NODEARRAY TO RESOLVE LINKS
+    for node in NodeArray:           
+        if "Links" in node and bpy.data.objects.get(node["Name"]):
+            if "Class" in node and (node["Class"] == "RailNode" or node["Class"] == "ClimbingNode" or node["Class"] == "Waypoint"):
+                continue
             
+            ob = bpy.data.objects.get(node["Name"])
+            for obj_index in node_indices:
+                for _idx in obj_index['indices']:
+                    if _idx == node["Links"][0]:
+                        ob.thug_rail_connects_to = obj_index['name']
+                        print("Object " + node["Name"] + " is linked to: " + obj_index['name'] + "(" + str(_idx) + ")")
+        
 
 # OPERATORS
 #############################################

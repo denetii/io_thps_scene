@@ -128,6 +128,8 @@ def import_col(filename, directory):
                 pass
 
         bm.to_mesh(blender_mesh)
+        blender_object.thug_export_scene = False
+        to_group(blender_object, "CollisionMesh")
         bpy.context.scene.objects.link(blender_object)
 
         output_vert_offset += obj_num_verts

@@ -46,6 +46,8 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
 
         blender_mesh = bpy.data.meshes.new("scn_mesh_" + str(sec_checksum))
         blender_object = bpy.data.objects.new("scn_" + str(sec_checksum), blender_mesh)
+        blender_object.thug_export_collision = False
+        to_group(blender_object, "SceneMesh")
         context.scene.objects.link(blender_object)
         # context.scene.objects.active = blender_object
 

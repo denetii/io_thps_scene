@@ -20,7 +20,15 @@ from . qb import *
 def _thug_object_settings_draw(self, context):
     if not context.object: return
     ob = context.object
-    if ob.type == "EMPTY":
+    if ob.type == "LAMP" and ob.data.type == "POINT":
+        box = self.layout.box().column(True)
+        box.row().prop(ob.data, "color")
+        box.row().prop(ob.data, "energy")
+        box.row().prop(ob.data.thug_light_props, "light_radius")
+        box.row().prop(ob.data.thug_light_props, "light_excludeskater")
+        box.row().prop(ob.data.thug_light_props, "light_excludelevel")
+        
+    elif ob.type == "EMPTY":
         self.layout.row().prop(ob.thug_empty_props, "empty_type")
         if ob.thug_empty_props.empty_type == "Restart":
             self.layout.row().prop(ob.thug_restart_props, "restart_type")
@@ -34,19 +42,71 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_restart_props, "restart_horse")
             box.row().prop(ob.thug_restart_props, "restart_ctf")
         elif ob.thug_empty_props.empty_type == "ProximNode":
-            self.layout.row().prop(ob.thug_proxim_props, "proxim_type")
-            self.layout.row().prop(ob.thug_proxim_props, "radius")
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_proxim_props, "proxim_type")
+            box.row().prop(ob.thug_proxim_props, "proxim_shape")
+            box.row().prop(ob.thug_proxim_props, "proxim_radius")
         elif ob.thug_empty_props.empty_type == "GenericNode":
             self.layout.row().prop(ob.thug_generic_props, "generic_type")
         elif ob.thug_empty_props.empty_type == "GameObject":
             self.layout.row().prop(ob.thug_go_props, "go_type")
-            self.layout.row().prop(ob.thug_go_props, "go_model")
+            if ob.thug_go_props.go_type == "Custom":
+                self.layout.row().prop(ob.thug_go_props, "go_type_other")
+                self.layout.row().prop(ob.thug_go_props, "go_model")
             self.layout.row().prop(ob.thug_go_props, "go_suspend")
         elif ob.thug_empty_props.empty_type == "Pedestrian":
             self.layout.row().prop(ob.thug_ped_props, "ped_type")
+            self.layout.row().prop(ob.thug_ped_props, "ped_profile")
             self.layout.row().prop(ob.thug_ped_props, "ped_skeleton")
             self.layout.row().prop(ob.thug_ped_props, "ped_animset")
             self.layout.row().prop(ob.thug_ped_props, "ped_extra_anims")
+            self.layout.row().prop(ob.thug_ped_props, "ped_suspend")
+        elif ob.thug_empty_props.empty_type == "Vehicle":
+            self.layout.row().prop(ob.thug_veh_props, "veh_type")
+            self.layout.row().prop(ob.thug_veh_props, "veh_model")
+            self.layout.row().prop(ob.thug_veh_props, "veh_skeleton")
+            self.layout.row().prop(ob.thug_veh_props, "veh_suspend")
+            self.layout.row().prop(ob.thug_veh_props, "veh_norail")
+            self.layout.row().prop(ob.thug_veh_props, "veh_noskitch")
+        elif ob.thug_empty_props.empty_type == "ParticleObject":
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_particle_props, "particle_boxdimsstart")
+            box.row().prop(ob.thug_particle_props, "particle_boxdimsmid")
+            box.row().prop(ob.thug_particle_props, "particle_boxdimsend")
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_particle_props, "particle_usestartpos")
+            if ob.thug_particle_props.particle_usestartpos == True:
+                box.row().prop(ob.thug_particle_props, "particle_startposition")
+            box.row().prop(ob.thug_particle_props, "particle_midposition")
+            box.row().prop(ob.thug_particle_props, "particle_endposition")
+            box.row().prop(ob.thug_particle_props, "particle_suspend")
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_particle_props, "particle_texture")
+            #box.row().prop_search(
+            #    ob.thug_particle_props,
+            #    "particle_texture",
+            #    bpy.data,
+            #    "images")
+            box.row().prop(ob.thug_particle_props, "particle_type")
+            box.row().prop(ob.thug_particle_props, "particle_blendmode")
+            box.row().prop(ob.thug_particle_props, "particle_fixedalpha")
+            box.row().prop(ob.thug_particle_props, "particle_alphacutoff")
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_particle_props, "particle_maxstreams")
+            box.row().prop(ob.thug_particle_props, "particle_emitrate")
+            box.row().prop(ob.thug_particle_props, "particle_lifetime")
+            box.row().prop(ob.thug_particle_props, "particle_usemidpoint")
+            box.row().prop(ob.thug_particle_props, "particle_midpointpct")
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_particle_props, "particle_radius")
+            box.row().prop(ob.thug_particle_props, "particle_radiusspread")
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_particle_props, "particle_startcolor")
+            box.row().prop(ob.thug_particle_props, "particle_usecolormidtime")
+            if ob.thug_particle_props.particle_usecolormidtime == True:
+                box.row().prop(ob.thug_particle_props, "particle_colormidtime")
+            box.row().prop(ob.thug_particle_props, "particle_midcolor")
+            box.row().prop(ob.thug_particle_props, "particle_endcolor")
         
     if ob.type == "EMPTY" and ob.thug_empty_props.empty_type in ( "Pedestrian", "Vehicle" ):
         self.layout.row().prop_search(
@@ -62,6 +122,9 @@ def _thug_object_settings_draw(self, context):
         self.layout.row().prop(ob, "thug_object_class")
         self.layout.row().prop(ob, "thug_export_collision")
         self.layout.row().prop(ob, "thug_export_scene")
+        if ob.thug_export_scene:
+            self.layout.row().prop(ob, "thug_lightgroup")
+        
         self.layout.row().prop(ob, "thug_occluder")
         self.layout.row().prop(ob, "thug_always_export_to_nodearray")
         self.layout.row().prop(ob, "thug_do_autosplit")
