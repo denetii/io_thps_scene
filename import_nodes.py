@@ -39,15 +39,18 @@ def get_node(index):
 def fill_ncomp_data(node):
     if "ncomp_filled" in node:
         return node
-    for n_name, n_value in node.items():
-        if n_name.startswith("ncomp_"):
-            #print("NCOMP " + n_name)
-            ncomp_name = n_name
-            if ncomp_name in ncomp:
-                for name, value in ncomp[ncomp_name].items():
-                    print("expanding " + str(name) + ": " + str(value))
-                    if name not in node:
-                        node[str(name)] = value
+    
+    ncomp_names = []
+    for name, value in node.items():
+        if name.startswith("ncomp_"):
+            ncomp_names.append(name)
+            
+    for ncomp_name in ncomp_names:
+        if ncomp_name in ncomp:
+            for name, value in ncomp[ncomp_name].items():
+                print("expanding " + str(name) + ": " + str(value))
+                if name not in node:
+                    node[str(name)] = value
     node["ncomp_filled"] = 1
     return node
     
@@ -325,7 +328,7 @@ def import_nodearray(gamemode):
                 if node["Class"] == "GameObject":
                     ob.empty_draw_type = 'CUBE'
                     ob.empty_draw_size = 64
-                    to_group(curveOB, "GameObjects")
+                    to_group(ob, "GameObjects")
                 elif node["Class"] == "Pedestrian" or node["Class"] == "Vehicle":
                     ob.empty_draw_type = 'PLAIN_AXES'
                     ob.empty_draw_size = 108
