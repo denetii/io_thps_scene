@@ -39,9 +39,10 @@ def get_node(index):
 def fill_ncomp_data(node):
     if "ncomp_filled" in node:
         return node
-    for name, value in node.items():
-        if name.startswith("ncomp_"):
-            ncomp_name = name
+    for n_name, n_value in node.items():
+        if n_name.startswith("ncomp_"):
+            #print("NCOMP " + n_name)
+            ncomp_name = n_name
             if ncomp_name in ncomp:
                 for name, value in ncomp[ncomp_name].items():
                     print("expanding " + str(name) + ": " + str(value))
@@ -97,8 +98,8 @@ def get_linked_path(node, node_type):
         node_index = -1
         link_found = False
         for no in NodeArray:
-            if "ncomp" in no:
-                no = fill_ncomp_data(no)
+            #if "ncomp" in no:
+            no = fill_ncomp_data(no)
             node_index += 1
             if "Class" in no and no["Class"] == node_type and "Links" in no and my_links[0] in no["Links"] and node_index not in my_links:
                 # Back link to the start of the path
@@ -176,8 +177,8 @@ def import_nodearray(gamemode):
                 node["Position"] = node["Pos"]
             else:
                 raise Exception("Node " + node["Name"] + " has no position!")
-        if "ncomp" in node:
-            node = fill_ncomp_data(node)
+        #if "ncomp" in node:
+        node = fill_ncomp_data(node)
             
         # STEP 2A - GENERATE RAIL NODES
         if "Class" in node and ( node["Class"] == "RailNode" or node["Class"] == "Waypoint" or node["Class"] == "ClimbingNode" ):
