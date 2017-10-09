@@ -48,7 +48,7 @@ def fill_ncomp_data(node):
     for ncomp_name in ncomp_names:
         if ncomp_name in ncomp:
             for name, value in ncomp[ncomp_name].items():
-                print("expanding " + str(name) + ": " + str(value))
+                #print("expanding " + str(name) + ": " + str(value))
                 if name not in node:
                     node[str(name)] = value
     node["ncomp_filled"] = 1
@@ -80,7 +80,7 @@ def get_linked_path(node, node_type):
                 linked_nodes.append(next_node["Index"])   
             else:
                 # Invalid link?
-                print("Invalid " + node_type + " link to node " + next_node["Name"] + " (idx: " + str(next_node["Index"]) + ", expecting " + node_type + ")")
+                print("Invalid link to node " + next_node["Name"] + " (idx: " + str(next_node["Index"]) + ", expecting " + node_type + ")")
                 break
                 
             if "Links" in next_node:
@@ -108,7 +108,7 @@ def get_linked_path(node, node_type):
                 # Back link to the start of the path
                 my_links.insert(0, node_index)
                 linked_nodes.append(node_index)
-                print("found rail backlink: " + no["Name"])
+                #print("found rail backlink: " + no["Name"])
                 link_found = True
         if link_found == False:
             # this should be the end of the line
@@ -119,6 +119,7 @@ def get_linked_path(node, node_type):
         print("Point rail?")
         # If there are no links to this rail, it's a point rail!
     
+    
     for idx in my_links:
         tmp_node = get_node(idx)
         if "Position" not in tmp_node:
@@ -126,6 +127,21 @@ def get_linked_path(node, node_type):
                 tmp_node["Position"] = tmp_node["Pos"]
             else:
                 raise Exception("linked node " + tmp_node["Name"] + " has no position!")
+                
+        # Make sure there isn't already a point with the same position, or the game will crash!
+        duplicate_pos = False
+        for railpoint in point_coords:
+            tmp_pos = tmp_node["Position"]
+            if railpoint[0] == tmp_pos[0] and railpoint[1] == tmp_pos[1] and railpoint[2] == tmp_pos[2]:
+                print("***********************************************")
+                print("* Rail point already exists!")
+                print("***********************************************")
+                duplicate_pos = True
+                break
+        if duplicate_pos:
+            print("Skipping...")
+            continue
+            
         point_coords.append(tmp_node["Position"])
         point_names.append(tmp_node["Name"])
         point_indices.append(tmp_node["Index"])
@@ -155,14 +171,14 @@ def import_nodearray(gamemode):
     for ob in level_mesh:
         if ob.name.startswith("scn_"):
             if ob.name[4:] in KeyTable:
-                print("Renaming " + ob.name + " to scn_" + KeyTable[ob.name[4:]])
+                print("Renaming " + ob.name + " to " + KeyTable[ob.name[4:]] + "_SCN")
                 ob.name = KeyTable[ob.name[4:]] + "_SCN"
             ob.thug_export_collision = False
             ob.thug_export_scene = True
                 
         if ob.name.startswith("col_"):
             if ob.name[4:] in KeyTable:
-                print("Renaming " + ob.name + " to scn_" + KeyTable[ob.name[4:]])
+                print("Renaming " + ob.name + " to " + KeyTable[ob.name[4:]])
                 # We want the collision mesh to have the exact name, no suffix
                 ob.name = KeyTable[ob.name[4:]]
                 ob.thug_always_export_to_nodearray = True # always export named collision!
@@ -212,17 +228,18 @@ def import_nodearray(gamemode):
             polyline = curveData.splines.new('POLY')
             polyline.points.add(len(rail_nodes[0]) - 1)
             for i, coord in enumerate(rail_nodes[0]):
-                print("Adding point " + str(i))
+                #print("Adding point " + str(i))
                 x,y,z = coord
                 if gamemode == 'THAW':
                     polyline.points[i].co = (x, -z, y, 1)
                 else:
                     polyline.points[i].co = (x, z, y, 1)
                     
-
+            test_cyclic = False
             if rail_nodes[3] == True and len(polyline.points) > 2: # is_circular = True  
                 polyline.use_endpoint_u = True
                 polyline.use_cyclic_u = True  
+                test_cyclic = True
                 
             # Save the node indices of each point in our newly created Path
             # This lets us resolve links to the specific blender objects later
@@ -239,12 +256,10 @@ def import_nodearray(gamemode):
             for i, ts in enumerate(rail_nodes[2]):
                 curveOB.data.thug_pathnode_triggers[i].script_name = ts
                 if ts != "":
-                    script_text = bpy.data.texts.get("THUG_SCRIPTS", None)
+                    script_text = bpy.data.texts.get("script_" + ts, None)
                     if not script_text:
-                        script_text = bpy.data.texts.new(name="THUG_SCRIPTS")
-                    script_text.write(":i function $" + ts + "$\n")
-                    script_text.write(":i endfunction\n")
-                
+                        script_text = bpy.data.texts.new(name="script_" + ts)
+                        
             #curveData.bevel_depth = 0.01
             if node["Class"] == "RailNode":
                 curveOB.thug_path_type = "Rail"
@@ -254,13 +269,20 @@ def import_nodearray(gamemode):
                     except TypeError:
                         curveOB.thug_rail_terrain_type = "Auto"
                 to_group(curveOB, "RailNodes")
+                if test_cyclic:
+                    to_group(curveOB, "Circular RailNodes")
+                    
             elif node["Class"] == "Waypoint":
                 curveOB.thug_path_type = "Waypoint"
                 to_group(curveOB, "Waypoints")
+                if test_cyclic:
+                    to_group(curveOB, "Circular Waypoints")
                 
             elif node["Class"] == "ClimbingNode":
                 curveOB.thug_path_type = "Ladder"
                 to_group(curveOB, "ClimbingNodes")
+                if test_cyclic:
+                    to_group(curveOB, "Circular ClimbingNodes")
             
             else:
                 # The importer is meant for THPS3/4 levels, so ClimbingNodes are not currently implemented
@@ -495,7 +517,7 @@ def import_nodearray(gamemode):
                     
                 elif node["Class"] == "ParticleObject":
                     ob.thug_empty_props.empty_type = "ParticleObject"
-                    ob.rotation_euler[0] = math.radians(90.0)
+                    #ob.rotation_euler[0] = math.radians(90.0)
                     if "BoxDimsStart" in node:
                         ob.thug_particle_props.particle_boxdimsstart = from_thug_coords(node["BoxDimsStart"])
                     if "BoxDimsMid" in node:
@@ -659,9 +681,80 @@ def import_nodearray(gamemode):
                         ob.thug_rail_connects_to = obj_index['name']
                         print("Object " + node["Name"] + " is linked to: " + obj_index['name'] + "(" + str(_idx) + ")")
         
+        
+def read_until(textblock, start_line, trigger):
+    lines = []
+    line_num = 0
+    for line in textblock.lines:
+        line_num += 1
+        if line_num < start_line:
+            continue
+        if line.body.startswith(":i function "):
+            continue
+        if line.body.startswith(trigger):
+            return lines
+        lines.append(line)
+    
+def import_triggerscripts():
+    old_scripts = bpy.data.texts.get("THUG_SCRIPTS")
+    line_number = 0
+    for line in old_scripts.lines:
+        line_number += 1
+        if line.body.startswith(":i function "):
+            script_name = line.body.replace(":i function ", "").replace("$", "")
+            print("Found script: " + script_name)
+            script_text = read_until(old_scripts, line_number, ":i endfunction")
+            if not bpy.data.texts.get("script_" + script_name, None):
+                print("Writing script: " + script_name)
+                script_block = bpy.data.texts.new(name="script_" + script_name)
+                
+                for script_line in script_text:
+                    script_block.write(script_line.body + "\n")
 
 # OPERATORS
 #############################################
+class THUGImportTriggerScripts(bpy.types.Operator):
+    bl_idname = "io.import_thug_triggerscripts"
+    bl_label = "Import TriggerScripts"
+    import_type = EnumProperty(items=(
+        ("ScriptsOnly", "Scripts only", "Copies scripts from THUG_SCRIPTS into individual text blocks (the new format)."),
+        ("ScriptsAndObjects", "Scripts and objects", "Also updates object references to script names."),
+        ), name="Import type", default="ScriptsOnly")
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        import_triggerscripts()
+        if self.import_type == "ScriptsAndObjects":
+            for ob in bpy.data.objects:
+                if ob.thug_triggerscript_props and ob.thug_triggerscript_props.triggerscript_type == "Custom":
+                    old_name = ob.thug_triggerscript_props.custom_name
+                    if bpy.data.texts.get(old_name, None):
+                        # This was already converted, don't modify
+                        continue
+                    new_name = "script_" + old_name
+                    if not bpy.data.texts.get(new_name, None):
+                        # Converted name was not found! Make sure they know there's an invalid reference
+                        raise Exception("Updated script name " + new_name + " was not found.")
+                    ob.thug_triggerscript_props.custom_name = new_name
+                        
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return "THUG_SCRIPTS" in bpy.data.texts
+    
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+    
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.label(text="TriggerScript Import")
+        row = col.row()
+        row.prop(self, "import_type")
+        
+        
 class THUGImportNodeArray(bpy.types.Operator):
     bl_idname = "io.import_thug_nodearray"
     bl_label = "Import NodeArray"

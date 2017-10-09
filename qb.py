@@ -15,6 +15,9 @@ from . helpers import *
 
 # METHODS
 #############################################
+def script_exists(name):
+    return "script_" + name in bpy.data.texts 
+
 def blub_int(integer):
     return "%i({},{:08})".format(integer, integer)
 #----------------------------------------------------------------------------------
@@ -221,6 +224,7 @@ def export_qb(filename, directory, target_game, operator=None):
                 if ob.name.endswith("_COL"):
                     print("Special collision mesh: " + ob.name + ". It is not meant to be exported to the QB. Skipping...")
                     continue
+                col_ob = ob # Collision object may have different properties than the scene object (Triggers, etc)
                 if bpy.data.objects.get(ob.name + "_SCN"):
                     print("Mesh " + ob.name + " also has a scene mesh. Using its properties instead!")
                     ob = bpy.data.objects.get(ob.name + "_SCN")
@@ -234,12 +238,12 @@ def export_qb(filename, directory, target_game, operator=None):
                     not is_levelobject and \
                     ob.thug_created_at_start and \
                     not custom_node_props.get(clean_name) and \
-                    ob.thug_occluder == False and \
+                    col_ob.thug_occluder == False and \
                     ob.thug_lightgroup == "None" and \
                     not ob.name.lower().startswith("NightOn") and \
                     not ob.name.lower().startswith("NightOff") :
                     if (not getattr(ob, "thug_is_trickobject", False) and
-                            ob.thug_triggerscript_props.triggerscript_type == "None") \
+                            col_ob.thug_triggerscript_props.triggerscript_type == "None") \
                         or not \
                         (getattr(ob, "thug_export_collision", True) or
                          getattr(ob, "thug_export_scene", True)):
@@ -254,7 +258,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 p("\t\t:i {} = {}".format(c("Class"), c("LevelGeometry") if not is_levelobject else c("LevelObject")))
-                if ob.thug_occluder:
+                if col_ob.thug_occluder:
                     p("\t\t:i {}".format(c("Occluder")))
                 elif ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
@@ -267,17 +271,17 @@ def export_qb(filename, directory, target_game, operator=None):
                                              c(ob.thug_cluster_name if ob.thug_cluster_name else clean_name)))
                 p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
 
-                if ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(ob):
-                    if (ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(ob)):
-                        script_name = ob.thug_triggerscript_props.custom_name[7:]
+                if col_ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(col_ob):
+                    if (col_ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(col_ob)):
+                        script_name = col_ob.thug_triggerscript_props.custom_name[7:]
                         custom_triggerscript_names.append(script_name)
                     else:
-                        script_name, script_code = _generate_script(ob)
+                        script_name, script_code = _generate_script(col_ob)
                         generated_scripts.setdefault(script_name, script_code)
                     p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
 
-                if ob.thug_node_expansion:
-                    p("\t\t:i {}".format(c(ob.thug_node_expansion)))
+                if col_ob.thug_node_expansion:
+                    p("\t\t:i {}".format(c(col_ob.thug_node_expansion)))
 
             # -----------------------------------------------------------------------------------------------------------
             # - Export node definitions for lamps (LevelLights)!
@@ -633,6 +637,8 @@ def export_qb(filename, directory, target_game, operator=None):
 
         p(":i :a}") # end node array =======================
 
+        print("Exporting base TriggerScripts...")
+        
         if target_game == "THUG2":
             p("""
 :i function ${}_Goals$
@@ -679,70 +685,97 @@ def export_qb(filename, directory, target_game, operator=None):
             p('\n'.join("\t:i ${}$".format(script_name) for script_name in custom_triggerscript_names))
             p("\n:i :a}\n")
 
-        p("""
+        if not script_exists("TRG_CTF_Flag_Blue_Script"):
+            p("""
 :i function $TRG_CTF_Flag_Blue_Script$
     :i call $Team_Flag$ arguments $blue$
-:i endfunction
+:i endfunction""")
+        if not script_exists("TRG_CTF_Flag_Red_Script"):
+            p("""
 :i function $TRG_CTF_Flag_Red_Script$
     :i call $Team_Flag$ arguments $red$
-:i endfunction
+:i endfunction""")
+        if not script_exists("TRG_CTF_Flag_Yellow_Script"):
+            p("""
 :i function $TRG_CTF_Flag_Yellow_Script$
     :i call $Team_Flag$ arguments $yellow$
-:i endfunction
+:i endfunction""")
+        if not script_exists("TRG_CTF_Flag_Green_Script"):
+            p("""
 :i function $TRG_CTF_Flag_Green_Script$
     :i call $Team_Flag$ arguments $green$
-:i endfunction
+:i endfunction""")
+        if not script_exists("TRG_CTF_Flag_Blue_Base_Script"):
+            p("""
 :i function $TRG_CTF_Flag_Blue_Base_Script$
     :i call $Team_Flag_Base$ arguments $blue$
-:i endfunction
+:i endfunction""")
+        if not script_exists("TRG_CTF_Flag_Green_Base_Script"):
+            p("""
 :i function $TRG_CTF_Flag_Green_Base_Script$
     :i call $Team_Flag_Base$ arguments $green$
-:i endfunction
+:i endfunction""")
+        if not script_exists("TRG_CTF_Flag_Red_Base_Script"):
+            p("""
 :i function $TRG_CTF_Flag_Red_Base_Script$
     :i call $Team_Flag_Base$ arguments $red$
-:i endfunction
+:i endfunction""")
+        if not script_exists("TRG_CTF_Flag_Yellow_Base_Script"):
+            p("""
 :i function $TRG_CTF_Flag_Yellow_Base_Script$
     :i call $Team_Flag_Base$ arguments $yellow$
-:i endfunction
-""")
+:i endfunction""")
 
-        p(":i function $LoadAllParticleTextures$")
-        p(":i endfunction")
+        # Export generic LoadAllParticleTextures script, if there isn't a script defined for it already
+        if not script_exists("LoadAllParticleTextures"):
+            p(":i function $LoadAllParticleTextures$")
+            p(":i endfunction")
 
+        print("Writing generated scripts...")
         for script_name, script_code in generated_scripts.items():
             p("")
             p(script_code)
 
 
-        p(":i function $LoadTerrain$\n")
+        # Export generic LoadTerrain script, if there isn't a script defined for it already
+        if not script_exists("LoadTerrain"):
+            p(":i function $LoadTerrain$\n")
 
-        for terrain_type in TERRAIN_TYPES:
-            if terrain_type != "WHEELS":
-                if target_game == "THUG2":
-                    p("\t:i $LoadTerrainSounds$$terrain$ = $TERRAIN_{}$\n".format(terrain_type))
-                else:
-                    p("\t:i $SetTerrain{}$\n".format(terrain_type))
+            for terrain_type in TERRAIN_TYPES:
+                if terrain_type != "WHEELS":
+                    if target_game == "THUG2":
+                        p("\t:i $LoadTerrainSounds$$terrain$ = $TERRAIN_{}$\n".format(terrain_type))
+                    else:
+                        p("\t:i $SetTerrain{}$\n".format(terrain_type))
 
-        if target_game == "THUG1":
-            p(""":i call $LoadSound$ arguments %s(22,"Shared\Water\FallWater") $FLAG_PERM$\n""")
+            if target_game == "THUG1":
+                p(""":i call $LoadSound$ arguments %s(22,"Shared\Water\FallWater") $FLAG_PERM$\n""")
 
 
-        p("""
-#/    :i call $script_change_tod$ arguments $tod_action$ = $set_tod_night$
-#/    :i call $start_dynamic_tod$
+            p("""
+    #/    :i call $script_change_tod$ arguments $tod_action$ = $set_tod_night$
+    #/    :i call $start_dynamic_tod$
 
-    :i endfunction""")
+        :i endfunction""")
 
-        p(""":i function $load_level_anims$
+        # Export generic load_level_anims script, if there isn't a script defined for it already
+        if not script_exists("load_level_anims"):
+            p(""":i function $load_level_anims$
 #/    :i $animload_THPS5_human$
 :i endfunction""")
 
-        p(""":i function $LoadCameras$
-:i endfunction
-:i function $LoadObjectAnims$
+        # Export generic load_level_anims script, if there isn't a script defined for it already
+        if not script_exists("LoadCameras"):
+            p(""":i function $LoadCameras$
+:i endfunction""")
+
+        # Export generic LoadObjectAnims script, if there isn't a script defined for it already
+        if not script_exists("LoadObjectAnims"):
+            p(""":i function $LoadObjectAnims$
 :i endfunction
 """)
 
+        print("Writing ncomp data...")
         ncomp_text = bpy.data.texts.get("NCOMP", None)
         if ncomp_text:
             p(ncomp_text.as_string())
