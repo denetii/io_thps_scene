@@ -208,17 +208,34 @@ def export_qb(filename, directory, target_game, operator=None):
         has_ctf_green = False
         has_ctf_blue = False
         
+        print("Exporting level QB...")
+        
         for ob in bpy.data.objects:
             # -----------------------------------------------------------------------------------------------------------
             # - Export node definitions for mesh-based objects (level geometry, level object)
             # -----------------------------------------------------------------------------------------------------------
             if ob.type == "MESH" and not ob.get("thug_autosplit_object_no_export_hack"):
+                if ob.name.endswith("_SCN") and bpy.data.objects.get(ob.name[:-4]):
+                    print("Skipping scene mesh " + ob.name + ". It has a collision mesh we will work from")
+                    continue
+                if ob.name.endswith("_COL"):
+                    print("Special collision mesh: " + ob.name + ". It is not meant to be exported to the QB. Skipping...")
+                    continue
+                if bpy.data.objects.get(ob.name + "_SCN"):
+                    print("Mesh " + ob.name + " also has a scene mesh. Using its properties instead!")
+                    ob = bpy.data.objects.get(ob.name + "_SCN")
+                    
                 is_levelobject = ob.thug_object_class == "LevelObject"
                 clean_name = get_clean_name(ob)
+                if clean_name.endswith("_SCN"):
+                    clean_name = clean_name[:-4]
+                
                 if not ob.thug_always_export_to_nodearray and \
                     not is_levelobject and \
                     ob.thug_created_at_start and \
                     not custom_node_props.get(clean_name) and \
+                    ob.thug_occluder == False and \
+                    ob.thug_lightgroup == "None" and \
                     not ob.name.lower().startswith("NightOn") and \
                     not ob.name.lower().startswith("NightOff") :
                     if (not getattr(ob, "thug_is_trickobject", False) and
@@ -228,6 +245,7 @@ def export_qb(filename, directory, target_game, operator=None):
                          getattr(ob, "thug_export_scene", True)):
                         continue
                     
+                print("Exporting node definition for " + ob.name + " (" + clean_name + ")...")
                 p("\t:i :s{")
                 p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
                 if is_levelobject:
@@ -240,7 +258,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {}".format(c("Occluder")))
                 elif ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
-                if ob.thug_lightgroup != "None":
+                if ob.thug_lightgroup != "None" and ob.thug_export_scene:
                     p("\t\t:i {} = {}".format(c("LightGroup"), c(ob.thug_lightgroup)))
                     
                 if getattr(ob, "thug_is_trickobject", False):
@@ -271,13 +289,24 @@ def export_qb(filename, directory, target_game, operator=None):
                 p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 p("\t\t:i {} = {}".format(c("Class"), c("LevelLight")))
-                p("\t\t:i {} = {}".format(c("Brightness"), f(ob.data.energy)))
-                p("\t\t:i {} = {}".format(c("InnerRadius"), f(ob.data.thug_light_props.light_radius[0])))
-                p("\t\t:i {} = {}".format(c("OuterRadius"), f(ob.data.thug_light_props.light_radius[1])))
+                if ob.thug_created_at_start:
+                    p("\t\t:i {}".format(c("CreatedAtStart")))
+                if ob.thug_network_option != "Default":
+                    p("\t\t:i {}".format(c(ob.thug_network_option)))
+                    if ob.thug_network_option == "NetEnabled":
+                        p("\t\t:i {}".format(c("Permanent")))
+                p("\t\t:i {} = {}".format(c("Brightness"), i(int(ob.data.energy))))
+                p("\t\t:i {} = {}".format(c("InnerRadius"), i(int(ob.data.thug_light_props.light_radius[0]))))
+                p("\t\t:i {} = {}".format(c("OuterRadius"), i(int(ob.data.thug_light_props.light_radius[1]))))
                 if ob.data.thug_light_props.light_excludeskater:
                     p("\t\t:i {}".format(c("ExcludeSkater")))
                 if ob.data.thug_light_props.light_excludelevel:
                     p("\t\t:i {}".format(c("ExcludeLevel")))
+                light_color = [ int((ob.data.color[0] * 256) / 2), 
+                                int((ob.data.color[1] * 256) / 2) , 
+                                int((ob.data.color[2] * 256) / 2)]
+                p("\t\t:i {} = :a{{ {};{};{} :a}}".format(c("Color"),
+                            i(light_color[0]), i(light_color[1]),i(light_color[2])))
                 if ob.thug_node_expansion:
                     p("\t\t:i {}".format(c(ob.thug_node_expansion)))
                 #p("\t:i :s}")
@@ -365,10 +394,10 @@ def export_qb(filename, directory, target_game, operator=None):
                         p("\t\t:i {} = {}".format(c("StartPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_startposition))))
                     p("\t\t:i {} = {}".format(c("MidPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_midposition))))
                     p("\t\t:i {} = {}".format(c("EndPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_endposition))))
-                    p("\t\t:i {} = {}".format(c("Texture"), blub_str(ob.thug_particle_props.particle_texture)))
+                    p("\t\t:i {} = {}".format(c("Texture"), c(ob.thug_particle_props.particle_texture)))
                     if ob.thug_particle_props.particle_usemidpoint == True:
                         p("\t\t:i {}".format(c("UseMidPoint")))
-                    p("\t\t:i {} = {}".format(c("MidPointPCT"), f(ob.thug_particle_props.particle_midpointpct)))
+                    p("\t\t:i {} = {}".format(c("MidPointPCT"), i(ob.thug_particle_props.particle_midpointpct)))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_particle_props.particle_type)))
                     p("\t\t:i {} = {}".format(c("BlendMode"), c(ob.thug_particle_props.particle_blendmode)))
                     p("\t\t:i {} = {}".format(c("FixedAlpha"), i(ob.thug_particle_props.particle_fixedalpha)))
@@ -395,16 +424,16 @@ def export_qb(filename, directory, target_game, operator=None):
                                     int(ob.thug_particle_props.particle_endcolor[2] * 256) , 
                                     int(ob.thug_particle_props.particle_endcolor[3] * 256) ]
                                     
-                    p("\t\t:i {} = :a{{ {} {} {} :a}}".format(c("StartRGB"),
+                    p("\t\t:i {} = :a{{ {};{};{} :a}}".format(c("StartRGB"),
                                 i(start_color[0]), i(start_color[1]),i(start_color[2])))
                     p("\t\t:i {} = {}".format(c("StartAlpha"), i(start_color[3])))
-                    p("\t\t:i {} = :a{{ {} {} {} :a}}".format(c("EndRGB"),
+                    p("\t\t:i {} = :a{{ {};{};{} :a}}".format(c("EndRGB"),
                                 i(end_color[0]), i(end_color[1]),i(end_color[2])))
                     p("\t\t:i {} = {}".format(c("EndAlpha"), i(end_color[3])))
                     if ob.thug_particle_props.particle_usecolormidtime == True:
                         p("\t\t:i {}".format(c("UseColorMidTime")))
                         p("\t\t:i {} = {}".format(c("ColorMidTime"), f(ob.thug_particle_props.particle_colormidtime)))
-                        p("\t\t:i {} = :a{{ {} {} {} :a}}".format(c("MidRGB"),
+                        p("\t\t:i {} = :a{{ {};{};{} :a}}".format(c("MidRGB"),
                                 i(mid_color[0]), i(mid_color[1]),i(mid_color[2])))
                         p("\t\t:i {} = {}".format(c("MidAlpha"), i(mid_color[3])))
                                 

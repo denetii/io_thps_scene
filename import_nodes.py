@@ -39,13 +39,15 @@ def get_node(index):
 def fill_ncomp_data(node):
     if "ncomp_filled" in node:
         return node
-    ncomp_name = node["ncomp"]
-    if ncomp_name in ncomp:
-        for name, value in ncomp[ncomp_name].items():
-            print("expanding " + str(name) + ": " + str(value))
-            if name not in node:
-                node[str(name)] = value
-        node["ncomp_filled"] = 1
+    for name, value in node.items():
+        if name.startswith("ncomp_"):
+            ncomp_name = name
+            if ncomp_name in ncomp:
+                for name, value in ncomp[ncomp_name].items():
+                    print("expanding " + str(name) + ": " + str(value))
+                    if name not in node:
+                        node[str(name)] = value
+    node["ncomp_filled"] = 1
     return node
     
 #----------------------------------------------------------------------------------
@@ -74,7 +76,7 @@ def get_linked_path(node, node_type):
                 linked_nodes.append(next_node["Index"])   
             else:
                 # Invalid link?
-                print("Invalid " + node_type + " link to node " + next_node["Name"] + " (idx: " + str(next_node["Index"]) + ")")
+                print("Invalid " + node_type + " link to node " + next_node["Name"] + " (idx: " + str(next_node["Index"]) + ", expecting " + node_type + ")")
                 break
                 
             if "Links" in next_node:
@@ -214,7 +216,7 @@ def import_nodearray(gamemode):
                     polyline.points[i].co = (x, z, y, 1)
                     
 
-            if rail_nodes[3] == True: # is_circular = True  
+            if rail_nodes[3] == True and len(polyline.points) > 2: # is_circular = True  
                 polyline.use_endpoint_u = True
                 polyline.use_cyclic_u = True  
                 
@@ -322,6 +324,7 @@ def import_nodearray(gamemode):
                 if node["Class"] == "GameObject":
                     ob.empty_draw_type = 'CUBE'
                     ob.empty_draw_size = 64
+                    to_group(curveOB, "GameObjects")
                 elif node["Class"] == "Pedestrian" or node["Class"] == "Vehicle":
                     ob.empty_draw_type = 'PLAIN_AXES'
                     ob.empty_draw_size = 108
@@ -410,7 +413,7 @@ def import_nodearray(gamemode):
                     ob.rotation_euler[2] = node["Angles"][1]
                     # Pull the _SCN mesh out and give it the same position
                     if bpy.data.objects.get(ob.name + "_SCN"):
-                        ob2 = bpy.data.objects.get(ob.name)
+                        ob2 = bpy.data.objects.get(ob.name + "_SCN")
                         ob2.location = ob.location
                         ob2.rotation_euler = ob.rotation_euler
                 
@@ -490,19 +493,19 @@ def import_nodearray(gamemode):
                     ob.thug_empty_props.empty_type = "ParticleObject"
                     ob.rotation_euler[0] = math.radians(90.0)
                     if "BoxDimsStart" in node:
-                        ob.thug_particle_props.particle_boxdimsstart = node["BoxDimsStart"]
+                        ob.thug_particle_props.particle_boxdimsstart = from_thug_coords(node["BoxDimsStart"])
                     if "BoxDimsMid" in node:
-                        ob.thug_particle_props.particle_boxdimsmid = node["BoxDimsMid"]
+                        ob.thug_particle_props.particle_boxdimsmid = from_thug_coords(node["BoxDimsMid"])
                     if "BoxDimsEnd" in node:
-                        ob.thug_particle_props.particle_boxdimsend = node["BoxDimsEnd"]
+                        ob.thug_particle_props.particle_boxdimsend = from_thug_coords(node["BoxDimsEnd"])
                     if "UseStartPosition" in node:
                         ob.thug_particle_props.particle_usestartpos = node["UseStartPosition"]
                     if "StartPosition" in node:
-                        ob.thug_particle_props.particle_startposition = node["StartPosition"]
+                        ob.thug_particle_props.particle_startposition = from_thug_coords(node["StartPosition"])
                     if "MidPosition" in node:
-                        ob.thug_particle_props.particle_midposition = node["MidPosition"]
+                        ob.thug_particle_props.particle_midposition = from_thug_coords(node["MidPosition"])
                     if "EndPosition" in node:
-                        ob.thug_particle_props.particle_endposition = node["EndPosition"]
+                        ob.thug_particle_props.particle_endposition = from_thug_coords(node["EndPosition"])
                     if "Texture" in node:
                         tmp_texture_name = node["Texture"] #str(crc_from_string(bytes(node["Texture"], 'ascii')))
                         ob.thug_particle_props.particle_texture = tmp_texture_name

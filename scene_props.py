@@ -247,7 +247,8 @@ class THUGVehicleProps(bpy.types.PropertyGroup):
     veh_noskitch = BoolProperty(name="No Skitch", default=False, description="Vehicle cannot be skitched.")
     
 def thug_light_update(self, context):
-    context.object.data.distance = self.light_radius[0]
+    if context.object.type == "LAMP" and context.object.data.type == "POINT":
+        context.object.data.distance = self.light_radius[0]
     
 #----------------------------------------------------------------------------------
 #- Light properties
@@ -278,7 +279,7 @@ class THUGParticleProps(bpy.types.PropertyGroup):
     particle_maxstreams = IntProperty(name="Max Streams", min=0, max=256, default=2)
     particle_emitrate = FloatProperty(name="Emit Rate", min=0, max=4096, default=50)
     particle_lifetime = FloatProperty(name="Lifetime", min=0, max=128000, default=1)
-    particle_midpointpct = FloatProperty(name="Midpoint Pct", min=0, max=100, default=50)
+    particle_midpointpct = IntProperty(name="Midpoint Pct", min=0, max=100, default=50)
     particle_radius = FloatVectorProperty(name="Radius", description="Start, mid and end radius.")
     particle_radiusspread = FloatVectorProperty(name="Radius Spread")
     particle_startcolor = FloatVectorProperty(name="Start Color",

@@ -21,6 +21,8 @@ def _thug_object_settings_draw(self, context):
     if not context.object: return
     ob = context.object
     if ob.type == "LAMP" and ob.data.type == "POINT":
+        self.layout.row().prop(ob, "thug_created_at_start")
+        self.layout.row().prop(ob, "thug_network_option")
         box = self.layout.box().column(True)
         box.row().prop(ob.data, "color")
         box.row().prop(ob.data, "energy")
