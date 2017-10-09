@@ -421,8 +421,15 @@ def import_nodearray(gamemode):
                     
                 if node["Class"] == "LevelGeometry" or node["Class"] == "EnvironmentObject":
                     ob.thug_object_class = "LevelGeometry"
+                    if "LightGroup" in node and bpy.data.objects.get(node["Name"] + "_SCN"):
+                        scn_ob = bpy.data.objects.get(node["Name"] + "_SCN")
+                        scn_ob.thug_lightgroup = node["LightGroup"]
+                        
                 elif node["Class"] == "LevelObject":
                     ob.thug_object_class = "LevelObject"
+                    if "LightGroup" in node and bpy.data.objects.get(node["Name"] + "_SCN"):
+                        scn_ob = bpy.data.objects.get(node["Name"] + "_SCN")
+                        scn_ob.thug_lightgroup = node["LightGroup"]
                     ob.location[0] = node["Position"][0]
                     # Reposition the LevelObject based on what is in the NodeArray
                     # When exported it is always at the origin
@@ -443,6 +450,39 @@ def import_nodearray(gamemode):
                         ob2.location = ob.location
                         ob2.rotation_euler = ob.rotation_euler
                 
+                    # Process additional LevelObject properties, including bouncy mesh!
+                    if "Type" in node:
+                        ob.thug_levelobj_props.obj_type = node["Type"]
+                    if "Bouncy" in node or "bouncy" in node:
+                        ob.thug_levelobj_props.obj_bouncy = True
+                    if "contacts" in node:
+                        for _pos in node["contacts"]:
+                            _contact = ob.thug_levelobj_props.contacts.add()
+                            _contact.contact = _pos
+                    if "center_of_mass" in node:
+                        ob.thug_levelobj_props.center_of_mass = node["center_of_mass"]
+                    if "coeff_restitution" in node:
+                        ob.thug_levelobj_props.coeff_restitution = node["coeff_restitution"]
+                    if "coeff_friction" in node:
+                        ob.thug_levelobj_props.coeff_friction = node["coeff_friction"]
+                    if "skater_collision_impulse_factor" in node:
+                        ob.thug_levelobj_props.skater_collision_impulse_factor = node["skater_collision_impulse_factor"]
+                    if "skater_collision_rotation_factor" in node:
+                        ob.thug_levelobj_props.skater_collision_rotation_factor = node["skater_collision_rotation_factor"]
+                    if "skater_collision_assent" in node:
+                        ob.thug_levelobj_props.skater_collision_assent = node["skater_collision_assent"]
+                    if "skater_collision_radius" in node:
+                        ob.thug_levelobj_props.skater_collision_radius = node["skater_collision_radius"]
+                    if "mass_over_moment" in node:
+                        ob.thug_levelobj_props.mass_over_moment = node["mass_over_moment"]
+                    if "stuckscript" in node:
+                        if node["stuckscript"] != "":
+                            script_text = bpy.data.texts.get("script_" + node["stuckscript"], None)
+                            if not script_text:
+                                script_text = bpy.data.texts.new(name="script_" + node["stuckscript"])
+                        
+                        ob.thug_levelobj_props.stuckscript = node["stuckscript"]
+                        
                 elif node["Class"] == "Restart":
                     to_group(ob, "Restarts")
                     ob.thug_empty_props.empty_type = "Restart"

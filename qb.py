@@ -175,7 +175,11 @@ def export_qb(filename, directory, target_game, operator=None):
         all_triggerscripts = [s for s in bpy.data.texts if s.name.startswith("script_")]
         for ts in all_triggerscripts:
             p(":i function $" + ts.name[7:] + "$")
-            p(ts.as_string())
+            if target_game == "THUG1":
+                # Make sure we don't export the THUG2 if/else conditions!
+                p(ts.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
+            else:
+                p(ts.as_string())
             p(":i endfunction")
             p("")
         p("")
@@ -229,7 +233,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     print("Mesh " + ob.name + " also has a scene mesh. Using its properties instead!")
                     ob = bpy.data.objects.get(ob.name + "_SCN")
                     
-                is_levelobject = ob.thug_object_class == "LevelObject"
+                is_levelobject = col_ob.thug_object_class == "LevelObject"
                 clean_name = get_clean_name(ob)
                 if clean_name.endswith("_SCN"):
                     clean_name = clean_name[:-4]
@@ -253,11 +257,42 @@ def export_qb(filename, directory, target_game, operator=None):
                 p("\t:i :s{")
                 p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
                 if is_levelobject:
+                    #p("\t\t:i {} = {}".format(c("Pos"), v3((0, 0, 0))))
                     p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 else:
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
+                    #p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 p("\t\t:i {} = {}".format(c("Class"), c("LevelGeometry") if not is_levelobject else c("LevelObject")))
+                # Exporting LevelObject specific properties below
+                if is_levelobject:
+                    p("\t\t:i {} = {}".format(c("Type"), c(col_ob.thug_levelobj_props.obj_type)))
+                    if col_ob.thug_levelobj_props.obj_bouncy:
+                        # Bouncy Object properties go here!
+                        p("\t\t:i {}".format(c("Bouncy")))
+                        #p("\t\t:i {} = :a{{ ".format(c("contacts")))
+                        _ctnum = 0
+                        _prop = "\t\t:i {} = :a{{ "
+                        for _contact in col_ob.thug_levelobj_props.contacts:
+                            _ctnum += 1
+                            if _ctnum > 1:
+                                _prop += ";"
+                            firstc = False
+                            _prop += v3(_contact.contact)
+                        _prop += ":a}}"
+                        p(_prop.format(c("contacts")))
+                        #p(":a}}")
+                        p("\t\t:i {} = {}".format(c("center_of_mass"), v3(col_ob.thug_levelobj_props.center_of_mass)))
+                        p("\t\t:i {} = {}".format(c("coeff_restitution"), f(col_ob.thug_levelobj_props.coeff_restitution)))
+                        p("\t\t:i {} = {}".format(c("coeff_friction"), f(col_ob.thug_levelobj_props.coeff_friction)))
+                        p("\t\t:i {} = {}".format(c("skater_collision_impulse_factor"), f(col_ob.thug_levelobj_props.skater_collision_impulse_factor)))
+                        p("\t\t:i {} = {}".format(c("skater_collision_rotation_factor"), i(col_ob.thug_levelobj_props.skater_collision_rotation_factor)))
+                        p("\t\t:i {} = {}".format(c("skater_collision_assent"), i(col_ob.thug_levelobj_props.skater_collision_assent)))
+                        p("\t\t:i {} = {}".format(c("skater_collision_radius"), i(col_ob.thug_levelobj_props.skater_collision_radius)))
+                        p("\t\t:i {} = {}".format(c("mass_over_moment"), f(col_ob.thug_levelobj_props.mass_over_moment)))
+                        if col_ob.thug_levelobj_props.stuckscript != "":
+                            p("\t\t:i {} = {}".format(c("stuckscript"), c(col_ob.thug_levelobj_props.stuckscript)))
+                        
                 if col_ob.thug_occluder:
                     p("\t\t:i {}".format(c("Occluder")))
                 elif ob.thug_created_at_start:

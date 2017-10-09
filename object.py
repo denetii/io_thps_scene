@@ -122,6 +122,25 @@ def _thug_object_settings_draw(self, context):
 
     if ob.type == "MESH":
         self.layout.row().prop(ob, "thug_object_class")
+        if ob.thug_object_class == "LevelObject":
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_levelobj_props, "obj_type")
+            box.row().prop(ob.thug_levelobj_props, "obj_bouncy")
+            if ob.thug_levelobj_props.obj_bouncy:
+                box.row().prop(ob.thug_levelobj_props, "center_of_mass")
+                box.row().prop(ob.thug_levelobj_props, "contacts")
+                box.row().prop(ob.thug_levelobj_props, "coeff_restitution")
+                box.row().prop(ob.thug_levelobj_props, "coeff_friction")
+                box.row().prop(ob.thug_levelobj_props, "skater_collision_impulse_factor")
+                box.row().prop(ob.thug_levelobj_props, "skater_collision_rotation_factor")
+                box.row().prop(ob.thug_levelobj_props, "skater_collision_assent")
+                box.row().prop(ob.thug_levelobj_props, "skater_collision_radius")
+                box.row().prop(ob.thug_levelobj_props, "mass_over_moment")
+                box.row().prop_search(
+                    ob.thug_levelobj_props, "stuckscript",
+                    bpy.data,
+                    "texts")
+            
         self.layout.row().prop(ob, "thug_export_collision")
         self.layout.row().prop(ob, "thug_export_scene")
         if ob.thug_export_scene:

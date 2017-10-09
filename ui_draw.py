@@ -11,6 +11,7 @@ from . material import *
 from . collision import *
 from . export_thug1 import *
 from . export_thug2 import *
+from . export_shared import *
 from . import_nodes import *
 
 # PROPERTIES

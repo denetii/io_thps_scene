@@ -3,14 +3,16 @@
 #############################################
 import bpy
 import bmesh
+from bpy.props import *
+from bpy_extras.io_utils import ExportHelper
 import struct
 import mathutils
 import math
-from bpy.props import *
+from . import helpers
 from . helpers import *
 from . material import *
-from bpy_extras.io_utils import ExportHelper
-from . export_shared import *
+from . prefs import *
+from . autosplit import *
 
 # METHODS
 #############################################

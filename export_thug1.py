@@ -36,6 +36,13 @@ def export_scn_sectors(output_file, operator=None):
         original_object = ob
         original_object_name = ob.name
         is_levelobject = ob.thug_object_class == "LevelObject"
+        if is_levelobject == False and original_object_name.endswith("_SCN"):
+            # If using separate collision/scene mesh, check the collision mesh
+            if bpy.data.objects.get(original_object_name[:-4]):
+                _omgtmp = bpy.data.objects.get(original_object_name[:-4])
+                if _omgtmp.thug_object_class == "LevelObject":
+                    is_levelobject = True
+                    
         if is_levelobject:
             lo_matrix = mathutils.Matrix.Identity(4)
             lo_matrix[0][0] = ob.scale[0]
@@ -153,7 +160,10 @@ def export_scn_sectors(output_file, operator=None):
                 w("i", 0) # vertex data stride, this seems to be ignored
 
                 for v in split_verts.keys():
-                    w("3f", *to_thug_coords(ob.matrix_world * v.co))
+                    if is_levelobject:
+                        w("3f", *to_thug_coords(lo_matrix * v.co))
+                    else:
+                        w("3f", *to_thug_coords(ob.matrix_world * v.co))
 
                 if flags & SECFLAGS_HAS_VERTEX_NORMALS:
                     if flags & SECFLAGS_HAS_VERTEX_WEIGHTS:

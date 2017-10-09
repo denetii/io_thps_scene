@@ -191,6 +191,27 @@ class THUGGameObjectProps(bpy.types.PropertyGroup):
     go_model = StringProperty(name="Model path", default="none", description="Path to the model, relative to Data/Models/.")
     go_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion of the object pauses.", min=0, max=1000000, default=0)
     
+    
+class THUGBouncyProps(bpy.types.PropertyGroup):
+    contact = FloatVectorProperty(name="Contact", description="A point used for collision detection.")
+    
+#----------------------------------------------------------------------------------
+#- Level obj properties! There's a lot of them!
+#----------------------------------------------------------------------------------
+class THUGLevelObjectProps(bpy.types.PropertyGroup):
+    obj_type = StringProperty(name="Type", description="Type of level object.")
+    obj_bouncy = BoolProperty(name="Bouncy", description="Enable collision physics on this object.")
+    center_of_mass = FloatVectorProperty(name="Center Of Mass")
+    contacts = CollectionProperty(type=THUGBouncyProps, name="Contacts")
+    coeff_restitution = FloatProperty(name="coeff_restitution", min=0, max=1024, default=0.25)
+    coeff_friction = FloatProperty(name="coeff_friction", min=0, max=1024, default=0.25)
+    skater_collision_impulse_factor = FloatProperty(name="skater_collision_impulse_factor", min=0, max=1024, default=1.5)
+    skater_collision_rotation_factor = IntProperty(name="skater_collision_rotation_factor", min=0, max=1024, default=1)
+    skater_collision_assent = IntProperty(name="skater_collision_assent", min=0, max=1024, default=0)
+    skater_collision_radius = IntProperty(name="skater_collision_radius", min=0, max=1024, default=0)
+    mass_over_moment = FloatProperty(name="mass_over_moment", min=0, max=1024, default=0)
+    stuckscript = StringProperty(name="stuckscript")
+    
 #----------------------------------------------------------------------------------
 #- Properties for individual nodes along a path (rail, ladder, waypoints)
 #----------------------------------------------------------------------------------
@@ -425,6 +446,7 @@ def register_props():
             ("Indoor", "Indoor", "")],
         default="None")
         
+    bpy.types.Object.thug_levelobj_props = PointerProperty(type=THUGLevelObjectProps)
     bpy.types.Object.thug_triggerscript_props = PointerProperty(type=THUGObjectTriggerScriptProps)
     bpy.types.Object.thug_empty_props = PointerProperty(type=THUGEmptyProps)
     bpy.types.Object.thug_proxim_props = PointerProperty(type=THUGProximNodeProps)
