@@ -283,6 +283,8 @@ def _export_rails(p, c, operator=None):
 
     def i(integer):
         return "%i({},{:08})".format(integer, integer)
+    def f(value):
+        return "%f({})".format(value)
 
     rail_node_counter = _export_autorails(p, c, i, v3, operator)
 
@@ -333,22 +335,60 @@ def _export_rails(p, c, operator=None):
                     name = "CustomPathNode_" + str(rail_node_counter)
                 else:
                     assert False
+                    
+                # Insert individual node properties here, if they exist!
                 if len(ob.data.thug_pathnode_triggers) > p_num and ob.data.thug_pathnode_triggers[p_num].name != "":
                     # individual rail/path node names
                     name = ob.data.thug_pathnode_triggers[p_num].name
+                    p("\t\t:i {} = {}".format(c("Name"), c(name)))
+                    if ob.data.thug_pathnode_triggers[p_num].terrain != "":
+                        # Terrain is also used for AI skaters, so don't output twice!
+                        if ob.data.thug_pathnode_triggers[p_num].PedType != "Skate":
+                            p("\t\t:i {} = {}".format(c("TerrainType"), c(ob.data.thug_pathnode_triggers[p_num].terrain)))
+                        
+                    if ob.data.thug_pathnode_triggers[p_num].PedType != "":
+                        p("\t\t:i {} = {}".format(c("PedType"), c(ob.data.thug_pathnode_triggers[p_num].PedType)))
+                        # Output skater AI node properties here!
+                        if ob.data.thug_pathnode_triggers[p_num].PedType == "Skate":
+                            if ob.data.thug_pathnode_triggers[p_num].do_continue:
+                                p("\t\t:i {}".format(c("Continue")))
+                                p("\t\t:i {} = {}".format(c("ContinueWeight"), f(ob.data.thug_pathnode_triggers[p_num].ContinueWeight)))
+                            if ob.data.thug_pathnode_triggers[p_num].JumpToNextNode:
+                                p("\t\t:i {}".format(c("JumpToNextNode")))
+                            p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))
+                            # Skate action types defined here!
+                            _skateaction = ob.data.thug_pathnode_triggers[p_num].SkateAction
+                            p("\t\t:i {} = {}".format(c("SkateAction"), c(_skateaction)))
+                            if _skateaction == "Flip_Trick" or _skateaction == "Jump" or _skateaction == "Vert_Jump" or \
+                                _skateaction == "Vert_Flip":
+                                p("\t\t:i {} = {}".format(c("JumpHeight"), f(ob.data.thug_pathnode_triggers[p_num].JumpHeight)))
+                            elif _skateaction == "Grind":
+                                p("\t\t:i {} = {}".format(c("TerrainType"), c(ob.data.thug_pathnode_triggers[p_num].terrain)))
+                            elif _skateaction == "Manual":
+                                p("\t\t:i {} = {}".format(c("ManualType"), c(ob.data.thug_pathnode_triggers[p_num].ManualType)))
+                            elif _skateaction == "Stop":
+                                p("\t\t:i {} = {}".format(c("Deceleration"), f(ob.data.thug_pathnode_triggers[p_num].Deceleration)))
+                                p("\t\t:i {} = {}".format(c("StopTime"), f(ob.data.thug_pathnode_triggers[p_num].StopTime)))
+                            elif _skateaction == "Vert_Grab":
+                                p("\t\t:i {} = {}".format(c("SpinAngle"), f(ob.data.thug_pathnode_triggers[p_num].SpinAngle)))
+                                p("\t\t:i {} = {}".format(c("SpinDirection"), c(ob.data.thug_pathnode_triggers[p_num].SpinDirection)))
+                        
+                # No individual node properties are defined, so use the object-level settings    
                 else:
                     name = clean_name + "__" + str(point_idx - 1)
-                p("\t\t:i {} = {}".format(c("Name"), c(name)))
+                    p("\t\t:i {} = {}".format(c("Name"), c(name)))
+                    # Generate terrain type using the object terrain settings
+                    if ob.thug_path_type != "Custom" and ob.thug_path_type != "Waypoint" :
+                        p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
+                        rail_type = ob.thug_rail_terrain_type
+                        if rail_type == "Auto":
+                            rail_type = "TERRAIN_GRINDCONC"
+                        else:
+                            rail_type = "TERRAIN_" + rail_type
+                        p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
 
+                # Other object-level properties defined here!
                 if ob.thug_path_type != "Custom" and ob.thug_path_type != "Waypoint" :
-                    p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
-                    rail_type = ob.thug_rail_terrain_type
-                    if rail_type == "Auto":
-                        rail_type = "TERRAIN_GRINDCONC"
-                    else:
-                        rail_type = "TERRAIN_" + rail_type
-                    p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
-
                     if getattr(ob, "thug_is_trickobject", False):
                         p("\t\t:i call {} arguments".format(c("TrickObject")))
                         if ob.thug_cluster_name:

@@ -29,7 +29,7 @@ def get_node(index):
         if tmp_index == index:
             if "Index" not in node:
                 node["Index"] = index
-            return node
+            return fill_ncomp_data(node)
         
     raise Exception("Node index " + str(index) + " does not exist.")
 
@@ -65,6 +65,7 @@ def get_linked_path(node, node_type):
     point_names = []
     point_triggers = []
     point_indices = []
+    point_nodes = []
     is_circular = False
     
     # If the first RailNode has no links, then it might be a point rail
@@ -85,7 +86,7 @@ def get_linked_path(node, node_type):
                 
             if "Links" in next_node:
                 node_links = next_node["Links"]
-                if node_links[0] in linked_nodes:
+                if node_links[0] in my_links:
                     # Circular link, time to blast!
                     print("Circular link to " + node_type + " " + str(node_links[0]) + ", ending line!")
                     is_circular = True
@@ -100,9 +101,9 @@ def get_linked_path(node, node_type):
     while line_continues == True:
         node_index = -1
         link_found = False
-        for no in NodeArray:
+        for node in NodeArray:
             #if "ncomp" in no:
-            no = fill_ncomp_data(no)
+            no = fill_ncomp_data(node)
             node_index += 1
             if "Class" in no and no["Class"] == node_type and "Links" in no and my_links[0] in no["Links"] and node_index not in my_links:
                 # Back link to the start of the path
@@ -145,12 +146,13 @@ def get_linked_path(node, node_type):
         point_coords.append(tmp_node["Position"])
         point_names.append(tmp_node["Name"])
         point_indices.append(tmp_node["Index"])
-        if "TriggerScript" in tmp_node:
-            point_triggers.append(tmp_node["TriggerScript"])
-        else:
-            point_triggers.append("")
+        point_nodes.append(tmp_node)
+        #if "TriggerScript" in tmp_node:
+        #    point_triggers.append(tmp_node["TriggerScript"])
+        #else:
+        #    point_triggers.append("")
         
-    node_path = [ point_coords, point_names, point_triggers, is_circular, point_indices ]
+    node_path = [ point_coords, point_names, point_nodes, is_circular, point_indices ]
     return node_path
         
         
@@ -253,12 +255,47 @@ def import_nodearray(gamemode):
             for i, nm in enumerate(rail_nodes[1]):
                 curveOB.data.thug_pathnode_triggers[i].name = nm
                 
-            for i, ts in enumerate(rail_nodes[2]):
-                curveOB.data.thug_pathnode_triggers[i].script_name = ts
-                if ts != "":
-                    script_text = bpy.data.texts.get("script_" + ts, None)
+            for i, _pnode in enumerate(rail_nodes[2]):
+                if "TriggerScript" in _pnode and _pnode["TriggerScript"] != "":
+                    # If there is a TriggerScript defined, assign to the blender obj and create text block if needed
+                    curveOB.data.thug_pathnode_triggers[i].script_name = _pnode["TriggerScript"]
+                    script_text = bpy.data.texts.get("script_" + _pnode["TriggerScript"], None)
                     if not script_text:
-                        script_text = bpy.data.texts.new(name="script_" + ts)
+                        script_text = bpy.data.texts.new(name="script_" + _pnode["TriggerScript"])
+                # Assign terrain type
+                if "TerrainType" in _pnode and _pnode["TerrainType"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].terrain = _pnode["TerrainType"]
+                        
+                # Assign spawnobj script
+                if "spawnobjscript" in _pnode and _pnode["spawnobjscript"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].spawnobjscript = _pnode["spawnobjscript"]
+                    
+                # Assign skater AI properties (if defined!)
+                if "PedType" in _pnode and _pnode["PedType"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].PedType = _pnode["PedType"]
+                if "Continue" in _pnode:
+                    curveOB.data.thug_pathnode_triggers[i].do_continue = True
+                if "JumpToNextNode" in _pnode:
+                    curveOB.data.thug_pathnode_triggers[i].JumpToNextNode = True
+                if "Priority" in _pnode and _pnode["Priority"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].Priority = _pnode["Priority"]
+                if "ContinueWeight" in _pnode and _pnode["ContinueWeight"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].ContinueWeight = _pnode["ContinueWeight"]
+                if "SkateAction" in _pnode and _pnode["SkateAction"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].SkateAction = _pnode["SkateAction"]
+                if "JumpHeight" in _pnode and _pnode["JumpHeight"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].JumpHeight = _pnode["JumpHeight"]
+                if "ManualType" in _pnode and _pnode["ManualType"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].ManualType = _pnode["ManualType"]
+                if "Deceleration" in _pnode and _pnode["Deceleration"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].Deceleration = _pnode["Deceleration"]
+                if "StopTime" in _pnode and _pnode["StopTime"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].StopTime = _pnode["StopTime"]
+                if "SpinAngle" in _pnode and _pnode["SpinAngle"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].SpinAngle = _pnode["SpinAngle"]
+                if "SpinDirection" in _pnode and _pnode["SpinDirection"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].SpinDirection = _pnode["SpinDirection"]
+                
                         
             #curveData.bevel_depth = 0.01
             if node["Class"] == "RailNode":

@@ -218,7 +218,21 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
 class THUGPathNodeProps(bpy.types.PropertyGroup):
     name = StringProperty(name="Node Name")
     script_name = StringProperty(name="TriggerScript Name")
-    
+    terrain = StringProperty(name="Terrain Type")
+    spawnobjscript = StringProperty(name="SpawnObj Script")
+    PedType = StringProperty(name="PedType")
+    do_continue = BoolProperty(name="Continue")
+    JumpToNextNode = BoolProperty(name="JumpToNextNode")
+    Priority = StringProperty(name="Priority")
+    ContinueWeight = FloatProperty(name="Continue Weight")
+    SkateAction = StringProperty(name="Skate Action")
+    JumpHeight = FloatProperty(name="Jump Height")
+    skaterai_terrain = StringProperty(name="TerrainType")
+    ManualType = StringProperty(name="ManualType")
+    Deceleration = FloatProperty(name="Deceleration")
+    StopTime = FloatProperty(name="StopTime")
+    SpinAngle = FloatProperty(name="SpinAngle")
+    SpinDirection = StringProperty(name="SpinDirection")
     #def register():
         #print("adding new path node struct")
         

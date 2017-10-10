@@ -302,7 +302,34 @@ class THUGCollisionMeshTools(bpy.types.Panel):
                 for p in context.object.data.splines[0].points:
                     tmp_idx += 1
                     if p.select:
+                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "name")
                         self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "script_name")
+                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "terrain")
+                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "spawnobjscript")
+                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "PedType")
+                        if context.object.data.thug_pathnode_triggers[tmp_idx].PedType == "Skate":
+                            self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "do_continue")
+                            self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "ContinueWeight")
+                            self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "Priority")
+                            self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "SkateAction")
+                            if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Flip_Trick":
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "JumpHeight")
+                            if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Jump":
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "JumpHeight")
+                            if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Vert_Jump":
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "JumpHeight")
+                            if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Vert_Flip":
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "JumpHeight")
+                            if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Grind":
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "terrain")
+                            if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Manual":
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "ManualType")
+                            if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Stop":
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "Deceleration")
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "StopTime")
+                            if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Vert_Grab":
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "SpinAngle")
+                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "SpinDirection")
                         break
                         
                 
