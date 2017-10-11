@@ -240,7 +240,7 @@ def export_qb(filename, directory, target_game, operator=None):
                 
                 if not ob.thug_always_export_to_nodearray and \
                     not is_levelobject and \
-                    ob.thug_created_at_start and \
+                    col_ob.thug_created_at_start and \
                     not custom_node_props.get(clean_name) and \
                     col_ob.thug_occluder == False and \
                     ob.thug_lightgroup == "None" and \
@@ -295,7 +295,7 @@ def export_qb(filename, directory, target_game, operator=None):
                         
                 if col_ob.thug_occluder:
                     p("\t\t:i {}".format(c("Occluder")))
-                elif ob.thug_created_at_start:
+                elif col_ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
                 if ob.thug_lightgroup != "None" and ob.thug_export_scene:
                     p("\t\t:i {} = {}".format(c("LightGroup"), c(ob.thug_lightgroup)))
@@ -341,9 +341,9 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {}".format(c("ExcludeSkater")))
                 if ob.data.thug_light_props.light_excludelevel:
                     p("\t\t:i {}".format(c("ExcludeLevel")))
-                light_color = [ int((ob.data.color[0] * 256) / 2), 
-                                int((ob.data.color[1] * 256) / 2) , 
-                                int((ob.data.color[2] * 256) / 2)]
+                light_color = [ int((ob.data.color[0] * 256) / 1), 
+                                int((ob.data.color[1] * 256) / 1) , 
+                                int((ob.data.color[2] * 256) / 1)]
                 p("\t\t:i {} = :a{{ {};{};{} :a}}".format(c("Color"),
                             i(light_color[0]), i(light_color[1]),i(light_color[2])))
                 if ob.thug_node_expansion:
@@ -363,6 +363,7 @@ def export_qb(filename, directory, target_game, operator=None):
                 p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
                 p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
+                # RESTART NODE
                 if ob.thug_empty_props.empty_type == "Restart":
                     p("\t\t:i {} = {}".format(c("Class"), c("Restart")))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_restart_props.restart_type)))
@@ -397,10 +398,38 @@ def export_qb(filename, directory, target_game, operator=None):
                         str_all_types += c("CTF")
                         if auto_restart_name == "": auto_restart_name = "CTF: Restart"
                     
-                    str_all_types += ":a}"
                     if auto_restart_name == "":
-                        raise Exception("Restart node {} has no restart type(s).".format(ob.name))
-                        
+                        # If none of the type boxes were checked off, use the primary type!
+                        #raise Exception("Restart node {} has no restart type(s).".format(ob.name))
+                        if ob.thug_restart_props.restart_type == "Player1":
+                            str_all_types += c("Player1")
+                            auto_restart_name = "P1: Restart"
+                            has_restart_p1 = True
+                        elif ob.thug_restart_props.restart_type == "Player2":
+                            str_all_types += c("Player2")
+                            auto_restart_name = "P2: Restart"
+                            has_restart_p2 = True
+                        if ob.thug_restart_props.restart_type == "Generic":
+                            str_all_types += c("Generic")
+                            auto_restart_name = "Gen: Restart"
+                            has_restart_gen = True
+                        if ob.thug_restart_props.restart_type == "Multiplayer":
+                            str_all_types += c("Multiplayer")
+                            auto_restart_name = "Multi: Restart"
+                            has_restart_multi = True
+                        if ob.thug_restart_props.restart_type == "Team":
+                            str_all_types += c("Team")
+                            auto_restart_name = "Team: Restart"
+                            has_restart_team = True
+                        if ob.thug_restart_props.restart_type == "Horse":
+                            str_all_types += c("Horse")
+                            auto_restart_name = "Ho: Restart"
+                            has_restart_horse = True
+                        if ob.thug_restart_props.restart_type == "CTF":
+                            str_all_types += c("CTF")
+                            auto_restart_name = "CTF: Restart"
+                            has_restart_ctf = True
+                    str_all_types += ":a}"
                     p("\t\t:i {} = {}".format(c("restart_types"), str_all_types))
                     actual_restart_name = ob.thug_restart_props.restart_name
                     if ob.thug_restart_props.restart_name == "":
@@ -420,6 +449,13 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {} = {}".format(c("Shape"), c(ob.thug_proxim_props.proxim_shape)))
                     p("\t\t:i {} = {}".format(c("Radius"), i(ob.thug_proxim_props.proxim_radius)))
                     
+                # EMITTER OBJECT NODE
+                elif ob.thug_empty_props.empty_type == "EmitterObject":
+                    p("\t\t:i {} = {}".format(c("Class"), c("EmitterObject")))
+                    p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_emitter_props.emit_type)))
+                    if ob.thug_emitter_props.emit_radius > 0:
+                        p("\t\t:i {} = {}".format(c("radius"), f(ob.thug_emitter_props.emit_radius)))
+                        
                 # PARTICLE OBJECT NODE
                 elif ob.thug_empty_props.empty_type == "ParticleObject":
                     p("\t\t:i {} = {}".format(c("Class"), c("ParticleObject")))

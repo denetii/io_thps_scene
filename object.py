@@ -48,6 +48,10 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_proxim_props, "proxim_type")
             box.row().prop(ob.thug_proxim_props, "proxim_shape")
             box.row().prop(ob.thug_proxim_props, "proxim_radius")
+        elif ob.thug_empty_props.empty_type == "EmitterObject":
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_emitter_props, "emit_type")
+            box.row().prop(ob.thug_emitter_props, "emit_radius")
         elif ob.thug_empty_props.empty_type == "GenericNode":
             self.layout.row().prop(ob.thug_generic_props, "generic_type")
         elif ob.thug_empty_props.empty_type == "GameObject":

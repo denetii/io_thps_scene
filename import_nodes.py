@@ -347,6 +347,11 @@ def import_nodearray(gamemode):
                 #bpy.data.objects.remove(bpy.data.objects[node_name], True)
                 bpy.data.objects[node_name].name = bpy.data.objects[node_name].name + "_COL"
                 
+            # Same story for EmitterObjects
+            elif node["Class"] == "EmitterObject" and bpy.data.objects.get(node_name):
+                #bpy.data.objects.remove(bpy.data.objects[node_name], True)
+                bpy.data.objects[node_name].name = bpy.data.objects[node_name].name + "_COL"
+                
             # Create level lights - these are point lamps and not empties
             if node["Class"] == "LevelLight":
                 lamp_data = bpy.data.lamps.new(name="Lamp_" + node["Name"], type='POINT')
@@ -409,6 +414,13 @@ def import_nodearray(gamemode):
                     else:
                         ob.empty_draw_size = 150
                     to_group(ob, "ProximNodes")
+                elif node["Class"] == "EmitterObject":
+                    ob.empty_draw_type = 'SPHERE'
+                    if "radius" in node:
+                        ob.empty_draw_size = node["radius"]
+                    else:
+                        ob.empty_draw_size = 300
+                    to_group(ob, "EmitterObjects")
                     
                 elif node["Class"] == "GenericNode":
                     ob.empty_draw_type = 'CIRCLE'
@@ -561,6 +573,8 @@ def import_nodearray(gamemode):
                                 ob.thug_restart_props.restart_p2 = True
                             elif _type == "Multiplayer":
                                 ob.thug_restart_props.restart_multi = True
+                            elif _type == "MultiPlayer":
+                                ob.thug_restart_props.restart_multi = True
                             elif _type == "Team":
                                 ob.thug_restart_props.restart_team = True
                             elif _type == "Generic":
@@ -591,6 +605,13 @@ def import_nodearray(gamemode):
                         ob.thug_proxim_props.proxim_selectrenderonly = True
                     if "ProximObject" in node:
                         ob.thug_proxim_props.proxim_object = True
+                    
+                elif node["Class"] == "EmitterObject":
+                    ob.thug_empty_props.empty_type = "EmitterObject"
+                    if "Type" in node:
+                        ob.thug_emitter_props.emit_type = node["Type"]
+                    if "radius" in node:
+                        ob.thug_emitter_props.emit_radius = node["radius"]
                     
                 elif node["Class"] == "ParticleObject":
                     ob.thug_empty_props.empty_type = "ParticleObject"
@@ -684,6 +705,8 @@ def import_nodearray(gamemode):
                         ob.thug_ped_props.ped_extra_anims = node["Extra_Anims"]
                     if "SkeletonName" in node:
                         ob.thug_ped_props.ped_skeleton = node["SkeletonName"]
+                    if "skeletonName" in node:
+                        ob.thug_ped_props.ped_skeleton = node["skeletonName"]
                     
                 elif node["Class"] == "Vehicle":
                     to_group(ob, "Vehicles")

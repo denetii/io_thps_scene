@@ -486,7 +486,19 @@ def export_col(filename, directory, target_game, operator=None):
             ttl = bm.faces.layers.int.get("terrain_type")
 
             # bm.verts.ensure_lookup_table()
+            # Face flags are output here!
             for face in bm.faces:
+                if face[cfl] & FACE_FLAGS["mFD_TRIGGER"]:
+                    if o.thug_triggerscript_props.triggerscript_type == "None" or \
+                    (o.thug_triggerscript_props.triggerscript_type == "Custom" and o.thug_triggerscript_props.custom_name == ""):
+                        # This object has a Trigger face, but no TriggerScript assigned
+                        # Normally this would crash the game, so let's create and assign a blank script!
+                        get_triggerscript("io_thps_scene_NullScript")
+                        o.thug_triggerscript_props.triggerscript_type = "Custom"
+                        o.thug_triggerscript_props.custom_name = "script_io_thps_scene_NullScript"
+                        LOG.debug("WARNING: Object {} has trigger faces but no TriggerScript. A blank script was assigned.".format(o.name))
+                        #raise Exception("Collision object " + o.name + " has a trigger face with no TriggerScript attached to the object! This is for your own safety!")
+                        
                 w("H", face[cfl] if cfl else 0)
                 tt = collision._resolve_face_terrain_type(o, bm, face)
                 w("H", tt)

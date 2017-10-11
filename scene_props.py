@@ -32,6 +32,7 @@ class THUGEmptyProps(bpy.types.PropertyGroup):
         ("Pedestrian", "Pedestrian", "Not currently implemented."),
         ("Vehicle", "Vehicle", "Not currently implemented."),
         ("ProximNode", "Proximity Node", "Node that can fire events when objects are inside its radius."),
+        ("EmitterObject", "Emitter Object", "Node used to play audio streams (typically, ambient sounds in a level)."),
         ("GameObject", "Game Object", "CTF Flags, COMBO letters, etc."),
         ("BouncyObject", "Bouncy Object", "Legacy node type, not used, only for identification in imported levels."),
         ("ParticleObject", "Particle Object", "Used to preserve particle systems in imported levels."),
@@ -156,6 +157,13 @@ class THUGProximNodeProps(bpy.types.PropertyGroup):
     proxim_radius = IntProperty(name="Radius", min=0, max=1000000, default=150)
     
 
+#----------------------------------------------------------------------------------
+#- Emitter properties
+#----------------------------------------------------------------------------------
+class THUGEmitterProps(bpy.types.PropertyGroup):
+    emit_type = StringProperty(name="Type", default="BoundingBox")
+    emit_radius = FloatProperty(name="Radius", min=0, max=1000000, default=0)
+    
 #----------------------------------------------------------------------------------
 #- If you know of another thing GenericNode is used for, let me know!
 #----------------------------------------------------------------------------------
@@ -464,6 +472,7 @@ def register_props():
     bpy.types.Object.thug_triggerscript_props = PointerProperty(type=THUGObjectTriggerScriptProps)
     bpy.types.Object.thug_empty_props = PointerProperty(type=THUGEmptyProps)
     bpy.types.Object.thug_proxim_props = PointerProperty(type=THUGProximNodeProps)
+    bpy.types.Object.thug_emitter_props = PointerProperty(type=THUGEmitterProps)
     bpy.types.Object.thug_generic_props = PointerProperty(type=THUGGenericNodeProps)
     bpy.types.Object.thug_restart_props = PointerProperty(type=THUGRestartProps)
     bpy.types.Object.thug_go_props = PointerProperty(type=THUGGameObjectProps)

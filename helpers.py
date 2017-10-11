@@ -24,6 +24,15 @@ def to_group(blender_object, group_name):
         group.objects.link(blender_object)
         
 #----------------------------------------------------------------------------------
+#- Auto-creates (if needed) and returns a TriggerScript with the given name
+#----------------------------------------------------------------------------------
+def get_triggerscript(script_name):
+    script_text = bpy.data.texts.get("script_" + script_name, None)
+    if not script_text:
+        script_text = bpy.data.texts.new(name="script_" + script_name)
+    return script_text
+
+#----------------------------------------------------------------------------------
 def get_index(seq, value, key=lambda x: x, default=-1):
     i = 0
     for item in seq:
