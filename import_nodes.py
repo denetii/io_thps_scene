@@ -271,6 +271,8 @@ def import_nodearray(gamemode):
                     curveOB.data.thug_pathnode_triggers[i].spawnobjscript = _pnode["spawnobjscript"]
                     
                 # Assign skater AI properties (if defined!)
+                if "Type" in _pnode and _pnode["Type"] != "":
+                    curveOB.data.thug_pathnode_triggers[i].waypt_type = _pnode["Type"]
                 if "PedType" in _pnode and _pnode["PedType"] != "":
                     curveOB.data.thug_pathnode_triggers[i].PedType = _pnode["PedType"]
                 if "Continue" in _pnode:
@@ -715,6 +717,8 @@ def import_nodearray(gamemode):
                         ob.thug_veh_props.veh_type = node["Type"]
                     if "model" in node:
                         ob.thug_veh_props.veh_model = node["model"]
+                    if "Model" in node:
+                        ob.thug_veh_props.veh_model = node["Model"]
                     if "SkeletonName" in node:
                         ob.thug_veh_props.veh_skeleton = node["SkeletonName"]
                     if "SuspendDistance" in node:
@@ -723,8 +727,14 @@ def import_nodearray(gamemode):
                         ob.thug_veh_props.veh_norail = True
                     if "NoSkitch" in node:
                         ob.thug_veh_props.veh_noskitch = True
-                    # more stuff goes here later!
-                    
+                    if "UseModelLights" in node:
+                        ob.thug_veh_props.veh_usemodellights = True
+                    if "AllowReplaceTex" in node:
+                        ob.thug_veh_props.veh_allowreplacetex = True
+                    # We definitely need a model for vehicles or the game will crash
+                    if ob.thug_veh_props.veh_model == "":
+                        raise Exception("Model path for Vehicle " + ob.name + " was not found.")
+                        
                 elif node["Class"] == "GameObject":
                     try:
                         ob.thug_empty_props.empty_type = "GameObject"

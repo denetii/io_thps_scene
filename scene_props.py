@@ -225,6 +225,7 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
 #----------------------------------------------------------------------------------
 class THUGPathNodeProps(bpy.types.PropertyGroup):
     name = StringProperty(name="Node Name")
+    waypt_type = StringProperty(name="Type")
     script_name = StringProperty(name="TriggerScript Name")
     terrain = StringProperty(name="Terrain Type")
     spawnobjscript = StringProperty(name="SpawnObj Script")
@@ -288,6 +289,8 @@ class THUGVehicleProps(bpy.types.PropertyGroup):
     veh_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
     veh_norail = BoolProperty(name="No Rails", default=False, description="Vehicle will not have any rails (even if the model does).")
     veh_noskitch = BoolProperty(name="No Skitch", default=False, description="Vehicle cannot be skitched.")
+    veh_usemodellights = BoolProperty(name="Use Model Lights", default=False)
+    veh_allowreplacetex = BoolProperty(name="Texture Replacement", default=False, description="Allow model textures to be changed by scripts.")
     
 def thug_light_update(self, context):
     if context.object.type == "LAMP" and context.object.data.type == "POINT":

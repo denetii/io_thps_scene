@@ -564,6 +564,11 @@ def export_qb(filename, directory, target_game, operator=None):
                         p("\t\t:i {}".format(c("NoRail")))
                     if ob.thug_veh_props.veh_noskitch == True:
                         p("\t\t:i {}".format(c("NoSkitch")))
+                    if ob.thug_veh_props.veh_usemodellights == True:
+                        p("\t\t:i {}".format(c("UseModelLights")))
+                    if ob.thug_veh_props.veh_allowreplacetex == True:
+                        p("\t\t:i {}".format(c("AllowReplaceTex")))
+                        
                     p("\t\t:i {} = {}".format(c("lod_dist1"), i(1024)))
                     p("\t\t:i {} = {}".format(c("lod_dist2"), i(2048)))
                     

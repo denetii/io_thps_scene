@@ -294,14 +294,19 @@ def _export_rails(p, c, operator=None):
     obj_rail_node_start_offset_counter = rail_node_counter
     obj_rail_node_start_offsets = {}
     for ob in bpy.data.objects:
-        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): continue
+        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): 
+            continue
+        if ob.thug_path_type == "Custom" and ob.thug_node_expansion == "": 
+            continue # Path with no class will break the game!
         obj_rail_node_start_offsets[ob] = obj_rail_node_start_offset_counter
         for spline in ob.data.splines:
             obj_rail_node_start_offset_counter += len(spline.points)
 
     for ob in bpy.data.objects:
-        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): continue
-        if ob.thug_path_type == "Custom" and ob.thug_node_expansion == "": continue # Path with no class will break the game!
+        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): 
+            continue
+        if ob.thug_path_type == "Custom" and ob.thug_node_expansion == "": 
+            continue # Path with no class will break the game!
         
         clean_name = get_clean_name(ob)
         point_idx = 1
@@ -328,7 +333,9 @@ def _export_rails(p, c, operator=None):
                 elif ob.thug_path_type == "Waypoint":
                     p("\t\t:i {} = {}".format(c("Class"), c("Waypoint")))
                     #p("\t\t:i {} = {}".format(c("Type"), c("Default")))
-                    p("\t\t:i {} = {}".format(c("Angles"), v3((0, ob.rotation_euler[2], 0))))
+                    p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
+                    if ob.data.thug_pathnode_triggers[p_num].waypt_type != "":
+                        p("\t\t:i {} = {}".format(c("Type"), c(ob.data.thug_pathnode_triggers[p_num].waypt_type)))
                     name = "Waypoint_" + str(rail_node_counter)
                 elif ob.thug_path_type == "Custom":
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
@@ -372,7 +379,16 @@ def _export_rails(p, c, operator=None):
                             elif _skateaction == "Vert_Grab":
                                 p("\t\t:i {} = {}".format(c("SpinAngle"), f(ob.data.thug_pathnode_triggers[p_num].SpinAngle)))
                                 p("\t\t:i {} = {}".format(c("SpinDirection"), c(ob.data.thug_pathnode_triggers[p_num].SpinDirection)))
-                        
+                                
+                        # Walking ped logic goes here!
+                        elif ob.data.thug_pathnode_triggers[p_num].PedType == "Walk":
+                            if ob.data.thug_pathnode_triggers[p_num].do_continue:
+                                p("\t\t:i {}".format(c("Continue")))
+                                p("\t\t:i {} = {}".format(c("ContinueWeight"), f(ob.data.thug_pathnode_triggers[p_num].ContinueWeight)))
+                            #if ob.data.thug_pathnode_triggers[p_num].JumpToNextNode:
+                            #    p("\t\t:i {}".format(c("JumpToNextNode")))
+                            p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))
+                            
                 # No individual node properties are defined, so use the object-level settings    
                 else:
                     name = clean_name + "__" + str(point_idx - 1)
