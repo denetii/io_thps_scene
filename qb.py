@@ -289,9 +289,12 @@ def export_qb(filename, directory, target_game, operator=None):
                         p("\t\t:i {} = {}".format(c("skater_collision_rotation_factor"), i(col_ob.thug_levelobj_props.skater_collision_rotation_factor)))
                         p("\t\t:i {} = {}".format(c("skater_collision_assent"), i(col_ob.thug_levelobj_props.skater_collision_assent)))
                         p("\t\t:i {} = {}".format(c("skater_collision_radius"), i(col_ob.thug_levelobj_props.skater_collision_radius)))
-                        p("\t\t:i {} = {}".format(c("mass_over_moment"), f(col_ob.thug_levelobj_props.mass_over_moment)))
+                        if col_ob.thug_levelobj_props.mass_over_moment >= 0:
+                            p("\t\t:i {} = {}".format(c("mass_over_moment"), f(col_ob.thug_levelobj_props.mass_over_moment)))
                         if col_ob.thug_levelobj_props.stuckscript != "":
                             p("\t\t:i {} = {}".format(c("stuckscript"), c(col_ob.thug_levelobj_props.stuckscript)))
+                        if col_ob.thug_levelobj_props.SoundType != "":
+                            p("\t\t:i {} = {}".format(c("SoundType"), c(col_ob.thug_levelobj_props.SoundType)))
                         
                 if col_ob.thug_occluder:
                     p("\t\t:i {}".format(c("Occluder")))
@@ -459,8 +462,10 @@ def export_qb(filename, directory, target_game, operator=None):
                 # PARTICLE OBJECT NODE
                 elif ob.thug_empty_props.empty_type == "ParticleObject":
                     p("\t\t:i {} = {}".format(c("Class"), c("ParticleObject")))
-                    p("\t\t:i {} = {}".format(c("Type"), c("Default")))
+                    p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_particle_props.particle_profile)))
                     p("\t\t:i {} = {}".format(c("SuspendDistance"), i(ob.thug_particle_props.particle_suspend)))
+                    p("\t\t:i {} = {}".format(c("lod_dist1"), i(1024)))
+                    p("\t\t:i {} = {}".format(c("lod_dist2"), i(2048)))
                     p("\t\t:i {} = {}".format(c("BoxDimsStart"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsstart))))
                     p("\t\t:i {} = {}".format(c("BoxDimsMid"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsmid))))
                     p("\t\t:i {} = {}".format(c("BoxDimsEnd"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsend))))
@@ -472,34 +477,44 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {} = {}".format(c("Texture"), c(ob.thug_particle_props.particle_texture)))
                     if ob.thug_particle_props.particle_usemidpoint == True:
                         p("\t\t:i {}".format(c("UseMidPoint")))
-                    p("\t\t:i {} = {}".format(c("MidPointPCT"), i(ob.thug_particle_props.particle_midpointpct)))
+                    if ob.thug_particle_props.particle_midpointpct >= 0:
+                        p("\t\t:i {} = {}".format(c("MidPointPCT"), i(ob.thug_particle_props.particle_midpointpct)))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_particle_props.particle_type)))
                     p("\t\t:i {} = {}".format(c("BlendMode"), c(ob.thug_particle_props.particle_blendmode)))
                     p("\t\t:i {} = {}".format(c("FixedAlpha"), i(ob.thug_particle_props.particle_fixedalpha)))
-                    p("\t\t:i {} = {}".format(c("AlphaCutoff"), i(ob.thug_particle_props.particle_alphacutoff)))
+                    if ob.thug_particle_props.particle_alphacutoff >= 0:
+                        p("\t\t:i {} = {}".format(c("AlphaCutoff"), i(ob.thug_particle_props.particle_alphacutoff)))
                     p("\t\t:i {} = {}".format(c("MaxStreams"), i(ob.thug_particle_props.particle_maxstreams)))
                     p("\t\t:i {} = {}".format(c("EmitRate"), f(ob.thug_particle_props.particle_emitrate)))
-                    p("\t\t:i {} = {}".format(c("StartRadius"), f(ob.thug_particle_props.particle_radius[0])))
-                    p("\t\t:i {} = {}".format(c("MidRadius"), f(ob.thug_particle_props.particle_radius[1])))
-                    p("\t\t:i {} = {}".format(c("EndRadius"), f(ob.thug_particle_props.particle_radius[2])))
-                    p("\t\t:i {} = {}".format(c("StartRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[0])))
-                    p("\t\t:i {} = {}".format(c("MidRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[1])))
-                    p("\t\t:i {} = {}".format(c("EndRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[2])))
+                    if ob.thug_particle_props.particle_radius[0] >= 0:
+                        p("\t\t:i {} = {}".format(c("StartRadius"), f(ob.thug_particle_props.particle_radius[0])))
+                    if ob.thug_particle_props.particle_radius[1] >= 0:
+                        p("\t\t:i {} = {}".format(c("MidRadius"), f(ob.thug_particle_props.particle_radius[1])))
+                    if ob.thug_particle_props.particle_radius[2] >= 0:
+                        p("\t\t:i {} = {}".format(c("EndRadius"), f(ob.thug_particle_props.particle_radius[2])))
+                    if ob.thug_particle_props.particle_radiusspread[0] >= 0:
+                        p("\t\t:i {} = {}".format(c("StartRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[0])))
+                    if ob.thug_particle_props.particle_radiusspread[1] >= 0:
+                        p("\t\t:i {} = {}".format(c("MidRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[1])))
+                    if ob.thug_particle_props.particle_radiusspread[2] >= 0:
+                        p("\t\t:i {} = {}".format(c("EndRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[2])))
                     
                     if ob.thug_particle_props.EmitScript != "":
                         p("\t\t:i " + c("EmitScript") + " = :a{ " + c(ob.thug_particle_props.EmitScript) + " :a}")
-                    if ob.thug_particle_props.Force[0] > 0:
+                    if ob.thug_particle_props.Force[0] >= 0:
                         p("\t\t:i {} = {}".format(c("Force_X"), f(ob.thug_particle_props.Force[0])))
                         p("\t\t:i {} = {}".format(c("Force_Y"), f(ob.thug_particle_props.Force[1])))
                         p("\t\t:i {} = {}".format(c("Force_Z"), f(ob.thug_particle_props.Force[2])))
-                    if ob.thug_particle_props.Speed[0] > 0:
+                    if ob.thug_particle_props.Speed[0] >= 0:
                         p("\t\t:i {} = {}".format(c("SpeedMin"), f(ob.thug_particle_props.Speed[0])))
                         p("\t\t:i {} = {}".format(c("SpeedMax"), f(ob.thug_particle_props.Speed[1])))
-                    if ob.thug_particle_props.Width[0] > 0:
-                        p("\t\t:i {} = {}".format(c("EmitWidth"), f(ob.thug_particle_props.Width[0])))
-                        p("\t\t:i {} = {}".format(c("StartWidth"), f(ob.thug_particle_props.Width[1])))
-                        p("\t\t:i {} = {}".format(c("EndWidth"), f(ob.thug_particle_props.Width[2])))
-                    if ob.thug_particle_props.AngleSpread > 0:
+                    if ob.thug_particle_props.Size[0] >= 0:
+                        p("\t\t:i {} = {}".format(c("EmitWidth"), f(ob.thug_particle_props.Size[0])))
+                        p("\t\t:i {} = {}".format(c("EmitHeight"), f(ob.thug_particle_props.Size[1])))
+                    if ob.thug_particle_props.Width[0] >= 0:
+                        p("\t\t:i {} = {}".format(c("StartWidth"), f(ob.thug_particle_props.Width[0])))
+                        p("\t\t:i {} = {}".format(c("EndWidth"), f(ob.thug_particle_props.Width[1])))
+                    if ob.thug_particle_props.AngleSpread >= 0:
                         p("\t\t:i {} = {}".format(c("AngleSpread"), f(ob.thug_particle_props.AngleSpread)))
                         
                     if ob.thug_particle_props.UsePulseEmit:
@@ -519,7 +534,10 @@ def export_qb(filename, directory, target_game, operator=None):
                     else:
                         p("\t\t:i {} = {}".format(c("UseMidTime"), c("FALSE")))
                         
-                    if ob.thug_particle_props.EmitTarget[0] > 0:
+                    if ob.thug_particle_props.MidTime >= 0:
+                        p("\t\t:i {} = {}".format(c("MidTime"), i(ob.thug_particle_props.MidTime)))
+                    
+                    if ob.thug_particle_props.EmitTarget[0] >= 0:
                         p("\t\t:i {} = {}".format(c("EmitTarget_X"), f(ob.thug_particle_props.EmitTarget[0])))
                         p("\t\t:i {} = {}".format(c("EmitTarget_Y"), f(ob.thug_particle_props.EmitTarget[1])))
                         p("\t\t:i {} = {}".format(c("EmitTarget_Z"), f(ob.thug_particle_props.EmitTarget[2])))

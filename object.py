@@ -151,6 +151,7 @@ def _thug_object_settings_draw(self, context):
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_particle_props, "particle_radius")
             box.row().prop(ob.thug_particle_props, "particle_radiusspread")
+            box.row().prop(ob.thug_particle_props, "Size")
             box.row().prop(ob.thug_particle_props, "Width")
             box.row().prop(ob.thug_particle_props, "AngleSpread")
             box.row().prop(ob.thug_particle_props, "UseMidTime")

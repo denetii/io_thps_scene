@@ -533,6 +533,8 @@ def import_nodearray(gamemode):
                                 script_text = bpy.data.texts.new(name="script_" + node["stuckscript"])
                         
                         ob.thug_levelobj_props.stuckscript = node["stuckscript"]
+                    if "SoundType" in node:
+                        ob.thug_levelobj_props.SoundType = node["SoundType"]
                         
                 elif node["Class"] == "Restart":
                     to_group(ob, "Restarts")
@@ -637,6 +639,8 @@ def import_nodearray(gamemode):
                         ob.thug_particle_props.particle_texture = tmp_texture_name
                         if tmp_texture_name in bpy.data.images:
                             ob.image = tmp_texture_name
+                    if "Profile" in node:
+                        ob.thug_particle_props.particle_profile = node["Profile"]
                     if "Type" in node:
                         ob.thug_particle_props.particle_type = node["Type"]
                     if "BlendMode" in node:
@@ -695,11 +699,13 @@ def import_nodearray(gamemode):
                         ob.thug_particle_props.particle_endcolor[3] = float(int(node["EndAlpha"]) / 256)
                     # Particle width + start/end values
                     if "EmitWidth" in node:
-                        ob.thug_particle_props.Width[0] = node["EmitWidth"]
+                        ob.thug_particle_props.Size[0] = node["EmitWidth"]
+                    if "EmitHeight" in node:
+                        ob.thug_particle_props.Size[1] = node["EmitHeight"]
                     if "StartWidth" in node:
-                        ob.thug_particle_props.Width[1] = node["StartWidth"]
+                        ob.thug_particle_props.Width[0] = node["StartWidth"]
                     if "EndWidth" in node:
-                        ob.thug_particle_props.Width[2] = node["EndWidth"]
+                        ob.thug_particle_props.Width[1] = node["EndWidth"]
                         
                     if "Force_X" in node:
                         ob.thug_particle_props.Force[0] = node["Force_X"]

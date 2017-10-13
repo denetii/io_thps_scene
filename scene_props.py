@@ -219,6 +219,7 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
     skater_collision_radius = IntProperty(name="skater_collision_radius", min=0, max=1024, default=0)
     mass_over_moment = FloatProperty(name="mass_over_moment", min=0, max=1024, default=-1, description="Use value of -1 to not export this property to the QB.")
     stuckscript = StringProperty(name="stuckscript")
+    SoundType = StringProperty(name="Sound", description="Sound used when colliding with the object.")
     
 #----------------------------------------------------------------------------------
 #- Properties for individual nodes along a path (rail, ladder, waypoints)
@@ -323,17 +324,18 @@ class THUGParticleProps(bpy.types.PropertyGroup):
     particle_endposition = FloatVectorProperty(name="End Position")
     
     particle_texture = StringProperty(name="Texture", description="Texture assigned to the particles.")
-    particle_usemidpoint = BoolProperty(name="Use Midpoint", default=True)
+    particle_usemidpoint = BoolProperty(name="Use Midpoint", default=False)
+    particle_profile = StringProperty(name="Profile", default="Default")
     particle_type = StringProperty(name="Type", default="NEWFLAT")
     particle_blendmode = StringProperty(name="Blend Mode", default="BLEND")
     particle_fixedalpha = IntProperty(name="Fixed Alpha", min=0, max=256, default=128)
-    particle_alphacutoff = IntProperty(name="Alpha Cutoff", min=0, max=256, default=1)
-    particle_maxstreams = IntProperty(name="Max Streams", min=0, max=256, default=2)
-    particle_emitrate = FloatProperty(name="Emit Rate", min=0, max=4096, default=50)
-    particle_lifetime = FloatProperty(name="Lifetime", min=0, max=128000, default=1)
-    particle_midpointpct = IntProperty(name="Midpoint Pct", min=0, max=100, default=50)
-    particle_radius = FloatVectorProperty(name="Radius", description="Start, mid and end radius.")
-    particle_radiusspread = FloatVectorProperty(name="Radius Spread")
+    particle_alphacutoff = IntProperty(name="Alpha Cutoff", soft_min=0, max=256, default=-1)
+    particle_maxstreams = IntProperty(name="Max Streams", soft_min=0, max=256, default=-1)
+    particle_emitrate = FloatProperty(name="Emit Rate", soft_min=0, max=4096, default=-1)
+    particle_lifetime = FloatProperty(name="Lifetime", soft_min=0, max=128000, default=-1)
+    particle_midpointpct = IntProperty(name="Midpoint Pct", soft_min=0, max=100, default=-1)
+    particle_radius = FloatVectorProperty(name="Radius", description="Start, mid and end radius.", default=(-1,-1,-1))
+    particle_radiusspread = FloatVectorProperty(name="Radius Spread", default=(-1, -1, -1))
     particle_startcolor = FloatVectorProperty(name="Start Color",
                            subtype='COLOR',
                            default=(1.0, 1.0, 1.0, 1.0),
@@ -361,7 +363,8 @@ class THUGParticleProps(bpy.types.PropertyGroup):
     EmitScript = StringProperty(name="Emit Script")
     Force = FloatVectorProperty(name="Emit Force", size=3, soft_min=0, soft_max=4096, default=(-1, -1, -1))
     Speed = FloatVectorProperty(name="Speed", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
-    Width = FloatVectorProperty(name="Width", size=3, soft_min=0, soft_max=4096, default=(-1, -1, -1))
+    Size = FloatVectorProperty(name="Emit Size", description="Width/height.", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
+    Width = FloatVectorProperty(name="Start/End Width", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
     AngleSpread = FloatProperty(name="Angle Spread", soft_min=0, soft_max=4096, default=-1)
     UsePulseEmit = BoolProperty(name="UsePulseEmit", default=False)
     RandomEmitRate = BoolProperty(name="RandomEmitRate", default=False)
@@ -370,9 +373,9 @@ class THUGParticleProps(bpy.types.PropertyGroup):
     MidTime = IntProperty(name="MidTime", default=-1)
     EmitTarget = FloatVectorProperty(name="Emit Target", size=3, default=(-1, -1, -1))
     EmitRate1 = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
-    EmitRate1Delay = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
-    EmitRate2 = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
-    EmitRate2Delay = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
+    EmitRate1Delay = FloatVectorProperty(name="Emit Delay 1", size=3, default=(-1, -1, -1))
+    EmitRate2 = FloatVectorProperty(name="Emit Rate 2", size=3, default=(-1, -1, -1))
+    EmitRate2Delay = FloatVectorProperty(name="Emit Delay 2", size=3, default=(-1, -1, -1))
     
 # METHODS
 #############################################
