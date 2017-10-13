@@ -653,6 +653,8 @@ def import_nodearray(gamemode):
                         ob.thug_particle_props.particle_emitrate = node["EmitRate"]
                     if "Lifetime" in node:
                         ob.thug_particle_props.particle_lifetime = node["Lifetime"]
+                    if "LifetimeMax" in node:
+                        ob.thug_particle_props.particle_lifetime = node["LifetimeMax"]
                     if "UseMidPoint"in node:
                         ob.thug_particle_props.particle_usemidpoint = node["UseMidPoint"]
                     if "MidPointPCT" in node:
@@ -691,7 +693,70 @@ def import_nodearray(gamemode):
                         ob.thug_particle_props.particle_endcolor[2] = float(int(node["EndRGB"][2]) / 256)
                     if "EndAlpha" in node:
                         ob.thug_particle_props.particle_endcolor[3] = float(int(node["EndAlpha"]) / 256)
-                    
+                    # Particle width + start/end values
+                    if "EmitWidth" in node:
+                        ob.thug_particle_props.Width[0] = node["EmitWidth"]
+                    if "StartWidth" in node:
+                        ob.thug_particle_props.Width[1] = node["StartWidth"]
+                    if "EndWidth" in node:
+                        ob.thug_particle_props.Width[2] = node["EndWidth"]
+                        
+                    if "Force_X" in node:
+                        ob.thug_particle_props.Force[0] = node["Force_X"]
+                    if "Force_Y" in node:
+                        ob.thug_particle_props.Force[1] = node["Force_Y"]
+                    if "Force_Z" in node:
+                        ob.thug_particle_props.Force[2] = node["Force_Z"]
+                        
+                    if "SpeedMin" in node:
+                        ob.thug_particle_props.Speed[0] = node["SpeedMin"]
+                    if "SpeedMax" in node:
+                        ob.thug_particle_props.Speed[1] = node["SpeedMax"]
+                        
+                    if "EmitScript" in node:
+                        ob.thug_particle_props.EmitScript = node["EmitScript"][0]
+                    if "AngleSpread" in node:
+                        ob.thug_particle_props.AngleSpread = node["AngleSpread"]
+                        
+                    if "EmitTarget_X" in node:
+                        ob.thug_particle_props.EmitTarget[0] = node["EmitTarget_X"]
+                    if "EmitTarget_Y" in node:
+                        ob.thug_particle_props.EmitTarget[1] = node["EmitTarget_Y"]
+                    if "EmitTarget_Z" in node:
+                        ob.thug_particle_props.EmitTarget[2] = node["EmitTarget_Z"]
+                        
+                    if "UsePulseEmit" in node and node["UsePulseEmit"] == "TRUE":
+                        ob.thug_particle_props.UsePulseEmit = True
+                    if "RandomEmitRate" in node and node["RandomEmitRate"] == "TRUE":
+                        ob.thug_particle_props.RandomEmitRate = True
+                    if "RandomEmitDelay" in node and node["RandomEmitDelay"] == "TRUE":
+                        ob.thug_particle_props.RandomEmitDelay = True
+                        
+                    if "EmitRate1" in node:
+                        ob.thug_particle_props.EmitRate1[0] = node["EmitRate1"]
+                    if "EmitRate1Rnd" in node:
+                        ob.thug_particle_props.EmitRate1[1] = node["EmitRate1Rnd"][0]
+                        ob.thug_particle_props.EmitRate1[2] = node["EmitRate1Rnd"][1]
+                        
+                    if "EmitRate1Delay" in node:
+                        ob.thug_particle_props.EmitRate1Delay[0] = node["EmitRate1Delay"]
+                    if "EmitRate1DelayRnd" in node:
+                        ob.thug_particle_props.EmitRate1Delay[1] = node["EmitRate1DelayRnd"][0]
+                        ob.thug_particle_props.EmitRate1Delay[2] = node["EmitRate1DelayRnd"][1]
+                        
+                    if "EmitRate2" in node:
+                        ob.thug_particle_props.EmitRate2[0] = node["EmitRate2"]
+                    if "EmitRate2Rnd" in node:
+                        ob.thug_particle_props.EmitRate2[1] = node["EmitRate2Rnd"][0]
+                        ob.thug_particle_props.EmitRate2[2] = node["EmitRate2Rnd"][1]
+                        
+                    if "EmitRate2Delay" in node:
+                        ob.thug_particle_props.EmitRate2Delay[0] = node["EmitRate2Delay"]
+                    if "EmitRate2DelayRnd" in node:
+                        ob.thug_particle_props.EmitRate2Delay[1] = node["EmitRate2DelayRnd"][0]
+                        ob.thug_particle_props.EmitRate2Delay[2] = node["EmitRate2DelayRnd"][1]
+                        
+                        
                 elif node["Class"] == "Pedestrian":
                     to_group(ob, "Pedestrians")
                     ob.thug_empty_props.empty_type = "Pedestrian"
@@ -699,6 +764,16 @@ def import_nodearray(gamemode):
                         ob.thug_ped_props.ped_type = node["Type"]
                     if "profile" in node:
                         ob.thug_ped_props.ped_profile = node["profile"]
+                        ob.thug_ped_props.ped_source = "Profile"
+                    elif "model" in node:
+                        ob.thug_ped_props.ped_model = node["model"]
+                        ob.thug_ped_props.ped_source = "Model"
+                    elif "Model" in node:
+                        ob.thug_ped_props.ped_model = node["Model"]
+                        ob.thug_ped_props.ped_source = "Model"
+                    
+                    if "NoPedLogic" in node:
+                        ob.thug_ped_props.ped_nologic = True
                     if "SuspendDistance" in node:
                         ob.thug_ped_props.ped_suspend = node["SuspendDistance"]
                     if "AnimName" in node:

@@ -20,6 +20,9 @@ from . qb import *
 def _thug_object_settings_draw(self, context):
     if not context.object: return
     ob = context.object
+    # ********************************************************
+    # * LEVEL LIGHT
+    # ********************************************************
     if ob.type == "LAMP" and ob.data.type == "POINT":
         self.layout.row().prop(ob, "thug_created_at_start")
         self.layout.row().prop(ob, "thug_network_option")
@@ -32,6 +35,9 @@ def _thug_object_settings_draw(self, context):
         
     elif ob.type == "EMPTY":
         self.layout.row().prop(ob.thug_empty_props, "empty_type")
+        # ********************************************************
+        # * RESTART
+        # ********************************************************
         if ob.thug_empty_props.empty_type == "Restart":
             self.layout.row().prop(ob.thug_restart_props, "restart_type")
             self.layout.row().prop(ob.thug_restart_props, "restart_name")
@@ -43,17 +49,29 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_restart_props, "restart_multi")
             box.row().prop(ob.thug_restart_props, "restart_horse")
             box.row().prop(ob.thug_restart_props, "restart_ctf")
+        # ********************************************************
+        # * PROXIMNODE 
+        # ********************************************************
         elif ob.thug_empty_props.empty_type == "ProximNode":
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_proxim_props, "proxim_type")
             box.row().prop(ob.thug_proxim_props, "proxim_shape")
             box.row().prop(ob.thug_proxim_props, "proxim_radius")
+        # ********************************************************
+        # * EMITTER OBJECT
+        # ********************************************************
         elif ob.thug_empty_props.empty_type == "EmitterObject":
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_emitter_props, "emit_type")
             box.row().prop(ob.thug_emitter_props, "emit_radius")
+        # ********************************************************
+        # * GENERIC
+        # ********************************************************
         elif ob.thug_empty_props.empty_type == "GenericNode":
             self.layout.row().prop(ob.thug_generic_props, "generic_type")
+        # ********************************************************
+        # * GAME OBJECT
+        # ********************************************************
         elif ob.thug_empty_props.empty_type == "GameObject":
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_go_props, "go_type")
@@ -61,14 +79,24 @@ def _thug_object_settings_draw(self, context):
                 box.row().prop(ob.thug_go_props, "go_type_other")
                 box.row().prop(ob.thug_go_props, "go_model")
             box.row().prop(ob.thug_go_props, "go_suspend")
+        # ********************************************************
+        # * PEDESTRIAN
+        # ********************************************************
         elif ob.thug_empty_props.empty_type == "Pedestrian":
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_ped_props, "ped_type")
-            box.row().prop(ob.thug_ped_props, "ped_profile")
+            box.row().prop(ob.thug_ped_props, "ped_source", expand=True)
+            if ob.thug_ped_props.ped_source == "Profile":
+                box.row().prop(ob.thug_ped_props, "ped_profile")
+            else:
+                box.row().prop(ob.thug_ped_props, "ped_model")
             box.row().prop(ob.thug_ped_props, "ped_skeleton")
             box.row().prop(ob.thug_ped_props, "ped_animset")
             box.row().prop(ob.thug_ped_props, "ped_extra_anims")
             box.row().prop(ob.thug_ped_props, "ped_suspend")
+        # ********************************************************
+        # * VEHICLE
+        # ********************************************************
         elif ob.thug_empty_props.empty_type == "Vehicle":
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_veh_props, "veh_type")
@@ -80,6 +108,10 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_veh_props, "veh_suspend")
             box.row().prop(ob.thug_veh_props, "veh_norail")
             box.row().prop(ob.thug_veh_props, "veh_noskitch")
+            
+        # ********************************************************
+        # * PARTICLE OBJECT
+        # ********************************************************
         elif ob.thug_empty_props.empty_type == "ParticleObject":
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_particle_props, "particle_boxdimsstart")
@@ -94,11 +126,6 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_particle_props, "particle_suspend")
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_particle_props, "particle_texture")
-            #box.row().prop_search(
-            #    ob.thug_particle_props,
-            #    "particle_texture",
-            #    bpy.data,
-            #    "images")
             box.row().prop(ob.thug_particle_props, "particle_type")
             box.row().prop(ob.thug_particle_props, "particle_blendmode")
             box.row().prop(ob.thug_particle_props, "particle_fixedalpha")
@@ -109,9 +136,26 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_particle_props, "particle_lifetime")
             box.row().prop(ob.thug_particle_props, "particle_usemidpoint")
             box.row().prop(ob.thug_particle_props, "particle_midpointpct")
+            box.row().prop(ob.thug_particle_props, "EmitScript")
+            box.row().prop(ob.thug_particle_props, "Force")
+            box.row().prop(ob.thug_particle_props, "Speed")
+            box.row().prop(ob.thug_particle_props, "EmitTarget")
+            box.row().prop(ob.thug_particle_props, "UsePulseEmit")
+            box.row().prop(ob.thug_particle_props, "RandomEmitRate")
+            box.row().prop(ob.thug_particle_props, "RandomEmitDelay")
+            box.row().prop(ob.thug_particle_props, "EmitRate1")
+            box.row().prop(ob.thug_particle_props, "EmitRate1Delay")
+            box.row().prop(ob.thug_particle_props, "EmitRate2")
+            box.row().prop(ob.thug_particle_props, "EmitRate2Delay")
+            
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_particle_props, "particle_radius")
             box.row().prop(ob.thug_particle_props, "particle_radiusspread")
+            box.row().prop(ob.thug_particle_props, "Width")
+            box.row().prop(ob.thug_particle_props, "AngleSpread")
+            box.row().prop(ob.thug_particle_props, "UseMidTime")
+            if ob.thug_particle_props.UseMidTime:
+                box.row().prop(ob.thug_particle_props, "MidTime")
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_particle_props, "particle_startcolor")
             box.row().prop(ob.thug_particle_props, "particle_usecolormidtime")

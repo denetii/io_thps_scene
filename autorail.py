@@ -293,14 +293,14 @@ def _export_rails(p, c, operator=None):
 
     obj_rail_node_start_offset_counter = rail_node_counter
     obj_rail_node_start_offsets = {}
-    for ob in bpy.data.objects:
-        if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): 
-            continue
-        if ob.thug_path_type == "Custom" and ob.thug_node_expansion == "": 
-            continue # Path with no class will break the game!
-        obj_rail_node_start_offsets[ob] = obj_rail_node_start_offset_counter
-        for spline in ob.data.splines:
-            obj_rail_node_start_offset_counter += len(spline.points)
+    #for ob in bpy.data.objects:
+    #    if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): 
+    #        continue
+    #    if ob.thug_path_type == "Custom" and ob.thug_node_expansion == "": 
+    #        continue # Path with no class will break the game!
+    #    obj_rail_node_start_offsets[ob] = obj_rail_node_start_offset_counter
+    #    for spline in ob.data.splines:
+    #        obj_rail_node_start_offset_counter += len(spline.points)
 
     for ob in bpy.data.objects:
         if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): 
@@ -311,6 +311,8 @@ def _export_rails(p, c, operator=None):
         clean_name = get_clean_name(ob)
         point_idx = 1
         first_node_idx = rail_node_counter
+        if not (ob.name in obj_rail_node_start_offsets):
+            obj_rail_node_start_offsets[ob.name] = first_node_idx
         for spline in ob.data.splines:
             points = spline.points
             point_count = len(points)
@@ -434,10 +436,10 @@ def _export_rails(p, c, operator=None):
                         operator.report({"ERROR"}, "Rail {} connects to nonexistent rail {}".format(ob.name, ob.thug_rail_connects_to))
                     else:
                         connected_to = bpy.data.objects[ob.thug_rail_connects_to]
-                        if connected_to in obj_rail_node_start_offsets:
+                        if connected_to.name in obj_rail_node_start_offsets:
                             p("\t\t:i {} = :a{{{}:a}}".format(
                                 c("Links"),
-                                i(obj_rail_node_start_offsets[connected_to])))
+                                i(obj_rail_node_start_offsets[connected_to.name])))
 
                 p("\t:i :s}")
                 point_idx += 1

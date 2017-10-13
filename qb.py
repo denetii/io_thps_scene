@@ -486,6 +486,58 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {} = {}".format(c("MidRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[1])))
                     p("\t\t:i {} = {}".format(c("EndRadiusSpread"), f(ob.thug_particle_props.particle_radiusspread[2])))
                     
+                    if ob.thug_particle_props.EmitScript != "":
+                        p("\t\t:i " + c("EmitScript") + " = :a{ " + c(ob.thug_particle_props.EmitScript) + " :a}")
+                    if ob.thug_particle_props.Force[0] > 0:
+                        p("\t\t:i {} = {}".format(c("Force_X"), f(ob.thug_particle_props.Force[0])))
+                        p("\t\t:i {} = {}".format(c("Force_Y"), f(ob.thug_particle_props.Force[1])))
+                        p("\t\t:i {} = {}".format(c("Force_Z"), f(ob.thug_particle_props.Force[2])))
+                    if ob.thug_particle_props.Speed[0] > 0:
+                        p("\t\t:i {} = {}".format(c("SpeedMin"), f(ob.thug_particle_props.Speed[0])))
+                        p("\t\t:i {} = {}".format(c("SpeedMax"), f(ob.thug_particle_props.Speed[1])))
+                    if ob.thug_particle_props.Width[0] > 0:
+                        p("\t\t:i {} = {}".format(c("EmitWidth"), f(ob.thug_particle_props.Width[0])))
+                        p("\t\t:i {} = {}".format(c("StartWidth"), f(ob.thug_particle_props.Width[1])))
+                        p("\t\t:i {} = {}".format(c("EndWidth"), f(ob.thug_particle_props.Width[2])))
+                    if ob.thug_particle_props.AngleSpread > 0:
+                        p("\t\t:i {} = {}".format(c("AngleSpread"), f(ob.thug_particle_props.AngleSpread)))
+                        
+                    if ob.thug_particle_props.UsePulseEmit:
+                        p("\t\t:i {} = {}".format(c("UsePulseEmit"), c("TRUE")))
+                    else:
+                        p("\t\t:i {} = {}".format(c("UsePulseEmit"), c("FALSE")))
+                    if ob.thug_particle_props.RandomEmitRate:
+                        p("\t\t:i {} = {}".format(c("RandomEmitRate"), c("TRUE")))
+                    else:
+                        p("\t\t:i {} = {}".format(c("RandomEmitRate"), c("FALSE")))
+                    if ob.thug_particle_props.RandomEmitDelay:
+                        p("\t\t:i {} = {}".format(c("RandomEmitDelay"), c("TRUE")))
+                    else:
+                        p("\t\t:i {} = {}".format(c("RandomEmitDelay"), c("FALSE")))
+                    if ob.thug_particle_props.UseMidTime:
+                        p("\t\t:i {} = {}".format(c("UseMidTime"), c("TRUE")))
+                    else:
+                        p("\t\t:i {} = {}".format(c("UseMidTime"), c("FALSE")))
+                        
+                    if ob.thug_particle_props.EmitTarget[0] > 0:
+                        p("\t\t:i {} = {}".format(c("EmitTarget_X"), f(ob.thug_particle_props.EmitTarget[0])))
+                        p("\t\t:i {} = {}".format(c("EmitTarget_Y"), f(ob.thug_particle_props.EmitTarget[1])))
+                        p("\t\t:i {} = {}".format(c("EmitTarget_Z"), f(ob.thug_particle_props.EmitTarget[2])))
+                        
+                    if ob.thug_particle_props.EmitRate1[0] > 0:
+                        p("\t\t:i {} = {}".format(c("EmitRate1"), f(ob.thug_particle_props.EmitRate1[0])))
+                        p("\t\t:i {} = {} ; {}".format(c("EmitRate1Rnd"), i(int(ob.thug_particle_props.EmitRate1[1])), i(int(ob.thug_particle_props.EmitRate1[2]))))
+                    if ob.thug_particle_props.EmitRate1Delay[0] > 0:
+                        p("\t\t:i {} = {}".format(c("EmitRate1Delay"), f(ob.thug_particle_props.EmitRate1Delay[0])))
+                        p("\t\t:i {} = {} ; {}".format(c("EmitRate1DelayRnd"), i(int(ob.thug_particle_props.EmitRate1Delay[1])), i(int(ob.thug_particle_props.EmitRate1Delay[2]))))
+                    if ob.thug_particle_props.EmitRate2[0] > 0:
+                        p("\t\t:i {} = {}".format(c("EmitRate2"), f(ob.thug_particle_props.EmitRate2[0])))
+                        p("\t\t:i {} = {} ; {}".format(c("EmitRate2Rnd"), i(int(ob.thug_particle_props.EmitRate2[1])), i(int(ob.thug_particle_props.EmitRate2[2]))))
+                    if ob.thug_particle_props.EmitRate2Delay[0] > 0:
+                        p("\t\t:i {} = {}".format(c("EmitRate2Delay"), f(ob.thug_particle_props.EmitRate2Delay[0])))
+                        p("\t\t:i {} = {} ; {}".format(c("EmitRate2DelayRnd"), i(int(ob.thug_particle_props.EmitRate2Delay[1])), i(int(ob.thug_particle_props.EmitRate2Delay[2]))))
+                        
+                        
                     start_color = [ int(ob.thug_particle_props.particle_startcolor[0] * 256), 
                                     int(ob.thug_particle_props.particle_startcolor[1] * 256) , 
                                     int(ob.thug_particle_props.particle_startcolor[2] * 256) , 
@@ -544,7 +596,12 @@ def export_qb(filename, directory, target_game, operator=None):
                 elif ob.thug_empty_props.empty_type == "Pedestrian":
                     p("\t\t:i {} = {}".format(c("Class"), c("Pedestrian")))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_ped_props.ped_type)))
-                    p("\t\t:i {} = {}".format(c("profile"), c(ob.thug_ped_props.ped_profile)))
+                    if ob.thug_ped_props.ped_source == "Profile":
+                        p("\t\t:i {} = {}".format(c("profile"), c(ob.thug_ped_props.ped_profile)))
+                    else:
+                        p("\t\t:i {} = {}".format(c("model"), blub_str(ob.thug_ped_props.ped_model)))
+                    if ob.thug_ped_props.ped_nologic:
+                        p("\t\t:i {}".format(c("NoPedLogic")))
                     p("\t\t:i {} = {}".format(c("SkeletonName"), c(ob.thug_ped_props.ped_skeleton)))
                     p("\t\t:i {} = {}".format(c("AnimName"), c(ob.thug_ped_props.ped_animset)))
                     if ob.thug_ped_props.ped_extra_anims != "":
@@ -599,10 +656,10 @@ def export_qb(filename, directory, target_game, operator=None):
                         operator.report({"ERROR"}, "Object {} connects to nonexistent path {}".format(ob.name, ob.thug_rail_connects_to))
                     else:
                         connected_to = bpy.data.objects[ob.thug_rail_connects_to]
-                        if connected_to in rail_node_offsets:
+                        if connected_to.name in rail_node_offsets:
                             p("\t\t:i {} = :a{{{}:a}}".format(
                                 c("Links"),
-                                i(rail_node_offsets[connected_to])))
+                                i(rail_node_offsets[connected_to.name])))
 
                 if ob.thug_node_expansion:
                     p("\t\t:i {}".format(c(ob.thug_node_expansion)))

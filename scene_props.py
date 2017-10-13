@@ -217,7 +217,7 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
     skater_collision_rotation_factor = IntProperty(name="skater_collision_rotation_factor", min=0, max=1024, default=1)
     skater_collision_assent = IntProperty(name="skater_collision_assent", min=0, max=1024, default=0)
     skater_collision_radius = IntProperty(name="skater_collision_radius", min=0, max=1024, default=0)
-    mass_over_moment = FloatProperty(name="mass_over_moment", min=0, max=1024, default=0)
+    mass_over_moment = FloatProperty(name="mass_over_moment", min=0, max=1024, default=-1, description="Use value of -1 to not export this property to the QB.")
     stuckscript = StringProperty(name="stuckscript")
     
 #----------------------------------------------------------------------------------
@@ -273,11 +273,17 @@ class THUGRestartProps(bpy.types.PropertyGroup):
 #----------------------------------------------------------------------------------
 class THUGPedestrianProps(bpy.types.PropertyGroup):
     ped_type = StringProperty(name="Type", default="Ped_From_Profile")
+    ped_source = EnumProperty(name="Source", items=(
+        ( 'Profile', 'Profile', 'Pedestrian model is defined in a profile.'),
+        ( 'Model', 'Model', 'Use an explicit path to the mdl file.')
+    ), default="Profile")
     ped_profile = StringProperty(name="Profile", default="random_male_profile", description="Pedestrian profile name.")
     ped_skeleton = StringProperty(name="Skeleton", default="THPS5_human")
     ped_animset = StringProperty(name="Anim Set", default="animload_THPS5_human", description="Anim set to load for this pedestrian.")
     ped_extra_anims = StringProperty(name="Extra Anims", description="Additional anim sets to load.")
     ped_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
+    ped_model = StringProperty(name="Model", default="", description="Relative path to mdl file.")
+    ped_nologic = BoolProperty(name="No Logic", default=False, description="Pedestrian will not have any logic, only animations.")
     
 #----------------------------------------------------------------------------------
 #- Vehicle properties
@@ -350,6 +356,23 @@ class THUGParticleProps(bpy.types.PropertyGroup):
                            description="End Color (with alpha).")
     particle_suspend = IntProperty(name="Suspend Distance", description="Distance at which the system pauses.", min=0, max=1000000, default=0)
     
+    # Even more particle properties that I missed the first time!
+    #EmitSize = FloatVectorProperty(name="Emit Size", size=3, min=0, max=4096, default=16)
+    EmitScript = StringProperty(name="Emit Script")
+    Force = FloatVectorProperty(name="Emit Force", size=3, soft_min=0, soft_max=4096, default=(-1, -1, -1))
+    Speed = FloatVectorProperty(name="Speed", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
+    Width = FloatVectorProperty(name="Width", size=3, soft_min=0, soft_max=4096, default=(-1, -1, -1))
+    AngleSpread = FloatProperty(name="Angle Spread", soft_min=0, soft_max=4096, default=-1)
+    UsePulseEmit = BoolProperty(name="UsePulseEmit", default=False)
+    RandomEmitRate = BoolProperty(name="RandomEmitRate", default=False)
+    RandomEmitDelay = BoolProperty(name="RandomEmitDelay", default=False)
+    UseMidTime = BoolProperty(name="UseMidTime", default=False)
+    MidTime = IntProperty(name="MidTime", default=-1)
+    EmitTarget = FloatVectorProperty(name="Emit Target", size=3, default=(-1, -1, -1))
+    EmitRate1 = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
+    EmitRate1Delay = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
+    EmitRate2 = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
+    EmitRate2Delay = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
     
 # METHODS
 #############################################
