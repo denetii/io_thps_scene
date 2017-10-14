@@ -149,7 +149,7 @@ class THUGProximNodeProps(bpy.types.PropertyGroup):
     name="Type", default="Camera")
     proxim_shape = EnumProperty(items=(
         ("BoundingBox", "Bounding Box", ""), 
-        ("BoundingSphere", "Bounding Sphere", "")), 
+        ("Sphere", "Sphere", "")), 
     name="Shape", default="BoundingBox")
     proxim_object = BoolProperty(name="Object", default=True)
     proxim_rendertoviewport = BoolProperty(name="RenderToViewport", default=True)

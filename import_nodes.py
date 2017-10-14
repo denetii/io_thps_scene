@@ -158,7 +158,7 @@ def get_linked_path(node, node_type):
         
 #----------------------------------------------------------------------------------
 #- Processes the node array found in the 'NodeArray' text block
-#- 'gamemode' must be one of: 'THPS', 'THUG', 'THAW'
+#- 'gamemode' must be one of: 'THPS3', 'THPS4', 'THUG'
 #----------------------------------------------------------------------------------
 def import_nodearray(gamemode):
     if not 'NodeArray' in globals():
@@ -232,7 +232,7 @@ def import_nodearray(gamemode):
             for i, coord in enumerate(rail_nodes[0]):
                 #print("Adding point " + str(i))
                 x,y,z = coord
-                if gamemode == 'THAW':
+                if gamemode == 'THUG':
                     polyline.points[i].co = (x, -z, y, 1)
                 else:
                     polyline.points[i].co = (x, z, y, 1)
@@ -378,7 +378,7 @@ def import_nodearray(gamemode):
                     
                 ob = bpy.data.objects.new(name=node["Name"], object_data=lamp_data )
                 ob.location[0] = node["Position"][0]
-                if gamemode == 'THAW':
+                if gamemode == 'THUG':
                     ob.location[1] = -node["Position"][2]
                 else:
                     ob.location[1] = node["Position"][2]
@@ -432,14 +432,14 @@ def import_nodearray(gamemode):
                     ob.empty_draw_type = 'ARROWS'
                     ob.empty_draw_size = 108
                 ob.location[0] = node["Position"][0]
-                if gamemode == 'THAW':
+                if gamemode == 'THUG':
                     ob.location[1] = -node["Position"][2]
                 else:
                     ob.location[1] = node["Position"][2]
                 ob.location[2] = node["Position"][1]
                 
                 ob.rotation_euler[0] = node["Angles"][0]
-                if gamemode == 'THAW':
+                if gamemode == 'THUG':
                     ob.rotation_euler[1] = -node["Angles"][2]
                 else:
                     ob.rotation_euler[1] = node["Angles"][2]
@@ -484,13 +484,13 @@ def import_nodearray(gamemode):
                     ob.location[0] = node["Position"][0]
                     # Reposition the LevelObject based on what is in the NodeArray
                     # When exported it is always at the origin
-                    if gamemode == 'THAW':
+                    if gamemode == 'THUG':
                         ob.location[1] = -node["Position"][2]
                     else:
                         ob.location[1] = node["Position"][2]
                     ob.location[2] = node["Position"][1]
                     ob.rotation_euler[0] = node["Angles"][0]
-                    if gamemode == 'THAW':
+                    if gamemode == 'THUG':
                         ob.rotation_euler[1] = -node["Angles"][2]
                     else:
                         ob.rotation_euler[1] = node["Angles"][2]
@@ -951,9 +951,9 @@ class THUGImportNodeArray(bpy.types.Operator):
     bl_label = "Import NodeArray"
     # bl_options = {'REGISTER', 'UNDO'}
     game_mode = EnumProperty(items=(
-        ("THPS", "THPS", "THPS3/4 games."),
-        ("THUG", "THUG", "THUG1/2 games."),
-        ("THAW", "THAW", "THAW and later games."),
+        ("THPS3", "THPS3", ""),
+        ("THPS4", "THPS4", ""),
+        ("THUG", "THUG+", "THUG and later games."),
         ), name="Game Mode", default="THUG")
 
     def execute(self, context):

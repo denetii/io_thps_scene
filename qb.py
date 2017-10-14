@@ -223,14 +223,14 @@ def export_qb(filename, directory, target_game, operator=None):
             # -----------------------------------------------------------------------------------------------------------
             if ob.type == "MESH" and not ob.get("thug_autosplit_object_no_export_hack"):
                 if ob.name.endswith("_SCN") and bpy.data.objects.get(ob.name[:-4]):
-                    print("Skipping scene mesh " + ob.name + ". It has a collision mesh we will work from")
+                    #print("Skipping scene mesh " + ob.name + ". It has a collision mesh we will work from")
                     continue
                 if ob.name.endswith("_COL"):
                     print("Special collision mesh: " + ob.name + ". It is not meant to be exported to the QB. Skipping...")
                     continue
                 col_ob = ob # Collision object may have different properties than the scene object (Triggers, etc)
                 if bpy.data.objects.get(ob.name + "_SCN"):
-                    print("Mesh " + ob.name + " also has a scene mesh. Using its properties instead!")
+                    #print("Mesh " + ob.name + " also has a scene mesh. Using its properties instead!")
                     ob = bpy.data.objects.get(ob.name + "_SCN")
                     
                 is_levelobject = col_ob.thug_object_class == "LevelObject"
