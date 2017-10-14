@@ -251,8 +251,8 @@ def do_export_model(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
 
-    addon_prefs = context.user_preferences.addons[__name__].preferences
-    base_files_dir_error = _get_base_files_dir_error(addon_prefs)
+    addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
+    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Aborting export.".format(base_files_dir_error))
         return {"CANCELLED"}
@@ -289,7 +289,7 @@ def do_export_model(operator, context, target_game):
         LOG.addHandler(logging_ch)
         LOG.setLevel(logging.DEBUG)
 
-        orig_objects, temporary_objects = _prepare_autosplit_objects(operator, context,target_game)
+        orig_objects, temporary_objects = autosplit._prepare_autosplit_objects(operator, context,target_game)
 
         path = j(directory, "Models/" + filename)
         md(path)
@@ -360,7 +360,7 @@ def do_export_model(operator, context, target_game):
         global_export_scale = 1
         LOG.removeHandler(logging_fh)
         LOG.removeHandler(logging_ch)
-        _cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)
+        autosplit._cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)
     return {'FINISHED'}
 
 

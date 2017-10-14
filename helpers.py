@@ -205,6 +205,103 @@ def get_scale_matrix(ob):
     matrix[1][1] = ob.scale[1]
     matrix[2][2] = ob.scale[2]
     return matrix
+    
+#----------------------------------------------------------------------------------
+def _generate_lambert_shading(ob):
+    # bpy.ops.object.select_all(action="DESELECT")
+    # bpy.ops.object.select_pattern(pattern=ob.name)
+    if not hasattr(ob.data, 'polygons') or len(ob.data.polygons) == 0:
+        LOG.debug("_generate_lambert_shading got a bad object! {}".format(ob))
+        return
+    for other_ob in bpy.context.selected_objects:
+        other_ob.select = False
+
+    mesh = ob.data
+    mixing = False
+    if not len(mesh.vertex_colors):
+        mesh.vertex_colors.new()
+    else:
+        mixing = True
+
+    mesh.vertex_colors[0].active = True
+    mesh.vertex_colors[0].active_render = True
+
+    LOG.debug("making shading for {}".format(ob))
+    # bpy.ops.object.mode_set(mode='EDIT')
+    if False:
+        bpy.context.scene.objects.active = ob
+        ob.select = True
+        bpy.context.scene.render.bake_type = "SHADOW"
+        bpy.context.scene.render.bake_normal_space = "WORLD"
+        bpy.context.scene.render.use_bake_to_vertex_color = True
+        bpy.context.scene.render.use_bake_selected_to_active = False
+        bpy.context.scene.render.use_bake_multires = False
+
+        bpy.ops.object.bake_image()
+
+        sun = bpy.data.objects.get("Sun")
+        if sun:
+            sun_dir = (sun.matrix_world * mathutils.Vector((0.0, 0.0, -1.0, 0.0))).to_3d()
+            sun_dir.x *= -1
+        else:
+            sun_dir = mathutils.Vector((0.5, 0.5, -0.5)).normalized()
+        half_vec = mathutils.Vector((0.5, 0.5, 0.5))
+        for loop_color in ob.data.vertex_colors[0].data:
+            normal = mathutils.Vector(loop_color.color)
+            normal -= half_vec
+            normal *= 2
+            sunlight_strength = sun_dir.dot(normal)
+
+            if sunlight_strength < 0:
+                sunlight_strength = 0
+            if sunlight_strength > 1:
+                sunlight_strength = 1
+            sunlight_strength *= 0.7
+            sunlight_strength += 0.3
+
+            loop_color.color = (sunlight_strength, sunlight_strength, sunlight_strength)
+    else:
+        sun = bpy.data.objects.get("Sun")
+        if sun and sun.type == "LAMP":
+            sun_dir = -(sun.matrix_world * mathutils.Vector((0.0, 0.0, -1, 0.0))).to_3d()
+            sun_color = sun.data.color * sun.data.energy
+        else:
+            sun_dir = mathutils.Vector((0.5, 0.5, 0.5)).normalized()
+            sun_color = mathutils.Color((0.6, 0.6, 0.6))
+
+        # ob.data.calc_tessface()
+        ob.data.calc_normals_split()
+
+        mat = ob.matrix_world.copy()
+        mat.invert()
+        mat.transpose()
+
+        ambient_color = mathutils.Color((1.0, 1.0, 1.0))
+        world = bpy.context.scene.world
+        if world and world.light_settings.use_environment_light:
+            ambient_color *= world.light_settings.environment_energy
+        else:
+            ambient_color *= 0.25
+
+        vcdata = ob.data.vertex_colors[0].data
+        for i, loop in enumerate(ob.data.loops):
+            normal = mat * mathutils.Vector((loop.normal[0], loop.normal[1], loop.normal[2], 0))
+            normal.normalize()
+            sunlight_strength = sun_dir.dot(normal)
+            if sunlight_strength < 0:
+                sunlight_strength = 0
+
+            c = ambient_color + (sun_color * sunlight_strength)
+
+            if mixing:
+                vcdata[i].color.r *= c.r
+                vcdata[i].color.g *= c.g
+                vcdata[i].color.b *= c.b
+            else:
+                vcdata[i].color = c
+
+        ob.data.update()
+        return
 
 # CLASSES
 #############################################

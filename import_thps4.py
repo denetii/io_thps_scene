@@ -212,6 +212,8 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
 
         blender_mesh = bpy.data.meshes.new("scn_mesh_" + str(sec_checksum))
         blender_object = bpy.data.objects.new("scn_" + str(sec_checksum), blender_mesh)
+        blender_object.thug_export_collision = False
+        to_group(blender_object, "SceneMesh")
         context.scene.objects.link(blender_object)
 
         bone_index = p("  bone index: {}", r.i32())

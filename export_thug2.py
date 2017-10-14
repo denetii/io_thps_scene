@@ -59,7 +59,7 @@ def export_scn_sectors_ug2(output_file, operator=None):
                     operator.generate_vertex_color_shading and
                     len(temporary_object.data.polygons) != 0 and
                     not ob.get("thug_this_is_autosplit_temp_object")):
-                    _generate_lambert_shading(temporary_object)
+                    helpers._generate_lambert_shading(temporary_object)
 
                 if helpers._need_to_flip_normals(ob):
                     helpers._flip_normals(temporary_object)

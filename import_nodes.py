@@ -401,6 +401,7 @@ def import_nodearray(gamemode):
                 elif node["Class"] == "EnvironmentObject" or node["Class"] == "LevelGeometry" or node["Class"] == "LevelObject":
                     ob.empty_draw_type = 'CONE'
                     ob.empty_draw_size = 32
+                    to_group(ob, "Missing Scene Mesh")
                 elif node["Class"] == "BouncyObject":
                     ob.empty_draw_type = 'CUBE'
                     ob.empty_draw_size = 32

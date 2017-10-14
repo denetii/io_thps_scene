@@ -997,7 +997,7 @@ def export_model_qb(filename, directory, target_game, operator=None):
         p("$" + filename + "_NodeArray$ =")
         p(":i :a{")
 
-        rail_custom_triggerscript_names, rail_generated_scripts = _export_rails(p, c, operator)
+        rail_custom_triggerscript_names, rail_generated_scripts, rail_node_offsets = autorail._export_rails(p, c, operator)
         custom_triggerscript_names += rail_custom_triggerscript_names
         generated_scripts.update(rail_generated_scripts)
 
