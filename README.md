@@ -13,13 +13,15 @@ scenes would export the same way, as well as imported levels.
 ## Change list
 Here's the full list of changes and bug fixes since the previous public release of `io_thug_tools`:
 
- - Added support for the following object/node types:
+ - Added import/export support for the following node types:
     * Level light
     * Pedestrian
     * Vehicle
     * ProximNode
     * Waypoint
     * GameObject
+    * ParticleObject
+    * EmitterObject
  - Added Network Options to objects, which lets you control how they appear in online play.
  - Added LightGroup setting for scene meshes
  - Name, terrain type, trigger scripts and skater AI properties can now be configured on individual points along a path
