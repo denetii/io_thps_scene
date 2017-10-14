@@ -523,8 +523,8 @@ def register_props():
 
     # bpy.utils.unregister_class(ExtractRail)
     # bpy.utils.register_class(ExtractRail)
-    bpy.utils.unregister_class(THUGImportNodeArray)
-    bpy.utils.register_class(THUGImportNodeArray)
+    # bpy.utils.unregister_class(THUGImportNodeArray)
+    # bpy.utils.register_class(THUGImportNodeArray)
     
     #_update_pathnodes_collections()
     
@@ -542,7 +542,7 @@ def unregister_props():
     bgl.glDeleteLists(draw_stuff_display_list_id, 1)
 
     # bpy.utils.unregister_class(ExtractRail)
-    bpy.utils.unregister_class(THUGImportNodeArray)
+    # bpy.utils.unregister_class(THUGImportNodeArray)
 
     global draw_handle
     if draw_handle:
