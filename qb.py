@@ -344,9 +344,9 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {}".format(c("ExcludeSkater")))
                 if ob.data.thug_light_props.light_excludelevel:
                     p("\t\t:i {}".format(c("ExcludeLevel")))
-                light_color = [ int((ob.data.color[0] * 256) / 1), 
-                                int((ob.data.color[1] * 256) / 1) , 
-                                int((ob.data.color[2] * 256) / 1)]
+                light_color = [ int((ob.data.color[0] * 255) / 1), 
+                                int((ob.data.color[1] * 255) / 1) , 
+                                int((ob.data.color[2] * 255) / 1)]
                 p("\t\t:i {} = :a{{ {};{};{} :a}}".format(c("Color"),
                             i(light_color[0]), i(light_color[1]),i(light_color[2])))
                 if ob.thug_node_expansion:
@@ -556,18 +556,18 @@ def export_qb(filename, directory, target_game, operator=None):
                         p("\t\t:i {} = {} ; {}".format(c("EmitRate2DelayRnd"), i(int(ob.thug_particle_props.EmitRate2Delay[1])), i(int(ob.thug_particle_props.EmitRate2Delay[2]))))
                         
                         
-                    start_color = [ int(ob.thug_particle_props.particle_startcolor[0] * 256), 
-                                    int(ob.thug_particle_props.particle_startcolor[1] * 256) , 
-                                    int(ob.thug_particle_props.particle_startcolor[2] * 256) , 
-                                    int(ob.thug_particle_props.particle_startcolor[3] * 256) ]
-                    mid_color = [ int(ob.thug_particle_props.particle_midcolor[0] * 256), 
-                                    int(ob.thug_particle_props.particle_midcolor[1] * 256) , 
-                                    int(ob.thug_particle_props.particle_midcolor[2] * 256) , 
-                                    int(ob.thug_particle_props.particle_midcolor[3] * 256) ]
-                    end_color = [ int(ob.thug_particle_props.particle_endcolor[0] * 256), 
-                                    int(ob.thug_particle_props.particle_endcolor[1] * 256) , 
-                                    int(ob.thug_particle_props.particle_endcolor[2] * 256) , 
-                                    int(ob.thug_particle_props.particle_endcolor[3] * 256) ]
+                    start_color = [ int(ob.thug_particle_props.particle_startcolor[0] * 255), 
+                                    int(ob.thug_particle_props.particle_startcolor[1] * 255) , 
+                                    int(ob.thug_particle_props.particle_startcolor[2] * 255) , 
+                                    int(ob.thug_particle_props.particle_startcolor[3] * 255) ]
+                    mid_color = [ int(ob.thug_particle_props.particle_midcolor[0] * 255), 
+                                    int(ob.thug_particle_props.particle_midcolor[1] * 255) , 
+                                    int(ob.thug_particle_props.particle_midcolor[2] * 255) , 
+                                    int(ob.thug_particle_props.particle_midcolor[3] * 255) ]
+                    end_color = [ int(ob.thug_particle_props.particle_endcolor[0] * 255), 
+                                    int(ob.thug_particle_props.particle_endcolor[1] * 255) , 
+                                    int(ob.thug_particle_props.particle_endcolor[2] * 255) , 
+                                    int(ob.thug_particle_props.particle_endcolor[3] * 255) ]
                                     
                     p("\t\t:i {} = :a{{ {};{};{} :a}}".format(c("StartRGB"),
                                 i(start_color[0]), i(start_color[1]),i(start_color[2])))

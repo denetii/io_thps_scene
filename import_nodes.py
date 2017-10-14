@@ -241,7 +241,7 @@ def import_nodearray(gamemode):
             if rail_nodes[3] == True and len(polyline.points) > 2: # is_circular = True  
                 polyline.use_endpoint_u = True
                 polyline.use_cyclic_u = True  
-                test_cyclic = True
+                #test_cyclic = True
                 
             # Save the node indices of each point in our newly created Path
             # This lets us resolve links to the specific blender objects later
@@ -368,9 +368,9 @@ def import_nodearray(gamemode):
                 if "OuterRadius" in node:
                     lamp_data.thug_light_props.light_radius[1] = float(node["OuterRadius"])
                 if "Color" in node:
-                    lamp_data.color[0] = float(int(node["Color"][0]) / 256)
-                    lamp_data.color[1] = float(int(node["Color"][1]) / 256)
-                    lamp_data.color[2] = float(int(node["Color"][2]) / 256)
+                    lamp_data.color[0] = float(int(node["Color"][0]) / 255)
+                    lamp_data.color[1] = float(int(node["Color"][1]) / 255)
+                    lamp_data.color[2] = float(int(node["Color"][2]) / 255)
                 if "ExcludeSkater" in node:
                     lamp_data.thug_light_props.light_excludeskater = True
                 if "ExcludeLevel" in node:
@@ -676,27 +676,27 @@ def import_nodearray(gamemode):
                     if "EndRadiusSpread" in node:
                         ob.thug_particle_props.particle_radiusspread[2] = node["EndRadiusSpread"]
                     if "StartRGB" in node:
-                        ob.thug_particle_props.particle_startcolor[0] = float(int(node["StartRGB"][0]) / 256)
-                        ob.thug_particle_props.particle_startcolor[1] = float(int(node["StartRGB"][1]) / 256)
-                        ob.thug_particle_props.particle_startcolor[2] = float(int(node["StartRGB"][2]) / 256)
+                        ob.thug_particle_props.particle_startcolor[0] = float(int(node["StartRGB"][0]) / 255)
+                        ob.thug_particle_props.particle_startcolor[1] = float(int(node["StartRGB"][1]) / 255)
+                        ob.thug_particle_props.particle_startcolor[2] = float(int(node["StartRGB"][2]) / 255)
                     if "StartAlpha" in node:
-                        ob.thug_particle_props.particle_startcolor[3] = float(int(node["StartAlpha"]) / 256)
+                        ob.thug_particle_props.particle_startcolor[3] = float(int(node["StartAlpha"]) / 255)
                     if "UseColorMidTime" in node:
                         ob.thug_particle_props.particle_usecolormidtime = node["UseColorMidTime"]
                     if "ColorMidTime" in node:
                         ob.thug_particle_props.particle_colormidtime = node["ColorMidTime"]
                     if "MidRGB" in node:
-                        ob.thug_particle_props.particle_midcolor[0] = float(int(node["MidRGB"][0]) / 256)
-                        ob.thug_particle_props.particle_midcolor[1] = float(int(node["MidRGB"][1]) / 256)
-                        ob.thug_particle_props.particle_midcolor[2] = float(int(node["MidRGB"][2]) / 256)
+                        ob.thug_particle_props.particle_midcolor[0] = float(int(node["MidRGB"][0]) / 255)
+                        ob.thug_particle_props.particle_midcolor[1] = float(int(node["MidRGB"][1]) / 255)
+                        ob.thug_particle_props.particle_midcolor[2] = float(int(node["MidRGB"][2]) / 255)
                     if "MidAlpha" in node:
-                        ob.thug_particle_props.particle_midcolor[3] = float(int(node["MidAlpha"]) / 256)
+                        ob.thug_particle_props.particle_midcolor[3] = float(int(node["MidAlpha"]) / 255)
                     if "EndRGB" in node:
-                        ob.thug_particle_props.particle_endcolor[0] = float(int(node["EndRGB"][0]) / 256)
-                        ob.thug_particle_props.particle_endcolor[1] = float(int(node["EndRGB"][1]) / 256)
-                        ob.thug_particle_props.particle_endcolor[2] = float(int(node["EndRGB"][2]) / 256)
+                        ob.thug_particle_props.particle_endcolor[0] = float(int(node["EndRGB"][0]) / 255)
+                        ob.thug_particle_props.particle_endcolor[1] = float(int(node["EndRGB"][1]) / 255)
+                        ob.thug_particle_props.particle_endcolor[2] = float(int(node["EndRGB"][2]) / 255)
                     if "EndAlpha" in node:
-                        ob.thug_particle_props.particle_endcolor[3] = float(int(node["EndAlpha"]) / 256)
+                        ob.thug_particle_props.particle_endcolor[3] = float(int(node["EndAlpha"]) / 255)
                     # Particle width + start/end values
                     if "EmitWidth" in node:
                         ob.thug_particle_props.Size[0] = node["EmitWidth"]

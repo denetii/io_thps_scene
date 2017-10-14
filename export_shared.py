@@ -16,6 +16,7 @@ from . material import *
 from . constants import *
 from . qb import *
 from . export_thug1 import export_scn_sectors
+from . export_thug2 import export_scn_sectors_ug2
 
 class ExportError(Exception):
     pass
@@ -23,6 +24,39 @@ class ExportError(Exception):
 
 # METHODS
 #############################################
+def pack_pre(root_dir, output_file):
+    files = [os.path.join(r, f) for r, ds, fs in os.walk(root_dir) for f in fs]
+    files = [f[2:] if f.startswith(".\\") else f for f in files]
+
+    pack = struct.pack
+    with open(output_file, "wb") as outp:
+        outp.write(pack("I", 0))
+        outp.write(pack("I", 0xABCD0003))  # version
+        outp.write(pack("I", len(files)))  # num files
+
+        for file in files:
+            adjusted_fn = bytes(os.path.relpath(file, root_dir), 'ascii') + b"\x00"
+            if len(adjusted_fn) % 4 != 0:
+                adjusted_fn = adjusted_fn + (b'\x00' * (4 - (len(adjusted_fn) % 4)))
+
+            with open(file, "rb") as inp:
+                data = inp.read()
+            outp.write(pack("I", len(data)))  # data size
+            outp.write(pack("I", 0))  # compressed data size
+            outp.write(pack("I", len(adjusted_fn)))  # file name size
+            outp.write(pack("I", crc_from_string(bytes(os.path.relpath(file, root_dir), 'ascii'))))  # file name checksum
+            outp.write(adjusted_fn)  # file name
+            outp.write(data)  # data
+
+            offs = outp.tell()
+            if offs % 4 != 0:
+                outp.write(b'\x00' * (4 - (offs % 4)))
+
+        total_bytes = outp.tell()
+        outp.seek(0)
+        outp.write(pack("I", total_bytes))
+
+#----------------------------------------------------------------------------------
 def do_export(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
@@ -488,7 +522,7 @@ def export_col(filename, directory, target_game, operator=None):
             # bm.verts.ensure_lookup_table()
             # Face flags are output here!
             for face in bm.faces:
-                if face[cfl] & FACE_FLAGS["mFD_TRIGGER"]:
+                if cfl and (face[cfl] & FACE_FLAGS["mFD_TRIGGER"]):
                     if o.thug_triggerscript_props.triggerscript_type == "None" or \
                     (o.thug_triggerscript_props.triggerscript_type == "Custom" and o.thug_triggerscript_props.custom_name == ""):
                         # This object has a Trigger face, but no TriggerScript assigned
@@ -706,6 +740,110 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         
     def execute(self, context):
         return do_export_model(self, context, "THUG1")
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}
+        
+        
+
+# OPERATORS
+#############################################
+class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
+    bl_idname = "export.scene_to_thug2_xbx"
+    bl_label = "Scene to THUG2 level files"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def report(self, category, message):
+        LOG.debug("OP: {}: {}".format(category, message))
+        super().report(category, message)
+
+
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+
+    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
+    use_vc_hack = BoolProperty(name="Vertex color hack",default=False, options={'HIDDEN'})
+    autosplit_everything = BoolProperty(name="Autosplit All"
+        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
+        , default=False)
+    is_park_editor = BoolProperty(
+        name="Is Park Editor",
+        description="Use this option when exporting a park editor dictionary.",
+        default=False)
+    generate_tex_file = BoolProperty(
+        name="Generate a .tex file",
+        description="If you have already generated a .tex file, and didn't change/add any new images in meantime, you can uncheck this.",
+        default=True)
+    generate_scn_file = BoolProperty(
+        name="Generate a .scn file",
+        default=True)
+    pack_scn = BoolProperty(
+        name="Pack the scene .prx",
+        default=True)
+    generate_col_file = BoolProperty(
+        name="Generate a .col file",
+        default=True)
+    pack_col = BoolProperty(
+        name="Pack the col .prx",
+        default=True)
+    generate_scripts_files = BoolProperty(
+        name="Generate scripts",
+        default=True)
+    pack_scripts = BoolProperty(
+        name="Pack the scripts .prx",
+        default=True)
+#    filepath = StringProperty()
+
+    skybox_name = StringProperty(name="Skybox name", default="THUG2_Sky")
+    export_scale = FloatProperty(name="Export scale", default=1)
+    mipmap_offset = IntProperty(
+        name="Mipmap offset",
+        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
+        min=0, max=4, default=0)
+
+    def execute(self, context):
+        return do_export(self, context, "THUG2")
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}
+
+
+#----------------------------------------------------------------------------------
+class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
+    bl_idname = "export.scene_to_thug2_model"
+    bl_label = "Scene to THUG2 model"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def report(self, category, message):
+        LOG.debug("OP: {}: {}".format(category, message))
+        super().report(category, message)
+
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+
+    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=True)
+    use_vc_hack = BoolProperty(name="Vertex color hack",default=False, options={'HIDDEN'})
+    autosplit_everything = BoolProperty(name="Autosplit All"
+        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
+        , default=False)
+    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
+    generate_scripts_files = BoolProperty(
+        name="Generate scripts",
+        default=True)
+    export_scale = FloatProperty(name="Export scale", default=1)
+    mipmap_offset = IntProperty(
+        name="Mipmap offset",
+        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
+        min=0, max=4, default=0)
+        
+    def execute(self, context):
+        return do_export_model(self, context, "THUG2")
 
     def invoke(self, context, event):
         wm = bpy.context.window_manager
