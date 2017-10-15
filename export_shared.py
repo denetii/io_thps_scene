@@ -393,7 +393,7 @@ def export_col(filename, directory, target_game, operator=None):
     def triang(o):
         final_mesh = o.to_mesh(bpy.context.scene, True, 'PREVIEW')
         if helpers._need_to_flip_normals(o):
-            temporary_object = _make_temp_obj(final_mesh)
+            temporary_object = helpers._make_temp_obj(final_mesh)
             try:
                 bpy.context.scene.objects.link(temporary_object)
                 # temporary_object.matrix_world = o.matrix_world
