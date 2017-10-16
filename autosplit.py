@@ -3,6 +3,7 @@ import bgl
 import bmesh
 import collections
 from bpy.props import *
+from . import helpers
 from . helpers import *
 
 __reload_order_index__ = -10
