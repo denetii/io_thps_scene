@@ -397,7 +397,7 @@ def export_col(filename, directory, target_game, operator=None):
             try:
                 bpy.context.scene.objects.link(temporary_object)
                 # temporary_object.matrix_world = o.matrix_world
-                _flip_normals(temporary_object)
+                helpers._flip_normals(temporary_object)
             finally:
                 if bpy.context.mode != "OBJECT":
                     bpy.ops.object.mode_set(mode="OBJECT")

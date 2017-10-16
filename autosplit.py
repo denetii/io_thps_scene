@@ -335,11 +335,11 @@ def _prepare_autosplit_objects(operator, context, target_game):
         bpy.context.scene.objects.link(temporary_object)
         # temporary_object.matrix_world = ob.matrix_world
 
-        if _need_to_flip_normals(ob):
-            _flip_normals(temporary_object)
+        if helpers._need_to_flip_normals(ob):
+            helpers._flip_normals(temporary_object)
 
         if operator and operator.generate_vertex_color_shading:
-            _generate_lambert_shading(temporary_object)
+            helpers._generate_lambert_shading(temporary_object)
 
         temporary_object.select = True
         bpy.context.scene.objects.active = temporary_object
