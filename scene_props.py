@@ -497,6 +497,20 @@ def register_props():
             ("Indoor", "Indoor", "")],
         default="None")
         
+    bpy.types.Object.thug_lightmap_resolution = EnumProperty(
+        name="Lightmap Resolution",
+        items=[
+            ("16", "16", ""),
+            ("32", "32", ""),
+            ("64", "64", ""),
+            ("128", "128", ""),
+            ("256", "256", ""),
+            ("512", "512", ""),
+            ("1024", "1024", ""),
+            ("2048", "2048", "")],
+        default="128", 
+        description="Controls the resolution (squared) of baked lightmaps.")
+        
     bpy.types.Object.thug_levelobj_props = PointerProperty(type=THUGLevelObjectProps)
     bpy.types.Object.thug_triggerscript_props = PointerProperty(type=THUGObjectTriggerScriptProps)
     bpy.types.Object.thug_empty_props = PointerProperty(type=THUGEmptyProps)

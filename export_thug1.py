@@ -88,14 +88,6 @@ def export_scn_sectors(output_file, operator=None):
                 for env_test in ob.data.materials:
                     if not hasattr(env_test, 'texture_slots'): continue
                     
-                    # Collect all unique texture passes that reference a unique UV map
-                    _tmp_uvs = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
-                    
-                    for ts in _tmp_uvs:
-                        if ts.uv_layer not in tx_uv_layers:
-                            tx_uv_layers.append(ts.uv_layer)
-                            tx_uv_passes.append(ts)
-                            
                     _tmp_passes = [tex_slot.texture for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
                     for _tmp_tex in _tmp_passes:
                         _pprops = _tmp_tex and _tmp_tex.thug_material_pass_props
@@ -120,7 +112,7 @@ def export_scn_sectors(output_file, operator=None):
                         face_list.append(face)
                     else:
                         mats_to_faces[face.material_index] = [face]
-
+                    
                 #split_verts = make_split_verts(final_mesh, bm, flags)
                 
                 _all_nonsplit_verts = set()
@@ -128,6 +120,17 @@ def export_scn_sectors(output_file, operator=None):
                     for face in mat_faces:
                         for vert in face.verts:
                             _all_nonsplit_verts.add(vert)
+                    
+                    # Collect all unique texture passes that reference a unique UV map
+                    the_material = len(ob.material_slots) and ob.material_slots[mat_index].material
+                    if not the_material:
+                        the_material = bpy.data.materials["_THUG_DEFAULT_MATERIAL_"]
+                    _tmp_uvs = [tex_slot for tex_slot in the_material.texture_slots if tex_slot and tex_slot.use][:4]
+                    
+                    for ts in _tmp_uvs:
+                        tx_uv_layers.append(ts.uv_layer)
+                        tx_uv_passes.append(ts)
+                        #if ts.uv_layer not in tx_uv_layers:
                     #nonsplit_verts = {vert for face in mat_faces for vert in face.verts}
                     
                 split_verts = make_split_verts(
