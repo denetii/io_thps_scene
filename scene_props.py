@@ -214,10 +214,10 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
     coeff_restitution = FloatProperty(name="coeff_restitution", min=0, max=1024, default=0.25)
     coeff_friction = FloatProperty(name="coeff_friction", min=0, max=1024, default=0.25)
     skater_collision_impulse_factor = FloatProperty(name="skater_collision_impulse_factor", min=0, max=1024, default=1.5)
-    skater_collision_rotation_factor = IntProperty(name="skater_collision_rotation_factor", min=0, max=1024, default=1)
+    skater_collision_rotation_factor = FloatProperty(name="skater_collision_rotation_factor", min=0, max=1024, default=1)
     skater_collision_assent = IntProperty(name="skater_collision_assent", min=0, max=1024, default=0)
     skater_collision_radius = IntProperty(name="skater_collision_radius", min=0, max=1024, default=0)
-    mass_over_moment = FloatProperty(name="mass_over_moment", min=0, max=1024, default=-1, description="Use value of -1 to not export this property to the QB.")
+    mass_over_moment = FloatProperty(name="mass_over_moment", min=-1, max=1024, default=-1, description="Use value of -1 to not export this property to the QB.")
     stuckscript = StringProperty(name="stuckscript")
     SoundType = StringProperty(name="Sound", description="Sound used when colliding with the object.")
     
@@ -441,7 +441,7 @@ def register_props():
     bpy.types.Object.thug_do_autosplit_faces_per_subobject = IntProperty(
         name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
-        default=300, min=50, max=6000)
+        default=800, min=50, max=6000)
     bpy.types.Object.thug_do_autosplit_max_radius = FloatProperty(
         name="Max Radius",
         description="The max radius of for every created subobject.",
@@ -507,9 +507,29 @@ def register_props():
             ("256", "256", ""),
             ("512", "512", ""),
             ("1024", "1024", ""),
-            ("2048", "2048", "")],
+            ("2048", "2048", ""),
+            ("4096", "4096", ""),
+            ("8192", "8192", "")],
         default="128", 
         description="Controls the resolution (squared) of baked lightmaps.")
+    bpy.types.Object.thug_lightmap_quality = EnumProperty(
+        name="Lightmap Quality",
+        items=[
+            ("Draft", "Draft", ""),
+            ("Preview", "Preview", ""),
+            ("Good", "Good", ""),
+            ("High", "High", ""),
+            ("Ultra", "Ultra", ""),
+            ("Custom", "Custom", "Uses existing Cycles render settings.")],
+        default="Preview", 
+        description="Preset controls for the bake quality.")
+    bpy.types.Object.thug_lightmap_type = EnumProperty(
+        name="UV Type",
+        items=[
+            ("Lightmap", "Lightmap", "Lightmap pack with preset margins."),
+            ("Smart", "Smart", "Smart UV projection with default settings.")],
+        default="Lightmap", 
+        description="Determines the type of UV unwrapping done on the object for the bake.")
         
     bpy.types.Object.thug_levelobj_props = PointerProperty(type=THUGLevelObjectProps)
     bpy.types.Object.thug_triggerscript_props = PointerProperty(type=THUGObjectTriggerScriptProps)
@@ -535,6 +555,21 @@ def register_props():
     bpy.types.WindowManager.thug_all_rails = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_all_restarts = CollectionProperty(type=bpy.types.PropertyGroup)
 
+    bpy.types.Scene.thug_lightmap_scale = EnumProperty(
+        name="Lightmap Scale",
+        items=[
+            ("0.25", "0.25", ""),
+            ("0.5", "0.5", ""),
+            ("1", "1", ""),
+            ("2", "2", ""),
+            ("4", "4", "")],
+        default="1", 
+        description="Scales the resolution of all lightmaps by the specified factor.")
+    bpy.types.Scene.thug_lightmap_uglymode = BoolProperty(
+        name="Performance Mode",
+        default=False, 
+        description="Disable all Cycles materials when baking. Bakes faster, but with much less accuracy.")
+        
     # bpy.utils.unregister_class(ExtractRail)
     # bpy.utils.register_class(ExtractRail)
     # bpy.utils.unregister_class(THUGImportNodeArray)

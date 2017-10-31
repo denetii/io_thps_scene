@@ -33,6 +33,15 @@ def get_triggerscript(script_name):
     return script_text
 
 #----------------------------------------------------------------------------------
+#- Returns an array of vertices for the given object
+#----------------------------------------------------------------------------------
+def get_vertices_thug(obj):
+    verts = []
+    for v in obj.data.vertices:
+        verts.append(to_thug_coords(v.co))
+    return verts
+    
+#----------------------------------------------------------------------------------
 def get_index(seq, value, key=lambda x: x, default=-1):
     i = 0
     for item in seq:

@@ -125,7 +125,7 @@ def export_scn_sectors(output_file, operator=None):
                     the_material = len(ob.material_slots) and ob.material_slots[mat_index].material
                     if not the_material:
                         the_material = bpy.data.materials["_THUG_DEFAULT_MATERIAL_"]
-                    _tmp_uvs = [tex_slot for tex_slot in the_material.texture_slots if tex_slot and tex_slot.use][:4]
+                    _tmp_uvs = [tex_slot for tex_slot in the_material.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
                     
                     for ts in _tmp_uvs:
                         tx_uv_layers.append(ts.uv_layer)

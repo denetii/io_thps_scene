@@ -273,12 +273,22 @@ def export_qb(filename, directory, target_game, operator=None):
                         #p("\t\t:i {} = :a{{ ".format(c("contacts")))
                         _ctnum = 0
                         _prop = "\t\t:i {} = :a{{ "
-                        for _contact in col_ob.thug_levelobj_props.contacts:
-                            _ctnum += 1
-                            if _ctnum > 1:
-                                _prop += ";"
-                            firstc = False
-                            _prop += v3(_contact.contact)
+                        # Imported scenes will have contacts defined directly in custom props
+                        if len(col_ob.thug_levelobj_props.contacts) > 0:
+                            for _contact in col_ob.thug_levelobj_props.contacts:
+                                _ctnum += 1
+                                if _ctnum > 1:
+                                    _prop += ";"
+                                firstc = False
+                                _prop += v3(_contact.contact)
+                        # For other scenes, we need to get the verts from the object data
+                        else:
+                            for _contact in get_vertices_thug(col_ob):
+                                _ctnum += 1
+                                if _ctnum > 1:
+                                    _prop += ";"
+                                firstc = False
+                                _prop += v3(_contact)
                         _prop += ":a}}"
                         p(_prop.format(c("contacts")))
                         #p(":a}}")
@@ -286,7 +296,7 @@ def export_qb(filename, directory, target_game, operator=None):
                         p("\t\t:i {} = {}".format(c("coeff_restitution"), f(col_ob.thug_levelobj_props.coeff_restitution)))
                         p("\t\t:i {} = {}".format(c("coeff_friction"), f(col_ob.thug_levelobj_props.coeff_friction)))
                         p("\t\t:i {} = {}".format(c("skater_collision_impulse_factor"), f(col_ob.thug_levelobj_props.skater_collision_impulse_factor)))
-                        p("\t\t:i {} = {}".format(c("skater_collision_rotation_factor"), i(col_ob.thug_levelobj_props.skater_collision_rotation_factor)))
+                        p("\t\t:i {} = {}".format(c("skater_collision_rotation_factor"), f(col_ob.thug_levelobj_props.skater_collision_rotation_factor)))
                         p("\t\t:i {} = {}".format(c("skater_collision_assent"), i(col_ob.thug_levelobj_props.skater_collision_assent)))
                         p("\t\t:i {} = {}".format(c("skater_collision_radius"), i(col_ob.thug_levelobj_props.skater_collision_radius)))
                         if col_ob.thug_levelobj_props.mass_over_moment >= 0:

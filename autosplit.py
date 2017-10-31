@@ -285,6 +285,18 @@ def _alt_split_obj(ob, context, max_radius=500, faces_per_subobject=250, preserv
         bpy.data.meshes.remove(small_mesh)
         
 #----------------------------------------------------------------------------------
+def _is_levelobject(ob):
+    if ob.thug_object_class == "LevelObject":
+        return True
+    if ob.name.endswith("_SCN"):
+        col_name = ob.name[:-4]
+        if bpy.data.objects.get(col_name):
+            col_obj = bpy.data.objects.get(col_name)
+            if col_obj.thug_object_class == "LevelObject":
+                return True
+    return False
+        
+#----------------------------------------------------------------------------------
 def _prepare_autosplit_objects(operator, context, target_game):
     out_objects = [o for o in bpy.data.objects
                   if (o.type == "MESH" and
@@ -298,7 +310,11 @@ def _prepare_autosplit_objects(operator, context, target_game):
     temporary_objects = []
     for ob in out_objects:
         final_mesh = None
-
+        
+        if _is_levelobject(ob):
+            LOG.debug("Skipping {}, it is a LevelObject!".format(ob.name))
+            continue
+            
         if ob.modifiers:
             final_mesh = ob.to_mesh(bpy.context.scene, True, 'PREVIEW')
 

@@ -191,6 +191,7 @@ def _thug_object_settings_draw(self, context):
                 box.row().prop(ob.thug_levelobj_props, "skater_collision_assent")
                 box.row().prop(ob.thug_levelobj_props, "skater_collision_radius")
                 box.row().prop(ob.thug_levelobj_props, "mass_over_moment")
+                box.row().prop(ob.thug_levelobj_props, "SoundType")
                 box.row().prop_search(
                     ob.thug_levelobj_props, "stuckscript",
                     bpy.data,
