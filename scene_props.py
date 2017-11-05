@@ -562,13 +562,18 @@ def register_props():
             ("0.5", "0.5", ""),
             ("1", "1", ""),
             ("2", "2", ""),
-            ("4", "4", "")],
+            ("4", "4", ""),
+            ("8", "8", "")],
         default="1", 
         description="Scales the resolution of all lightmaps by the specified factor.")
     bpy.types.Scene.thug_lightmap_uglymode = BoolProperty(
         name="Performance Mode",
         default=False, 
         description="Disable all Cycles materials when baking. Bakes faster, but with much less accuracy.")
+    bpy.types.Scene.thug_lightmap_clamp = FloatProperty(
+        name="Shadow Intensity",
+        description="Controls the maximum intensity of shadowed areas. Reduce in low-light scenes if you need to improve visibility.",
+        min=0, max=1.0, default=1.0)
         
     # bpy.utils.unregister_class(ExtractRail)
     # bpy.utils.register_class(ExtractRail)

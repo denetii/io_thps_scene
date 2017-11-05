@@ -390,26 +390,33 @@ def export_col(filename, directory, target_game, operator=None):
     output_file = os.path.join(directory, filename)
 
     bm = bmesh.new()
+    # Applies modifiers and triangulates mesh - unless the 'speed hack' export option is on
     def triang(o):
-        final_mesh = o.to_mesh(bpy.context.scene, True, 'PREVIEW')
-        if helpers._need_to_flip_normals(o):
-            temporary_object = helpers._make_temp_obj(final_mesh)
-            try:
-                bpy.context.scene.objects.link(temporary_object)
-                # temporary_object.matrix_world = o.matrix_world
-                helpers._flip_normals(temporary_object)
-            finally:
-                if bpy.context.mode != "OBJECT":
-                    bpy.ops.object.mode_set(mode="OBJECT")
-                bpy.context.scene.objects.unlink(temporary_object)
-                bpy.data.objects.remove(temporary_object)
-
-        bm.clear()
-        bm.from_mesh(final_mesh)
-        bmesh.ops.triangulate(bm, faces=bm.faces)
-        bm.faces.ensure_lookup_table()
-        bm.faces.index_update()
-        bpy.data.meshes.remove(final_mesh)
+        if operator.speed_hack:
+            final_mesh = o.data
+            bm.clear()
+            bm.from_mesh(final_mesh)
+        else:
+            final_mesh = o.to_mesh(bpy.context.scene, True, 'PREVIEW')
+            if helpers._need_to_flip_normals(o):
+                temporary_object = helpers._make_temp_obj(final_mesh)
+                try:
+                    bpy.context.scene.objects.link(temporary_object)
+                    # temporary_object.matrix_world = o.matrix_world
+                    helpers._flip_normals(temporary_object)
+                finally:
+                    if bpy.context.mode != "OBJECT":
+                        bpy.ops.object.mode_set(mode="OBJECT")
+                    bpy.context.scene.objects.unlink(temporary_object)
+                    bpy.data.objects.remove(temporary_object)
+            
+            bm.clear()
+            bm.from_mesh(final_mesh)
+            bmesh.ops.triangulate(bm, faces=bm.faces)
+            bm.faces.ensure_lookup_table()
+            bm.faces.index_update()
+            bpy.data.meshes.remove(final_mesh)
+        return
 
     out_objects = [o for o in bpy.data.objects
                    if (o.type == "MESH"
@@ -662,6 +669,9 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
     use_vc_hack = BoolProperty(name="Vertex color hack"
         , description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)"
+        , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
+        , default=False)
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
@@ -726,6 +736,9 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
     use_vc_hack = BoolProperty(name="Vertex color hack"
         , description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)"
+        , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
+        , default=False)
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
@@ -766,6 +779,9 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
 
     generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
     use_vc_hack = BoolProperty(name="Vertex color hack",default=False, options={'HIDDEN'})
+    speed_hack = BoolProperty(name="No modifiers (speed hack)"
+        , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
+        , default=False)
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
@@ -829,6 +845,9 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
 
     generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=True)
     use_vc_hack = BoolProperty(name="Vertex color hack",default=False, options={'HIDDEN'})
+    speed_hack = BoolProperty(name="No modifiers (speed hack)"
+        , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
+        , default=False)
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)

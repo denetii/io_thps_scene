@@ -48,58 +48,69 @@ def export_scn_sectors(output_file, operator=None):
             lo_matrix[0][0] = ob.scale[0]
             lo_matrix[1][1] = ob.scale[1]
             lo_matrix[2][2] = ob.scale[2]
-        ob.name = "TEMP_OBJECT___"
+        if not operator.speed_hack:
+            ob.name = "TEMP_OBJECT___"
         try:
-            final_mesh = ob.to_mesh(bpy.context.scene, True, 'PREVIEW')
-            temporary_object = helpers._make_temp_obj(final_mesh)
-            temporary_object.name = original_object_name
-            try:
-                bpy.context.scene.objects.link(temporary_object)
-                temporary_object.matrix_world = ob.matrix_world
-
-                if helpers._need_to_flip_normals(ob):
-                    helpers._flip_normals(temporary_object)
-
-                if (operator and
-                    operator.generate_vertex_color_shading and
-                    len(temporary_object.data.polygons) != 0 and
-                    not ob.get("thug_this_is_autosplit_temp_object")):
-                    helpers._generate_lambert_shading(temporary_object)
-
-                ob = temporary_object
-                object_counter += 1
+            if operator.speed_hack:
                 final_mesh = ob.data
-                
-                bm.clear()
-                bm.from_mesh(final_mesh)
-                bmesh.ops.triangulate(bm, faces=bm.faces)
-                bm.to_mesh(final_mesh)
-                final_mesh.calc_normals_split()
-                bm.clear()
-                bm.from_mesh(final_mesh)
+            else:
+                final_mesh = ob.to_mesh(bpy.context.scene, False, 'PREVIEW')
+                temporary_object = helpers._make_temp_obj(final_mesh)
+                temporary_object.name = original_object_name
+            try:
+                if operator.speed_hack:
+                    object_counter += 1
+                    bm.clear()
+                    bm.from_mesh(final_mesh)
+                else:
+                    bpy.context.scene.objects.link(temporary_object)
+                    temporary_object.matrix_world = ob.matrix_world
+                    
+                    if helpers._need_to_flip_normals(ob):
+                        helpers._flip_normals(temporary_object)
+                    
+                    if (operator and
+                        operator.generate_vertex_color_shading and
+                        len(temporary_object.data.polygons) != 0 and
+                        not ob.get("thug_this_is_autosplit_temp_object")):
+                        helpers._generate_lambert_shading(temporary_object)
+
+                    ob = temporary_object
+                    object_counter += 1
+                    final_mesh = ob.data
+                    
+                    bm.clear()
+                    bm.from_mesh(final_mesh)
+                    bmesh.ops.triangulate(bm, faces=bm.faces)
+                    bm.to_mesh(final_mesh)
+                    final_mesh.calc_normals_split()
+                    bm.clear()
+                    bm.from_mesh(final_mesh)
                 
                 flags = 0 if not is_levelobject else SECFLAGS_HAS_VERTEX_NORMALS
                 
-                tx_uv_layers = []
-                tx_uv_passes = []
-                # Does this object have env mapped texture passes? If so, we need to export vertex normals
-                # this requirement apparently doesn't exist in THUG2
+                # Check texture passes for:
+                # - Environment mapped textures (normals need to be exported)
+                # - Valid UV map assignments (must be in the correct order!)
                 ob_has_env_map = False
                 for env_test in ob.data.materials:
                     if not hasattr(env_test, 'texture_slots'): continue
-                    
-                    _tmp_passes = [tex_slot.texture for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
+                    _tmp_passes = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
+                    pass_index = -1
                     for _tmp_tex in _tmp_passes:
-                        _pprops = _tmp_tex and _tmp_tex.thug_material_pass_props
+                        pass_index += 1
+                        if get_uv_index(ob, _tmp_tex.uv_layer) != pass_index and operator:
+                            operator.report({"WARNING"},
+                            "UV/material pass index mismatch on: {} for material: {} assigned to object: {}. UVs will not appear correct in-game.".format(_tmp_tex.name, env_test.name, ob.name))
+                        _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
                         if _pprops and _pprops.pf_environment:
                             ob_has_env_map = True
-                            break
+                            #break
                             
                 if True or len(bm.loops.layers.uv):
                     flags |= SECFLAGS_HAS_TEXCOORDS
                 if True or len(bm.loops.layers.color):
                     flags |= SECFLAGS_HAS_VERTEX_COLORS
-                    #flags |= SECFLAGS_HAS_VERTEX_NORMALS
                 if len(original_object.vertex_groups):
                     flags |= SECFLAGS_HAS_VERTEX_WEIGHTS
                 if len(original_object.vertex_groups) or ob_has_env_map:
@@ -113,32 +124,8 @@ def export_scn_sectors(output_file, operator=None):
                     else:
                         mats_to_faces[face.material_index] = [face]
                     
-                #split_verts = make_split_verts(final_mesh, bm, flags)
-                
-                _all_nonsplit_verts = set()
-                for mat_index, mat_faces in mats_to_faces.items():
-                    for face in mat_faces:
-                        for vert in face.verts:
-                            _all_nonsplit_verts.add(vert)
-                    
-                    # Collect all unique texture passes that reference a unique UV map
-                    the_material = len(ob.material_slots) and ob.material_slots[mat_index].material
-                    if not the_material:
-                        the_material = bpy.data.materials["_THUG_DEFAULT_MATERIAL_"]
-                    _tmp_uvs = [tex_slot for tex_slot in the_material.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
-                    
-                    for ts in _tmp_uvs:
-                        tx_uv_layers.append(ts.uv_layer)
-                        tx_uv_passes.append(ts)
-                        #if ts.uv_layer not in tx_uv_layers:
-                    #nonsplit_verts = {vert for face in mat_faces for vert in face.verts}
-                    
-                split_verts = make_split_verts(
-                    final_mesh,
-                    bm,
-                    flags,
-                    verts=_all_nonsplit_verts)
-                        
+                split_verts = make_split_verts(final_mesh, bm, flags)
+                       
                 if get_clean_name(ob).endswith("_SCN"): # This is from an imported level, so drop the _SCN part
                     w("I", crc_from_string(bytes(get_clean_name(ob)[:-4], 'ascii')))  # checksum
                 else:
@@ -201,25 +188,16 @@ def export_scn_sectors(output_file, operator=None):
                         
                     print("Done...")
                     
-                if len(ob.data.materials) > 0:
-                    passes = tx_uv_passes
-                    #passes = [tex_slot for tex_slot in ob.active_material.texture_slots if tex_slot and tex_slot.use][:4]
-                else:
-                    passes = []
-                w("i", (len(passes) or 1) if flags & SECFLAGS_HAS_TEXCOORDS else 0)
+                uv_total = 0
+                for v in split_verts.keys():
+                    if len(v.uvs) > uv_total:
+                        uv_total = len(v.uvs)
+                        
+                w("i", (uv_total or 1) if flags & SECFLAGS_HAS_TEXCOORDS else 0)
                 if flags & SECFLAGS_HAS_TEXCOORDS:
                     for v in split_verts.keys():
-                        for tex_slot in passes:
-                            uv_index = 0
-                            if tex_slot.uv_layer:
-                                uv_index = get_index(
-                                    bm.loops.layers.uv.values(),
-                                    tex_slot.uv_layer,
-                                    lambda layer: layer.name)
-                            w("2f", *v.uvs[uv_index])
-                        if not passes:
-                            w("2f", *v.uvs[0])
-                        # w("2f", *(-v.uv))
+                        for i in range(0, uv_total):
+                            w("2f", *v.uvs[i])
 
                 VC_MULT = 256 if operator.use_vc_hack else 128
                 FULL_WHITE = (1.0, 1.0, 1.0, 1.0)
@@ -254,9 +232,11 @@ def export_scn_sectors(output_file, operator=None):
             finally:
                 if bpy.context.mode != "OBJECT":
                     bpy.ops.object.mode_set(mode="OBJECT")
-                bpy.context.scene.objects.unlink(temporary_object)
-                bpy.data.objects.remove(temporary_object)
-                bpy.data.meshes.remove(final_mesh)
+                    
+                if not operator.speed_hack:
+                    bpy.context.scene.objects.unlink(temporary_object)
+                    bpy.data.objects.remove(temporary_object)
+                    bpy.data.meshes.remove(final_mesh)
         finally:
             original_object.name = original_object_name
         

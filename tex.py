@@ -248,23 +248,23 @@ def export_tex(filename, directory, target_game, operator=None):
                 }[image.thug_image_props.compression_type]
             else:
                 dxt = 0
-            LOG.debug("compression: {}".format(dxt))
+            #LOG.debug("compression: {}".format(dxt))
             if operator.mipmap_offset:
                 mm_offset = operator.mipmap_offset
             else:
                 mm_offset = 0
             mipmaps = get_all_compressed_mipmaps(image, dxt, mm_offset) if do_compression else get_all_mipmaps(image, mm_offset)
-            for idx, (mw, mh, mm) in enumerate(mipmaps):
-                LOG.debug("mm #{}: {}x{} bytes: {}".format(idx, mw, mh, len(mm)))
+            #for idx, (mw, mh, mm) in enumerate(mipmaps):
+                #LOG.debug("mm #{}: {}x{} bytes: {}".format(idx, mw, mh, len(mm)))
             if not do_compression:
                 mipmaps = [(mw, mh, mm) for mw, mh, mm in mipmaps if mw <= 1024 and mh <= 1024]
-                LOG.debug("after culling: {}".format(len(mipmaps)))
+                #LOG.debug("after culling: {}".format(len(mipmaps)))
             if not mipmaps:
                 continue
             exported_images_count += 1
             width, height, _ = mipmaps[0]
             mipmaps = [mm for mw, mh, mm in mipmaps]
-            LOG.debug("width, height: {}, {}".format(width, height))
+            #LOG.debug("width, height: {}, {}".format(width, height))
 
             mip_levels = len(mipmaps)
             texel_depth = 32
@@ -314,7 +314,7 @@ def export_tex(filename, directory, target_game, operator=None):
                 else:
                     w(str(len(out_pixels)) + "I", *out_pixels)
             del mipmaps[:]
-            LOG.debug("time taken: {}{}".format(time.clock() - start_time, "sec"))
+            #LOG.debug("time taken: {}{}".format(time.clock() - start_time, "sec"))
 
         outp.seek(4)
         w("I", exported_images_count)

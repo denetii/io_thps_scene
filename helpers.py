@@ -41,6 +41,21 @@ def get_vertices_thug(obj):
         verts.append(to_thug_coords(v.co))
     return verts
     
+def get_uv_index(obj, uv_name):
+    uv_index = -1
+    found = False
+    for map in obj.data.uv_textures:
+        uv_index += 1
+        if map.name == str(uv_name):
+            found = True
+            break
+            
+    if found:
+        return uv_index
+    else:
+        #raise Exception("UV Index not found for map name: {} on object: {}".format(uv_name, obj.name))
+        return -1
+        
 #----------------------------------------------------------------------------------
 def get_index(seq, value, key=lambda x: x, default=-1):
     i = 0
@@ -100,7 +115,12 @@ def _flip_normals(ob):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 def _make_temp_obj(data):
-    return bpy.data.objects.new("~THUG TEMPORARY OBJECT~", data)
+    ob = bpy.data.objects.get("~THUG TEMPORARY OBJECT~")
+    if ob:
+        ob.data = data
+        return ob
+    else:
+        return bpy.data.objects.new("~THUG TEMPORARY OBJECT~", data)
 
 #----------------------------------------------------------------------------------
 def get_sphere_from_bbox(bbox):
