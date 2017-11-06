@@ -45,39 +45,48 @@ def export_scn_sectors_ug2(output_file, operator=None):
             lo_matrix[0][0] = ob.scale[0]
             lo_matrix[1][1] = ob.scale[1]
             lo_matrix[2][2] = ob.scale[2]
-        ob.name = "TEMP_OBJECT___"
+        if not operator.speed_hack:
+            ob.name = "TEMP_OBJECT___"
         try:
-            final_mesh = ob.to_mesh(bpy.context.scene, True, 'PREVIEW')
-            # LOG.debug("object vc layers: {}", len(ob.data.vertex_colors))
-            temporary_object = helpers._make_temp_obj(final_mesh)
-            temporary_object.name = original_object_name
-            try:
-                bpy.context.scene.objects.link(temporary_object)
-                temporary_object.matrix_world = ob.matrix_world
-
-                if (operator and
-                    operator.generate_vertex_color_shading and
-                    len(temporary_object.data.polygons) != 0 and
-                    not ob.get("thug_this_is_autosplit_temp_object")):
-                    helpers._generate_lambert_shading(temporary_object)
-
-                if helpers._need_to_flip_normals(ob):
-                    helpers._flip_normals(temporary_object)
-
-                ob = temporary_object
-
-                object_counter += 1
+            if operator.speed_hack:
                 final_mesh = ob.data
+            else:
+                final_mesh = ob.to_mesh(bpy.context.scene, True, 'PREVIEW')
+                # LOG.debug("object vc layers: {}", len(ob.data.vertex_colors))
+                temporary_object = helpers._make_temp_obj(final_mesh)
+                temporary_object.name = original_object_name
+            try:
+                if operator.speed_hack:
+                    object_counter += 1
+                    bm.clear()
+                    bm.from_mesh(final_mesh)
+                else:
+                    bpy.context.scene.objects.link(temporary_object)
+                    temporary_object.matrix_world = ob.matrix_world
 
-                bm.clear()
-                # final_mesh.calc_normals()
+                    if (operator and
+                        operator.generate_vertex_color_shading and
+                        len(temporary_object.data.polygons) != 0 and
+                        not ob.get("thug_this_is_autosplit_temp_object")):
+                        helpers._generate_lambert_shading(temporary_object)
 
-                bm.from_mesh(final_mesh)
-                bmesh.ops.triangulate(bm, faces=bm.faces)
-                bm.to_mesh(final_mesh)
-                final_mesh.calc_normals_split()
-                bm.clear()
-                bm.from_mesh(final_mesh)
+                    if helpers._need_to_flip_normals(ob):
+                        helpers._flip_normals(temporary_object)
+
+                    ob = temporary_object
+
+                    object_counter += 1
+                    final_mesh = ob.data
+
+                    bm.clear()
+                    # final_mesh.calc_normals()
+
+                    bm.from_mesh(final_mesh)
+                    bmesh.ops.triangulate(bm, faces=bm.faces)
+                    bm.to_mesh(final_mesh)
+                    final_mesh.calc_normals_split()
+                    bm.clear()
+                    bm.from_mesh(final_mesh)
 
                 flags = 0 if not is_levelobject else SECFLAGS_HAS_VERTEX_NORMALS
                 # flags = 0 # SECFLAGS_HAS_VERTEX_NORMALS
@@ -269,11 +278,12 @@ def export_scn_sectors_ug2(output_file, operator=None):
                         w("I", 0)
             finally:
                 safe_mode_set("OBJECT")
-                ob = temporary_object
-                ob_data = ob.data
-                bpy.context.scene.objects.unlink(ob)
-                bpy.data.objects.remove(ob)
-                bpy.data.meshes.remove(ob_data)
+                if not operator.speed_hack:
+                    ob = temporary_object
+                    ob_data = ob.data
+                    bpy.context.scene.objects.unlink(ob)
+                    bpy.data.objects.remove(ob)
+                    bpy.data.meshes.remove(ob_data)
         finally:
             original_object.name = original_object_name
     _saved_offset = output_file.tell()

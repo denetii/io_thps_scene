@@ -145,7 +145,7 @@ def do_export(operator, context, target_game):
             else:
                 export_scn(filename + ".scn.xbx", path, target_game, self)
 
-        if self.properties.generate_tex_file or not os.path.exists(j(path, filename + ".tex.xbx")):
+        if self.properties.generate_tex_file:
             md(path)
             self.report({'OPERATOR'}, "Generating tex file... ")
             if target_game == "THUG1":
