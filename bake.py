@@ -81,6 +81,7 @@ def get_empty_image():
             pixels[(y * size[0]) + x] = [r, g, b, a]
     pixels = [chan for px in pixels for chan in px]
     img.pixels = pixels
+    img.use_fake_user = True
     return img
     
 #----------------------------------------------------------------------------------
@@ -151,7 +152,8 @@ def restore_mats(obj, stored_mats):
         
     for mat in stored_mats:
         #mat.use_nodes = False
-        obj.data.materials.append(mat.copy())
+        #obj.data.materials.append(mat.copy())
+        obj.data.materials.append(mat)
     #for mat in new_mats:
     #    obj.data.materials.append(mat)
         
@@ -336,6 +338,7 @@ def bake_thug_lightmaps(meshes, context):
     
     total_meshes = len(meshes)
     mesh_num = 0
+    baked_obs = []
     for ob in meshes:
         mesh_num += 1
         print("****************************************")
@@ -347,7 +350,7 @@ def bake_thug_lightmaps(meshes, context):
         print("****************************************")
         
         if "is_baked" in ob and ob["is_baked"] == True:
-            print("Object has been previously baked, clearing the bake...")
+            print("Object has been previously baked.")
             #unbake(ob)
             
         if ob.thug_export_scene == False:
@@ -371,13 +374,24 @@ def bake_thug_lightmaps(meshes, context):
             img_res = int(img_res * float(scene.thug_lightmap_scale))
             print("Resolution after scene scale is: {}x{}".format(img_res, img_res))
             
+        # Blender's UV margins seem to scale with resolution, so we need to make them smaller
+        # as the UV resolution increases above 512
+        if img_res > 2048:
+            bake_margin = 0.025
+        elif img_res > 1024:
+            bake_margin = 0.1
+        elif img_res > 512:
+            bake_margin = 0.25
+            
         # Grab original UV map, so any diffuse/normal textures are mapped correctly
         orig_uv = ob.data.uv_layers[0].name
         
-        # Also grab the original mesh data so we can remap the material assignments 
-        orig_polys = [0] * len(ob.data.polygons)
-        for f in ob.data.polygons:
-            orig_polys[f.index] = f.material_index
+        # Also grab the original mesh data so we can remap the material assignments
+        # - if we have more than one material assigned to our object
+        if len(ob.data.materials) > 1:
+            orig_polys = [0] * len(ob.data.polygons)
+            for f in ob.data.polygons:
+                orig_polys[f.index] = f.material_index
         
         bpy.ops.object.mode_set(mode='OBJECT')
         # Recreate the UV map if it's a different resolution than we want now
@@ -475,7 +489,7 @@ def bake_thug_lightmaps(meshes, context):
         # Bake the lightmap!
         scene.cycles.bake_type = 'DIFFUSE'
         bpy.context.scene.render.bake.use_pass_color = False
-        scene.render.bake_margin = bake_margin
+        scene.render.bake_margin = 1 # Used to be bake_margin
         if ob.thug_lightmap_quality != 'Custom':
             if ob.thug_lightmap_quality == 'Draft':
                 scene.cycles.samples = 16
@@ -493,27 +507,22 @@ def bake_thug_lightmaps(meshes, context):
                 scene.cycles.samples = 450
                 scene.cycles.max_bounces = 8
         print("Using {} bake quality. Samples: {}, bounces: {}".format(ob.thug_lightmap_quality, scene.cycles.samples, scene.cycles.max_bounces))
-        #return { 'FINISHED' }
+        #if mesh_num > 1: # Used for testing
+        #    return { 'FINISHED' }
         bpy.ops.object.bake(type='DIFFUSE')
         print("Object " + ob.name + " baked to texture " + blender_tex.name)
         
+        baked_obs.append(ob.name)
         bpy.ops.object.mode_set(mode='OBJECT')
         # Now, for the cleanup! Let's get everything back to BI and restore the missing mats
-        blender_mat.use_nodes = False
+        #blender_mat.use_nodes = False
         restore_mats(ob, orig_mats)
+        bpy.data.materials.remove(blender_mat)
         # Assign the texture pass from the bake material to the base material(s)
         ob.active_material_index = orig_index
         invert_image(blender_tex.image, scene.thug_lightmap_clamp)
         save_baked_texture(blender_tex.image, _folder)
-        for mat in ob.data.materials:
-            mat.use_nodes = False
-            if not mat.texture_slots.get(blender_tex.name):
-                slot = mat.texture_slots.add()
-            else:
-                slot = mat.texture_slots.get(blender_tex.name)
-            slot.texture = blender_tex
-            slot.uv_layer = str('Lightmap')
-            slot.blend_type = 'SUBTRACT'
+        
             
         ob.data.uv_textures[orig_uv].active = True
         ob.data.uv_textures[orig_uv].active_render = True
@@ -526,6 +535,28 @@ def bake_thug_lightmaps(meshes, context):
         ob["thug_last_bake_type"] = ob.thug_lightmap_type
         # Done!!
     
+    # Once we have finished baking everything, we then duplicate the materials and assign
+    # the lightmap texture to them - should be faster than doing it during the baking step
+    print("Baking complete. Setting up lightmapped materials...")
+    for obname in baked_obs:
+        ob = bpy.data.objects.get(obname)
+        if not ob: 
+            raise Exception("Unable to find baked object {}".format(obname))
+        for mat in ob.data.materials:
+            mat.use_nodes = False
+        for mat_slot in ob.material_slots:
+            mat_slot.material = mat_slot.material.copy()
+            blender_tex = bpy.data.textures.get("Baked_{}".format(obname))
+            if not mat_slot.material.texture_slots.get(blender_tex.name):
+                slot = mat_slot.material.texture_slots.add()
+            else:
+                slot = mat_slot.material.texture_slots.get(blender_tex.name)
+            slot.texture = blender_tex
+            slot.uv_layer = str('Lightmap')
+            slot.blend_type = 'SUBTRACT'
+        print("Processed object: {}".format(obname))
+            
+    print("COMPLETE! Thank you for your patience!")
     # Switch back to the original engine, if it wasn't Cycles
     if previous_engine != 'CYCLES':
         scene.render.engine = previous_engine
@@ -698,6 +729,38 @@ class BakeNewLightmaps(bpy.types.Operator):
         return {"FINISHED"}
         
 #----------------------------------------------------------------------------------
+class SelectAllBaked(bpy.types.Operator):
+    bl_idname = "object.thug_bake_select_all"
+    bl_label = "Select Baked"
+    bl_options = {'REGISTER', 'UNDO'}
+    @classmethod
+    def poll(cls, context):
+        meshes = [o for o in bpy.data.objects if o.type == 'MESH' and "is_baked" in o and o["is_baked"] == True ]
+        return len(meshes) > 0
+
+    def execute(self, context):
+        meshes = [o for o in bpy.data.objects if o.type == 'MESH' and "is_baked" in o and o["is_baked"] == True ]
+        for ob in meshes:
+            ob.select = True
+        return {"FINISHED"}
+        
+#----------------------------------------------------------------------------------
+class SelectAllNotBaked(bpy.types.Operator):
+    bl_idname = "object.thug_bake_select_new"
+    bl_label = "Select New"
+    bl_options = {'REGISTER', 'UNDO'}
+    @classmethod
+    def poll(cls, context):
+        meshes = [o for o in bpy.data.objects if o.type == 'MESH' and ("is_baked" not in o or o["is_baked"] == False) ]
+        return len(meshes) > 0
+
+    def execute(self, context):
+        meshes = [o for o in bpy.data.objects if o.type == 'MESH' and ("is_baked" not in o or o["is_baked"] == False) ]
+        for ob in meshes:
+            ob.select = True
+        return {"FINISHED"}
+        
+#----------------------------------------------------------------------------------
 class AutoLightmapResolution(bpy.types.Operator):
     bl_idname = "object.thug_auto_lightmap"
     bl_label = "Auto-set Resolution"
@@ -788,9 +851,9 @@ class THUGSceneLightingTools(bpy.types.Panel):
         
         tmp_row = self.layout.split()
         col = tmp_row.column()
-        col.operator(ReBakeLightmaps.bl_idname, text=ReBakeLightmaps.bl_label, icon='LIGHTPAINT')
+        col.operator(SelectAllBaked.bl_idname, text=SelectAllBaked.bl_label, icon='UV_SYNC_SELECT')
         col = tmp_row.column()
-        col.operator(BakeNewLightmaps.bl_idname, text=BakeNewLightmaps.bl_label, icon='LIGHTPAINT')
+        col.operator(SelectAllNotBaked.bl_idname, text=SelectAllNotBaked.bl_label, icon='UV_SYNC_SELECT')
         tmp_row = self.layout.split()
         col = tmp_row.column()
         col.operator(AutoLightmapResolution.bl_idname, text=AutoLightmapResolution.bl_label, icon='SCRIPT')

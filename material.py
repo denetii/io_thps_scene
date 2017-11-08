@@ -407,6 +407,66 @@ class THUGImageProps(bpy.types.PropertyGroup):
     name="Compression Type",
     default="DXT1")
 #----------------------------------------------------------------------------------
+class AddTextureKeyframe(bpy.types.Operator):
+    bl_idname = "object.thug_add_texture_keyframe"
+    bl_label = "Add THUG Texture Keyframe"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    @classmethod
+    def poll(cls, context):
+        if not context:
+            return False
+        ob = context.object
+        if not ob:
+            return False
+        mat = ob.active_material
+        if not mat:
+            return False
+        tex = mat.active_texture
+        if not tex:
+            return False
+        mpp = tex.thug_material_pass_props
+        if not mpp or not mpp.has_animated_texture:
+            return False
+        return True
+
+    def execute(self, context):
+        at = context.object.active_material.active_texture.thug_material_pass_props.animated_texture
+        at.keyframes.add()
+        at.keyframes_index = len(at.keyframes) - 1
+        return {"FINISHED"}
+
+#----------------------------------------------------------------------------------
+class RemoveTextureKeyframe(bpy.types.Operator):
+    bl_idname = "object.thug_remove_texture_keyframe"
+    bl_label = "Remove THUG Texture Keyframe"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    @classmethod
+    def poll(cls, context):
+        if not context:
+            return False
+        ob = context.object
+        if not ob:
+            return False
+        mat = ob.active_material
+        if not mat:
+            return False
+        tex = mat.active_texture
+        if not tex:
+            return False
+        mpp = tex.thug_material_pass_props
+        if not mpp or not mpp.has_animated_texture:
+            return False
+        return True
+
+    def execute(self, context):
+        at = context.object.active_material.active_texture.thug_material_pass_props.animated_texture
+        at.keyframes.remove(at.keyframes_index)
+        at.keyframes_index = max(0, min(at.keyframes_index, len(at.keyframes) - 1))
+        return {"FINISHED"}
+
+#----------------------------------------------------------------------------------
 class THUGAnimatedTextureKeyframesUIList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(0.33)

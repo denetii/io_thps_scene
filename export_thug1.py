@@ -99,7 +99,8 @@ def export_scn_sectors(output_file, operator=None):
                     pass_index = -1
                     for _tmp_tex in _tmp_passes:
                         pass_index += 1
-                        if get_uv_index(ob, _tmp_tex.uv_layer) != pass_index and operator:
+                        _uvindex = get_uv_index(ob, _tmp_tex.uv_layer)
+                        if _uvindex != -1 and _uvindex != pass_index and operator:
                             operator.report({"WARNING"},
                             "UV/material pass index mismatch on: {} for material: {} assigned to object: {}. UVs will not appear correct in-game.".format(_tmp_tex.name, env_test.name, ob.name))
                         _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
