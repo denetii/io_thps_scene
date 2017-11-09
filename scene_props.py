@@ -574,7 +574,20 @@ def register_props():
         name="Shadow Intensity",
         description="Controls the maximum intensity of shadowed areas. Reduce in low-light scenes if you need to improve visibility.",
         min=0, max=1.0, default=1.0)
-        
+    bpy.types.Scene.thug_lightmap_color = FloatVectorProperty(name="Ambient Color",
+                       subtype='COLOR',
+                       default=(1.0, 1.0, 1.0, 1.0),
+                       size=4,
+                       min=0.0, max=1.0,
+                       description="Lightmaps are baked onto a surface of this color.")
+    bpy.types.Scene.thug_bake_type = EnumProperty(
+        name="Bake Type",
+        items=[
+            ("LIGHT", "Lighting Only", "Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting."),
+            ("FULL", "Full Diffuse", "Bake lighting onto textures. Accurate lighting, but lowers base texture resolution.")],
+        default="LIGHT", 
+        description="Type of bakes to use for this scene.")
+                           
     # bpy.utils.unregister_class(ExtractRail)
     # bpy.utils.register_class(ExtractRail)
     # bpy.utils.unregister_class(THUGImportNodeArray)

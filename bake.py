@@ -87,7 +87,7 @@ def get_empty_image():
 #----------------------------------------------------------------------------------
 #- Checks for the temp off-white image used for baking onto a surface
 #----------------------------------------------------------------------------------
-def get_filler_image():
+def get_filler_image(color):
     if bpy.data.images.get("_tmp_flat"):
         return bpy.data.images.get("_tmp_flat")
         
@@ -99,10 +99,10 @@ def get_filler_image():
     for x in range(size[0]):
         for y in range(size[1]):
             # assign RGBA to something useful
-            r = 1.0
-            g = 1.0
-            b = 1.0
-            a = 1.0
+            r = color[0]
+            g = color[1]
+            b = color[2]
+            a = color[3]
             pixels[(y * size[0]) + x] = [r, g, b, a]
 
     # flatten list
@@ -211,12 +211,12 @@ def setup_cycles_scene(use_uglymode = False):
             mat.use_nodes = True
     
 
-def setup_cycles_nodes(node_tree, diffuse_tex = None, normal_tex = None, uv_map = ""):
+def setup_cycles_nodes(node_tree, diffuse_tex = None, normal_tex = None, color = [1.0, 1.0, 1.0, 1.0], uv_map = ""):
     nodes = node_tree.nodes
     # First, add textures...
     # Add dummy diffuse texture node (off white)
     node_d = get_cycles_node(nodes, 'Filler Tex', 'ShaderNodeTexImage')
-    node_d.image = get_filler_image()
+    node_d.image = get_filler_image(color)
     node_d.location = (-680,40)
     
     node_t = get_cycles_node(nodes, 'Diffuse Texture', 'ShaderNodeTexImage')
@@ -342,11 +342,7 @@ def bake_thug_lightmaps(meshes, context):
     for ob in meshes:
         mesh_num += 1
         print("****************************************")
-        print("****************************************")
-        print("****************************************")
         print("BAKING LIGHTING FOR OBJECT #" + str(mesh_num) + " OF " + str(total_meshes) + ": " + ob.name)
-        print("****************************************")
-        print("****************************************")
         print("****************************************")
         
         if "is_baked" in ob and ob["is_baked"] == True:
@@ -413,7 +409,7 @@ def bake_thug_lightmaps(meshes, context):
             bpy.ops.mesh.uv_texture_add({"object": ob})
             ob.data.uv_layers[len(ob.data.uv_layers)-1].name = 'Lightmap'
             ob.data.uv_textures['Lightmap'].active = True
-            ob.data.uv_textures['Lightmap'].active_render = True
+            #ob.data.uv_textures['Lightmap'].active_render = True
             
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
             bpy.ops.object.mode_set(mode='EDIT')
@@ -430,65 +426,107 @@ def bake_thug_lightmaps(meshes, context):
                 raise Exception("Unknown lightmap type specified on object {}".format(ob.name))
         else:
             ob.data.uv_textures['Lightmap'].active = True
-            ob.data.uv_textures['Lightmap'].active_render = True
+            #ob.data.uv_textures['Lightmap'].active_render = True
             
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-        # First, we need to store the materials assigned to the object
-        # As baking will fail if there are any materials without textures
-        orig_mats = store_materials(ob)
-        orig_index = ob.active_material_index
-        if orig_index == None or orig_index < 0:
-            orig_index = 0
+        
+        #-----------------------------------------------------------------------------------------
+        # For FULL bakes, we just need to loop through all the Cycles mats and add the image slot
+        # to store the bake result, pretty easy!
+        if scene.thug_bake_type == 'FULL':
+            orig_index = ob.active_material_index
             
-        # Create a new image to bake the lighting in to, if it doesn't exist
-        if not bpy.data.images.get('LM_' + ob.name):
-            bpy.ops.image.new(name="LM_" + ob.name, width=img_res, height=img_res)
-            image = bpy.data.images['LM_' + ob.name]
+            # Create a new image to bake the lighting in to, if it doesn't exist
+            if not bpy.data.images.get('LM_' + ob.name):
+                bpy.ops.image.new(name="LM_" + ob.name, width=img_res, height=img_res)
+                image = bpy.data.images['LM_' + ob.name]
+            else:
+                image = bpy.data.images.get('LM_' + ob.name)
+            image.generated_width = img_res
+            image.generated_height = img_res
+            
+            # Create or retrieve the lightmap texture
+            if not bpy.data.textures.get("Baked_{}".format(ob.name)):
+                blender_tex = bpy.data.textures.new("Baked_{}".format(ob.name), "IMAGE")
+            else:
+                blender_tex = bpy.data.textures.get("Baked_{}".format(ob.name))
+            blender_tex.image = image
+            blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_BLEND'
+            
+            for mat in ob.data.materials:
+                node_d = get_cycles_node(mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
+                node_d.image = blender_tex.image
+                node_d.location = (-880,40)
+                mat.node_tree.nodes.active = node_d
+                # Add a UV map node 
+                node_uv = get_cycles_node(mat.node_tree.nodes, 'Bake Result UV', 'ShaderNodeUVMap')
+                node_uv.location = (-1060,60)
+                node_uv.uv_map = "Lightmap"
+                mat.node_tree.links.new(node_d.inputs[0], node_uv.outputs[0]) # Bake Texture UV
+            
+        #-----------------------------------------------------------------------------------------
+        # For lighting only bakes, it's more complicated! We clear out the materials, add a temp material
+        # to bake the result onto, then restore the original materials and apply the bake texture
         else:
-            image = bpy.data.images.get('LM_' + ob.name)
-        # Always set width and height, in case the user changed the lightmap res
-        image.generated_width = img_res
-        image.generated_height = img_res
-        
-        # Create or retrieve the lightmap material
-        if not bpy.data.textures.get("Baked_{}".format(ob.name)):
-            blender_tex = bpy.data.textures.new("Baked_{}".format(ob.name), "IMAGE")
-        else:
-            blender_tex = bpy.data.textures.get("Baked_{}".format(ob.name))
-        blender_tex.image = image
-        blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_SUBTRACT'
-        blender_mat = get_material("Lightmap_" + ob.name)
-        if not blender_mat.texture_slots.get(blender_tex.name):
-            tex_slot = blender_mat.texture_slots.add()
-        else:
-            tex_slot = blender_mat.texture_slots.get(blender_tex.name)
-        tex_slot.texture = blender_tex
-        tex_slot.uv_layer = str('Lightmap')
-        tex_slot.blend_type = 'SUBTRACT'
-        blender_mat.use_textures[0] = True
-        if not ob.data.materials.get(blender_mat.name):
-            ob.data.materials.append(blender_mat)
-        
-        # Create a material tree node in Cycles
-        blender_mat.use_nodes = True
-        # Look for diffuse and normal textures in the original active material
-        test_mat = orig_mats[orig_index]
-        tx_d = mat_get_pass(test_mat, 'Diffuse')
-        tx_n = mat_get_pass(test_mat, 'Normal')
-        setup_cycles_nodes(blender_mat.node_tree, tx_d, tx_n, orig_uv)
-        
-        # Finally, add the result texture, this is what will actually store the bake
-        node_bake = get_cycles_node(blender_mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
-        node_bake.image = blender_tex.image
-        node_bake.location = (-160,100)
-        node_bake.select = True
-        blender_mat.node_tree.nodes.active = node_bake
-        
+            # First, we need to store the materials assigned to the object
+            # As baking will fail if there are any materials without textures
+            orig_mats = store_materials(ob)
+            orig_index = ob.active_material_index
+            if orig_index == None or orig_index < 0:
+                orig_index = 0
+                
+            # Create a new image to bake the lighting in to, if it doesn't exist
+            if not bpy.data.images.get('LM_' + ob.name):
+                bpy.ops.image.new(name="LM_" + ob.name, width=img_res, height=img_res)
+                image = bpy.data.images['LM_' + ob.name]
+            else:
+                image = bpy.data.images.get('LM_' + ob.name)
+            # Always set width and height, in case the user changed the lightmap res
+            image.generated_width = img_res
+            image.generated_height = img_res
+            
+            # Create or retrieve the lightmap material
+            if not bpy.data.textures.get("Baked_{}".format(ob.name)):
+                blender_tex = bpy.data.textures.new("Baked_{}".format(ob.name), "IMAGE")
+            else:
+                blender_tex = bpy.data.textures.get("Baked_{}".format(ob.name))
+            blender_tex.image = image
+            blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_SUBTRACT'
+            blender_mat = get_material("Lightmap_" + ob.name)
+            if not blender_mat.texture_slots.get(blender_tex.name):
+                tex_slot = blender_mat.texture_slots.add()
+            else:
+                tex_slot = blender_mat.texture_slots.get(blender_tex.name)
+            tex_slot.texture = blender_tex
+            tex_slot.uv_layer = str('Lightmap')
+            tex_slot.blend_type = 'SUBTRACT'
+            blender_mat.use_textures[0] = True
+            if not ob.data.materials.get(blender_mat.name):
+                ob.data.materials.append(blender_mat)
+            
+            # Create a material tree node in Cycles
+            blender_mat.use_nodes = True
+            # Look for diffuse and normal textures in the original active material
+            test_mat = orig_mats[orig_index]
+            tx_d = mat_get_pass(test_mat, 'Diffuse')
+            tx_n = mat_get_pass(test_mat, 'Normal')
+            setup_cycles_nodes(blender_mat.node_tree, tx_d, tx_n, scene.thug_lightmap_color, orig_uv)
+            
+            # Finally, add the result texture, this is what will actually store the bake
+            node_bake = get_cycles_node(blender_mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
+            node_bake.image = blender_tex.image
+            node_bake.location = (-160,100)
+            node_bake.select = True
+            blender_mat.node_tree.nodes.active = node_bake
+            
         #return {"FINISHED"}
         
         # Bake the lightmap!
         scene.cycles.bake_type = 'DIFFUSE'
-        bpy.context.scene.render.bake.use_pass_color = False
+        if scene.thug_bake_type == 'FULL':
+            bpy.context.scene.render.bake.use_pass_color = True
+        else:
+            bpy.context.scene.render.bake.use_pass_color = False
         scene.render.bake_margin = 1 # Used to be bake_margin
         if ob.thug_lightmap_quality != 'Custom':
             if ob.thug_lightmap_quality == 'Draft':
@@ -514,21 +552,29 @@ def bake_thug_lightmaps(meshes, context):
         
         baked_obs.append(ob.name)
         bpy.ops.object.mode_set(mode='OBJECT')
-        # Now, for the cleanup! Let's get everything back to BI and restore the missing mats
-        #blender_mat.use_nodes = False
-        restore_mats(ob, orig_mats)
-        bpy.data.materials.remove(blender_mat)
-        # Assign the texture pass from the bake material to the base material(s)
-        ob.active_material_index = orig_index
-        invert_image(blender_tex.image, scene.thug_lightmap_clamp)
-        save_baked_texture(blender_tex.image, _folder)
         
+        if scene.thug_bake_type == 'FULL':
+            ob.active_material_index = orig_index
+        
+        else:
+            # Now, for the cleanup! Let's get everything back to BI and restore the missing mats
+            #blender_mat.use_nodes = False
+            restore_mats(ob, orig_mats)
+            bpy.data.materials.remove(blender_mat)
+            # Assign the texture pass from the bake material to the base material(s)
+            ob.active_material_index = orig_index
+            invert_image(blender_tex.image, scene.thug_lightmap_clamp)
             
+        save_baked_texture(blender_tex.image, _folder)
         ob.data.uv_textures[orig_uv].active = True
         ob.data.uv_textures[orig_uv].active_render = True
-        # If there is more than one material, restore the per-face material assignment
-        if len(ob.data.materials) > 1:
-            restore_mat_assignments(ob, orig_polys)
+        
+        if scene.thug_bake_type == 'FULL':
+            ob.select = False
+        else:
+            # If there is more than one material, restore the per-face material assignment
+            if len(ob.data.materials) > 1:
+                restore_mat_assignments(ob, orig_polys)
         ob.select = False
         ob["is_baked"] = True
         ob["thug_last_bake_res"] = img_res
@@ -553,7 +599,10 @@ def bake_thug_lightmaps(meshes, context):
                 slot = mat_slot.material.texture_slots.get(blender_tex.name)
             slot.texture = blender_tex
             slot.uv_layer = str('Lightmap')
-            slot.blend_type = 'SUBTRACT'
+            if scene.thug_bake_type == 'FULL':
+                slot.blend_type = 'MIX'
+            else:
+                slot.blend_type = 'SUBTRACT'
         print("Processed object: {}".format(obname))
             
     print("COMPLETE! Thank you for your patience!")
@@ -845,8 +894,11 @@ class THUGSceneLightingTools(bpy.types.Panel):
         if not context.scene: return
         scene = context.scene
         self.layout.row().prop(scene, "thug_lightmap_scale")
-        self.layout.row().prop(scene, "thug_lightmap_uglymode")
-        self.layout.row().prop(scene, "thug_lightmap_clamp")
+        self.layout.row().prop(scene, "thug_bake_type")
+        if scene.thug_bake_type == 'LIGHT':
+            self.layout.row().prop(scene, "thug_lightmap_uglymode")
+            self.layout.row().prop(scene, "thug_lightmap_color")
+            self.layout.row().prop(scene, "thug_lightmap_clamp")
         self.layout.row().operator(ToggleLightmapPreview.bl_idname, text=ToggleLightmapPreview.bl_label, icon='SEQ_PREVIEW')
         
         tmp_row = self.layout.split()
