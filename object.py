@@ -251,6 +251,7 @@ def _thug_object_settings_draw(self, context):
         # context.window_manager.thug_rail_objects = [obj for obj in context.scene.objects if obj.type == "CURVE"]
         if ob.thug_path_type == "Rail":
             self.layout.row().prop(ob, "thug_rail_terrain_type")
+            self.layout.row().operator(AutoRailMesh.bl_idname, AutoRailMesh.bl_label)
         _update_rails_collection(self, context)
         #_update_pathnodes_collections()
         self.layout.row().prop_search(

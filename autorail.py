@@ -1,12 +1,14 @@
 import bpy
 import bgl
 import bmesh
+import mathutils
 from bpy.props import *
 from pprint import pprint
 from . import collision, helpers
 from . collision import update_triggered_by_ui_updater 
 from . constants import *
 from . helpers import *
+from . import prefs
 
 # PROPERTIES
 #############################################
@@ -15,6 +17,134 @@ AUTORAIL_AUTO = -1
 
 # METHODS
 #############################################
+def get_autorail_image():
+    if bpy.data.images.get("Autorail_Metal"):
+        return bpy.data.images.get("Autorail_Metal")
+        
+    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
+    if base_files_dir_error:
+        self.report({"WARNING"}, "Base files directory error: {} - Unable to find autorail texture, using color instead.".format(base_files_dir_error))
+        size = 32, 32
+        img = bpy.data.images.new(name="Autorail_Metal", width=size[0], height=size[1])
+        img.generated_color = ( 0.1, 0.1, 0.1, 1.0 )
+        img.use_fake_user = True
+        return
+    base_files_dir = addon_prefs.base_files_dir
+    
+    img = bpy.data.images.load(base_files_dir + "textures\\autorail_cap.png")
+    img.name = "Autorail_Metal"
+    img.use_fake_user = True
+    return img
+    
+def get_autorail_material():
+    if not bpy.data.materials.get('Autorail_Metal'):
+        blender_mat = bpy.data.materials.new('Autorail_Metal') 
+        blender_mat.use_transparency = True
+        blender_mat.diffuse_color = (1, 1, 1)
+        blender_mat.diffuse_intensity = 1
+        blender_mat.specular_intensity = 0.25
+        blender_mat.alpha = 1
+        
+        if bpy.data.textures.get("Autorail_Metal"):
+            rail_tex = bpy.data.textures.get("Autorail_Metal")
+        else:
+            rail_tex = bpy.data.textures.new("Autorail_Metal", "IMAGE")
+        rail_tex.image = get_autorail_image()
+        rail_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_DIFFUSE'
+        tex_slot = blender_mat.texture_slots.add()
+        tex_slot.texture = rail_tex
+        tex_slot.uv_layer = str('Rail')
+        tex_slot.blend_type = 'MIX'
+        
+    else:
+        blender_mat = bpy.data.materials.get('Autorail_Metal') 
+    return blender_mat
+    
+
+def build_rail_mesh(ob_rail, thickness = 2):
+    if not ob_rail.data.splines:
+        raise Exception("Object is not a rail path.")
+        
+    rail_path = ob_rail.data.splines[0]
+    
+    mesh_name = "OBJ_Rail0"
+    rail_name_idx = 0
+    # Create new rail path
+    while mesh_name in bpy.data.objects:
+        rail_name_idx += 1
+        mesh_name = "OBJ_Rail" + str(rail_name_idx)
+        #print("TRG_RailPath" + str(rail_name_idx))
+        
+    # Set up the path, which will be converted to mesh after
+    curveData = bpy.data.curves.new(mesh_name, type='CURVE')
+    curveData.dimensions = '3D'
+    curveData.resolution_u = 12
+    curveData.bevel_depth = thickness
+    #curveData.bevel_resolution = 3
+    curveData.bevel_resolution = 0
+    curveData.fill_mode = 'FULL'
+    polyline = curveData.splines.new('POLY')
+    
+    point_index = -1
+    for pnt in rail_path.points:
+        point_index += 1
+        if point_index > 0:
+            polyline.points.add()
+        # Make the rail mesh slightly lower so we don't interfere with grinds
+        point_world = ob_rail.matrix_world * pnt.co
+        polyline.points[point_index].co = pnt.co - mathutils.Vector( [0, 0, curveData.bevel_depth, 0] )
+        #print("Adding point {}".format(point_index))
+        # Add post
+        post_line = curveData.splines.new('POLY')
+        post_line.points.add()
+        post_line.points[0].co = ( pnt.co[0], pnt.co[1], 0, 0)
+        post_line.points[1].co = pnt.co - mathutils.Vector( [0, 0, curveData.bevel_depth, 0] )
+        
+    is_cyclic = False
+    if rail_path.use_cyclic_u:
+        is_cyclic = True
+        polyline.use_cyclic_u = True
+    polyline.use_smooth = True
+    
+    # create Object
+    curveOB = bpy.data.objects.new(mesh_name, curveData)
+    #for i, coord in enumerate(rail_nodes[0]):
+    #    curveOB.data.thug_pathnode_triggers.add()
+    # attach to scene and validate context
+    
+    # Now we have the path for the rail mesh, let's convert to mesh and assign materials!
+    rail_mesh = curveOB.to_mesh(bpy.context.scene, True, 'PREVIEW')
+    actual_ob = bpy.data.objects.new('Rail' + mesh_name, rail_mesh)
+    bpy.context.scene.objects.link(actual_ob)
+    bpy.context.scene.objects.active = actual_ob
+    
+    # Fill the gaps in the ends and assign mats
+    if is_cyclic == False:
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.edge_face_add()
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    # Add UV map
+    bpy.ops.mesh.uv_texture_add({"object": actual_ob})
+    actual_ob.data.uv_layers[len(actual_ob.data.uv_layers)-1].name = 'Rail'
+    actual_ob.data.uv_textures['Rail'].active = True
+    actual_ob.data.uv_textures['Rail'].active_render = True
+    
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    #bpy.ops.uv.follow_active_quads()
+    bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
+    #bpy.ops.uv.smart_project()
+    bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    
+    # Add Material
+    actual_ob.data.materials.append(get_autorail_material())
+    actual_ob.parent = ob_rail
+    #Done! You should now have a decent-looking generated rail :)
+    
 def update_autorail_terrain_type(wm, context):
     global update_triggered_by_ui_updater
     if update_triggered_by_ui_updater:
@@ -574,4 +704,20 @@ class ExtractRail(bpy.types.Operator):
         new_object.thug_path_type = "Rail"
 
         return {"FINISHED"}
+
+        
+class AutoRailMesh(bpy.types.Operator):
+    bl_idname = "path.thug_generate_rail_mesh"
+    bl_label = "Create Mesh"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "OBJECT" and context.active_object.type == "CURVE"
+
+    def execute(self, context):
+        if context.selected_objects:
+            for ob in context.selected_objects:
+                build_rail_mesh(ob)
+        return {'FINISHED'}
 

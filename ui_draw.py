@@ -14,6 +14,7 @@ from . export_thug1 import *
 from . export_thug2 import *
 from . export_shared import *
 from . import_nodes import *
+from . presets import *
 
 # PROPERTIES
 #############################################
@@ -219,13 +220,23 @@ def export_menu_func(self, context):
     self.layout.operator(SceneToTHUG2Files.bl_idname, text="Scene to THUG2 level files", icon='PLUGIN')
     self.layout.operator(SceneToTHUG2Model.bl_idname, text="Scene to THUG2 model", icon='PLUGIN')
 #----------------------------------------------------------------------------------
+def add_menu_func(self, context):
+    self.layout.menu(THUGPresetsMenu.bl_idname, text="THUG", icon='PLUGIN')
+#----------------------------------------------------------------------------------
 def register_menus():
     bpy.types.INFO_MT_file_import.append(import_menu_func)
     bpy.types.INFO_MT_file_export.append(export_menu_func)
+    addPresetNodes()
+    addPresetMesh()
+    bpy.types.INFO_MT_add.append(add_menu_func)
 #----------------------------------------------------------------------------------
 def unregister_menus():
     bpy.types.INFO_MT_file_import.remove(import_menu_func)
     bpy.types.INFO_MT_file_export.remove(export_menu_func)
+    bpy.types.INFO_MT_add.remove(add_menu_func)
+    clearPresetNodes()
+    clearPresetMesh()
+
 
 
 

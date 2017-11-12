@@ -10,6 +10,7 @@ from bpy.props import *
 from . helpers import *
 from . material import *
 from . pieces import *
+from . autorail import *
 import fnmatch
 
 # Park piece rotation constants
@@ -46,12 +47,18 @@ def parked_place_piece(piece_name, loc_x, loc_y, loc_z, angle, link = True):
     new_piece.hide = False
     new_piece.hide_render = False
     final_angle = (angle + 4) & 3
+    dimensions = [ new_piece.dimensions.x, new_piece.dimensions.y ]
+    if dimensions[0] < 120:
+        dimensions[0] = 120
+    if dimensions[1] < 120:
+        dimensions[1] = 120
+    
     if final_angle == ROTATE_90 or final_angle == ROTATE_270:
-        new_piece.location[0] += new_piece.dimensions.x / 2
-        new_piece.location[1] += new_piece.dimensions.y / 2
+        new_piece.location[0] += dimensions[0] / 2
+        new_piece.location[1] += dimensions[1] / 2
     else:
-        new_piece.location[0] += new_piece.dimensions.y / 2
-        new_piece.location[1] += new_piece.dimensions.x / 2
+        new_piece.location[0] += dimensions[1] / 2
+        new_piece.location[1] += dimensions[0] / 2
     
     new_piece.rotation_euler[2] = math.radians((90.0 * (final_angle + 2)) - 90)
     if link:
@@ -245,6 +252,9 @@ def import_prk(filename, directory, context, operator):
     for p in range(0, num_pieces):
         piece_data = r.u32()
         piece_data2 = r.u32()
+        # Don't actually import the piece if the option is disabled
+        if operator.import_pieces == False:
+            continue
         piece_index = piece_data & 1023
         piece_pos_x = (piece_data >> 10) & 255
         piece_pos_y = (piece_data >> 18) & 255
@@ -259,13 +269,30 @@ def import_prk(filename, directory, context, operator):
             continue
             
         ob_piece = get_composite_piece(piece_name)
+            
         for pc in ob_piece["pieces"]:
             #print("Piece {}".format(pc["name"]))
-            translated_pos = [ piece_pos_x + pc["pos"][0], piece_pos_y + pc["pos"][2], piece_pos_z + pc["pos"][1] ]
+            if piece_rotation == ROTATE_0:
+                translated_pos = [ piece_pos_x + pc["pos"][0], piece_pos_y + pc["pos"][2], piece_pos_z + pc["pos"][1] ]
+            
+            elif piece_rotation == ROTATE_90:
+                translated_pos = [ piece_pos_x + pc["pos"][2], piece_pos_y + pc["pos"][0], piece_pos_z + pc["pos"][1] ]
+            
+            elif piece_rotation == ROTATE_180:
+                translated_pos = [ piece_pos_x + pc["pos"][0], piece_pos_y + pc["pos"][2], piece_pos_z + pc["pos"][1] ]
+            
+            elif piece_rotation == ROTATE_270:
+                translated_pos = [ piece_pos_x + pc["pos"][2], piece_pos_y + pc["pos"][0], piece_pos_z + pc["pos"][1] ]
+                
+            extra_rotation = 0
+            if len(pc["pos"]) > 3:
+                # The fourth Position element in a composite piece is rotation, apply that here
+                extra_rotation = pc["pos"][3]
+                
             #print("Pos x/y/z: {} {} {}".format(translated_pos[0], translated_pos[1], translated_pos[2]))
             #print("Rotation: {}".format(piece_rotation))
             #print("--------------------------")
-            parked_place_piece(pc["name"], translated_pos[0], translated_pos[1], translated_pos[2], piece_rotation)
+            parked_place_piece(pc["name"], translated_pos[0], translated_pos[1], translated_pos[2], (piece_rotation + extra_rotation))
         
     empty_slots = (1443 - num_pieces)
     print("Empty piece slots: {}".format(empty_slots))
@@ -278,16 +305,25 @@ def import_prk(filename, directory, context, operator):
     #r.offset += parkdata_size
         
     print("I am at offset: {}".format(r.offset))
-    print("****************************************************")
-    print("Park data processed! Building floor/riser grid...")
-    print("****************************************************")
-        #p_meta->SetRot(Mth::ERot90(rot));
-    build_floor_grid(riser_data)   
     
+    # Don't actually import the piece if the option is disabled
+    if operator.import_floors:
+        print("****************************************************")
+        print("Park data processed! Building floor/riser grid...")
+        print("****************************************************")
+            #p_meta->SetRot(Mth::ERot90(rot));
+        build_floor_grid(riser_data)   
+    
+    
+    if operator.import_rails == False:
+        print("****************************************************")
+        print("Import complete! Have fun :)")
+        print("****************************************************")
+        return
+        
     print("****************************************************")
     print("Complete! Building rails...")
     print("****************************************************")
-    
     r.u8() # padding
     r.u32() # park_editor_goals
     r.u8() 
@@ -347,12 +383,19 @@ def import_prk(filename, directory, context, operator):
          
         # create Object
         curveOB = bpy.data.objects.new(rail_path_name, curveData)
+        curveOB.thug_path_type = "Rail"
+        curveOB.thug_rail_terrain_type = "GRINDMETAL"
         #for i, coord in enumerate(rail_nodes[0]):
         #    curveOB.data.thug_pathnode_triggers.add()
         # attach to scene and validate context
         bpy.context.scene.objects.link(curveOB)
         bpy.context.scene.objects.active = curveOB
+        build_rail_mesh(curveOB)
     #read_prk_sections(r, p, num_sectors, context, operator)
+    
+    print("****************************************************")
+    print("Import complete! Have fun :)")
+    print("****************************************************")
     
 #----------------------------------------------------------------------------------
 
@@ -367,6 +410,8 @@ class ImportTHUGPrk(bpy.types.Operator):
     filter_glob = StringProperty(default="*.prk", options={"HIDDEN"})
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
+    import_floors = BoolProperty(name="Generate Floor/Risers", default=True)
+    import_pieces = BoolProperty(name="Import Pieces", default=True)
     import_rails = BoolProperty(name="Import Rails", default=True)
 
     def execute(self, context):
