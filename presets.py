@@ -134,23 +134,52 @@ def preset_place_node(node_type, position):
         curveOB.select = True
         to_group(curveOB, "Waypoints")
         
+def append_from_dictionary(dict_name, piece_name, scn, use_existing = False):
+    # Get the path to the dictionary .blend file - it should always be within the
+    # base files as defined in the plugin configuration
+    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
+    if base_files_dir_error:
+        self.report({"WARNING"}, "Base files directory error: {} - Unable to find path to template .blend files.".format(base_files_dir_error))
+        raise Exception("Unable to find template .blend file.")
+    base_files_dir = addon_prefs.base_files_dir
+    
+    # This flag tells us to try using an object of the same name from the scene first, then
+    # read from the external blend file. Used by the PRK importer to stop us from pulling the
+    # dictionary blend files once per object!
+    if use_existing:
+        piece_search = [obj for obj in scn.objects if fnmatch.fnmatch(obj.name, piece_name)]
+        if piece_search:
+            source_piece = piece_search[0]
+            new_piece = source_piece.copy()
+            new_piece.data = source_piece.data.copy()
+            scn.objects.link(new_piece)
+            return new_piece
+            
+    # This is where we append the object and determine the name when it is added to the scene
+    filepath = base_files_dir + "scenes\\" + dict_name + ".blend"
+    # link all objects starting with 'Cube'
+    with bpy.data.libraries.load(filepath, link=False) as (data_from, data_to):
+        data_to.objects = [name for name in data_from.objects if fnmatch.fnmatch(name, piece_name)]
 
-def preset_place_mesh(piece_name, position):
+    #link object to current scene
+    for obj in data_to.objects:
+        if obj is not None:
+            scn.objects.link(obj)
+            return obj
+        
+        
+def preset_place_mesh(dictionary_name, piece_name, position):
     scene = bpy.context.scene
     bpy.ops.object.select_all(action='DESELECT')
-    piece_search = [obj for obj in scene.objects if fnmatch.fnmatch(obj.name, piece_name)]
-    if not piece_search:
-        print("Piece {} not found in scene.".format(piece_name))
-        return
-    source_piece = piece_search[0]
-    new_piece = source_piece.copy()
-    new_piece.data = source_piece.data.copy()
+    new_piece = append_from_dictionary(dictionary_name, piece_name, scene)
+    #new_piece.data = source_piece.data.copy()
     new_piece.location = position
     new_piece.hide = False
     new_piece.hide_render = False
     new_piece.thug_export_scene = True
     new_piece.thug_export_collision = True
-    scene.objects.link(new_piece)
+    #scene.objects.link(new_piece)
     scene.objects.active = new_piece
     new_piece.select = True
     return new_piece
@@ -159,35 +188,36 @@ def preset_place_compositeobject(piece_name):
     piece_data = {}
     found = False
     pieces = []
-    for ob in Ed_Pieces_UG1:
-        # Single object definitions don't use "single" for the mesh name
-        if "single" in ob and ob["single"] == piece_name:
-            found = True
-            piece = {}
-            piece["name"] = ob["single"]
-            if "pos" in ob:
-                piece["pos"] = ob["pos"]
-            else:
-                piece["pos"] = [0,0,0]
-            if "is_riser" in ob:
-                piece["riser"] = 1
-            pieces.append(piece)
-            break
-            
-        # Multi-object composites have a "name" property we can look up
-        elif "name" in ob and ob["name"] == piece_name:
-            found = True
-            piece_data["name"] = piece_name
-        
-            for cob in ob["multiple"]:
+    for category in Ed_Pieces_UG1:
+        for ob in category:
+            # Single object definitions don't use "single" for the mesh name
+            if "single" in ob and ob["single"] == piece_name:
+                found = True
                 piece = {}
-                piece["name"] = cob["name"]
-                if "pos" in cob:
-                    piece["pos"] = cob["pos"]
+                piece["name"] = ob["single"]
+                if "pos" in ob:
+                    piece["pos"] = ob["pos"]
                 else:
                     piece["pos"] = [0,0,0]
+                if "is_riser" in ob:
+                    piece["riser"] = 1
                 pieces.append(piece)
-                        
+                break
+                
+            # Multi-object composites have a "name" property we can look up
+            elif "name" in ob and ob["name"] == piece_name:
+                found = True
+                piece_data["name"] = piece_name
+            
+                for cob in ob["multiple"]:
+                    piece = {}
+                    piece["name"] = cob["name"]
+                    if "pos" in cob:
+                        piece["pos"] = cob["pos"]
+                    else:
+                        piece["pos"] = [0,0,0]
+                    pieces.append(piece)
+                            
     if not found:
         raise Exception("Unable to find object {} in piece list.".format(piece_name))
     
@@ -207,9 +237,16 @@ preset_node_list = [
     { 'name': 'GAMEOBJECT', 'title': 'GameObject', 'desc': 'Add a new GameObject.' },
 ]
 
+preset_template_list = [
+    { "name": "sk5ed", "title": "Park Editor (UG+)", "list": Ed_Pieces_UG1 }
+    , { "name": "sk6ed", "title": "Park Editor (THUG PRO)", "list": Ed_Pieces_UG2}
+]
+
 # this holds the custom operators so we can cleanup when turned off
 preset_nodes = []
-preset_mesh = []
+preset_mesh = {}
+mesh_submenus = []
+mesh_categories = {}
 
 def addPresetNodes():
     for node in preset_node_list:
@@ -225,28 +262,55 @@ def addPresetNodes():
         bpy.utils.register_class(nc)
 
 def addPresetMesh():
-    for ob in Ed_Pieces_UG1:
-        # Single object definitions don't use "single" for the mesh name
-        if "single" in ob:
-            piece_name = ob["single"]
-            #piece_search = [obj for obj in bpy.context.scene if fnmatch.fnmatch(obj.name, piece_name)]
-            #if not piece_search:
-            #    continue
-                
-            op_name = 'object.add_custom_' + ob["single"].lower()
-            op_label = ob["single"]
-            if "text_name" in ob:
-                op_label = ob["text_name"]
+    for template in preset_template_list:
+        if not template["name"] in preset_mesh:
+            preset_mesh[template["name"]] = {}
+            mesh_categories[template["name"]] = []
             
-            nc = type(  'DynOp_' + ob["single"],
-                        (AddTHUGMesh, ),
-                        {'bl_idname': op_name,
-                        'bl_label': op_label,
-                        'bl_description': 'Add this piece to the scene.',
-                        'piece_name': ob["single"]
+            new_submenu = type(  'DynMenu_' + template["name"],
+                        (THUGMeshSubMenu, ),
+                        {'bl_idname': THUGMeshSubMenu.bl_idname + '_' + template["name"],
+                        'bl_label': template["title"],
+                        'template_name': template["name"]
                     })
-            preset_mesh.append(nc)
-            bpy.utils.register_class(nc)
+            bpy.utils.register_class(new_submenu)
+            mesh_submenus.append(new_submenu)
+            
+        for cat_name, category in template["list"].items():
+            # Create the submenu for the category if it doesn't exist
+            if not cat_name in preset_mesh:
+                preset_mesh[template["name"]][cat_name] = []
+                new_submenu = type(  'DynMenu_' + template["name"] + '_' + cat_name,
+                        (THUGMeshSubSubMenu, ),
+                        {'bl_idname': THUGMeshSubSubMenu.bl_idname + '_' + template["name"] + '_' + cat_name,
+                        'bl_label': cat_name,
+                        'template_name': template["name"],
+                        'category_name': cat_name,
+                    })
+                bpy.utils.register_class(new_submenu)
+                mesh_submenus.append(new_submenu)
+                
+            mesh_categories[template["name"]].append(cat_name) 
+            for ob in category:
+                # Single object definitions don't use "single" for the mesh name
+                if "single" in ob:
+                    piece_name = ob["single"]
+                    op_name = 'object.add_custom_' + template["name"] + '_' + ob["single"].lower()
+                    op_label = ob["single"]
+                    if "text_name" in ob:
+                        op_label = ob["text_name"]
+                    
+                    nc = type(  'DynOp_' + template["name"] + '_' + cat_name + '_' + ob["single"],
+                                (AddTHUGMesh, ),
+                                {'bl_idname': op_name,
+                                'bl_label': op_label,
+                                'bl_description': 'Add this piece to the scene.',
+                                'template_name': template["name"],
+                                'piece_name': ob["single"]
+                            })
+                    
+                    preset_mesh[template["name"]][cat_name].append(nc)
+                    bpy.utils.register_class(nc)
 
 def clearPresetNodes():
     for c in preset_nodes:
@@ -255,6 +319,9 @@ def clearPresetNodes():
 def clearPresetMesh():
     for c in preset_nodes:
         bpy.utils.unregister_class(c)
+    for menu in mesh_submenus:
+        bpy.utils.unregister_class(menu)
+        
 
 # OPERATORS
 #############################################
@@ -277,9 +344,10 @@ class AddTHUGMesh(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     piece_name = bpy.props.StringProperty()
+    template_name = bpy.props.StringProperty()
 
     def execute(self, context):
-        preset_place_mesh(self.piece_name, bpy.context.scene.cursor_location)
+        preset_place_mesh(self.template_name, self.piece_name, bpy.context.scene.cursor_location)
         return {'FINISHED'}
 
 
@@ -295,6 +363,35 @@ class THUGNodesMenu(bpy.types.Menu):
         for o in preset_nodes:
             layout.operator(o.bl_idname)
             
+class THUGMeshSubSubMenu(bpy.types.Menu):
+    bl_label = 'Objects'
+    bl_idname = 'mesh.thug_presetsubmenu'
+    template_name = bpy.props.StringProperty()
+    category_name = bpy.props.StringProperty()
+    
+    def draw(self, context):
+        print("drawing mesh menu")
+        layout = self.layout
+        if self.template_name in preset_mesh:
+            if self.category_name in preset_mesh[self.template_name]:
+                for o in preset_mesh[self.template_name][self.category_name]:
+                    layout.operator(o.bl_idname, icon='OBJECT_DATAMODE')
+                    
+                    
+class THUGMeshSubMenu(bpy.types.Menu):
+    bl_label = 'Objects'
+    bl_idname = 'mesh.thug_presetmenu'
+    template_name = bpy.props.StringProperty()
+    
+    def draw(self, context):
+        print("drawing mesh menu")
+        layout = self.layout
+        if self.template_name in mesh_categories:
+            for category_name in mesh_categories[self.template_name]:
+                layout.menu(THUGMeshSubSubMenu.bl_idname + '_' + self.template_name + '_' + category_name, 
+                icon='GROUP')
+                    
+
 class THUGMeshMenu(bpy.types.Menu):
     bl_label = 'Objects'
     bl_idname = 'mesh.thug_preset_pieces'
@@ -303,11 +400,14 @@ class THUGMeshMenu(bpy.types.Menu):
         print("drawing mesh menu")
         layout = self.layout
         #layout.row().label("This is a submenu")
-        for o in preset_mesh:
-            piece_search = [obj for obj in bpy.data.objects if obj.type == 'MESH' and fnmatch.fnmatch(obj.name, o.piece_name)]
-            if not piece_search:
-                continue
-            layout.operator(o.bl_idname, icon='OUTLINER_OB_ARMATURE')
+        for template_name in preset_mesh:
+            for category in template_name:
+                layout.menu(THUGMeshSubMenu.bl_idname + '_' + template_name + '_' + category)
+                
+            #piece_search = [obj for obj in bpy.data.objects if obj.type == 'MESH' and fnmatch.fnmatch(obj.name, o.piece_name)]
+            #if not piece_search:
+            #    continue
+            #layout.operator(o.bl_idname, icon='OUTLINER_OB_ARMATURE')
 
 
 class THUGPresetsMenu(bpy.types.Menu):
@@ -319,4 +419,5 @@ class THUGPresetsMenu(bpy.types.Menu):
 
         #layout.label("This is a main menu")
         layout.row().menu(THUGNodesMenu.bl_idname)
-        layout.row().menu(THUGMeshMenu.bl_idname)
+        layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk5ed')
+        layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk6ed')

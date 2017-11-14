@@ -11,6 +11,7 @@ from . helpers import *
 from . material import *
 from . pieces import *
 from . autorail import *
+from . presets import *
 import fnmatch
 
 # Park piece rotation constants
@@ -24,28 +25,15 @@ ROTATE_270 = 3
 def parked_place_piece(piece_name, loc_x, loc_y, loc_z, angle, link = True):
     scene = bpy.context.scene
     
-    piece_search = [obj for obj in scene.objects if fnmatch.fnmatch(obj.name, piece_name)]
-    if not piece_search:
-        print("Piece {} not found in scene.".format(piece_name))
-        return
-    source_piece = piece_search[0]
-        
-    #print("Placing piece {} at: {} {} {}".format(piece_name, loc_x, loc_y, loc_z))
-    new_piece = source_piece.copy()
-    new_piece.data = source_piece.data.copy()
+    new_piece = append_from_dictionary(piece_name, scene, True)
     new_piece.location[0] = loc_y * 120
     new_piece.location[1] = loc_x * 120
     new_piece.location[2] = loc_z * 48
-    #new_piece.dimensions.x = round(new_piece.dimensions.x)
-    #new_piece.dimensions.y = round(new_piece.dimensions.y)
-    
-    #if new_piece.dimensions.x > 120:
-    #    new_piece.location[0] += ((round(new_piece.dimensions.x) / 120) * 120) / 4
-    #if new_piece.dimensions.y > 120:
-    #    new_piece.location[1] += ((round(new_piece.dimensions.y) / 120) * 120) / 4
-        
     new_piece.hide = False
     new_piece.hide_render = False
+    new_piece.thug_export_scene = True
+    new_piece.thug_export_collision = True
+    
     final_angle = (angle + 4) & 3
     dimensions = [ new_piece.dimensions.x, new_piece.dimensions.y ]
     if dimensions[0] < 120:
@@ -61,43 +49,42 @@ def parked_place_piece(piece_name, loc_x, loc_y, loc_z, angle, link = True):
         new_piece.location[1] += dimensions[0] / 2
     
     new_piece.rotation_euler[2] = math.radians((90.0 * (final_angle + 2)) - 90)
-    if link:
-        scene.objects.link(new_piece)
     return new_piece
     
 def get_composite_piece(piece_name):
     piece_data = {}
     found = False
     pieces = []
-    for ob in Ed_Pieces_UG1:
-        # Single object definitions don't use "single" for the mesh name
-        if "single" in ob and ob["single"] == piece_name:
-            found = True
-            piece = {}
-            piece["name"] = ob["single"]
-            if "pos" in ob:
-                piece["pos"] = ob["pos"]
-            else:
-                piece["pos"] = [0,0,0]
-            if "is_riser" in ob:
-                piece["riser"] = 1
-            pieces.append(piece)
-            break
-            
-        # Multi-object composites have a "name" property we can look up
-        elif "name" in ob and ob["name"] == piece_name:
-            found = True
-            piece_data["name"] = piece_name
-        
-            for cob in ob["multiple"]:
+    for cat_name, category in Ed_Pieces_UG1.items():
+        for ob in category:
+            # Single object definitions don't use "single" for the mesh name
+            if "single" in ob and ob["single"] == piece_name:
+                found = True
                 piece = {}
-                piece["name"] = cob["name"]
-                if "pos" in cob:
-                    piece["pos"] = cob["pos"]
+                piece["name"] = ob["single"]
+                if "pos" in ob:
+                    piece["pos"] = ob["pos"]
                 else:
                     piece["pos"] = [0,0,0]
+                if "is_riser" in ob:
+                    piece["riser"] = 1
                 pieces.append(piece)
-                        
+                break
+                
+            # Multi-object composites have a "name" property we can look up
+            elif "name" in ob and ob["name"] == piece_name:
+                found = True
+                piece_data["name"] = piece_name
+            
+                for cob in ob["multiple"]:
+                    piece = {}
+                    piece["name"] = cob["name"]
+                    if "pos" in cob:
+                        piece["pos"] = cob["pos"]
+                    else:
+                        piece["pos"] = [0,0,0]
+                    pieces.append(piece)
+                            
     if not found:
         raise Exception("Unable to find object {} in piece list.".format(piece_name))
     

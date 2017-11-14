@@ -231,8 +231,10 @@ def do_export(operator, context, target_game):
 
         end_time = datetime.datetime.now()
         if (compilation_successful is None) or compilation_successful:
+            print("EXPORT COMPLETE! Thank you for waiting :)")
             self.report({'INFO'}, "Exported level {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
         else:
+            print("EXPORT FAILED! Uh oh :(")
             self.report({'WARNING'}, "Failed exporting level {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
     except ExportError as e:
         self.report({'ERROR'}, "Export failed.\nExport error: {}".format(str(e)))

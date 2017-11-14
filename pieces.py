@@ -3,7 +3,8 @@
 # Used for importing PRK files
 #############################################
 
-Ed_Pieces_UG1 = [
+Ed_Pieces_UG1 = {
+    "meta": [
     {
       "single": "Sk3Ed_RS_1p",
       "text_name": "Player 1 Start",
@@ -60,6 +61,7 @@ Ed_Pieces_UG1 = [
       "text_name": "Rail Placement",
       "special_type": "rail_placement",
     }, 
+    ],"Benches": [
     { 
       "single": "Sk3Ed_Bs_01",
       "text_name": "Table",
@@ -120,6 +122,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_sdBench",
       "text_name": "SD Bench",
     }, 
+    ],"Pools/Bowls": [
     { 
       "single": "Sk3Ed_PB_Sul",
       "text_name": "S Bowl",
@@ -144,6 +147,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_ShipPool",
       "text_name": "Cruise Ship Pool",
     }, 
+    ],"Buildings & Vehicles": [
     { 
       "single": "Sk3Ed_MTra_01",
       "text_name": "RV",
@@ -180,6 +184,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_Ghetto",
       "text_name": "House Projects",
     }, 
+    ],"Funboxes": [
     { 
       "single": "Sk3Ed_FB_Tok01",
       "text_name": "Tokyo Mega",
@@ -244,6 +249,7 @@ Ed_Pieces_UG1 = [
       "single": "Sk3Ed_FB_30x30x8_04",
       "text_name": "High Long Oct",
     }, 
+    ],"Pipes & Tunnels": [
     { 
       "single": "Sk3Ed_PB_SubHp01",
       "text_name": "Sub Halfpipe",
@@ -284,6 +290,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_UndergroundCurved",
       "text_name": "Underground Curved",
     }, 
+    ],"Kickers": [
     { 
       "single": "Sk4Ed_SF2_TnAKicker01",
       "text_name": "Kicker 1",
@@ -312,6 +319,7 @@ Ed_Pieces_UG1 = [
       "single": "Sk5ED_BoobB_01",
       "text_name": "Big Boob",
     }, 
+    ],"Walls": [
     { 
       "single": "sk5ed_shortwall",
       "text_name": "Lowest",
@@ -400,6 +408,7 @@ Ed_Pieces_UG1 = [
       "single": "Sk3Ed_We_10x10x2",
       "text_name": "Low Connector",
     }, 
+    ],"QPs": [
     { 
       "single": "Sk3Ed_QPd_10x10x8",
       "text_name": "Low Short",
@@ -607,6 +616,7 @@ Ed_Pieces_UG1 = [
       "single": "Sk5Ed_QPshortMid_01",
       "text_name": "Short QP",
     }, 
+    ],"Pool Parts": [
     { 
       "single": "Sk3Ed_P_10x10x8",
       "text_name": "Short",
@@ -649,6 +659,7 @@ Ed_Pieces_UG1 = [
       "single": "Sk3Ed_Pdb_01",
       "text_name": "Diving Block",
     }, 
+    ],"Rail Pieces": [
     { 
       "single": "Sk3Ed_RAi_10x10x4",
       "text_name": "Low Tight Corner",
@@ -733,6 +744,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_kink",
       "text_name": "Kink",
     }, 
+    ],"Slopes": [
     { 
       "single": "Sk3Ed_S_10x10x4",
       "text_name": "Low",
@@ -849,6 +861,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_Test02",
       "text_name": "Car Ramp",
     }, 
+    ],"Stairs": [
     { 
       "single": "Sk3Ed_ST_10x10x2",
       "text_name": "Double",
@@ -905,6 +918,7 @@ Ed_Pieces_UG1 = [
       "single": "Sk5Ed_SF2_24Stair01",
       "text_name": "24 Set",
     }, 
+    ],"Trees & Planters": [
     { 
       "single": "Sk3Ed_Gt_20x20",
       "text_name": "Tree Planter",
@@ -941,6 +955,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_VCplanter_03",
       "text_name": "VC Planter 3",
     }, 
+    ],"Misc.": [
     { 
       "single": "Sk3Ed_Dumpster01",
       "text_name": "Dumpster",
@@ -1065,6 +1080,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_car",
       "text_name": "Car",
     }, 
+    ],"Ground Pieces": [
     { 
       "single": "Sk3Ed_MWa_20x20",
       "text_name": "Water",
@@ -1109,6 +1125,7 @@ Ed_Pieces_UG1 = [
       "single": "sk5ed_sand01",
       "text_name": "Sand 1 Square",
     }, 
+    ],"Risers": [
     { 
         "multiple": [ 
             { "name": "Sk3Ed_Rd1b_10x10x4", "pos": [ 0 , 0 , 0 ] }, 
@@ -1281,6 +1298,7 @@ Ed_Pieces_UG1 = [
       "single": "Sk4Ed_Fence_20x20",
       "text_name": "Big fence",
     }, 
+    ],"UG+": [
     # End of THUG1 base game piece listings
     # Underground+ Piece definitions follow below!
     # --------------------------------------------
@@ -1802,9 +1820,2030 @@ Ed_Pieces_UG1 = [
         "text_name": "Pillar",
         "no_rails": 1,
     }  
+    ]
+}
 
-]
-
+Ed_Pieces_UG2 = {
+    "hidden": [
+    {
+        "single": "Sk3Ed_RS_1p", 
+        "text_name": "Player 1 Restart",
+        "special_type": "restart_1", 
+    },
+    {
+        "single": "Sk3Ed_RS_Mp", 
+        "text_name": "Player 2 Restart",
+        "special_type": "restart_multi", 
+    },
+    {
+        "single": "Sk3Ed_Rs_Ho", 
+        "text_name": "Multiplayer / Horse Restart",
+        "special_type": "restart_horse", 
+    },
+    {
+        "single": "Sk3Ed_Rs_KOTH", 
+        "text_name": "King of the Hill Crown Restart",
+        "special_type": "king_of_hill", 
+    },
+    {
+        "single": "Sk4Ed_Team_Blue", 
+        "text_name": "Blue Team / CTF Base",
+        "special_type": "blue_flag", 
+    },
+    {
+        "single": "Sk4Ed_Team_Red", 
+        "text_name": "Red Team / CTF Base",
+        "special_type": "red_flag", 
+    },
+    {
+        "single": "Sk4Ed_Team_Green", 
+        "text_name": "Green Team / CTF Base",
+        "special_type": "green_flag", 
+    },
+    {
+        "single": "Sk4Ed_Team_Yellow", 
+        "text_name": "Yellow Team / CTF Base",
+        "special_type": "yellow_flag", 
+    },
+    {
+        "single": "Sk5Ed_Sel_01", 
+        "text_name": "Area Selection",
+        "special_type": "area_selection", 
+    },
+    {
+        "single": "Sk3Ed_GAP_01", 
+        "text_name": "Gap Placement Piece",
+        "special_type": "gap_placement", 
+    },
+    {
+        "single": "Sk3Ed_RAi_10x10x4", 
+        "name": "rail_placement", 
+        "text_name": "Rail Placement",
+        "special_type": "rail_placement", 
+    },
+    ],"Tables & Benches": [
+    {
+        "single": "Sk3Ed_Bs_01", 
+        "text_name": "Table",
+    },
+    {
+        "single": "Sk3Ed_Bs_02", 
+        "text_name": "Table Bench",
+    },
+    {
+        "single": "Sk3Ed_Bs_03", 
+        "text_name": "Corner Table",
+    },
+    {
+        "single": "Sk3Ed_Bs_04", 
+        "text_name": "Corner Table Bench",
+    },
+    {
+        "single": "Sk3Ed_Bs_05", 
+        "text_name": "Table On Dumpster",
+    },
+    {
+        "single": "Sk3Ed_Bp_01", 
+        "text_name": "Park Bench",
+    },
+    {
+        "single": "Sk3Ed_Bp_02", 
+        "text_name": "Corner Park Bench",
+    },
+    {
+        "single": "Sk4Ed_SF2_Bench", 
+        "text_name": "Conc Bench",
+    },
+    {
+        "single": "Sk4Ed_Alc_CrustyBench", 
+        "text_name": "Crusty Bench",
+    },
+    {
+        "single": "sk5ed_sdBench", 
+        "text_name": "SD Bench",
+    },
+    {
+        "single": "Sk4Ed_Alc_Bench", 
+        "text_name": "Alcatraz Bench",
+    },
+    {
+        "single": "sk6ed_Bench_BA_short", 
+        "text_name": "BA Bench Short",
+    },
+    {
+        "single": "sk6ed_Bench_BA_med", 
+        "text_name": "BA Bench Mid",
+    },
+    {
+        "single": "sk6ed_Bench_BA_long", 
+        "text_name": "BA Bench Long",
+    },
+    {
+        "single": "sk6ed_BusStop", 
+        "text_name": "AU Bus Stop",
+    },
+    {
+        "single": "sk5ed_veniceBench", 
+        "text_name": "Venice Bench",
+    },
+    {
+        "single": "sk6ed_crypt", 
+        "text_name": "Crypt",
+    },
+    ],"Funboxes & Kickers": [
+    {
+        "single": "Sk3Ed_FB_Tok02", 
+        "text_name": "Tokyo Low Wall",
+    },
+    {
+        "single": "Sk3Ed_FB_Rio01", 
+        "text_name": "Rio Quiksilver Box",
+    },
+    {
+        "single": "Sk3Ed_FB_Sub02", 
+        "text_name": "Suburbia Hump",
+    },
+    {
+        "single": "Sk3Ed_FB_Sub03", 
+        "text_name": "Suburbia Box",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x4_01", 
+        "text_name": "Low Med",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x4_02", 
+        "text_name": "Low Oct",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x4_03", 
+        "text_name": "Low Long Med",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x4_04", 
+        "text_name": "Low Long Oct",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x8_01", 
+        "text_name": "High Med",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x8_02", 
+        "text_name": "High Oct",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x8_03", 
+        "text_name": "High Long Med",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x8_04", 
+        "text_name": "High Long Oct",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x8_05", 
+        "text_name": "High Long Med Steep",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x8_06", 
+        "text_name": "High Long Oct Steep",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x8_07", 
+        "text_name": "High Long Med Steeper",
+    },
+    {
+        "single": "sk6ed_LaunchBB", 
+        "text_name": "Box Booster Big",
+    },
+    {
+        "single": "Sk3Ed_FB_30x30x8_08", 
+        "text_name": "High Long Oct Steeper",
+    },
+    {
+        "single": "sk6ed_LaunchSB", 
+        "text_name": "Box Booster Small",
+    },
+    {
+        "single": "sk6ed_SSrailbox", 
+        "text_name": "Rail Box Skatestreet",
+    },
+    {
+        "single": "sk6ed_SSbigkicker", 
+        "text_name": "Outside Skatestreet",
+    },
+    {
+        "single": "Sk4Ed_SF2_TnAKicker01", 
+        "text_name": "Kicker 1",
+    },
+    {
+        "single": "Sk4Ed_Alc_Kicker", 
+        "text_name": "Kicker 2",
+    },
+    {
+        "single": "sk5ed_Tightkicker", 
+        "text_name": "Tight Kicker",
+    },
+    {
+        "single": "sk5ed_KickerWall", 
+        "text_name": "Kicker Wall",
+    },
+    {
+        "single": "sk6ed_Kick_MidB", 
+        "text_name": "Kick Mid Boost",
+    },
+    {
+        "single": "sk6ed_Kick_HighB", 
+        "text_name": "Kick High Boost",
+    },
+    {
+        "single": "sk6ed_doubelsidedKick", 
+        "text_name": "Double Sided Kick",
+    },
+    {
+        "single": "sk6ed_SSrampmid", 
+        "text_name": "Ramp Mid Skatestreet",
+    },
+    {
+        "single": "sk6ed_SSrampmidBooster", 
+        "text_name": "Mid Skatestreet Booster",
+    },
+    {
+        "single": "sk6ed_SSmidpiece", 
+        "text_name": "Mid Piece Skatestreet",
+    },
+    {
+        "single": "sk6ed_SSrampsmall", 
+        "text_name": "Small Kicker Skatestreet",
+    },
+    {
+        "single": "sk6ed_SSrampwide", 
+        "text_name": "Wide Kicker Skatestreet",
+    },
+    {
+        "single": "sk6ed_SSroundkicker", 
+        "text_name": "Round Kicker Skatestreet",
+    },
+    {
+        "single": "sk6ed_venice_triangle", 
+        "text_name": "Venice Triangle",
+    },
+    {
+        "single": "Sk5ED_BoobB_03", 
+        "text_name": "Small Boob",
+    },
+    {
+        "single": "Sk5ED_BoobB_02", 
+        "text_name": "Medium Boob",
+    },
+    {
+        "single": "Sk5ED_BoobB_01", 
+        "text_name": "Big Boob",
+    },
+    ],"Pipes & Tunnels": [
+    {
+        "single": "sk6ed_HP_AU", 
+        "text_name": "Halfpipe Australia",
+    },
+    {
+        "single": "Sk5Ed_HPTunnel_01", 
+        "text_name": "HP Tunnel",
+    },
+    {
+        "single": "sk5ed_Underground", 
+        "text_name": "Underground",
+    },
+    {
+        "single": "sk5ed_UndergroundRailed", 
+        "text_name": "Underground Railed",
+    },
+    {
+        "single": "sk5ed_undergroundStraight", 
+        "text_name": "Underground Straight",
+    },
+    {
+        "single": "sk5ed_undergroundStraightRailed", 
+        "text_name": "Underground Railed Straight",
+    },
+    {
+        "single": "sk5ed_UndergroundCurved", 
+        "text_name": "Underground Curved",
+    },
+    ],"Walls": [
+    {
+        "single": "sk5ed_shortwall", 
+        "text_name": "Low",
+    },
+    {
+        "single": "sk5ed_Shortwall01", 
+        "text_name": "Short Wall",
+    },
+    {
+        "single": "Sk3Ed_W_10x10x2", 
+        "text_name": "Mid",
+    },
+    {
+        "single": "Sk3Ed_W_10x10x5", 
+        "text_name": "High",
+    },
+    {
+        "single": "Sk5Ed_W_10x10x06_01", 
+        "text_name": "Higher",
+    },
+    {
+        "single": "Sk5Ed_W_10x10x06_02", 
+        "text_name": "Highest",
+    },
+    {
+        "single": "Sk5Ed_W_Slated_01", 
+        "text_name": "Slanted",
+    },
+    {
+        "single": "Sk5Ed_SideWall", 
+        "text_name": "Side Wall",
+    },
+    {
+        "single": "Sk5Ed_BigSideWall", 
+        "text_name": "Big Side Wall",
+    },
+    {
+        "single": "Sk5Ed_90Wall", 
+        "text_name": "90 Wall",
+    },
+    {
+        "single": "Sk5Ed_RA_10x10x15_04", 
+        "text_name": "Low With Rail",
+    },
+    {
+        "single": "Sk5Ed_RA_10x10x15_03", 
+        "text_name": "Mid With Rail",
+    },
+    {
+        "single": "Sk5Ed_RA_10x10x15_02", 
+        "text_name": "High With Rail",
+    },
+    {
+        "single": "sk5ed_curvedLedge", 
+        "text_name": "Curved Ledge Short",
+    },
+    {
+        "single": "sk5ed_curvedLedge04", 
+        "text_name": "Curved Ledge Low",
+    },
+    {
+        "single": "sk5ed_curvedLedge01", 
+        "text_name": "Curved Ledge Mid",
+    },
+    {
+        "single": "sk5ed_curvedLedge02", 
+        "text_name": "Curved Ledge High",
+    },
+    {
+        "single": "sk5ed_curvedLedge03", 
+        "text_name": "Curved Ledge Highest",
+    },
+    {
+        "single": "Sk5ed_LAcurve", 
+        "text_name": "LA Curve",
+    },
+    {
+        "single": "Sk5ed_LAstraight", 
+        "text_name": "LA Straight",
+    },
+    {
+        "single": "Sk3Ed_We_10x10x5", 
+        "text_name": "High End",
+    },
+    {
+        "single": "Sk3Ed_We_10x10x2", 
+        "text_name": "Low Connector",
+    },
+    {
+        "single": "sk6ed_fence", 
+        "text_name": "Link Fence",
+    },
+    {
+        "single": "sk6ed_fencefiller", 
+        "text_name": "Link Fence Mid",
+    },
+    {
+        "single": "sk6ed_fenceedge", 
+        "text_name": "Link Fence Edge",
+    },
+    {
+        "single": "sk6ed_fencefilleredge", 
+        "text_name": "Link Fence Mid Edge",
+    },
+    {
+        "single": "sk5ed_Billboard_Med", 
+        "text_name": "Med Billboard",
+    },
+    {
+        "single": "sk5ed_Billboard_big", 
+        "text_name": "Big Billboard",
+    },
+    {
+        "single": "sk5ed_Billboard_Med45", 
+        "text_name": "Med Billboard 45",
+    },
+    {
+        "single": "sk5ed_Billboard_big45", 
+        "text_name": "Big Billboard 45",
+    },
+    {
+        "single": "sk6ed_handicap_AU", 
+        "text_name": "AU Walkway",
+    },
+    {
+        "single": "sk6ed_ps2", 
+        "text_name": "Concrete Piece",
+    },
+    {
+        "single": "sk6ed_greatwall", 
+        "text_name": "Ancient Wall",
+    },
+    {
+        "single": "sk6ed_greatwallmid", 
+        "text_name": "Ancient Wall Center",
+    },
+    {
+        "single": "sk6ed_greatwallCurved", 
+        "text_name": "Ancient Wall Curved",
+    },
+    {
+        "single": "sk6ed_WallBoost", 
+        "text_name": "Wall Booster",
+    },
+    ],"QPs": [
+    {
+        "single": "Sk3Ed_QPd_10x10x8", 
+        "text_name": "Low Short",
+    },
+    {
+        "multiple": [
+            { "name": "8", "pos": [ 0 , 0 , 0 ] },
+            { "name": "8", "pos": [ 1 , 0 , 0 ] },
+        ],
+        "name": "Low_Med", 
+        "text_name": "Low Med",
+    },
+    {
+        "multiple": [
+            { "name": "8", "pos": [ 0 , 0 , 0 ] },
+            { "name": "8", "pos": [ 1 , 0 , 0 ] },
+            { "name": "8", "pos": [ 2 , 0 , 0 ] },
+            { "name": "8", "pos": [ 3 , 0 , 0 ] },
+        ],
+        "name": "Low_Long", 
+        "text_name": "Low Long",
+    },
+    {
+        "single": "Sk3Ed_QPi_10x10x8", 
+        "text_name": "Low Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_QPo_10x10x8", 
+        "text_name": "Low Outside Corner",
+    },
+    {
+        "single": "Sk3Ed_QPdi_10x10x8", 
+        "text_name": "Low Inside Corner Deck",
+    },
+    {
+        "single": "Sk3Ed_QPdo_10x10x8", 
+        "text_name": "Low Outside Corner Deck",
+    },
+    {
+        "single": "Sk3Ed_QPd_10x10x12", 
+        "text_name": "High Short",
+    },
+    {
+        "multiple": [
+            { "name": "2", "pos": [ 0 , 0 , 0 ] },
+            { "name": "2", "pos": [ 1 , 0 , 0 ] },
+        ],
+        "name": "High_Med", 
+        "text_name": "High Med",
+    },
+    {
+        "multiple": [
+            { "name": "2", "pos": [ 0 , 0 , 0 ] },
+            { "name": "2", "pos": [ 1 , 0 , 0 ] },
+            { "name": "2", "pos": [ 2 , 0 , 0 ] },
+            { "name": "2", "pos": [ 3 , 0 , 0 ] },
+        ],
+        "name": "High_Long", 
+        "text_name": "High Long",
+    },
+    {
+        "single": "Sk3Ed_QPi_10x10x12", 
+        "text_name": "High Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_QPo_10x10x12", 
+        "text_name": "High Outside Corner",
+    },
+    {
+        "single": "Sk3Ed_QPdi_10x10x12", 
+        "text_name": "High Inside Corner Deck",
+    },
+    {
+        "single": "Sk3Ed_QPdo_10x10x12", 
+        "text_name": "High Outside Corner Deck",
+    },
+    {
+        "single": "Sk3Ed_QPdR_10x10x4", 
+        "text_name": "4ft Rollin",
+    },
+    {
+        "single": "Sk3Ed_QPdR_10x10x8", 
+        "text_name": "8ft Rollin",
+    },
+    {
+        "single": "Sk3Ed_QPdR_10x10x12", 
+        "text_name": "12ft Rollin",
+    },
+    {
+        "single": "Sk3Ed_QPdR_10x10x16", 
+        "text_name": "16ft Rollin",
+    },
+    {
+        "single": "Sk4Ed_Sch_Spine", 
+        "text_name": "School Spine",
+    },
+    {
+        "single": "Sk5Ed_QPshortMid_01", 
+        "text_name": "Short QP",
+    },
+    {
+        "single": "Sk5Ed_QPshortMid_01B", 
+        "text_name": "Short QP Booster",
+    },
+    {
+        "single": "sk6ed_pyramidqpbig", 
+        "text_name": "Pyramid QP",
+    },
+    {
+        "single": "sk6ed_Marsqps", 
+        "text_name": "QPs Marseille",
+    },
+    {
+        "single": "sk6ed_cashsign", 
+        "text_name": "Cash Sign",
+    },
+    {
+        "single": "sk6ed_NYqpledge", 
+        "text_name": "Coffee Shop NY",
+    },
+    {
+        "single": "sk6ed_SubwayRamp", 
+        "text_name": "Boston Subway",
+    },
+    {
+        "single": "sk6ed_tinyqp", 
+        "text_name": "Tiny QP",
+    },
+    {
+        "single": "sk5ed_HP_Skatestreet", 
+        "text_name": "HP Skatestreet",
+    },
+    {
+        "single": "sk6ed_hugeSticker", 
+        "text_name": "Huge Sticker",
+    },
+    ],"Pool Parts": [
+    {
+        "single": "Sk3Ed_P_10x10x8", 
+        "text_name": "Short",
+    },
+    {
+        "single": "sk6ed_qp_MidB", 
+        "text_name": "Pool Mid Boost",
+    },
+    {
+        "multiple": [
+            { "name": "8", "pos": [ 0 , 0 , 0 ] },
+            { "name": "8", "pos": [ 1 , 0 , 0 ] },
+        ],
+        "name": "Med", 
+        "text_name": "Med",
+    },
+    {
+        "multiple": [
+            { "name": "8", "pos": [ 0 , 0 , 0 ] },
+            { "name": "8", "pos": [ 1 , 0 , 0 ] },
+            { "name": "8", "pos": [ 2 , 0 , 0 ] },
+            { "name": "8", "pos": [ 3 , 0 , 0 ] },
+        ],
+        "name": "Long", 
+        "text_name": "Long",
+    },
+    {
+        "single": "Sk3Ed_Pi_10x10x8", 
+        "text_name": "Small Inside Corner",
+    },
+    {
+        "single": "Sk6ed_qp_cornerB", 
+        "text_name": "QP Corner Boost",
+    },
+    {
+        "single": "Sk3Ed_Pi_20x20x8", 
+        "text_name": "Large Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_Po_10x10x8", 
+        "text_name": "Outside Corner",
+    },
+    {
+        "single": "sk6ed_fountainLA", 
+        "text_name": "Fountain LA",
+    },
+    {
+        "single": "sk5ed_ShipPool", 
+        "text_name": "Cruise Ship Pool",
+    },
+    {
+        "single": "Sk3Ed_Pdp_01", 
+        "text_name": "Diving Platform",
+    },
+    {
+        "single": "Sk3Ed_Pdb_01", 
+        "text_name": "Diving Block",
+    },
+    ],"Lamps & Wires": [
+    {
+        "single": "sk6ed_Lamp", 
+        "text_name": "Australia Light",
+    },
+    {
+        "single": "sk6ed_lamp_half", 
+        "text_name": "Australia Half",
+    },
+    {
+        "single": "sk5ed_tele01", 
+        "text_name": "Telephone Pole 1",
+    },
+    {
+        "single": "sk5ed_tele02", 
+        "text_name": "Telephone Pole 2",
+    },
+    {
+        "single": "sk5ed_Telewires", 
+        "text_name": "Telephone Wires",
+    },
+    {
+        "single": "sk6ed_MarsLamp", 
+        "text_name": "Lamp Marseille",
+    },
+    {
+        "single": "sk6ed_HILamp", 
+        "text_name": "HI Lamp",
+    },
+    {
+        "single": "sk5ed_nylight", 
+        "text_name": "NY Light",
+    },
+    {
+        "single": "sk5ed_bigtraffic", 
+        "text_name": "Traffic Light 1",
+    },
+    {
+        "single": "sk5ed_smalltraffic", 
+        "text_name": "Traffic Light 2",
+    },
+    ],"Rail Parts": [
+    {
+        "single": "Sk3Ed_RA_10x10x4", 
+        "text_name": "Rail 1",
+    },
+    {
+        "single": "Sk3Ed_RA_10x10x8", 
+        "text_name": "Rail 2",
+    },
+    {
+        "single": "Sk3Ed_RA_10x10x12", 
+        "text_name": "Rail 3",
+    },
+    {
+        "single": "Sk3Ed_RA_10x10x4_8", 
+        "text_name": "Rail 4",
+    },
+    {
+        "single": "Sk3Ed_RA_10x10x8_12", 
+        "text_name": "Rail 5",
+    },
+    {
+        "single": "Sk3Ed_RA_10x10x4_12", 
+        "text_name": "Rail 6",
+    },
+    {
+        "single": "Sk3Ed_RA_10x10x12_8", 
+        "text_name": "Rail 7",
+    },
+    {
+        "single": "Sk3Ed_RAsi_10x10x4", 
+        "text_name": "Rail 8",
+    },
+    {
+        "single": "Sk3Ed_RAsi_10x10x8", 
+        "text_name": "Rail 9",
+    },
+    {
+        "single": "Sk3Ed_RAsi_10x10x12", 
+        "text_name": "Rail 10",
+    },
+    {
+        "single": "Sk3Ed_RAsi_20x20x4", 
+        "text_name": "Rail 11",
+    },
+    {
+        "single": "Sk3Ed_RAsi_20x20x8", 
+        "text_name": "Rail 12",
+    },
+    {
+        "single": "Sk3Ed_RAi_10x10x4", 
+        "text_name": "Low Tight Corner",
+    },
+    {
+        "single": "Sk3Ed_RAi_10x10x8", 
+        "text_name": "Med Tight Corner",
+    },
+    {
+        "single": "Sk3Ed_RAi_10x10x12", 
+        "text_name": "High Tight Corner",
+    },
+    {
+        "single": "Sk3Ed_RAi_20x20x4", 
+        "text_name": "Low Corner",
+    },
+    {
+        "single": "Sk3Ed_RAi_20x20x8", 
+        "text_name": "Med Corner",
+    },
+    {
+        "single": "Sk3Ed_RAi_20x20x12", 
+        "text_name": "High Corner",
+    },
+    {
+        "single": "sk5ed_Railroad", 
+        "text_name": "Railroad",
+    },
+    {
+        "single": "sk5ed_Railroad90", 
+        "text_name": "Railroad 90",
+    },
+    {
+        "single": "sk5ed_Srail", 
+        "text_name": "S Rail",
+    },
+    {
+        "single": "sk5ed_Srailcenter", 
+        "text_name": "S Rail Center",
+    },
+    {
+        "single": "sk5ed_SDRail", 
+        "text_name": "SD Rail",
+    },
+    {
+        "single": "Sk4Ed_SF2_TnAPipe01", 
+        "text_name": "3rd Piping 1",
+    },
+    {
+        "single": "Sk4Ed_SF2_TnAPipe03", 
+        "text_name": "3rd Piping 2",
+    },
+    {
+        "single": "sk5ed_wavysmall", 
+        "text_name": "Wavy Concrete",
+    },
+    {
+        "single": "sk5ed_wavyconcretebig", 
+        "text_name": "Wavy Concrete Big",
+    },
+    {
+        "single": "sk5ed_curveconcrete", 
+        "text_name": "Wavy Concrete Curved",
+    },
+    {
+        "single": "sk5ed_upcurve", 
+        "text_name": "Wavy Concrete Up",
+    },
+    {
+        "single": "sk5ed_Swingrail", 
+        "text_name": "Swing Rail",
+    },
+    {
+        "single": "sk6ed_log_med", 
+        "text_name": "Log Mid",
+    },
+    {
+        "single": "sk6ed_BOrail", 
+        "text_name": "Rail Boston",
+    },
+    ],"Slopes": [
+    {
+        "single": "Sk3Ed_S_10x10x4", 
+        "text_name": "Low",
+    },
+    {
+        "single": "Sk3Ed_Si_10x10x4", 
+        "text_name": "Low Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_Si2_10x10x4", 
+        "text_name": "Low Inside Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_So_10x10x4", 
+        "text_name": "Low Outside Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_So2_10x10x4", 
+        "text_name": "Low Outside Corner",
+    },
+    {
+        "single": "Sk3Ed_S_10x10x8", 
+        "text_name": "High",
+    },
+    {
+        "single": "Sk3Ed_Si_10x10x8", 
+        "text_name": "High Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_Si2_10x10x8", 
+        "text_name": "High Inside Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_So_10x10x8", 
+        "text_name": "High Outside Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_So2_10x10x8", 
+        "text_name": "High Outside Corner",
+    },
+    {
+        "single": "Sk3Ed_S_10x20x4", 
+        "text_name": "Low Long",
+    },
+    {
+        "single": "Sk3Ed_Si_20x20x4", 
+        "text_name": "Low Long Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_Si2_20x20x4", 
+        "text_name": "Low Long Inside Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_So_20x20x4", 
+        "text_name": "Low Long Outside Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_So2_20x20x4", 
+        "text_name": "Low Long Outside Corner",
+    },
+    {
+        "single": "Sk3Ed_S_10x20x8", 
+        "text_name": "High Long",
+    },
+    {
+        "single": "Sk3Ed_Si_20x20x8", 
+        "text_name": "High Long Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_Si2_20x20x8", 
+        "text_name": "High Long Inside Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_So_20x20x8", 
+        "text_name": "High Long Outside Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_So2_20x20x8", 
+        "text_name": "High Long Outside Corner",
+    },
+    {
+        "single": "sk5ed_45Launch", 
+        "text_name": "45 Launch Ramp",
+    },
+    {
+        "single": "sk5ed_45LaunchMed", 
+        "text_name": "45 Launch Ramp Med",
+    },
+    {
+        "single": "sk5ed_45LaunchLow", 
+        "text_name": "45 Short Launch Ramp",
+    },
+    {
+        "single": "sk5ed_45LaunchMed01", 
+        "text_name": "45 Mid Launch Ramp",
+    },
+    {
+        "single": "sk5ed_SlantedSmall", 
+        "text_name": "Slanted Small Ramp",
+    },
+    {
+        "single": "sk5ed_SlantedBig", 
+        "text_name": "Slanted Big Ramp",
+    },
+    {
+        "single": "sk5ed_SlantedTall01", 
+        "text_name": "Slanted Tall Ramp",
+    },
+    {
+        "single": "sk5ed_SlantedTall02", 
+        "text_name": "Slanted Tall Corner Ramp",
+    },
+    {
+        "single": "sk6ed_RailSlanted01", 
+        "text_name": "Rail Slanted 1",
+    },
+    {
+        "single": "sk6ed_RailSlanted02", 
+        "text_name": "Rail Slanted 2",
+    },
+    {
+        "single": "sk6ed_RailSlanted03", 
+        "text_name": "Rail Slanted 3",
+    },
+    {
+        "single": "sk6ed_RailSlanted04", 
+        "text_name": "Rail Slanted 4",
+    },
+    {
+        "single": "sk6ed_RailSlanted05", 
+        "text_name": "Rail Slanted 5",
+    },
+    {
+        "single": "sk6ed_RailSlanted06", 
+        "text_name": "Rail Slanted 6",
+    },
+    {
+        "single": "sk6ed_RailSlanted07", 
+        "text_name": "Rail Slanted 7",
+    },
+    {
+        "single": "sk6ed_RailSlanted08", 
+        "text_name": "Rail Slanted 8",
+    },
+    {
+        "single": "sk6ed_RailSlanted09", 
+        "text_name": "Rail Slanted 9",
+    },
+    {
+        "single": "sk6ed_RailSlanted010", 
+        "text_name": "Rail Slanted 10",
+    },
+    {
+        "single": "sk6ed_RailSlanted011", 
+        "text_name": "Rail Slanted 11",
+    },
+    {
+        "single": "sk6ed_RailSlanted012", 
+        "text_name": "Rail Slanted 12",
+    },
+    ],"Slopes (Huge)": [
+    {
+        "single": "Sk3Ed_S_10x10x09", 
+        "text_name": "Low Huge Slope",
+    },
+    {
+        "single": "Sk3Ed_Si_10x10x09", 
+        "text_name": "Low Inside Huge Corner",
+    },
+    {
+        "single": "Sk3Ed_Si2_10x10x09", 
+        "text_name": "Low Inside Huge Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_So_10x10x11", 
+        "text_name": "Low Outside Huge Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_So2_10x10x09", 
+        "text_name": "Low Outside Huge Corner",
+    },
+    {
+        "single": "Sk3Ed_S_10x10x11", 
+        "text_name": "High Huge Slope",
+    },
+    {
+        "single": "Sk3Ed_Si_10x10x10", 
+        "text_name": "High Inside Huge Corner",
+    },
+    {
+        "single": "Sk3Ed_Si2_10x10x10", 
+        "text_name": "High Inside Huge Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_So_10x10x10", 
+        "text_name": "High Outside Big Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_So2_10x10x10", 
+        "text_name": "High Outside Huge Corner",
+    },
+    {
+        "single": "Sk3Ed_S_10x20x09", 
+        "text_name": "Low Huge Long Slope",
+    },
+    {
+        "single": "Sk3Ed_Si_20x20x09", 
+        "text_name": "Low Long Inside Huge Corner",
+    },
+    {
+        "single": "Sk3Ed_Si2_20x20x10", 
+        "text_name": "Low Long Inside Huge Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_So_20x20x09", 
+        "text_name": "Low Long Outside Huge Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_So2_20x20x09", 
+        "text_name": "Low Long Outside Huge Corner",
+    },
+    {
+        "single": "Sk3Ed_S_10x20x10", 
+        "text_name": "High Huge Long Slope",
+    },
+    {
+        "single": "Sk3Ed_Si_20x20x10", 
+        "text_name": "High Long Inside Huge Corner",
+    },
+    {
+        "single": "Sk3Ed_Si2_20x20x09", 
+        "text_name": "High Long Inside Huge Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_So_20x20x10", 
+        "text_name": "High Long Outside Huge Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_So2_20x20x10", 
+        "text_name": "High Long Outside Huge Corner",
+    },
+    ],"Stairs": [
+    {
+        "single": "Sk3Ed_ST_10x10x2", 
+        "text_name": "Double",
+    },
+    {
+        "single": "Sk3Ed_STi_10x10x2", 
+        "text_name": "Double Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_STi2_10x10x2", 
+        "text_name": "Double Inside Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_STo_10x10x2", 
+        "text_name": "Double Outside Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_STo2_10x10x2", 
+        "text_name": "Double Outside Corner",
+    },
+    {
+        "single": "Sk3Ed_STio_10x10x2", 
+        "text_name": "Double Inside/Outside Corner",
+    },
+    {
+        "single": "Sk3Ed_ST_10x10x4", 
+        "text_name": "Quad",
+    },
+    {
+        "single": "Sk3Ed_STi_10x10x4", 
+        "text_name": "Quad Inside Corner",
+    },
+    {
+        "single": "Sk3Ed_STi2_10x10x4", 
+        "text_name": "Quad Inside Decked Corner",
+    },
+    {
+        "single": "Sk3Ed_STo_10x10x4", 
+        "text_name": "Quad Outside Pyramid Corner",
+    },
+    {
+        "single": "Sk3Ed_STo2_10x10x4", 
+        "text_name": "Quad Outside Corner",
+    },
+    {
+        "single": "Sk3Ed_STio_10x10x4", 
+        "text_name": "Quad Inside/Outside Corner",
+    },
+    {
+        "single": "sk6ed_RailStair01", 
+        "text_name": "Rail Stair 1",
+    },
+    {
+        "single": "sk6ed_RailStair02", 
+        "text_name": "Rail Stair 2",
+    },
+    {
+        "single": "sk6ed_RailStair03", 
+        "text_name": "Rail Stair 3",
+    },
+    {
+        "single": "sk6ed_RailStair04", 
+        "text_name": "Rail Stair 4",
+    },
+    {
+        "single": "sk6ed_RailStair05", 
+        "text_name": "Rail Stair 5",
+    },
+    {
+        "single": "sk6ed_RailStair06", 
+        "text_name": "Rail Stair 6",
+    },
+    {
+        "single": "Sk4Ed_Sch_BigStairs", 
+        "text_name": "Big School Stair/Ramp",
+    },
+    {
+        "single": "Sk5Ed_SF2_24Stair01", 
+        "text_name": "24 Set",
+    },
+    {
+        "single": "Sk3Ed_PB_Stairs01", 
+        "text_name": "Bleachers",
+    },
+    ],"Ground Pieces": [
+    {
+        "single": "Sk3Ed_MWa_20x20", 
+        "text_name": "Water",
+    },
+    {
+        "single": "Sk5ed_Water1square", 
+        "text_name": "Water Square",
+    },
+    {
+        "single": "Sk3Ed_MLa_20x20", 
+        "text_name": "Lava",
+    },
+    {
+        "single": "Sk5ed_lava1square", 
+        "text_name": "Lava Square",
+    },
+    {
+        "single": "Sk6ed_Acid", 
+        "text_name": "Acid Pit",
+    },
+    {
+        "single": "Sk3Ed_MPu_20x20x8", 
+        "text_name": "Pungee Pit",
+    },
+    {
+        "single": "Sk5ed_Concrete", 
+        "text_name": "Concrete",
+    },
+    {
+        "single": "Sk5ed_Concretesquare", 
+        "text_name": "Concrete Square",
+    },
+    {
+        "single": "sk5ed_Grass", 
+        "text_name": "Grass",
+    },
+    {
+        "single": "sk5ed_Grass1square", 
+        "text_name": "Grass Square",
+    },
+    {
+        "single": "sk5ed_sand", 
+        "text_name": "Sand",
+    },
+    {
+        "single": "sk5ed_sand01", 
+        "text_name": "Sand Square",
+    },
+    {
+        "single": "sk5ed_speedboostGS", 
+        "text_name": "Speed Booster Small",
+    },
+    {
+        "single": "sk5ed_speedboostG", 
+        "text_name": "Speed Booster",
+    },
+    {
+        "single": "sk6ed_lidsmall", 
+        "text_name": "Lid Small",
+    },
+    {
+        "single": "sk6ed_lidsquare", 
+        "text_name": "Lid Square",
+    },
+    {
+        "single": "sk6ed_lidround", 
+        "text_name": "Lid Round",
+    },
+    {
+        "single": "Sk3Ed_F_10x10", 
+        "text_name": "Concrete Square",
+        "no_rails": 1,
+    },
+    {
+        "multiple": [
+            { "name": "0", "pos": [ 0 , 0 , 0 ] },
+            { "name": "0", "pos": [ 1 , 0 , 1 ] },
+            { "name": "0", "pos": [ 0 , 0 , 1 ] },
+            { "name": "0", "pos": [ 1 , 0 , 0 ] },
+        ],
+        "name": "SkProEd_Conc4x", 
+        "text_name": "Concrete",
+        "no_rails": 1,
+    },
+    {
+        "single": "Sk3Ed_Fd1_10x10", 
+        "text_name": "Concrete Light Square",
+        "no_rails": 1,
+    },
+    {
+        "multiple": [
+            { "name": "0", "pos": [ 0 , 0 , 0 ] },
+            { "name": "0", "pos": [ 1 , 0 , 1 ] },
+            { "name": "0", "pos": [ 0 , 0 , 1 ] },
+            { "name": "0", "pos": [ 1 , 0 , 0 ] },
+        ],
+        "name": "SkProEd_ConcLight4x", 
+        "text_name": "Concrete Light",
+        "no_rails": 1,
+    },
+    {
+        "single": "sk5ed_street", 
+        "text_name": "Street",
+    },
+    {
+        "single": "sk5ed_street_Mid", 
+        "text_name": "Street Mid",
+    },
+    {
+        "single": "sk5ed_street_curve", 
+        "text_name": "Street Curved",
+    },
+    {
+        "single": "sk5ed_straightcurbShort", 
+        "text_name": "Curb Short",
+    },
+    {
+        "single": "sk5ed_curvedcurb", 
+        "text_name": "Curved Curb",
+    },
+    {
+        "single": "sk5ed_straightcurb", 
+        "text_name": "Curb",
+    },
+    {
+        "single": "sk5ed_curvedcurbQuarter", 
+        "text_name": "Curved Curb Quarter",
+    },
+    {
+        "single": "sk5ed_curvedcurbHalf", 
+        "text_name": "Curved Curb Half",
+    },
+    {
+        "single": "sk5ed_curvedcurbFull", 
+        "text_name": "Curved Curb Full",
+    },
+    {
+        "single": "Sk4Ed_SF2_Planter01", 
+        "text_name": "Short Flower Planter Blue",
+    },
+    {
+        "single": "Sk4Ed_SF2_Planter02", 
+        "text_name": "Short Flower Planter Pink",
+    },
+    {
+        "single": "Sk3Ed_Gb_10x10", 
+        "text_name": "Small Bush Planter",
+    },
+    {
+        "single": "Sk3Ed_Gb_20x10", 
+        "text_name": "Long Bush Planter",
+    },
+    {
+        "single": "Sk3Ed_Gt_20x20", 
+        "text_name": "Tree Planter",
+    },
+    {
+        "single": "sk6ed_bushsmall", 
+        "text_name": "Bush Small",
+    },
+    {
+        "single": "sk6ed_bushmid", 
+        "text_name": "Bush Mid",
+    },
+    {
+        "single": "sk5ed_treetall", 
+        "text_name": "Tree Tall",
+    },
+    ],"Buildings & Vehicles": [
+    {
+        "single": "sk5ed_hut", 
+        "text_name": "Hut",
+    },
+    {
+        "single": "sk6ed_electricbox", 
+        "text_name": "Electric Box",
+    },
+    {
+        "single": "sk6ed_house_small", 
+        "text_name": "Metal Hut",
+    },
+    {
+        "single": "sk6ed_smallhouse", 
+        "text_name": "House Small",
+    },
+    {
+        "single": "sk5ed_Ghetto", 
+        "text_name": "House Projects",
+    },
+    {
+        "single": "sk6ed_NYsnack", 
+        "text_name": "NY Snack Shack",
+    },
+    {
+        "single": "sk6ed_church", 
+        "text_name": "Church",
+    },
+    {
+        "single": "sk6ed_Pyramidsmall", 
+        "text_name": "Pyramid Small",
+    },
+    {
+        "single": "sk6ed_Pyramidmid", 
+        "text_name": "Pyramid Mid",
+    },
+    {
+        "single": "sk6ed_Pyramidbig", 
+        "text_name": "Pyramid Big",
+    },
+    {
+        "single": "sk6ed_HugePyra", 
+        "text_name": "Huge Pyramid",
+    },
+    {
+        "single": "sk5ed_Rooftop", 
+        "text_name": "SC2 Building",
+    },
+    {
+        "single": "sk5ed_BigSkyscraper", 
+        "text_name": "Big Skyscraper",
+    },
+    {
+        "single": "sk6ed_hpcar", 
+        "text_name": "HP Car",
+    },
+    {
+        "single": "sk6ed_jeep", 
+        "text_name": "Jeep Wrangler",
+    },
+    ],"Small Stuff": [
+    {
+        "single": "sk6ed_sign_nono01", 
+        "text_name": "Sign Handicap",
+    },
+    {
+        "single": "sk6ed_sign_nono", 
+        "text_name": "Sign No Entry",
+    },
+    {
+        "single": "sk6ed_sign_nobeyond", 
+        "text_name": "Sign Beyond Point",
+    },
+    {
+        "single": "sk6ed_pole", 
+        "text_name": "Pole",
+    },
+    {
+        "single": "sk6ed_PoleBE", 
+        "text_name": "Pole Berlin",
+    },
+    {
+        "single": "sk6ed_tombstone", 
+        "text_name": "Tombstone",
+    },
+    {
+        "single": "Sk4Ed_SF2_TrashBox", 
+        "text_name": "Trash Can",
+    },
+    {
+        "single": "sk5ed_Mailbox", 
+        "text_name": "Mailbox",
+    },
+    {
+        "single": "sk6ed_hydrant", 
+        "text_name": "Hydrant",
+    },
+    {
+        "single": "Sk3Ed_Dumpster01", 
+        "text_name": "Dumpster",
+    },
+    {
+        "single": "Sk3Ed_Dumpster02", 
+        "text_name": "Corner Dumpster",
+    },
+    {
+        "single": "Sk4Ed_SF2_Newsstands", 
+        "text_name": "Newsstands",
+    },
+    {
+        "single": "sk5ed_bbhoop", 
+        "text_name": "Basketball Hoop",
+    },
+    {
+        "single": "sk5ed_candy", 
+        "text_name": "Candy Machine",
+    },
+    {
+        "single": "sk6ed_Porta", 
+        "text_name": "Porta Potty",
+    },
+    {
+        "single": "sk6ed_whitepicketfence", 
+        "text_name": "White Picket",
+    },
+    {
+        "single": "sk6ed_whitepicketfence_edge", 
+        "text_name": "White Picket Edge",
+    },
+    {
+        "single": "sk6ed_Welcome", 
+        "text_name": "Welcome Mat",
+    },
+    {
+        "single": "sk6ed_IndianRug", 
+        "text_name": "Asian Rug",
+    },
+    {
+        "single": "sk6ed_couch", 
+        "text_name": "Couch",
+    },
+    {
+        "single": "sk5ed_dinnertable", 
+        "text_name": "Coffee Table",
+    },
+    {
+        "single": "sk6ed_Fridge", 
+        "text_name": "Huge Fridge",
+    },
+    {
+        "single": "Sk3Ed_MFo_01", 
+        "text_name": "Fountain",
+    },
+    {
+        "single": "sk6ed_ladderSmall", 
+        "text_name": "Ladder Small",
+    },
+    {
+        "single": "sk6ed_ladderMid", 
+        "text_name": "Ladder Mid",
+    },
+    {
+        "single": "sk6ed_ladderTall", 
+        "text_name": "Ladder Tall",
+    },
+    {
+        "multiple": [
+            { "name": "A", "pos": [ 0 , 0 , 0 ] },
+            { "name": "3", "pos": [ 0 , 0 , 0 ] },
+        ],
+        "name": "sk6ed_GarbageLA", 
+        "text_name": "Garbage LA",
+    },
+    {
+        "single": "TRGP_ArcoWindow", 
+        "text_name": "Window",
+    },
+    {
+        "single": "sk6ed_crate", 
+        "text_name": "Crate",
+    },
+    {
+        "single": "sk6ed_BAGlass", 
+        "text_name": "BA Glass",
+    },
+    {
+        "single": "sk6ed_Graffiti_Ammo", 
+        "text_name": "Ammo Graffiti Box",
+    },
+    {
+        "single": "BO_Classic_Barrel", 
+        "text_name": "BO Classic Barrel",
+    },
+    {
+        "single": "BO_AppleBarrel", 
+        "text_name": "Ammo Apple Barrel",
+    },
+    {
+        "single": "sk6ed_tomato_boxz", 
+        "text_name": "Ammo Tomato Box",
+    },
+    {
+        "single": "sk6ed_Bouy", 
+        "name": "thugpro_bouy", 
+        "text_name": "Bouy",
+    },
+    ],"Huge Pieces": [
+    {
+        "single": "sk6ed_hugepoolP12", 
+        "text_name": "Huge Drop-In Lowest",
+    },
+    {
+        "single": "sk6ed_hugedropin", 
+        "text_name": "Huge Drop-In Low",
+    },
+    {
+        "single": "sk6ed_hugepoolP10", 
+        "text_name": "Huge Drop-In Med",
+    },
+    {
+        "single": "sk6ed_hugepoolP11", 
+        "text_name": "Huge Drop-In High",
+    },
+    {
+        "single": "sk6ed_qppieceCorner", 
+        "text_name": "Huge QP Corner Small",
+    },
+    {
+        "single": "sk6ed_qppiececorner1", 
+        "text_name": "Huge QP Corner Med",
+    },
+    {
+        "single": "sk6ed_qppiececornerB", 
+        "text_name": "Huge QP Corner Big",
+    },
+    {
+        "single": "Sk3Ed_P_10x10x09", 
+        "text_name": "Huge Low Pool",
+    },
+    {
+        "multiple": [
+            { "name": "9", "pos": [ 0 , 0 , 0 ] },
+            { "name": "9", "pos": [ 3 , 0 , 0 ] },
+        ],
+        "name": "Huge_Med_Pool", 
+        "text_name": "Huge Med Pool",
+    },
+    {
+        "multiple": [
+            { "name": "9", "pos": [ 0 , 0 , 0 ] },
+            { "name": "9", "pos": [ 3 , 0 , 0 ] },
+            { "name": "9", "pos": [ 6 , 0 , 0 ] },
+            { "name": "9", "pos": [ 9 , 0 , 0 ] },
+        ],
+        "name": "Huge_Long_Pool", 
+        "text_name": "Huge Long Pool",
+    },
+    {
+        "single": "Sk3Ed_QPd_10x10x13", 
+        "text_name": "Huge Low",
+    },
+    {
+        "multiple": [
+            { "name": "3", "pos": [ 0 , 0 , 0 ] },
+            { "name": "3", "pos": [ 3 , 0 , 0 ] },
+        ],
+        "name": "Huge_Mid", 
+        "text_name": "Huge Med",
+    },
+    {
+        "multiple": [
+            { "name": "3", "pos": [ 0 , 0 , 0 ] },
+            { "name": "3", "pos": [ 3 , 0 , 0 ] },
+            { "name": "3", "pos": [ 6 , 0 , 0 ] },
+            { "name": "3", "pos": [ 9 , 0 , 0 ] },
+        ],
+        "name": "Huge_Long", 
+        "text_name": "Huge Long",
+    },
+    {
+        "single": "sk6ed_hugepoolP01", 
+        "text_name": "Huge Pool Corner In",
+    },
+    {
+        "single": "sk6ed_hugepoolP02", 
+        "text_name": "Huge Pool Corner Out",
+    },
+    {
+        "single": "sk6ed_hugepoolP03", 
+        "text_name": "Huge Pool Deck In",
+    },
+    {
+        "single": "sk6ed_hugepoolP04", 
+        "text_name": "Huge Pool Deck Out",
+    },
+    {
+        "single": "sk6ed_hugepoolP06", 
+        "text_name": "Huge Pool Deck Tall",
+    },
+    {
+        "single": "sk6ed_hugepoolP07", 
+        "text_name": "Huge Pool Corner",
+    },
+    {
+        "single": "sk6ed_hugepoolP08", 
+        "text_name": "Huge Pool Corner Inverted",
+    },
+    {
+        "single": "sk6ed_hugepoolP09", 
+        "text_name": "Huge Pool Piece",
+    },
+    {"single": "Sk3Ed_QPd_10x10x09", 
+        "text_name": "Huge Lower",
+    },
+    {
+        "multiple": [
+            { "name": "9", "pos": [ 0 , 0 , 0 ] },
+            { "name": "9", "pos": [ 3 , 0 , 0 ] },
+        ],
+        "name": "Low_Med_Huge", 
+        "text_name": "Huge Low Med",
+    },
+    {
+        "multiple": [
+            { "name": "9", "pos": [ 0 , 0 , 0 ] },
+            { "name": "9", "pos": [ 3 , 0 , 0 ] },
+            { "name": "9", "pos": [ 6 , 0 , 0 ] },
+            { "name": "9", "pos": [ 9 , 0 , 0 ] },
+        ],
+        "name": "Low_Long_Huge", 
+        "text_name": "Huge Low Long",
+    },
+    {
+        "single": "sk6ed_hugebench", 
+        "text_name": "Huge Bench",
+    },
+    {
+        "single": "sk5ed_veniceBenchHuge", 
+        "text_name": "Venice Bench Huge",
+    },
+    ],"Floors": [
+    {
+        "multiple": [
+            { "name": "0", "pos": [ 0 , 1 , 0 ] },
+        ],
+        "name": "floor_wall_block1", 
+        "is_riser": 1,
+    },
+    {
+        "single": "Sk3Ed_Fd1_10x10", 
+        "pos": [0, 1, 0],
+        "name": "floor_block1", 
+        "is_riser": 1,
+        "no_rails": 1,
+    },
+    {
+        "multiple": [
+            { "name": "0", "pos": [ 0 , 1 , 0 ] },
+        ],
+        "name": "floor_wall_block2", 
+        "is_riser": 1,
+    },
+    {
+        "single": "Sk3Ed_Fd1_10x10", 
+        "pos": [0, 1, 0],
+        "name": "floor_block2", 
+        "is_riser": 1,
+        "no_rails": 1,
+    },
+    {
+        "multiple": [
+            { "name": "0", "pos": [ 0 , 1 , 0 ] },
+        ],
+        "name": "floor_wall_block3", 
+        "is_riser": 1,
+    },
+    {
+        "single": "Sk3Ed_F_10x10", 
+        "pos": [0, 1, 0],
+        "name": "floor_block3", 
+        "is_riser": 1,
+        "no_rails": 1,
+    },
+    {
+        "multiple": [
+            { "name": "0", "pos": [ 0 , 1 , 0 ] },
+        ],
+        "name": "floor_wall_block4", 
+        "is_riser": 1,
+    },
+    {
+        "single": "Sk3Ed_F_10x10", 
+        "pos": [0, 1, 0],
+        "name": "floor_block4", 
+        "is_riser": 1,
+        "no_rails": 1,
+    },
+    {
+        "single": "Sk4Ed_Fence_20x20", 
+        "text_name": "Big fence",
+    },
+    {
+        "single": "Sk4Ed_Fence_20x20_Wallride", 
+        "text_name": "Big fence Wallrideable",
+    },
+    {
+        "single": "Sk4Ed_Fence_20x20_Invisible", 
+        "text_name": "Big fence Invisible",
+    },
+    ],"Risers": [
+    {
+        "single": "sk5ed_Matttest", 
+        "name": "riser_below", 
+        "pos": [0, 0, 0],
+        "is_riser": 1,
+        "text_name": "Underground",
+    },
+    {
+        "single": "sk5ed_Matttest01", 
+        "name": "riser_above0", 
+        "pos": [0, 0, 0],
+        "is_riser": 1,
+        "text_name": "4ft",
+    },
+    {
+        "single": "sk5ed_Matttest02", 
+        "name": "riser_above1", 
+        "pos": [0, 0, 0],
+        "is_riser": 1,
+        "text_name": "8ft",
+    },
+    {
+        "single": "sk5ed_Matttest03", 
+        "name": "riser_above2", 
+        "pos": [0, 0, 0],
+        "is_riser": 1,
+        "text_name": "12ft",
+    },
+    {
+        "single": "sk5ed_Matttest04", 
+        "name": "riser_above3", 
+        "pos": [0, 0, 0],
+        "is_riser": 1,
+        "text_name": "16ft",
+    },
+    {
+        "single": "sk5ed_Matttest05", 
+        "name": "riser_above4", 
+        "pos": [0, 0, 0],
+        "is_riser": 1,
+        "text_name": "20ft",
+    },
+    {
+        "single": "sk5ed_Matttest06", 
+        "name": "riser_above5", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "24ft",
+    },
+    {
+        "single": "sk5ed_Matttest07", 
+        "name": "riser_above6", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "28ft",
+    },
+    {
+        "single": "sk5ed_Matttest08", 
+        "name": "riser_above7", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "32ft",
+    },
+    {
+        "single": "sk5ed_Matttest09", 
+        "name": "riser_above8", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "36ft",
+    },
+    {
+        "single": "sk5ed_Matttest10", 
+        "name": "riser_above9", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "40ft",
+    },
+    {
+        "single": "sk5ed_Matttest11", 
+        "name": "riser_above10", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "44ft",
+    },
+    {
+        "single": "sk5ed_Matttest12", 
+        "name": "riser_above11", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "48ft",
+    },
+    {
+        "single": "sk5ed_Matttest13", 
+        "name": "riser_above12", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "52ft",
+    },
+    {
+        "single": "sk5ed_Matttest14", 
+        "name": "riser_above13", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "56ft",
+    },
+    {
+        "single": "sk5ed_Matttest15", 
+        "name": "riser_above14", 
+        "pos": [ 0, 0, 0 ],
+        "is_riser": 1,
+        "text_name": "60ft",
+    },
+    {
+        "single": "Sk3Ed_F_10x10", 
+        "name": "riser_floor", 
+        "pos": [0, 1, 0],
+        "is_riser": 1,
+        "no_rails": 1,
+    },
+    {
+        "single": "Sk3Ed_F_10x10", 
+        "pos": [ 0, 0, 0 ],
+        "name": "riser_floor_below", 
+        "is_riser": 1,
+        "no_rails": 1,
+    },
+    ],"Risers (Huge)": [
+    #huge riser objects
+    {
+        "single": "Sk3Ed_Ru1b_10x10x05", 
+        "text_name": "Huge Riser 1 Bot",
+    },
+    {
+        "single": "Sk3Ed_Ru1m_10x10x05", 
+        "text_name": "Huge Riser 1 Mid",
+    },
+    {
+        "single": "Sk3Ed_Ru1t_10x10x05", 
+        "text_name": "Huge Riser 1 Top",
+    },
+    {
+        "single": "Sk3Ed_Fu1_10x21", 
+        "text_name": "Huge Riser 1 Floor",
+    },
+    {
+        "single": "Sk3Ed_Ru1b_10x10x06", 
+        "text_name": "Huge Riser 2 Bot",
+    },
+    {
+        "single": "Sk3Ed_Ru1m_10x10x06", 
+        "text_name": "Huge Riser 2 Mid",
+    },
+    {
+        "single": "Sk3Ed_Ru1t_10x10x06", 
+        "text_name": "Huge Riser 2 Top",
+    },
+    {
+        "single": "Sk3Ed_Fu1_10x22", 
+        "text_name": "Huge Riser 2 Floor",
+    },
+    {
+        "single": "Sk3Ed_Ru1b_10x10x07", 
+        "text_name": "Huge Riser 3 Bot",
+    },
+    {
+        "single": "Sk3Ed_Ru1m_10x10x07", 
+        "text_name": "Huge Riser 3 Mid",
+    },
+    {
+        "single": "Sk3Ed_Ru1t_10x10x07", 
+        "text_name": "Huge Riser 3 Top",
+    },
+    {
+        "single": "Sk3Ed_Fu1_10x23", 
+        "text_name": "Huge Riser 3 Floor",
+    },
+    {
+        "single": "Sk3Ed_Fu1_10x11", 
+        "text_name": "Huge Riser Floor",
+    },
+    #riser objects (placeable)
+    ],"Blocks": [
+    {
+        "single": "sk5ed_Matttest", 
+        "text_name": "High Wall",
+    },
+    {
+        "single": "sk5ed_Matttest01", 
+        "text_name": "4ft",
+    },
+    {
+        "single": "sk5ed_Matttest02", 
+        "text_name": "8ft",
+    },
+    {
+        "single": "sk5ed_Matttest03", 
+        "text_name": "12ft",
+    },
+    {
+        "single": "sk5ed_Matttest04", 
+        "text_name": "16ft",
+    },
+    {
+        "single": "sk5ed_Matttest05", 
+        "text_name": "20ft",
+    },
+    {
+        "single": "sk5ed_Matttest06", 
+        "text_name": "24ft",
+    },
+    {
+        "single": "sk5ed_Matttest07", 
+        "text_name": "28ft",
+    },
+    {
+        "single": "sk5ed_Matttest08", 
+        "text_name": "32ft",
+    },
+    {
+        "single": "sk5ed_Matttest09", 
+        "text_name": "36ft",
+    },
+    {
+        "single": "sk5ed_Matttest10", 
+        "text_name": "40ft",
+    },
+    {
+        "single": "sk5ed_Matttest11", 
+        "text_name": "44ft",
+    },
+    {
+        "single": "sk5ed_Matttest12", 
+        "text_name": "48ft",
+    },
+    {
+        "single": "sk5ed_Matttest13", 
+        "text_name": "52ft",
+    },
+    {
+        "single": "sk5ed_Matttest14", 
+        "text_name": "56ft",
+    },
+    {
+        "single": "sk5ed_Matttest15", 
+        "text_name": "60ft",
+    },
+    #thugpro objects
+    ],"THUG PRO Pieces": [
+    {
+        "single": "BO_ParkBench01", 
+        "text_name": "BO Park Bench",
+    },
+    {
+        "single": "BO_HospitalVolcano01", 
+        "text_name": "BO Volcano",
+    },
+    {
+        "single": "BO_BusStop01", 
+        "text_name": "BO Bus Stop",
+    },
+    {
+        "single": "NY_Anchor", 
+        "text_name": "NY Anchor",
+    },
+    {
+        "single": "HI_bench01", 
+        "text_name": "HI Bench",
+    },
+    {
+        "single": "HI_PalmTree01", 
+        "text_name": "HI Palm Tree",
+    },
+    {
+        "single": "HI_VolleyBall_Net", 
+        "text_name": "HI Volleyball Net",
+    },
+    {
+        "single": "NO_BoosterVent01", 
+        "text_name": "Booster",
+    },
+    {
+        "single": "Hell_QP", 
+        "text_name": "Hell QP",
+    },
+    {
+        "single": "Hell_RibCage_Spine", 
+        "text_name": "Hell Spine",
+    },
+    {
+        "single": "GroundPiece_CobbleStone", 
+        "text_name": "Cobblestone Floor",
+    },
+    {
+        "single": "HI_Statue", 
+        "text_name": "HI Statue",
+    }
+    ]
+}
 
 Ed_Save_Map_UG1 = [ 
     'Sk3Ed_RS_1p',
