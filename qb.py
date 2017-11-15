@@ -661,6 +661,8 @@ def export_qb(filename, directory, target_game, operator=None):
                 elif ob.thug_empty_props.empty_type == "GenericNode":
                     p("\t\t:i {} = {}".format(c("Class"), c("GenericNode")))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_generic_props.generic_type)))
+                    if ob.thug_generic_props.generic_type == 'Crown':
+                        has_koth = True
                 
                 # COMMON PROPERTIES
                 if ob.thug_created_at_start:

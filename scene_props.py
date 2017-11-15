@@ -8,6 +8,7 @@ from . collision import *
 from . material import *
 from . ui_draw import *
 from . import_nodes import THUGImportNodeArray
+from . presets import *
 
 # METHODS
 #############################################
@@ -21,6 +22,118 @@ def _gap_props_end_object_changed(gap_props, context):
 # PROPERTIES
 #############################################
 
+# Applies a context-specific mesh as a child of the empty when applicable
+# This just makes it easier to see presets like restarts, CTF flags etc
+def thug_empty_update(self, context):
+    if context.object.type == "EMPTY":
+        ob = context.object
+        mdl_ob = bpy.data.objects.get(ob.name + '_MDL')
+        if mdl_ob:
+            context.scene.objects.unlink(mdl_ob)
+            bpy.data.objects.remove(mdl_ob)
+            
+        if ob.thug_empty_props.empty_type == 'Restart':
+            mdl_mesh = 'Sk3Ed_RS_1p'
+            if ob.thug_restart_props.restart_type == 'Player2':
+                mdl_mesh = 'Sk3Ed_RS_Mp'
+            elif ob.thug_restart_props.restart_type == 'Multiplayer':
+                mdl_mesh = 'Sk3Ed_RS_Ho'
+            elif ob.thug_restart_props.restart_type == 'Horse':
+                mdl_mesh = 'Sk3Ed_RS_Ho'
+            elif ob.thug_restart_props.restart_type == 'CTF':
+                mdl_mesh = 'Sk3Ed_RS_Ho'
+            mdl_ob = append_from_dictionary('presets', mdl_mesh, context.scene)
+            mdl_ob.name = ob.name + '_MDL'
+            mdl_ob.location = [ 0, 0, 0 ]
+            mdl_ob.rotation_euler = [ 0, 0, 0 ]
+            mdl_ob.parent = ob
+            mdl_ob.hide_select = True
+            mdl_ob.hide_render = True
+            mdl_ob.thug_export_scene = False
+            mdl_ob.thug_export_collision = False
+            ob.empty_draw_type = 'CUBE'
+            ob.empty_draw_size = 36
+            
+        if ob.thug_empty_props.empty_type == 'GameObject':
+            mdl_mesh = ''
+            if ob.thug_go_props.go_type == 'Flag_Blue':
+                mdl_mesh = 'CTF_Flag_Blue'
+            elif ob.thug_go_props.go_type == 'Flag_Red':
+                mdl_mesh = 'CTF_Flag_Red'
+            elif ob.thug_go_props.go_type == 'Flag_Green':
+                mdl_mesh = 'CTF_Flag_Green'
+            elif ob.thug_go_props.go_type == 'Flag_Yellow':
+                mdl_mesh = 'CTF_Flag_Yellow'
+                
+            if ob.thug_go_props.go_type == 'Flag_Blue_Base':
+                mdl_mesh = 'CTF_Base_Blue'
+            elif ob.thug_go_props.go_type == 'Flag_Red_Base':
+                mdl_mesh = 'CTF_Base_Red'
+            elif ob.thug_go_props.go_type == 'Flag_Green_Base':
+                mdl_mesh = 'CTF_Base_Green'
+            elif ob.thug_go_props.go_type == 'Flag_Yellow_Base':
+                mdl_mesh = 'CTF_Base_Yellow'
+            elif ob.thug_go_props.go_type == 'Secret_Tape':
+                mdl_mesh = 'SecretTape'
+                
+            elif ob.thug_go_props.go_type.startswith('Combo_'):
+                mdl_mesh = ob.thug_go_props.go_type
+                
+            if mdl_mesh != '':
+                mdl_ob = append_from_dictionary('presets', mdl_mesh, context.scene)
+                mdl_ob.name = ob.name + '_MDL'
+                mdl_ob.location = [ 0, 0, 0 ]
+                mdl_ob.rotation_euler = [ 0, 0, 0 ]
+                mdl_ob.parent = ob
+                mdl_ob.hide_select = True
+                mdl_ob.hide_render = True
+                mdl_ob.thug_export_scene = False
+                mdl_ob.thug_export_collision = False
+            ob.empty_draw_type = 'CUBE'
+            ob.empty_draw_size = 36
+            
+        elif ob.thug_empty_props.empty_type == 'GenericNode' and \
+        ob.thug_generic_props.generic_type == 'Crown':
+            mdl_ob = append_from_dictionary('presets', 'Sk3Ed_RS_KOTH', context.scene)
+            mdl_ob.name = ob.name + '_MDL'
+            mdl_ob.location = [ 0, 0, 0 ]
+            mdl_ob.rotation_euler = [ 0, 0, 0 ]
+            mdl_ob.parent = ob
+            mdl_ob.hide_select = True
+            mdl_ob.hide_render = True
+            mdl_ob.thug_export_scene = False
+            mdl_ob.thug_export_collision = False
+            ob.empty_draw_type = 'CUBE'
+            ob.empty_draw_size = 42
+            
+        elif ob.thug_empty_props.empty_type == 'Pedestrian':
+            mdl_ob = append_from_dictionary('presets', 'Ped01', context.scene)
+            mdl_ob.name = ob.name + '_MDL'
+            mdl_ob.location = [ 0, 0, 0 ]
+            mdl_ob.rotation_euler = [ 0, 0, 0 ]
+            mdl_ob.parent = ob
+            mdl_ob.hide_select = True
+            mdl_ob.hide_render = True
+            mdl_ob.thug_export_scene = False
+            mdl_ob.thug_export_collision = False
+            ob.empty_draw_type = 'CUBE'
+            ob.empty_draw_size = 42
+            
+        elif ob.thug_empty_props.empty_type == 'Vehicle':
+            mdl_ob = append_from_dictionary('presets', 'Veh_Taxi', context.scene)
+            mdl_ob.name = ob.name + '_MDL'
+            mdl_ob.location = [ 0, 0, 0 ]
+            mdl_ob.rotation_euler = [ 0, 0, 0 ]
+            mdl_ob.parent = ob
+            mdl_ob.hide_select = True
+            mdl_ob.hide_render = True
+            mdl_ob.thug_export_scene = False
+            mdl_ob.thug_export_collision = False
+            ob.empty_draw_type = 'CUBE'
+            ob.empty_draw_size = 42
+            
+            
+        
 #----------------------------------------------------------------------------------
 #- Defines the Class of an empty
 #----------------------------------------------------------------------------------
@@ -37,7 +150,7 @@ class THUGEmptyProps(bpy.types.PropertyGroup):
         ("BouncyObject", "Bouncy Object", "Legacy node type, not used, only for identification in imported levels."),
         ("ParticleObject", "Particle Object", "Used to preserve particle systems in imported levels."),
         ("Custom", "Custom", ""),
-        ), name="Node Type", default="None")
+        ), name="Node Type", default="None", update=thug_empty_update)
 
 
 #----------------------------------------------------------------------------------
@@ -194,7 +307,7 @@ class THUGGameObjectProps(bpy.types.PropertyGroup):
         ("Combo_M", "Combo Letter M", ""), 
         ("Combo_B", "Combo Letter B", ""), 
         ("Custom", "Custom", "Specify a custom type and model.")), 
-    name="Type", default="Ghost")
+    name="Type", default="Ghost", update=thug_empty_update)
     go_type_other = StringProperty(name="Type", description="Custom type.")
     go_model = StringProperty(name="Model path", default="none", description="Path to the model, relative to Data/Models/.")
     go_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion of the object pauses.", min=0, max=1000000, default=0)
@@ -265,7 +378,7 @@ class THUGRestartProps(bpy.types.PropertyGroup):
         ("Multiplayer", "Multiplayer", ""),
         ("Horse", "Horse", ""),
         ("CTF", "CTF", "")),
-    name="Primary Type", default="Player1")
+    name="Primary Type", default="Player1", update=thug_empty_update)
     restart_name = StringProperty(name="Restart Name", description="Name that appears in restart menu.")
     
 

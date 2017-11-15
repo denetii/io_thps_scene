@@ -32,53 +32,62 @@ def preset_place_node(node_type, position):
     ob.location = position
     if node_type == 'RESTART':
         ob.name = 'TRG_Restart'
-        ob.thug_empty_props.empty_type = 'Restart'
-        ob.thug_restart_props.restart_type = "Player1"
-        ob.thug_restart_props.restart_p1 = True
         scene.objects.link( ob )
         scene.objects.active = ob 
         ob.select = True
+        ob.thug_empty_props.empty_type = 'Restart'
+        ob.thug_restart_props.restart_type = "Player1"
+        ob.thug_restart_props.restart_p1 = True
         to_group(ob, "Restarts")
         
     elif node_type == 'KOTH_CROWN':
         ob.name = 'TRG_KOTH'
-        ob.thug_empty_props.empty_type = "GenericNode"
-        ob.thug_generic_props.generic_type = "Crown"
         scene.objects.link( ob )
         scene.objects.active = ob 
         ob.select = True
+        ob.thug_empty_props.empty_type = "GenericNode"
+        ob.thug_generic_props.generic_type = "Crown"
         to_group(ob, "GenericNodes")
         
     elif node_type == 'PEDESTRIAN':
         ob.name = 'TRG_Pedestrian'
+        scene.objects.link( ob )
+        scene.objects.active = ob 
+        ob.select = True
         ob.thug_empty_props.empty_type = 'Pedestrian'
         ob.thug_ped_props.ped_type = "Ped_From_Profile"
         ob.thug_ped_props.ped_source = "Profile"
         ob.thug_ped_props.ped_profile = "random_male_profile"
         ob.thug_ped_props.ped_skeleton = "THPS5_human"
         ob.thug_ped_props.ped_animset = "animload_THPS5_human"
-        scene.objects.link( ob )
-        scene.objects.active = ob 
-        ob.select = True
         to_group(ob, "Pedestrians")
         
     elif node_type == 'VEHICLE':
         ob.name = 'TRG_Vehicle'
+        scene.objects.link( ob )
+        scene.objects.active = ob 
+        ob.select = True
         ob.thug_empty_props.empty_type = 'Vehicle'
         ob.thug_veh_props.veh_type = "Generic"
-        scene.objects.link( ob )
-        scene.objects.active = ob 
-        ob.select = True
         to_group(ob, "Vehicles")
         
-    elif node_type == 'GAMEOBJECT':
-        ob.name = 'TRG_GO'
-        ob.thug_empty_props.empty_type = 'GameObject'
-        ob.thug_go_props.go_type = "Ghost"
+    elif node_type == 'GAMEOBJECT' or node_type == 'CTF_FLAG' or node_type == 'CTF_BASE':
+        if node_type.startswith('CTF_'):
+            ob.name = 'TRG_CTF'
+        else:
+            ob.name = 'TRG_GO'
         scene.objects.link( ob )
         scene.objects.active = ob 
         ob.select = True
+        ob.thug_empty_props.empty_type = 'GameObject'
+        if node_type == 'CTF_FLAG':
+            ob.thug_go_props.go_type = 'Flag_Red'
+        elif node_type == 'CTF_BASE':
+            ob.thug_go_props.go_type = 'Flag_Red_Base'
+        else:
+            ob.thug_go_props.go_type = 'Ghost'
         to_group(ob, "GameObjects")
+        
         
     elif node_type == 'RAIL_NODE' or node_type == 'RAIL_PREMADE':
         rail_path_name = "TRG_RailPath0"
@@ -110,6 +119,39 @@ def preset_place_node(node_type, position):
         to_group(curveOB, "RailNodes")
         if node_type == 'RAIL_PREMADE':
             build_rail_mesh(curveOB)
+    
+    elif node_type == 'RAIL_POINT':
+        rail_path_name = "TRG_RailPoint0"
+        rail_name_idx = 0
+        # Create new rail path
+        while rail_path_name in bpy.data.objects:
+            rail_name_idx += 1
+            rail_path_name = "TRG_RailPoint" + str(rail_name_idx)
+        curveData = bpy.data.curves.new(rail_path_name, type='CURVE')
+        curveData.dimensions = '3D'
+        curveData.resolution_u = 12
+        curveData.bevel_depth = 4
+        # map coords to spline
+        polyline = curveData.splines.new('POLY')
+        rail_pos = mathutils.Vector([position[0], position[1], position[2], 0])
+        polyline.points[0].co = mathutils.Vector([ 0, 0, 24, 0])
+        
+        curveOB = bpy.data.objects.new(rail_path_name, curveData)
+        curveOB.location = [ 0, 0, 0 ]
+        curveOB.thug_path_type = "Rail"
+        curveOB.thug_rail_terrain_type = "GRINDMETAL"
+        curveOB.data.thug_pathnode_triggers.add()
+        
+        meshOB = append_from_dictionary('presets', 'Rail_Post', scene)
+        meshOB.location = position
+        
+        # attach to scene and validate context
+        scene.objects.link(curveOB)
+        scene.objects.active = curveOB
+        curveOB.parent = meshOB
+        curveOB.select = True
+        to_group(curveOB, "RailNodes")
+        
     
     elif node_type == 'WAYPOINT':
         path_name = "TRG_Waypoint"
@@ -233,13 +275,19 @@ preset_node_list = [
     { 'name': 'VEHICLE', 'title': 'Vehicle', 'desc': 'Add a new vehicle.' },
     { 'name': 'RAIL_NODE', 'title': 'Rail Node', 'desc': 'Add a new rail with 2 points (no mesh).' },
     { 'name': 'RAIL_PREMADE', 'title': 'Premade Rail', 'desc': 'Add a new rail with 2 points and mesh.' },
+    { 'name': 'RAIL_POINT', 'title': 'Point Rail', 'desc': 'Add a new rail with 1 point.' },
     { 'name': 'WAYPOINT', 'title': 'Waypoint', 'desc': 'Add a waypoint path with 2 points.' },
     { 'name': 'GAMEOBJECT', 'title': 'GameObject', 'desc': 'Add a new GameObject.' },
+    
+    { 'name': 'CTF_FLAG', 'title': 'CTF Flag', 'desc': 'Add a CTF Flag.' },
+    { 'name': 'CTF_BASE', 'title': 'CTF Base', 'desc': 'Add a CTF Base.' },
 ]
 
 preset_template_list = [
-    { "name": "sk5ed", "title": "Park Editor (UG+)", "list": Ed_Pieces_UG1 }
+    { "name": "presets", "title": "Presets", "list": Preset_Pieces }
+    , { "name": "sk5ed", "title": "Park Editor (UG+)", "list": Ed_Pieces_UG1 }
     , { "name": "sk6ed", "title": "Park Editor (THUG PRO)", "list": Ed_Pieces_UG2}
+    , { "name": "sk4ed", "title": "Park Editor (THPS4)", "list": Ed_Pieces_THPS4}
 ]
 
 # this holds the custom operators so we can cleanup when turned off
@@ -419,5 +467,7 @@ class THUGPresetsMenu(bpy.types.Menu):
 
         #layout.label("This is a main menu")
         layout.row().menu(THUGNodesMenu.bl_idname)
+        layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'presets')
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk5ed')
+        layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk6ed')
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk6ed')
