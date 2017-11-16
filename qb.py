@@ -193,6 +193,8 @@ def export_qb(filename, directory, target_game, operator=None):
             p("$NodeArray$ =")
         p(":i :a{")
 
+        print("Exporting level QB...")
+        
         rail_custom_triggerscript_names, rail_generated_scripts, rail_node_offsets = autorail._export_rails(p, c, operator)
         custom_triggerscript_names += rail_custom_triggerscript_names
         generated_scripts.update(rail_generated_scripts)
@@ -214,8 +216,11 @@ def export_qb(filename, directory, target_game, operator=None):
         has_ctf_yellow = False
         has_ctf_green = False
         has_ctf_blue = False
+        has_team_red = False
+        has_team_yellow = False
+        has_team_green = False
+        has_team_blue = False
         
-        print("Exporting level QB...")
         
         for ob in bpy.data.objects:
             # -----------------------------------------------------------------------------------------------------------
@@ -371,6 +376,85 @@ def export_qb(filename, directory, target_game, operator=None):
                     continue
                     
                 clean_name = get_clean_name(ob)
+                if ob.thug_empty_props.empty_type == "GameObject":
+                    # Need special logic for exporting CTF nodes, as they use a specific naming convention that
+                    # must be followed for everything to work correctly - we should also check for duplicate flags
+                    # and alert in the case we find any, as that can cause unexpected behavior
+                    if ob.thug_go_props.go_type == "Flag_Blue":
+                        if has_ctf_blue:
+                            print("Duplicate CTF Flag_Blue found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_CTF_Blue"
+                        has_ctf_blue = True
+                    elif ob.thug_go_props.go_type == "Flag_Blue_Base":
+                        if has_ctf_base_blue:
+                            print("Duplicate CTF Flag_Blue_Base found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_CTF_Blue_Base"
+                        has_ctf_base_blue = True
+                    elif ob.thug_go_props.go_type == "Team_Blue":
+                        if has_team_blue:
+                            print("Duplicate CTF Team_Blue found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_Flag_Blue"
+                        has_team_blue = True
+                        
+                    elif ob.thug_go_props.go_type == "Flag_Red":
+                        if has_ctf_red:
+                            print("Duplicate CTF Flag_Red found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_CTF_Red"
+                        has_ctf_red = True
+                    elif ob.thug_go_props.go_type == "Flag_Red_Base":
+                        if has_ctf_base_red:
+                            print("Duplicate CTF Flag_Red_Base found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_CTF_Red_Base"
+                        has_ctf_base_red = True
+                    elif ob.thug_go_props.go_type == "Team_Red":
+                        if has_team_red:
+                            print("Duplicate CTF Team_Red found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_Flag_Red"
+                        has_team_red = True
+                        
+                    elif ob.thug_go_props.go_type == "Flag_Green":
+                        if has_ctf_green:
+                            print("Duplicate CTF Flag_Green found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_CTF_Green"
+                        has_ctf_green = True
+                    elif ob.thug_go_props.go_type == "Flag_Green_Base":
+                        if has_ctf_base_green:
+                            print("Duplicate CTF Flag_Green_Base found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_CTF_Green_Base"
+                        has_ctf_base_green = True
+                    elif ob.thug_go_props.go_type == "Team_Green":
+                        if has_team_green:
+                            print("Duplicate CTF Team_Green found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_Flag_Green"
+                        has_team_green = True
+                        
+                    elif ob.thug_go_props.go_type == "Flag_Yellow":
+                        if has_ctf_yellow:
+                            print("Duplicate CTF Flag_Yellow found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_CTF_Yellow"
+                        has_ctf_yellow = True
+                    elif ob.thug_go_props.go_type == "Flag_Yellow_Base":
+                        if has_ctf_base_yellow:
+                            print("Duplicate CTF Flag_Yellow_Base found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_CTF_Yellow_Base"
+                        has_ctf_base_yellow = True
+                    elif ob.thug_go_props.go_type == "Team_Yellow":
+                        if has_team_yellow:
+                            print("Duplicate CTF Team_Yellow found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_Flag_Yellow"
+                        has_team_yellow = True
                 
                 p("\t:i :s{")
                 p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
@@ -599,12 +683,15 @@ def export_qb(filename, directory, target_game, operator=None):
                     if ob.thug_go_props.go_type == "Custom":
                         p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_go_props.go_type_other)))
                     else:
-                        p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_go_props.go_type)))
-                    
-                    if ob.thug_go_props.go_type.startswith("Flag_"):
+                        gameobj_type = ob.thug_go_props.go_type
+                        if gameobj_type.startswith("Team_"):
+                            gameobj_type = gameobj_type.replace("Team_", "Flag_")
+                        p("\t\t:i {} = {}".format(c("Type"), c(gameobj_type)))
+                        
+                    if ob.thug_go_props.go_type.startswith("Flag_") or ob.thug_go_props.go_type.startswith("Team_"):
                         if ob.thug_triggerscript_props.triggerscript_type == "None" or ob.thug_triggerscript_props.custom_name == "":
                             ob.thug_triggerscript_props.triggerscript_type = "Custom"
-                            ob.thug_triggerscript_props.custom_name = "TRG_CTF_" + ob.thug_go_props.go_type + "_Script"
+                            ob.thug_triggerscript_props.custom_name = "script_TRG_CTF_" + ob.thug_go_props.go_type + "_Script"
                             
                     # Removing temporarily to make imported levels easier to work with!
                     #if ob.thug_go_props.go_model != "":
@@ -716,24 +803,52 @@ def export_qb(filename, directory, target_game, operator=None):
 
         if not has_restart_p1:
             single_restarts = [("TRG_Playerone_0", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))]
+            print("Level has no Player 1 restarts. Generating one...")
         if not has_restart_multi:
             single_restarts = [("TRG_Multiplayer_0", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))]
+            print("Level has no Multiplayer restarts. Generating one...")
         if not has_restart_team:
             single_restarts = [("TRG_Team_Restart", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))]
+            print("Level has no Team restarts. Generating one...")
         if not has_koth:
             koth_nodes = [("TRG_KOTH", (0.0, 108.0, 0.0), (0.0, 0.0, 0.0))]
+            print("Level has no KOTH crown. Generating one...")
+        # Generate CTF components if any are missing, then alert with a warning for future reference
         if not has_ctf_blue:
-            ctf_nodes.append(("Flag_Blue", (108.0, 108.0, 0.0), (0.0, 0.0, 0.0)))
-            ctf_nodes.append(("Flag_Blue_Base", (108.0, 108.0, 0.0), (0.0, 0.0, 0.0)))
+            ctf_nodes.append(("TRG_CTF_Blue", "Flag_Blue", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+            print("Level has no CTF Blue Flag. Generating one...")
+        if not has_ctf_base_blue:
+            ctf_nodes.append(("TRG_CTF_Blue_Base", "Flag_Blue_Base", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+            print("Level has no CTF Blue Base. Generating one...")
         if not has_ctf_red:
-            ctf_nodes.append(("Flag_Red", (0.0, 108.0, 0.0), (0.0, 0.0, 0.0)))
-            ctf_nodes.append(("Flag_Red_Base", (0.0, 108.0, 0.0), (0.0, 0.0, 0.0)))
-        if not has_ctf_yellow:
-            ctf_nodes.append(("Flag_Yellow", (-108.0, 108.0, 0.0), (0.0, 0.0, 0.0)))
-            ctf_nodes.append(("Flag_Yellow_Base", (-108.0, 108.0, 0.0), (0.0, 0.0, 0.0)))
+            ctf_nodes.append(("TRG_CTF_Red", "Flag_Red", (500.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+            print("Level has no CTF Red Flag. Generating one...")
+        if not has_ctf_base_red:
+            ctf_nodes.append(("TRG_CTF_Red_Base", "Flag_Red_Base", (500.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+            print("Level has no CTF Red Base. Generating one...")
         if not has_ctf_green:
-            ctf_nodes.append(("Flag_Green", (0.0, 108.0, 108.0), (0.0, 0.0, 0.0)))
-            ctf_nodes.append(("Flag_Green_Base", (0.0, 108.0, 108.0), (0.0, 0.0, 0.0)))
+            ctf_nodes.append(("TRG_CTF_Green", "Flag_Green", (0.0, 0.0, 500.0), (0.0, 0.0, 0.0)))
+            print("Level has no CTF Green Flag. Generating one...")
+        if not has_ctf_base_green:
+            ctf_nodes.append(("TRG_CTF_Red_Green", "Flag_Green_Base", (0.0, 0.0, 500.0), (0.0, 0.0, 0.0)))
+            print("Level has no CTF Green Base. Generating one...")
+        if not has_ctf_yellow:
+            ctf_nodes.append(("TRG_CTF_Yellow", "Flag_Yellow", (-500.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+            print("Level has no CTF Yellow Flag. Generating one...")
+        if not has_ctf_base_yellow:
+            ctf_nodes.append(("TRG_CTF_Red_Yellow", "Flag_Yellow_Base", (-500.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+        if not has_team_blue:
+            ctf_nodes.append(("TRG_Flag_Blue", "Flag_Blue", (1000.0, 0.0, 1000.0), (0.0, 0.0, 0.0)))
+            print("Level has no Blue Team Flag. Generating one...")
+        if not has_team_red:
+            ctf_nodes.append(("TRG_Flag_Red", "Flag_Red", (700.0, 0.0, 1000.0), (0.0, 0.0, 0.0)))
+            print("Level has no Red Team Flag. Generating one...")
+        if not has_team_green:
+            ctf_nodes.append(("TRG_Flag_Green", "Flag_Green", (400.0, 0.0, 1000.0), (0.0, 0.0, 0.0)))
+            print("Level has no Green Team Flag. Generating one...")
+        if not has_team_yellow:
+            ctf_nodes.append(("TRG_Flag_Yellow", "Flag_Yellow", (100.0, 0.0, 1000.0), (0.0, 0.0, 0.0)))
+            print("Level has no Yellow Team Flag. Generating one...")
             
         for (name, loc, rot) in single_restarts:
             p("""\t:i :s{{
@@ -783,20 +898,20 @@ def export_qb(filename, directory, target_game, operator=None):
 \t:i :s}}
 """.format(loc, rot, c(name)))
 
-        for (name, loc, rot) in ctf_nodes:
-            model_path = THUG_DefaultGameObjects[name]
+        for (name, ctf_type, loc, rot) in ctf_nodes:
+            model_path = THUG_DefaultGameObjects[ctf_type]
             p("""\t:i :s{{
 \t\t:i $Pos$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Angles$ = %vec3({:.6f},{:.6f},{:.6f})
-\t\t:i $Name$ = $TRG_CTF_{}$
+\t\t:i $Name$ = ${}$
 \t\t:i $Class$ = $GameObject$
-\t\t:i $Type$ = {}
+\t\t:i $Type$ = ${}$
 \t\t:i $NeverSuspend$
 \t\t:i $model$ = {}
 \t\t:i $lod_dist1$ = %i(800,00000320)
 \t\t:i $lod_dist2$ = %i(801,00000321)
-\t\t:i $TriggerScript$ = $TRG_CTF_{}_Script$
-\t:i :s}}""".format(loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], name, c(name), blub_str(model_path), name))
+\t\t:i $TriggerScript$ = ${}_Script$
+\t:i :s}}""".format(loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], name, ctf_type, blub_str(model_path), name))
 
         p(":i :a}") # end node array =======================
 
@@ -838,6 +953,10 @@ def export_qb(filename, directory, target_game, operator=None):
             p(":i $TRG_CTF_Flag_Red_Script$")
             p(":i $TRG_CTF_Flag_Yellow_Script$")
             p(":i $TRG_CTF_Flag_Green_Script$")
+            p(":i $TRG_CTF_Team_Blue_Script$")
+            p(":i $TRG_CTF_Team_Red_Script$")
+            p(":i $TRG_CTF_Team_Yellow_Script$")
+            p(":i $TRG_CTF_Team_Green_Script$")
             p(":i $TRG_CTF_Flag_Blue_Base_Script$")
             p(":i $TRG_CTF_Flag_Red_Base_Script$")
             p(":i $TRG_CTF_Flag_Yellow_Base_Script$")
@@ -848,6 +967,9 @@ def export_qb(filename, directory, target_game, operator=None):
             p('\n'.join("\t:i ${}$".format(script_name) for script_name in custom_triggerscript_names))
             p("\n:i :a}\n")
 
+        # ------------------------------
+        # GENERATED CTF FLAG SCRIPTS 
+        # ------------------------------
         if not script_exists("TRG_CTF_Flag_Blue_Script"):
             p("""
 :i function $TRG_CTF_Flag_Blue_Script$
@@ -868,15 +990,36 @@ def export_qb(filename, directory, target_game, operator=None):
 :i function $TRG_CTF_Flag_Green_Script$
     :i call $Team_Flag$ arguments $green$
 :i endfunction""")
+        # ------------------------------
+        # GENERATED TEAM FLAG SCRIPTS 
+        # ------------------------------
+        if not script_exists("TRG_CTF_Team_Blue_Script"):
+            p("""
+:i function $TRG_CTF_Team_Blue_Script$
+    :i call $Team_Flag$ arguments $blue$
+:i endfunction""")
+        if not script_exists("TRG_CTF_Team_Red_Script"):
+            p("""
+:i function $TRG_CTF_Team_Red_Script$
+    :i call $Team_Flag$ arguments $red$
+:i endfunction""")
+        if not script_exists("TRG_CTF_Team_Yellow_Script"):
+            p("""
+:i function $TRG_CTF_Team_Yellow_Script$
+    :i call $Team_Flag$ arguments $yellow$
+:i endfunction""")
+        if not script_exists("TRG_CTF_Team_Green_Script"):
+            p("""
+:i function $TRG_CTF_Team_Green_Script$
+    :i call $Team_Flag$ arguments $green$
+:i endfunction""")
+        # ------------------------------
+        # GENERATED CTF BASE SCRIPTS 
+        # ------------------------------
         if not script_exists("TRG_CTF_Flag_Blue_Base_Script"):
             p("""
 :i function $TRG_CTF_Flag_Blue_Base_Script$
     :i call $Team_Flag_Base$ arguments $blue$
-:i endfunction""")
-        if not script_exists("TRG_CTF_Flag_Green_Base_Script"):
-            p("""
-:i function $TRG_CTF_Flag_Green_Base_Script$
-    :i call $Team_Flag_Base$ arguments $green$
 :i endfunction""")
         if not script_exists("TRG_CTF_Flag_Red_Base_Script"):
             p("""
@@ -887,6 +1030,11 @@ def export_qb(filename, directory, target_game, operator=None):
             p("""
 :i function $TRG_CTF_Flag_Yellow_Base_Script$
     :i call $Team_Flag_Base$ arguments $yellow$
+:i endfunction""")
+        if not script_exists("TRG_CTF_Flag_Green_Base_Script"):
+            p("""
+:i function $TRG_CTF_Flag_Green_Base_Script$
+    :i call $Team_Flag_Base$ arguments $green$
 :i endfunction""")
 
         # Export generic LoadAllParticleTextures script, if there isn't a script defined for it already

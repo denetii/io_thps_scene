@@ -301,9 +301,14 @@ class THUGCollisionMeshTools(bpy.types.Panel):
                 tmp_idx = -1
                 for p in context.object.data.splines[0].points:
                     tmp_idx += 1
-                    if p.select:
+                    if p.select and len(context.object.data.thug_pathnode_triggers) > tmp_idx:
                         self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "name")
-                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "script_name")
+                        self.layout.prop_search(
+                        context.object.data.thug_pathnode_triggers[tmp_idx], "script_name",
+                        bpy.data,
+                        "texts")
+                        
+                        #self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "script_name")
                         if context.object.thug_path_type == "Rail":
                             self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "terrain")
                         if context.object.thug_path_type == "Waypoint":

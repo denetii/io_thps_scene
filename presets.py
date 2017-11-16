@@ -470,4 +470,4 @@ class THUGPresetsMenu(bpy.types.Menu):
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'presets')
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk5ed')
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk6ed')
-        layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk6ed')
+        layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk4ed')

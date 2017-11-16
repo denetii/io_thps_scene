@@ -252,6 +252,8 @@ def _thug_object_settings_draw(self, context):
         if ob.thug_path_type == "Rail":
             self.layout.row().prop(ob, "thug_rail_terrain_type")
             self.layout.row().operator(AutoRailMesh.bl_idname, AutoRailMesh.bl_label)
+            
+        self.layout.row().operator(UpdateRails.bl_idname, UpdateRails.bl_label)
         _update_rails_collection(self, context)
         #_update_pathnodes_collections()
         self.layout.row().prop_search(
@@ -265,16 +267,6 @@ def _thug_object_settings_draw(self, context):
 
     self.layout.row().prop(ob, "thug_node_expansion")
 
-#----------------------------------------------------------------------------------
-def _update_pathnodes_collections():
-    for ob in bpy.data.objects:
-        if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom"):
-            tmp_idx = -1
-            if len(ob.data.splines):
-                for p in ob.data.splines[0].points:
-                    tmp_idx += 1
-                    if len(ob.data.thug_pathnode_triggers) < (tmp_idx + 1):
-                            ob.data.thug_pathnode_triggers.add()
                             
 #----------------------------------------------------------------------------------
 def _update_rails_collection(self, context):

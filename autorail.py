@@ -17,6 +17,7 @@ AUTORAIL_AUTO = -1
 
 # METHODS
 #############################################
+
 def get_autorail_image():
     if bpy.data.images.get("Autorail_Metal"):
         return bpy.data.images.get("Autorail_Metal")
@@ -37,6 +38,7 @@ def get_autorail_image():
     img.use_fake_user = True
     return img
     
+#----------------------------------------------------------------------------------
 def get_autorail_material():
     if not bpy.data.materials.get('Autorail_Metal'):
         blender_mat = bpy.data.materials.new('Autorail_Metal') 
@@ -62,6 +64,7 @@ def get_autorail_material():
     return blender_mat
     
 
+#----------------------------------------------------------------------------------
 def build_rail_mesh(ob_rail, thickness = 2):
     if not ob_rail.data.splines:
         raise Exception("Object is not a rail path.")
@@ -144,7 +147,19 @@ def build_rail_mesh(ob_rail, thickness = 2):
     actual_ob.data.materials.append(get_autorail_material())
     actual_ob.parent = ob_rail
     #Done! You should now have a decent-looking generated rail :)
-    
+
+#----------------------------------------------------------------------------------
+def _update_pathnodes_collections():
+    for ob in bpy.data.objects:
+        if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom"):
+            tmp_idx = -1
+            if len(ob.data.splines):
+                for p in ob.data.splines[0].points:
+                    tmp_idx += 1
+                    if len(ob.data.thug_pathnode_triggers) < (tmp_idx + 1):
+                            ob.data.thug_pathnode_triggers.add()
+                            
+#----------------------------------------------------------------------------------
 def update_autorail_terrain_type(wm, context):
     global update_triggered_by_ui_updater
     if update_triggered_by_ui_updater:
@@ -476,16 +491,32 @@ def _export_rails(p, c, operator=None):
                     assert False
                     
                 # Insert individual node properties here, if they exist!
-                if len(ob.data.thug_pathnode_triggers) > p_num and ob.data.thug_pathnode_triggers[p_num].name != "":
+                if len(ob.data.thug_pathnode_triggers) > p_num:
                     # individual rail/path node names
-                    name = ob.data.thug_pathnode_triggers[p_num].name
-                    p("\t\t:i {} = {}".format(c("Name"), c(name)))
-                    if ob.data.thug_pathnode_triggers[p_num].terrain != "":
-                        # Terrain is also used for AI skaters, so don't output twice!
-                        if ob.data.thug_pathnode_triggers[p_num].PedType != "Skate":
-                            p("\t\t:i {} = {}".format(c("TerrainType"), c(ob.data.thug_pathnode_triggers[p_num].terrain)))
+                    if ob.data.thug_pathnode_triggers[p_num].name != "":
+                        name = ob.data.thug_pathnode_triggers[p_num].name
+                        p("\t\t:i {} = {}".format(c("Name"), c(name)))
+                    else:
+                        name = clean_name + "__" + str(point_idx - 1)
+                        p("\t\t:i {} = {}".format(c("Name"), c(name)))
+                            
+                    if ob.thug_path_type == "Rail":
+                        # Output terrain type - use either the whole rail definition or the 
+                        # point-specific definition, depending on which one is set!
+                        if ob.data.thug_pathnode_triggers[p_num].terrain != "" and ob.data.thug_pathnode_triggers[p_num].terrain != "None":
+                            # Terrain is also used for AI skaters, so don't output twice!
+                            rail_type = ob.data.thug_pathnode_triggers[p_num].terrain
+                        else:
+                            rail_type = ob.thug_rail_terrain_type
                         
-                    if ob.data.thug_pathnode_triggers[p_num].PedType != "":
+                        if rail_type == "Auto" or rail_type == "None":
+                            rail_type = "TERRAIN_GRINDCONC"
+                        else:
+                            rail_type = "TERRAIN_" + rail_type
+                        p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
+                        
+                    # Output waypoint-specific data below!
+                    elif ob.thug_path_type == "Waypoint" and ob.data.thug_pathnode_triggers[p_num].PedType != "":
                         p("\t\t:i {} = {}".format(c("PedType"), c(ob.data.thug_pathnode_triggers[p_num].PedType)))
                         # Output skater AI node properties here!
                         if ob.data.thug_pathnode_triggers[p_num].PedType == "Skate":
@@ -553,9 +584,22 @@ def _export_rails(p, c, operator=None):
                 if ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
 
-                if len(ob.data.thug_pathnode_triggers) > p_num and ob.data.thug_pathnode_triggers[p_num].script_name != "":
-                    # Export trigger script assigned to individual rail nodes (not entire rail)
-                    p("\t\t:i {} = {}".format(c("TriggerScript"), c(ob.data.thug_pathnode_triggers[p_num].script_name)))
+                # Select TriggerScripts to export below - basically, if there is a script defined
+                # for the whole rail, then use that. Otherwise, use the point-specific setting
+                if ob.thug_triggerscript_props.triggerscript_type != "None":
+                    if ob.thug_triggerscript_props.triggerscript_type == "Custom":
+                        script_name = ob.thug_triggerscript_props.custom_name[7:]
+                        custom_triggerscript_names.append(script_name)
+                    else:
+                        script_name, script_code = _generate_script(ob)
+                        generated_scripts.setdefault(script_name, script_code)
+                    p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
+                    
+                # Export trigger script assigned to individual rail nodes (not entire rail)
+                elif len(ob.data.thug_pathnode_triggers) > p_num and ob.data.thug_pathnode_triggers[p_num].script_name != "":
+                    p("\t\t:i {} = {}".format(c("TriggerScript"), c(ob.data.thug_pathnode_triggers[p_num].script_name[7:])))
+                    custom_triggerscript_names.append(ob.data.thug_pathnode_triggers[p_num].script_name[7:])
+                # - End TriggerScript generation code
 
                 if point_idx != point_count:
                     p("\t\t:i {} = :a{{{}:a}}".format(c("Links"), i(rail_node_counter + 1)))
@@ -719,5 +763,19 @@ class AutoRailMesh(bpy.types.Operator):
         if context.selected_objects:
             for ob in context.selected_objects:
                 build_rail_mesh(ob)
+        return {'FINISHED'}
+
+        
+class UpdateRails(bpy.types.Operator):
+    bl_idname = "path.thug_update_rails"
+    bl_label = "Update Rails/Paths"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object.type == "CURVE"
+
+    def execute(self, context):
+        _update_pathnodes_collections()
         return {'FINISHED'}
 

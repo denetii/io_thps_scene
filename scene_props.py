@@ -27,10 +27,11 @@ def _gap_props_end_object_changed(gap_props, context):
 def thug_empty_update(self, context):
     if context.object.type == "EMPTY":
         ob = context.object
-        mdl_ob = bpy.data.objects.get(ob.name + '_MDL')
-        if mdl_ob:
-            context.scene.objects.unlink(mdl_ob)
-            bpy.data.objects.remove(mdl_ob)
+        
+        for mdl_ob in ob.children:
+            if mdl_ob.name.endswith('_MDL'):
+                context.scene.objects.unlink(mdl_ob)
+                bpy.data.objects.remove(mdl_ob)
             
         if ob.thug_empty_props.empty_type == 'Restart':
             mdl_mesh = 'Sk3Ed_RS_1p'
@@ -56,13 +57,13 @@ def thug_empty_update(self, context):
             
         if ob.thug_empty_props.empty_type == 'GameObject':
             mdl_mesh = ''
-            if ob.thug_go_props.go_type == 'Flag_Blue':
+            if ob.thug_go_props.go_type == 'Flag_Blue' or ob.thug_go_props.go_type == 'Team_Blue' :
                 mdl_mesh = 'CTF_Flag_Blue'
-            elif ob.thug_go_props.go_type == 'Flag_Red':
+            elif ob.thug_go_props.go_type == 'Flag_Red' or ob.thug_go_props.go_type == 'Team_Red':
                 mdl_mesh = 'CTF_Flag_Red'
-            elif ob.thug_go_props.go_type == 'Flag_Green':
+            elif ob.thug_go_props.go_type == 'Flag_Green' or ob.thug_go_props.go_type == 'Team_Green':
                 mdl_mesh = 'CTF_Flag_Green'
-            elif ob.thug_go_props.go_type == 'Flag_Yellow':
+            elif ob.thug_go_props.go_type == 'Flag_Yellow' or ob.thug_go_props.go_type == 'Team_Yellow':
                 mdl_mesh = 'CTF_Flag_Yellow'
                 
             if ob.thug_go_props.go_type == 'Flag_Blue_Base':
@@ -294,13 +295,17 @@ class THUGGameObjectProps(bpy.types.PropertyGroup):
     go_type = EnumProperty(items=(
         ("Ghost", "Ghost", "No model, used for game logic."), 
         ("Flag_Red", "CTF Flag - Red", "Red team flag for CTF."), 
-        ("Flag_Red_Base", "CTF Base - Red", "Red team base for CTF."), 
-        ("Flag_Yellow", "CTF Flag - Yellow", "Yellow team flag for CTF."), 
-        ("Flag_Yellow_Base", "CTF Base - Yellow", "Yellow team base for CTF."), 
-        ("Flag_Green", "CTF Flag - Green", "Green team flag for CTF."), 
-        ("Flag_Green_Base", "CTF Base - Green", "Green team base for CTF."), 
         ("Flag_Blue", "CTF Flag - Blue", "Blue team flag for CTF."), 
+        ("Flag_Green", "CTF Flag - Green", "Green team flag for CTF."), 
+        ("Flag_Yellow", "CTF Flag - Yellow", "Yellow team flag for CTF."), 
+        ("Flag_Red_Base", "CTF Base - Red", "Red team base for CTF."), 
         ("Flag_Blue_Base", "CTF Base - Blue", "Blue team base for CTF."), 
+        ("Flag_Green_Base", "CTF Base - Green", "Green team base for CTF."), 
+        ("Flag_Yellow_Base", "CTF Base - Yellow", "Yellow team base for CTF."), 
+        ("Team_Red", "Team Flag - Red", "Red team selection flag."), 
+        ("Team_Blue", "Team Flag - Blue", "Blue team selection flag."), 
+        ("Team_Green", "Team Flag - Green", "Green team selection flag."), 
+        ("Team_Yellow", "Team Flag - Yellow", "Yellow team selection flag."), 
         ("Secret_Tape", "Secret Tape", ""), 
         ("Combo_C", "Combo Letter C", ""), 
         ("Combo_O", "Combo Letter O", ""), 
@@ -341,7 +346,10 @@ class THUGPathNodeProps(bpy.types.PropertyGroup):
     name = StringProperty(name="Node Name")
     waypt_type = StringProperty(name="Type")
     script_name = StringProperty(name="TriggerScript Name")
-    terrain = StringProperty(name="Terrain Type")
+    terrain = EnumProperty(
+        name="Terrain Type",
+        items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]])
+    #terrain = StringProperty(name="Terrain Type")
     spawnobjscript = StringProperty(name="SpawnObj Script")
     PedType = StringProperty(name="PedType")
     do_continue = BoolProperty(name="Continue")
