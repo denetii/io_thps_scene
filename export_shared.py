@@ -674,9 +674,19 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
     speed_hack = BoolProperty(name="No modifiers (speed hack)"
         , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
         , default=False)
+    # AUTOSPLIT SETTINGS
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
+    autosplit_faces_per_subobject = IntProperty(
+        name="Faces Per Subobject",
+        description="The max amount of faces for every created subobject.",
+        default=800, min=50, max=6000)
+    autosplit_max_radius = FloatProperty(
+        name="Max Radius",
+        description="The max radius of for every created subobject.",
+        default=2000, min=100, max=5000)
+    # /AUTOSPLIT SETTINGS
     is_park_editor = BoolProperty(
         name="Is Park Editor",
         description="Use this option when exporting a park editor dictionary.",
@@ -720,6 +730,23 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
 
         return {'RUNNING_MODAL'}
         
+    def draw(self, context):
+        self.layout.row().prop(self, "skybox_name")
+        self.layout.row().prop(self, "generate_vertex_color_shading")
+        self.layout.row().prop(self, "use_vc_hack")
+        self.layout.row().prop(self, "speed_hack")
+        self.layout.row().prop(self, "autosplit_everything")
+        if self.autosplit_everything:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "autosplit_faces_per_subobject")
+            box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "generate_tex_file")
+        self.layout.row().prop(self, "generate_scn_file")
+        self.layout.row().prop(self, "generate_col_file")
+        self.layout.row().prop(self, "generate_scripts_files")
+        self.layout.row().prop(self, "export_scale")
+        self.layout.row().prop(self, "mipmap_offset")
+        
 #----------------------------------------------------------------------------------
 class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
     bl_idname = "export.scene_to_thug_model"
@@ -741,9 +768,20 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
     speed_hack = BoolProperty(name="No modifiers (speed hack)"
         , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
         , default=False)
+    
+    # AUTOSPLIT SETTINGS
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
+    autosplit_faces_per_subobject = IntProperty(
+        name="Faces Per Subobject",
+        description="The max amount of faces for every created subobject.",
+        default=800, min=50, max=6000)
+    autosplit_max_radius = FloatProperty(
+        name="Max Radius",
+        description="The max radius of for every created subobject.",
+        default=2000, min=100, max=5000)
+    # /AUTOSPLIT SETTINGS
     generate_scripts_files = BoolProperty(
         name="Generate scripts",
         default=True)
@@ -762,7 +800,22 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
 
         return {'RUNNING_MODAL'}
         
-        
+    def draw(self, context):
+        self.layout.row().prop(self, "skybox_name")
+        self.layout.row().prop(self, "generate_vertex_color_shading")
+        self.layout.row().prop(self, "use_vc_hack")
+        self.layout.row().prop(self, "speed_hack")
+        self.layout.row().prop(self, "autosplit_everything")
+        if self.autosplit_everything:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "autosplit_faces_per_subobject")
+            box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "generate_tex_file")
+        self.layout.row().prop(self, "generate_scn_file")
+        self.layout.row().prop(self, "generate_col_file")
+        self.layout.row().prop(self, "generate_scripts_files")
+        self.layout.row().prop(self, "export_scale")
+        self.layout.row().prop(self, "mipmap_offset")
 
 # OPERATORS
 #############################################
@@ -784,9 +837,19 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
     speed_hack = BoolProperty(name="No modifiers (speed hack)"
         , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
         , default=False)
+    # AUTOSPLIT SETTINGS
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
+    autosplit_faces_per_subobject = IntProperty(
+        name="Faces Per Subobject",
+        description="The max amount of faces for every created subobject.",
+        default=800, min=50, max=6000)
+    autosplit_max_radius = FloatProperty(
+        name="Max Radius",
+        description="The max radius of for every created subobject.",
+        default=2000, min=100, max=5000)
+    # /AUTOSPLIT SETTINGS
     is_park_editor = BoolProperty(
         name="Is Park Editor",
         description="Use this option when exporting a park editor dictionary.",
@@ -831,6 +894,26 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
 
         return {'RUNNING_MODAL'}
 
+    
+    def draw(self, context):
+        self.layout.row().prop(self, "skybox_name")
+        self.layout.row().prop(self, "generate_vertex_color_shading")
+        self.layout.row().prop(self, "use_vc_hack")
+        self.layout.row().prop(self, "speed_hack")
+        self.layout.row().prop(self, "autosplit_everything")
+        if self.autosplit_everything:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "autosplit_faces_per_subobject")
+            box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "generate_tex_file")
+        self.layout.row().prop(self, "generate_scn_file")
+        self.layout.row().prop(self, "pack_scn")
+        self.layout.row().prop(self, "generate_col_file")
+        self.layout.row().prop(self, "pack_col")
+        self.layout.row().prop(self, "generate_scripts_files")
+        self.layout.row().prop(self, "pack_scripts")
+        self.layout.row().prop(self, "export_scale")
+        self.layout.row().prop(self, "mipmap_offset")
 
 #----------------------------------------------------------------------------------
 class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
@@ -850,9 +933,19 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
     speed_hack = BoolProperty(name="No modifiers (speed hack)"
         , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
         , default=False)
+    # AUTOSPLIT SETTINGS
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
+    autosplit_faces_per_subobject = IntProperty(
+        name="Faces Per Subobject",
+        description="The max amount of faces for every created subobject.",
+        default=800, min=50, max=6000)
+    autosplit_max_radius = FloatProperty(
+        name="Max Radius",
+        description="The max radius of for every created subobject.",
+        default=2000, min=100, max=5000)
+    # /AUTOSPLIT SETTINGS
     is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
     generate_scripts_files = BoolProperty(
         name="Generate scripts",
@@ -871,3 +964,21 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         wm.fileselect_add(self)
 
         return {'RUNNING_MODAL'}
+    
+    def draw(self, context):
+        self.layout.row().prop(self, "skybox_name")
+        self.layout.row().prop(self, "generate_vertex_color_shading")
+        self.layout.row().prop(self, "use_vc_hack")
+        self.layout.row().prop(self, "speed_hack")
+        self.layout.row().prop(self, "autosplit_everything")
+        if self.autosplit_everything:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "autosplit_faces_per_subobject")
+            box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "generate_tex_file")
+        self.layout.row().prop(self, "generate_scn_file")
+        self.layout.row().prop(self, "generate_col_file")
+        self.layout.row().prop(self, "generate_scripts_files")
+        self.layout.row().prop(self, "export_scale")
+        self.layout.row().prop(self, "mipmap_offset")
+        

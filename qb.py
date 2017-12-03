@@ -326,7 +326,7 @@ def export_qb(filename, directory, target_game, operator=None):
 
                 if col_ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(col_ob):
                     if (col_ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(col_ob)):
-                        script_name = col_ob.thug_triggerscript_props.custom_name[7:]
+                        script_name = format_triggerscript_name(col_ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(col_ob)
@@ -691,7 +691,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     if ob.thug_go_props.go_type.startswith("Flag_") or ob.thug_go_props.go_type.startswith("Team_"):
                         if ob.thug_triggerscript_props.triggerscript_type == "None" or ob.thug_triggerscript_props.custom_name == "":
                             ob.thug_triggerscript_props.triggerscript_type = "Custom"
-                            ob.thug_triggerscript_props.custom_name = "script_TRG_CTF_" + ob.thug_go_props.go_type + "_Script"
+                            ob.thug_triggerscript_props.custom_name = "script_" + clean_name + "Script"
                             
                     # Removing temporarily to make imported levels easier to work with!
                     #if ob.thug_go_props.go_model != "":
@@ -761,7 +761,7 @@ def export_qb(filename, directory, target_game, operator=None):
                         
                 if ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(ob):
                     if (ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(ob)):
-                        script_name = ob.thug_triggerscript_props.custom_name[7:]
+                        script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(ob)
@@ -830,13 +830,13 @@ def export_qb(filename, directory, target_game, operator=None):
             ctf_nodes.append(("TRG_CTF_Green", "Flag_Green", (0.0, 0.0, 500.0), (0.0, 0.0, 0.0)))
             print("Level has no CTF Green Flag. Generating one...")
         if not has_ctf_base_green:
-            ctf_nodes.append(("TRG_CTF_Red_Green", "Flag_Green_Base", (0.0, 0.0, 500.0), (0.0, 0.0, 0.0)))
+            ctf_nodes.append(("TRG_CTF_Green_Base", "Flag_Green_Base", (0.0, 0.0, 500.0), (0.0, 0.0, 0.0)))
             print("Level has no CTF Green Base. Generating one...")
         if not has_ctf_yellow:
             ctf_nodes.append(("TRG_CTF_Yellow", "Flag_Yellow", (-500.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
             print("Level has no CTF Yellow Flag. Generating one...")
         if not has_ctf_base_yellow:
-            ctf_nodes.append(("TRG_CTF_Red_Yellow", "Flag_Yellow_Base", (-500.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
+            ctf_nodes.append(("TRG_CTF_Yellow_Base", "Flag_Yellow_Base", (-500.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
         if not has_team_blue:
             ctf_nodes.append(("TRG_Flag_Blue", "Flag_Blue", (1000.0, 0.0, 1000.0), (0.0, 0.0, 0.0)))
             print("Level has no Blue Team Flag. Generating one...")
@@ -910,7 +910,7 @@ def export_qb(filename, directory, target_game, operator=None):
 \t\t:i $model$ = {}
 \t\t:i $lod_dist1$ = %i(800,00000320)
 \t\t:i $lod_dist2$ = %i(801,00000321)
-\t\t:i $TriggerScript$ = ${}_Script$
+\t\t:i $TriggerScript$ = ${}Script$
 \t:i :s}}""".format(loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], name, ctf_type, blub_str(model_path), name))
 
         p(":i :a}") # end node array =======================
@@ -949,18 +949,18 @@ def export_qb(filename, directory, target_game, operator=None):
 \t:i $LoadTerrain$
             """)
 
-            p(":i $TRG_CTF_Flag_Blue_Script$")
-            p(":i $TRG_CTF_Flag_Red_Script$")
-            p(":i $TRG_CTF_Flag_Yellow_Script$")
-            p(":i $TRG_CTF_Flag_Green_Script$")
-            p(":i $TRG_CTF_Team_Blue_Script$")
-            p(":i $TRG_CTF_Team_Red_Script$")
-            p(":i $TRG_CTF_Team_Yellow_Script$")
-            p(":i $TRG_CTF_Team_Green_Script$")
-            p(":i $TRG_CTF_Flag_Blue_Base_Script$")
-            p(":i $TRG_CTF_Flag_Red_Base_Script$")
-            p(":i $TRG_CTF_Flag_Yellow_Base_Script$")
-            p(":i $TRG_CTF_Flag_Green_Base_Script$")
+            p(":i $TRG_CTF_BlueScript$")
+            p(":i $TRG_CTF_RedScript$")
+            p(":i $TRG_CTF_YellowScript$")
+            p(":i $TRG_CTF_GreenScript$")
+            p(":i $TRG_CTF_Blue_BaseScript$")
+            p(":i $TRG_CTF_Red_BaseScript$")
+            p(":i $TRG_CTF_Yellow_BaseScript$")
+            p(":i $TRG_CTF_Green_BaseScript$")
+            p(":i $TRG_Flag_BlueScript$")
+            p(":i $TRG_Flag_RedScript$")
+            p(":i $TRG_Flag_YellowScript$")
+            p(":i $TRG_Flag_GreenScript$")
 
             for script_name, script_code in generated_scripts.items():
                 p("\t:i {}".format(c(script_name)))
@@ -970,70 +970,70 @@ def export_qb(filename, directory, target_game, operator=None):
         # ------------------------------
         # GENERATED CTF FLAG SCRIPTS 
         # ------------------------------
-        if not script_exists("TRG_CTF_Flag_Blue_Script"):
+        if not script_exists("TRG_CTF_BlueScript"):
             p("""
-:i function $TRG_CTF_Flag_Blue_Script$
+:i function $TRG_CTF_BlueScript$
     :i call $Team_Flag$ arguments $blue$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Flag_Red_Script"):
+        if not script_exists("TRG_CTF_RedScript"):
             p("""
-:i function $TRG_CTF_Flag_Red_Script$
+:i function $TRG_CTF_RedScript$
     :i call $Team_Flag$ arguments $red$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Flag_Yellow_Script"):
+        if not script_exists("TRG_CTF_YellowScript"):
             p("""
-:i function $TRG_CTF_Flag_Yellow_Script$
+:i function $TRG_CTF_YellowScript$
     :i call $Team_Flag$ arguments $yellow$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Flag_Green_Script"):
+        if not script_exists("TRG_CTF_GreenScript"):
             p("""
-:i function $TRG_CTF_Flag_Green_Script$
+:i function $TRG_CTF_GreenScript$
     :i call $Team_Flag$ arguments $green$
 :i endfunction""")
         # ------------------------------
         # GENERATED TEAM FLAG SCRIPTS 
         # ------------------------------
-        if not script_exists("TRG_CTF_Team_Blue_Script"):
+        if not script_exists("TRG_Flag_BlueScript"):
             p("""
-:i function $TRG_CTF_Team_Blue_Script$
+:i function $TRG_Flag_BlueScript$
     :i call $Team_Flag$ arguments $blue$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Team_Red_Script"):
+        if not script_exists("TRG_Flag_RedScript"):
             p("""
-:i function $TRG_CTF_Team_Red_Script$
+:i function $TRG_Flag_RedScript$
     :i call $Team_Flag$ arguments $red$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Team_Yellow_Script"):
+        if not script_exists("TRG_Flag_YellowScript"):
             p("""
-:i function $TRG_CTF_Team_Yellow_Script$
+:i function $TRG_Flag_YellowScript$
     :i call $Team_Flag$ arguments $yellow$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Team_Green_Script"):
+        if not script_exists("TRG_Flag_GreenScript"):
             p("""
-:i function $TRG_CTF_Team_Green_Script$
+:i function $TRG_Flag_GreenScript$
     :i call $Team_Flag$ arguments $green$
 :i endfunction""")
         # ------------------------------
         # GENERATED CTF BASE SCRIPTS 
         # ------------------------------
-        if not script_exists("TRG_CTF_Flag_Blue_Base_Script"):
+        if not script_exists("TRG_CTF_Blue_BaseScript"):
             p("""
-:i function $TRG_CTF_Flag_Blue_Base_Script$
+:i function $TRG_CTF_Blue_BaseScript$
     :i call $Team_Flag_Base$ arguments $blue$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Flag_Red_Base_Script"):
+        if not script_exists("TRG_CTF_Red_BaseScript"):
             p("""
-:i function $TRG_CTF_Flag_Red_Base_Script$
+:i function $TRG_CTF_Red_BaseScript$
     :i call $Team_Flag_Base$ arguments $red$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Flag_Yellow_Base_Script"):
+        if not script_exists("TRG_CTF_Yellow_BaseScript"):
             p("""
-:i function $TRG_CTF_Flag_Yellow_Base_Script$
+:i function $TRG_CTF_Yellow_BaseScript$
     :i call $Team_Flag_Base$ arguments $yellow$
 :i endfunction""")
-        if not script_exists("TRG_CTF_Flag_Green_Base_Script"):
+        if not script_exists("TRG_CTF_Green_BaseScript"):
             p("""
-:i function $TRG_CTF_Flag_Green_Base_Script$
+:i function $TRG_CTF_Green_BaseScript$
     :i call $Team_Flag_Base$ arguments $green$
 :i endfunction""")
 
@@ -1199,7 +1199,7 @@ def export_model_qb(filename, directory, target_game, operator=None):
 
                 if ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(ob):
                     if (ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(ob)):
-                        script_name = ob.thug_triggerscript_props.custom_name
+                        script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(ob)

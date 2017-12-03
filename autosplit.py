@@ -317,6 +317,15 @@ def _prepare_autosplit_objects(operator, context, target_game):
     for ob in out_objects:
         final_mesh = None
         
+        # Use either the object settings or the export setting, depending on whether
+        # 'Auto-split everything' is enabled!
+        as_faces_per_obj = ob.thug_do_autosplit_faces_per_subobject
+        as_max_radius = ob.thug_do_autosplit_max_radius
+        if operator.autosplit_everything == True:
+            as_faces_per_obj = operator.autosplit_faces_per_subobject
+            as_max_radius = operator.autosplit_max_radius
+            
+        
         if _is_levelobject(ob):
             LOG.debug("Skipping {}, it is a LevelObject!".format(ob.name))
             continue
@@ -326,9 +335,9 @@ def _prepare_autosplit_objects(operator, context, target_game):
 
         small_enough = False
         if final_mesh:
-            if len(final_mesh.polygons) <= ob.thug_do_autosplit_faces_per_subobject:
+            if len(final_mesh.polygons) <= as_faces_per_obj:
                 small_enough = True
-        elif len(ob.data.polygons) <= ob.thug_do_autosplit_faces_per_subobject:
+        elif len(ob.data.polygons) <= as_faces_per_obj:
             small_enough = True
 
         if small_enough:
@@ -369,8 +378,8 @@ def _prepare_autosplit_objects(operator, context, target_game):
         # bpy.ops.object.thug_split_object(
         final_objs = _alt_split_obj(
             temporary_object, context,
-            faces_per_subobject=ob.thug_do_autosplit_faces_per_subobject,
-            max_radius=ob.thug_do_autosplit_max_radius)
+            faces_per_subobject=as_faces_per_obj,
+            max_radius=as_max_radius)
         # final_objs = context.selected_objects[:]
 
         bpy.context.scene.objects.unlink(temporary_object)

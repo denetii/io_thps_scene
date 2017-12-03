@@ -25,7 +25,7 @@ ROTATE_270 = 3
 def parked_place_piece(piece_name, loc_x, loc_y, loc_z, angle, link = True):
     scene = bpy.context.scene
     
-    new_piece = append_from_dictionary(piece_name, scene, True)
+    new_piece = append_from_dictionary('sk5ed', piece_name, scene, True)
     new_piece.location[0] = loc_y * 120
     new_piece.location[1] = loc_x * 120
     new_piece.location[2] = loc_z * 48

@@ -31,7 +31,16 @@ def get_triggerscript(script_name):
     if not script_text:
         script_text = bpy.data.texts.new(name="script_" + script_name)
     return script_text
-
+    
+#----------------------------------------------------------------------------------
+#- Returns a cleaned version of a script name for exporting
+#----------------------------------------------------------------------------------
+def format_triggerscript_name(script_name):
+    if script_name.startswith('script_') or script_name.startswith('Script_'):
+        return script_name[7:]
+        
+    return script_name
+    
 #----------------------------------------------------------------------------------
 #- Returns an array of vertices for the given object
 #----------------------------------------------------------------------------------

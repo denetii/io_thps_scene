@@ -264,7 +264,10 @@ def import_nodearray(gamemode):
                         script_text = bpy.data.texts.new(name="script_" + _pnode["TriggerScript"])
                 # Assign terrain type
                 if "TerrainType" in _pnode and _pnode["TerrainType"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].terrain = _pnode["TerrainType"]
+                    try:
+                        curveOB.data.thug_pathnode_triggers[i].terrain = str(_pnode["TerrainType"]).replace("TERRAIN_", "")
+                    except TypeError:
+                        curveOB.data.thug_pathnode_triggers[i].terrain = "Auto"
                         
                 # Assign spawnobj script
                 if "spawnobjscript" in _pnode and _pnode["spawnobjscript"] != "":
@@ -821,8 +824,11 @@ def import_nodearray(gamemode):
                     try:
                         ob.thug_empty_props.empty_type = "GameObject"
                         if "Type" in node:
-                            ob.thug_go_props.go_type = "Custom"
-                            ob.thug_go_props.go_type_other = node["Type"]
+                            try:
+                                ob.thug_go_props.go_type = node["Type"]
+                            except TypeError:
+                                ob.thug_go_props.go_type = "Custom"
+                                ob.thug_go_props.go_type_other = node["Type"]
                         if "model" in node:
                             ob.thug_go_props.go_model = node["model"]
                         if "Model" in node:

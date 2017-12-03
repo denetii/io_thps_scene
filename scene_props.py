@@ -52,6 +52,7 @@ def thug_empty_update(self, context):
             mdl_ob.hide_render = True
             mdl_ob.thug_export_scene = False
             mdl_ob.thug_export_collision = False
+            to_group(mdl_ob, "Visual Helpers")
             ob.empty_draw_type = 'CUBE'
             ob.empty_draw_size = 36
             
@@ -90,6 +91,7 @@ def thug_empty_update(self, context):
                 mdl_ob.hide_render = True
                 mdl_ob.thug_export_scene = False
                 mdl_ob.thug_export_collision = False
+                to_group(mdl_ob, "Visual Helpers")
             ob.empty_draw_type = 'CUBE'
             ob.empty_draw_size = 36
             
@@ -104,6 +106,7 @@ def thug_empty_update(self, context):
             mdl_ob.hide_render = True
             mdl_ob.thug_export_scene = False
             mdl_ob.thug_export_collision = False
+            to_group(mdl_ob, "Visual Helpers")
             ob.empty_draw_type = 'CUBE'
             ob.empty_draw_size = 42
             
@@ -117,6 +120,7 @@ def thug_empty_update(self, context):
             mdl_ob.hide_render = True
             mdl_ob.thug_export_scene = False
             mdl_ob.thug_export_collision = False
+            to_group(mdl_ob, "Visual Helpers")
             ob.empty_draw_type = 'CUBE'
             ob.empty_draw_size = 42
             
@@ -130,6 +134,7 @@ def thug_empty_update(self, context):
             mdl_ob.hide_render = True
             mdl_ob.thug_export_scene = False
             mdl_ob.thug_export_collision = False
+            to_group(mdl_ob, "Visual Helpers")
             ob.empty_draw_type = 'CUBE'
             ob.empty_draw_size = 42
             
@@ -306,6 +311,10 @@ class THUGGameObjectProps(bpy.types.PropertyGroup):
         ("Team_Blue", "Team Flag - Blue", "Blue team selection flag."), 
         ("Team_Green", "Team Flag - Green", "Green team selection flag."), 
         ("Team_Yellow", "Team Flag - Yellow", "Yellow team selection flag."), 
+        ("Team_Red_Base", "Team Base - Red", "Base for Red team selection flag."), 
+        ("Team_Blue_Base", "Team Base - Blue", "Base for Blue team selection flag."), 
+        ("Team_Green_Base", "Team Base - Green", "Base for Green team selection flag."), 
+        ("Team_Yellow_Base", "Team Base - Yellow", "Base for Yellow team selection flag."), 
         ("Secret_Tape", "Secret Tape", ""), 
         ("Combo_C", "Combo Letter C", ""), 
         ("Combo_O", "Combo Letter O", ""), 
@@ -348,7 +357,7 @@ class THUGPathNodeProps(bpy.types.PropertyGroup):
     script_name = StringProperty(name="TriggerScript Name")
     terrain = EnumProperty(
         name="Terrain Type",
-        items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]])
+        items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]], default="Auto")
     #terrain = StringProperty(name="Terrain Type")
     spawnobjscript = StringProperty(name="SpawnObj Script")
     PedType = StringProperty(name="PedType")

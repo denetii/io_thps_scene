@@ -533,7 +533,12 @@ def _export_rails(p, c, operator=None):
                                 _skateaction == "Vert_Flip":
                                 p("\t\t:i {} = {}".format(c("JumpHeight"), f(ob.data.thug_pathnode_triggers[p_num].JumpHeight)))
                             elif _skateaction == "Grind":
-                                p("\t\t:i {} = {}".format(c("TerrainType"), c(ob.data.thug_pathnode_triggers[p_num].terrain)))
+                                rail_type = ob.data.thug_pathnode_triggers[p_num].terrain
+                                if rail_type == "Auto":
+                                    rail_type = "TERRAIN_GRINDCONC"
+                                else:
+                                    rail_type = "TERRAIN_" + rail_type
+                                p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
                             elif _skateaction == "Manual":
                                 p("\t\t:i {} = {}".format(c("ManualType"), c(ob.data.thug_pathnode_triggers[p_num].ManualType)))
                             elif _skateaction == "Stop":
@@ -588,7 +593,7 @@ def _export_rails(p, c, operator=None):
                 # for the whole rail, then use that. Otherwise, use the point-specific setting
                 if ob.thug_triggerscript_props.triggerscript_type != "None":
                     if ob.thug_triggerscript_props.triggerscript_type == "Custom":
-                        script_name = ob.thug_triggerscript_props.custom_name[7:]
+                        script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(ob)
@@ -597,8 +602,10 @@ def _export_rails(p, c, operator=None):
                     
                 # Export trigger script assigned to individual rail nodes (not entire rail)
                 elif len(ob.data.thug_pathnode_triggers) > p_num and ob.data.thug_pathnode_triggers[p_num].script_name != "":
-                    p("\t\t:i {} = {}".format(c("TriggerScript"), c(ob.data.thug_pathnode_triggers[p_num].script_name[7:])))
-                    custom_triggerscript_names.append(ob.data.thug_pathnode_triggers[p_num].script_name[7:])
+                    script_name = format_triggerscript_name(ob.data.thug_pathnode_triggers[p_num].script_name)
+                    custom_triggerscript_names.append(script_name)
+                        
+                    p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
                 # - End TriggerScript generation code
 
                 if point_idx != point_count:
