@@ -720,6 +720,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
+    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
 
     def execute(self, context):
         return do_export(self, context, "THUG1")
@@ -745,7 +746,9 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_col_file")
         self.layout.row().prop(self, "generate_scripts_files")
         self.layout.row().prop(self, "export_scale")
-        self.layout.row().prop(self, "mipmap_offset")
+        box = self.layout.box().column(True)
+        box.row().prop(self, "mipmap_offset")
+        box.row().prop(self, "only_offset_lightmap")
         
 #----------------------------------------------------------------------------------
 class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
@@ -790,6 +793,7 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
+    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
         
     def execute(self, context):
         return do_export_model(self, context, "THUG1")
@@ -801,7 +805,6 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
         
     def draw(self, context):
-        self.layout.row().prop(self, "skybox_name")
         self.layout.row().prop(self, "generate_vertex_color_shading")
         self.layout.row().prop(self, "use_vc_hack")
         self.layout.row().prop(self, "speed_hack")
@@ -810,12 +813,11 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "generate_tex_file")
-        self.layout.row().prop(self, "generate_scn_file")
-        self.layout.row().prop(self, "generate_col_file")
         self.layout.row().prop(self, "generate_scripts_files")
         self.layout.row().prop(self, "export_scale")
-        self.layout.row().prop(self, "mipmap_offset")
+        box = self.layout.box().column(True)
+        box.row().prop(self, "mipmap_offset")
+        box.row().prop(self, "only_offset_lightmap")
 
 # OPERATORS
 #############################################
@@ -884,6 +886,7 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
+    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
 
     def execute(self, context):
         return do_export(self, context, "THUG2")
@@ -913,7 +916,9 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_scripts_files")
         self.layout.row().prop(self, "pack_scripts")
         self.layout.row().prop(self, "export_scale")
-        self.layout.row().prop(self, "mipmap_offset")
+        box = self.layout.box().column(True)
+        box.row().prop(self, "mipmap_offset")
+        box.row().prop(self, "only_offset_lightmap")
 
 #----------------------------------------------------------------------------------
 class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
@@ -955,6 +960,7 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
+    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
         
     def execute(self, context):
         return do_export_model(self, context, "THUG2")
@@ -966,7 +972,6 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
     
     def draw(self, context):
-        self.layout.row().prop(self, "skybox_name")
         self.layout.row().prop(self, "generate_vertex_color_shading")
         self.layout.row().prop(self, "use_vc_hack")
         self.layout.row().prop(self, "speed_hack")
@@ -975,10 +980,9 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "generate_tex_file")
-        self.layout.row().prop(self, "generate_scn_file")
-        self.layout.row().prop(self, "generate_col_file")
         self.layout.row().prop(self, "generate_scripts_files")
         self.layout.row().prop(self, "export_scale")
-        self.layout.row().prop(self, "mipmap_offset")
+        box = self.layout.box().column(True)
+        box.row().prop(self, "mipmap_offset")
+        box.row().prop(self, "only_offset_lightmap")
         

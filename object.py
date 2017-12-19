@@ -196,6 +196,15 @@ def _thug_object_settings_draw(self, context):
                     ob.thug_levelobj_props, "stuckscript",
                     bpy.data,
                     "texts")
+            # Display Links option for LevelObjects, as they support scripting
+            box.row().prop_search(
+                ob, "thug_rail_connects_to",
+                context.window_manager,
+                "thug_all_rails")
+            if (ob.thug_rail_connects_to and
+                    ob.thug_rail_connects_to in bpy.data.objects and
+                    bpy.data.objects[ob.thug_rail_connects_to].type != "CURVE"):
+                self.layout.label(text=ob.thug_rail_connects_to + " is not a curve!", icon="ERROR")
             
         self.layout.row().prop(ob, "thug_export_collision")
         self.layout.row().prop(ob, "thug_export_scene")

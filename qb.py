@@ -199,7 +199,7 @@ def export_qb(filename, directory, target_game, operator=None):
         custom_triggerscript_names += rail_custom_triggerscript_names
         generated_scripts.update(rail_generated_scripts)
             
-        # Used further down to determine if we need to auto-generate restarts of certain types
+        # Used further down to determine if we need to auto-generate nodes of certain types
         has_restart_p1 = False
         has_restart_p2 = False
         has_restart_multi = False
@@ -220,6 +220,10 @@ def export_qb(filename, directory, target_game, operator=None):
         has_team_yellow = False
         has_team_green = False
         has_team_blue = False
+        has_team_red_base = False
+        has_team_yellow_base = False
+        has_team_green_base = False
+        has_team_blue_base = False
         
         
         for ob in bpy.data.objects:
@@ -310,7 +314,17 @@ def export_qb(filename, directory, target_game, operator=None):
                             p("\t\t:i {} = {}".format(c("stuckscript"), c(col_ob.thug_levelobj_props.stuckscript)))
                         if col_ob.thug_levelobj_props.SoundType != "":
                             p("\t\t:i {} = {}".format(c("SoundType"), c(col_ob.thug_levelobj_props.SoundType)))
-                        
+                    # Only export Links on LevelObjects                    
+                    if col_ob.thug_rail_connects_to:
+                        if col_ob.thug_rail_connects_to not in bpy.data.objects:
+                            operator.report({"ERROR"}, "Object {} connects to nonexistent path {}".format(col_ob.name, col_ob.thug_rail_connects_to))
+                        else:
+                            connected_to = bpy.data.objects[col_ob.thug_rail_connects_to]
+                            if connected_to.name in rail_node_offsets:
+                                p("\t\t:i {} = :a{{{}:a}}".format(
+                                    c("Links"),
+                                i(rail_node_offsets[connected_to.name])))
+    
                 if col_ob.thug_occluder:
                     p("\t\t:i {}".format(c("Occluder")))
                 elif col_ob.thug_created_at_start:
@@ -398,6 +412,12 @@ def export_qb(filename, directory, target_game, operator=None):
                             continue
                         clean_name = "TRG_Flag_Blue"
                         has_team_blue = True
+                    elif ob.thug_go_props.go_type == "Team_Blue_Base":
+                        if has_team_blue_base:
+                            print("Duplicate CTF Team_Blue_Base found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_Flag_Blue_Base"
+                        has_team_blue_base = True
                         
                     elif ob.thug_go_props.go_type == "Flag_Red":
                         if has_ctf_red:
@@ -417,6 +437,12 @@ def export_qb(filename, directory, target_game, operator=None):
                             continue
                         clean_name = "TRG_Flag_Red"
                         has_team_red = True
+                    elif ob.thug_go_props.go_type == "Team_Red_Base":
+                        if has_team_red_base:
+                            print("Duplicate CTF Team_Red_Base found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_Flag_Red_Base"
+                        has_team_red_base = True
                         
                     elif ob.thug_go_props.go_type == "Flag_Green":
                         if has_ctf_green:
@@ -436,6 +462,12 @@ def export_qb(filename, directory, target_game, operator=None):
                             continue
                         clean_name = "TRG_Flag_Green"
                         has_team_green = True
+                    elif ob.thug_go_props.go_type == "Team_Green_Base":
+                        if has_team_green_base:
+                            print("Duplicate CTF Team_Green_Base found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_Flag_Green_Base"
+                        has_team_green_base = True
                         
                     elif ob.thug_go_props.go_type == "Flag_Yellow":
                         if has_ctf_yellow:
@@ -455,6 +487,12 @@ def export_qb(filename, directory, target_game, operator=None):
                             continue
                         clean_name = "TRG_Flag_Yellow"
                         has_team_yellow = True
+                    elif ob.thug_go_props.go_type == "Team_Yellow_Base":
+                        if has_team_yellow_base:
+                            print("Duplicate CTF Team_Yellow_Base found. Skipping {}...".format(ob.name))
+                            continue
+                        clean_name = "TRG_Flag_Yellow_Base"
+                        has_team_yellow_base = True
                 
                 p("\t:i :s{")
                 p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
@@ -688,6 +726,8 @@ def export_qb(filename, directory, target_game, operator=None):
                             gameobj_type = gameobj_type.replace("Team_", "Flag_")
                         p("\t\t:i {} = {}".format(c("Type"), c(gameobj_type)))
                         
+                    # Override the TriggerScript settings for CTF nodes
+                    # We want to use an auto-generated script which sets the appropriate game logic
                     if ob.thug_go_props.go_type.startswith("Flag_") or ob.thug_go_props.go_type.startswith("Team_"):
                         if ob.thug_triggerscript_props.triggerscript_type == "None" or ob.thug_triggerscript_props.custom_name == "":
                             ob.thug_triggerscript_props.triggerscript_type = "Custom"
@@ -730,7 +770,8 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {} = {}".format(c("Class"), c("Vehicle")))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_veh_props.veh_type)))
                     p("\t\t:i {} = {}".format(c("model"), blub_str(ob.thug_veh_props.veh_model)))
-                    p("\t\t:i {} = {}".format(c("SkeletonName"), c(ob.thug_veh_props.veh_skeleton)))
+                    if ob.thug_veh_props.veh_skeleton != "":
+                        p("\t\t:i {} = {}".format(c("SkeletonName"), c(ob.thug_veh_props.veh_skeleton)))
                     p("\t\t:i {} = {}".format(c("SuspendDistance"), i(ob.thug_veh_props.veh_suspend)))
                     if ob.thug_veh_props.veh_norail == True:
                         p("\t\t:i {}".format(c("NoRail")))
@@ -961,6 +1002,10 @@ def export_qb(filename, directory, target_game, operator=None):
             p(":i $TRG_Flag_RedScript$")
             p(":i $TRG_Flag_YellowScript$")
             p(":i $TRG_Flag_GreenScript$")
+            p(":i $TRG_Flag_Blue_BaseScript$")
+            p(":i $TRG_Flag_Red_BaseScript$")
+            p(":i $TRG_Flag_Yellow_BaseScript$")
+            p(":i $TRG_Flag_Green_BaseScript$")
 
             for script_name, script_code in generated_scripts.items():
                 p("\t:i {}".format(c(script_name)))
@@ -1012,6 +1057,29 @@ def export_qb(filename, directory, target_game, operator=None):
             p("""
 :i function $TRG_Flag_GreenScript$
     :i call $Team_Flag$ arguments $green$
+:i endfunction""")
+        # ------------------------------
+        # GENERATED TEAM BASE SCRIPTS 
+        # ------------------------------
+        if not script_exists("TRG_Flag_Blue_BaseScript"):
+            p("""
+:i function $TRG_Flag_Blue_BaseScript$
+    :i call $Team_Flag_Base$ arguments $blue$
+:i endfunction""")
+        if not script_exists("TRG_Flag_Red_BaseScript"):
+            p("""
+:i function $TRG_Flag_Red_BaseScript$
+    :i call $Team_Flag_Base$ arguments $red$
+:i endfunction""")
+        if not script_exists("TRG_Flag_Yellow_BaseScript"):
+            p("""
+:i function $TRG_Flag_Yellow_BaseScript$
+    :i call $Team_Flag_Base$ arguments $yellow$
+:i endfunction""")
+        if not script_exists("TRG_Flag_Green_BaseScript"):
+            p("""
+:i function $TRG_Flag_Green_BaseScript$
+    :i call $Team_Flag_Base$ arguments $green$
 :i endfunction""")
         # ------------------------------
         # GENERATED CTF BASE SCRIPTS 

@@ -292,12 +292,16 @@ THUG_DefaultGameObjects = {
     ,"Team_Yellow": "gameobjects\\flags\\flag_yellow\\flag_yellow.mdl"
     ,"Flag_Blue": "gameobjects\\flags\\flag_blue\\flag_blue.mdl"
     ,"Flag_Blue_Base": "gameobjects\\flags\\flag_blue_base\\flag_blue_base.mdl"
+    ,"Team_Blue_Base": "gameobjects\\flags\\flag_blue_base\\flag_blue_base.mdl"
     ,"Flag_Red": "gameobjects\\flags\\flag_red\\flag_red.mdl"
     ,"Flag_Red_Base": "gameobjects\\flags\\flag_red_base\\flag_red_base.mdl"
+    ,"Team_Red_Base": "gameobjects\\flags\\flag_red_base\\flag_red_base.mdl"
     ,"Flag_Green": "gameobjects\\flags\\flag_green\\flag_green.mdl"
     ,"Flag_Green_Base": "gameobjects\\flags\\flag_green_base\\flag_green_base.mdl"
+    ,"Team_Green_Base": "gameobjects\\flags\\flag_green_base\\flag_green_base.mdl"
     ,"Flag_Yellow": "gameobjects\\flags\\flag_yellow\\flag_yellow.mdl"
     ,"Flag_Yellow_Base": "gameobjects\\flags\\flag_yellow_base\\flag_yellow_base.mdl"
+    ,"Team_Yellow_Base": "gameobjects\\flags\\flag_yellow_base\\flag_yellow_base.mdl"
     ,"Ghost": "none"
 }
 

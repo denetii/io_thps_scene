@@ -482,6 +482,7 @@ def import_nodearray(gamemode):
                         
                 elif node["Class"] == "LevelObject":
                     ob.thug_object_class = "LevelObject"
+                    to_group(ob, "LevelObjects")
                     if "LightGroup" in node and bpy.data.objects.get(node["Name"] + "_SCN"):
                         scn_ob = bpy.data.objects.get(node["Name"] + "_SCN")
                         scn_ob.thug_lightgroup = node["LightGroup"]

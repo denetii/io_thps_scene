@@ -67,13 +67,13 @@ def thug_empty_update(self, context):
             elif ob.thug_go_props.go_type == 'Flag_Yellow' or ob.thug_go_props.go_type == 'Team_Yellow':
                 mdl_mesh = 'CTF_Flag_Yellow'
                 
-            if ob.thug_go_props.go_type == 'Flag_Blue_Base':
+            if ob.thug_go_props.go_type == 'Flag_Blue_Base' or ob.thug_go_props.go_type == 'Team_Blue_Base':
                 mdl_mesh = 'CTF_Base_Blue'
-            elif ob.thug_go_props.go_type == 'Flag_Red_Base':
+            elif ob.thug_go_props.go_type == 'Flag_Red_Base' or ob.thug_go_props.go_type == 'Team_Red_Base':
                 mdl_mesh = 'CTF_Base_Red'
-            elif ob.thug_go_props.go_type == 'Flag_Green_Base':
+            elif ob.thug_go_props.go_type == 'Flag_Green_Base' or ob.thug_go_props.go_type == 'Team_Green_Base':
                 mdl_mesh = 'CTF_Base_Green'
-            elif ob.thug_go_props.go_type == 'Flag_Yellow_Base':
+            elif ob.thug_go_props.go_type == 'Flag_Yellow_Base' or ob.thug_go_props.go_type == 'Team_Yellow_Base':
                 mdl_mesh = 'CTF_Base_Yellow'
             elif ob.thug_go_props.go_type == 'Secret_Tape':
                 mdl_mesh = 'SecretTape'
@@ -507,6 +507,47 @@ class THUGParticleProps(bpy.types.PropertyGroup):
     EmitRate2 = FloatVectorProperty(name="Emit Rate 2", size=3, default=(-1, -1, -1))
     EmitRate2Delay = FloatVectorProperty(name="Emit Delay 2", size=3, default=(-1, -1, -1))
     
+    
+#----------------------------------------------------------------------------------
+#- Properties for the entire level
+#----------------------------------------------------------------------------------
+class THUGLevelProps(bpy.types.PropertyGroup):
+    level_name = StringProperty(name="Level Name", description="Name of your level, used for in-game menus.")
+    level_creator = StringProperty(name="Creator Name", description="Name of the person(s) who created this level.")
+    level_skybox = StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level.")
+    
+    level_ambient_rgba = FloatVectorProperty(name="Ambient: Color/Mod",
+                           subtype='COLOR',
+                           default=(1.0, 1.0, 1.0, 1.0),
+                           size=4,
+                           min=0.0, max=1.0,
+                           description="Light color, with alpha used as the mod value.")
+    level_light0_rgba = FloatVectorProperty(name="Light #1: Color/Mod",
+                           subtype='COLOR',
+                           default=(1.0, 1.0, 1.0, 1.0),
+                           size=4,
+                           min=0.0, max=1.0,
+                           description="Light color, with alpha used as the mod value.")
+    level_light0_headpitch = FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
+    level_light1_rgba = FloatVectorProperty(name="Light #2: Color/Mod",
+                           subtype='COLOR',
+                           default=(1.0, 1.0, 1.0, 1.0),
+                           size=4,
+                           min=0.0, max=1.0,
+                           description="Light color, with alpha used as the mod value.")
+    level_light1_headpitch = FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
+    
+    level_flag_offline = BoolProperty(name="Offline Only", description="This level is not enabled for online play.", default=False)
+    level_flag_indoor = BoolProperty(name="Indoor", description="(THUG PRO only) This level is indoor.", default=False)
+    level_flag_nosun = BoolProperty(name="No Sun", description="(THUG PRO only) Don't display the dynamic sun in this level.", default=False)
+    level_flag_defaultsky = BoolProperty(name="Default Sky", description="(THUG PRO only) Use the default skybox.", default=False)
+    level_flag_wallridehack = BoolProperty(name="Wallride Hack", description="(THUG PRO only) Automatically makes all walls wallridable.", default=False)
+    level_flag_nobackfacehack = BoolProperty(name="No Backface Hack", description="(THUG PRO only)", default=False)
+    level_flag_modelsinprx = BoolProperty(name="Models in scripts .prx", description="(THUG PRO only)", default=False)
+    level_flag_nogoaleditor = BoolProperty(name="Disable goal editor", description="(THUG PRO only)", default=False)
+    level_flag_nogoalattack = BoolProperty(name="Disable goal attack", description="(THUG PRO only)", default=False)
+    level_flag_noprx = BoolProperty(name="Don't use prx files", description="(THUG PRO only) This level uses uncompressed files, not packed in .prx files", default=False)
+    
 # METHODS
 #############################################
 #----------------------------------------------------------------------------------
@@ -685,6 +726,7 @@ def register_props():
     bpy.types.WindowManager.thug_all_rails = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_all_restarts = CollectionProperty(type=bpy.types.PropertyGroup)
 
+    bpy.types.Scene.thug_level_props = PointerProperty(type=THUGLevelProps)
     bpy.types.Scene.thug_lightmap_scale = EnumProperty(
         name="Lightmap Scale",
         items=[

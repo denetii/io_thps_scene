@@ -351,7 +351,8 @@ def bake_thug_lightmaps(meshes, context):
             
         if ob.thug_export_scene == False:
             print("Object {} not marked for export to scene, skipping bake!".format(ob.name))
-        
+            continue
+            
         if not ob.data.uv_layers:
             print("Object {} has no UV maps. Cannot bake lighting!".format(ob.name))
             continue

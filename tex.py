@@ -251,6 +251,8 @@ def export_tex(filename, directory, target_game, operator=None):
             #LOG.debug("compression: {}".format(dxt))
             if operator.mipmap_offset:
                 mm_offset = operator.mipmap_offset
+                if operator.only_offset_lightmap and not image.name.startswith('LM_'):
+                    mm_offset = 0
             else:
                 mm_offset = 0
             mipmaps = get_all_compressed_mipmaps(image, dxt, mm_offset) if do_compression else get_all_mipmaps(image, mm_offset)
