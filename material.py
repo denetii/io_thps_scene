@@ -39,6 +39,10 @@ def _thug_material_pass_props_color_updated(self, context):
     idblock.active_texture.factor_green = g * 2
     idblock.active_texture.factor_blue = b * 2
 
+def rename_imported_materials():
+    for mat in bpy.data.materials:
+        if "thug_mat_name_checksum" in mat and mat["thug_mat_name_checksum"] != "":
+            mat.name = mat["thug_mat_name_checksum"]
 
 def read_materials(reader, printer, num_materials, directory, operator, output_file=None, texture_map=None, texture_prefix=None):
     import os
@@ -47,16 +51,14 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
 
     for i in range(num_materials):
         p("material {}", i)
-        mat_checksum = p("  material checksum: {}", r.u32())
+        mat_checksum = p("  material checksum: {}", hex(r.u32()))
+        mat_name_checksum = p("  material name checksum: {}", hex(r.u32()))
         blender_mat = bpy.data.materials.new(str(mat_checksum))
         ps = blender_mat.thug_material_props
-        p("  material name checksum: {}", r.u32())
-
-        if False and output_file:
-            output_file.write("newmtl {}\n".format(mat_checksum))
+        blender_mat["thug_mat_name_checksum"] = mat_name_checksum
 
         num_passes = p("  material passes: {}", r.u32())
-        # MATERIAL_PASSES[mat_checksum] = num_passes
+        # MATERIAL_PASSES[mat_name_checksum] = num_passes
         ps.alpha_cutoff = p("  alpha cutoff: {}", r.u32() % 256)
         ps.sorted = p("  sorted: {}", r.bool())
         ps.draw_order = p("  draw order: {}", r.f32())
@@ -80,13 +82,14 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
         blender_mat.alpha = 0
 
         for j in range(num_passes):
-            blender_tex = bpy.data.textures.new("{}/{}".format(mat_checksum, j), "IMAGE")
+            blender_tex = bpy.data.textures.new("{}/{}".format(mat_name_checksum, j), "IMAGE")
             tex_slot = blender_mat.texture_slots.add()
             tex_slot.texture = blender_tex
             pps = blender_tex.thug_material_pass_props
             p("  pass #{}", j)
             tex_checksum = p("    pass texture checksum: {}", r.u32())
-            image_name = str(tex_checksum) + ".png"
+            actual_tex_checksum = hex(tex_checksum)
+            image_name = str(actual_tex_checksum) #+ ".png"
             blender_tex.image = bpy.data.images.get(image_name)
             full_path = os.path.join(directory, image_name)
             full_path2 = os.path.join(directory, str("tex\\{:08x}.tga".format(tex_checksum)))
@@ -225,7 +228,11 @@ def export_materials(output_file, target_game, operator=None):
                 operator.report({"WARNING"}, "Material {} has no passes (enabled texture slots). Using it's diffuse color.".format(m.name))
                 passes = [None]
 
-        checksum = crc_from_string(bytes(m.name, 'ascii'))
+        if is_hex_string(m.name):
+            checksum = int(m.name, 0)
+        else:
+            checksum = crc_from_string(bytes(m.name, 'ascii'))
+        
         w("I", checksum)  # material checksum
         w("I", checksum)  # material name checksum
         mprops = m.thug_material_props
@@ -253,7 +260,10 @@ def export_materials(output_file, target_game, operator=None):
             pprops = texture and texture.thug_material_pass_props
             tex_checksum = 0
             if texture and hasattr(texture, 'image') and texture.image:
-                tex_checksum = crc_from_string(bytes(texture.image.name, 'ascii'))
+                if is_hex_string(texture.image.name):
+                    tex_checksum = int(texture.image.name, 0)
+                else:
+                    tex_checksum = crc_from_string(bytes(texture.image.name, 'ascii'))
 
             w("I", tex_checksum)  # texture checksum
             pass_flags = 0 # MATFLAG_SMOOTH

@@ -127,7 +127,7 @@ def read_tex(reader, printer):
 
     for i in range(num_textures):
         p("texture #{}", i)
-        checksum = p("  checksum: {}", r.u32())
+        checksum = p("  checksum: {}", hex(r.u32()))
 
         if checksum in already_seen:
             p("Duplicate checksum!", None)
@@ -162,12 +162,12 @@ def read_tex(reader, printer):
                 data_bytes = r.buf[r.offset:r.offset+data_size]
                 if pal_size > 0 and pal_depth == 32 and texel_depth == 8:
                     data_bytes = swizzle(data_bytes, img_width, img_height, 8, 0, True)
-                    blend_img = bpy.data.images.new(str(checksum) + ".png", img_width, img_height, alpha=True)
+                    blend_img = bpy.data.images.new(str(checksum), img_width, img_height, alpha=True)
                     blend_img.pixels = [pal_col for pal_idx in data_bytes for pal_col in pal_colors[pal_idx]]
             elif j == 0 and dxt_version in (1, 5):
                 data_bytes = r.buf[r.offset:r.offset+data_size]
 
-                blend_img = bpy.data.images.new(str(checksum) + ".png", img_width, img_height, alpha=True)
+                blend_img = bpy.data.images.new(str(checksum), img_width, img_height, alpha=True)
                 blend_img.gl_load()
                 blend_img.thug_image_props.compression_type = "DXT5" if dxt_version == 5 else "DXT1"
                 image_id = blend_img.bindcode[0]
@@ -238,7 +238,12 @@ def export_tex(filename, directory, target_game, operator=None):
             start_time = time.clock()
             LOG.debug("exporting texture: {}".format(image.name))
 
-            checksum = crc_from_string(bytes(image.name, 'ascii'))
+            # Names formatted as hex are the original checksums from a tex file import, so we should
+            # export with the same value for compatibility with CAS items
+            if is_hex_string(image.name):
+                checksum = int(image.name, 0)
+            else:
+                checksum = crc_from_string(bytes(image.name, 'ascii'))
             width, height = image.size
             do_compression = (width / 4.0).is_integer() and (height / 4.0).is_integer()
             if do_compression:

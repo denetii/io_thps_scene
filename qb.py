@@ -54,39 +54,6 @@ def _generate_script(_ob):
         else:
             target = get_clean_string(target)
 
-    reserved_by = None # obj_get_reserved_by(_ob)
-    if reserved_by or t == "Gap":
-        if reserved_by:
-            gap_props = reserved_by.thug_triggerscript_props.gap_props
-        else:
-            gap_props = script_props.gap_props
-        first_name, second_name = \
-            ("GapStart", "GapEnd") if not reserved_by else ("GapEnd", "GapStart")
-        script_name = "GENERATED_{}_{}".format(first_name, get_clean_name(_ob))
-        flags = ' '.join("${}$".format(flag)
-            for flag in THUGGapProps.flags
-            if getattr(gap_props, flag, False))
-        start_call = ""
-        if not reserved_by or gap_props.two_way:
-            start_call = ":i call $StartGap$ arguments $flags$ = :a{{ {flags} :a}} $gapid$ = ${name}$".format(flags=flags, name=script_name)
-        end_call = ""
-        if not gap_props.end_object and not reserved_by:
-            end_call = ":i call $EndGap$ arguments $gapid$ = ${name}$ $score$ = {score} $text$ = {text}".format(
-                name="GENERATED_{}_{}".format(first_name, get_clean_name(_ob)),
-                score=blub_int(gap_props.score),
-                text=blub_str(gap_props.name))
-        elif gap_props.two_way or reserved_by:
-            other_obj = bpy.data.objects.get(gap_props.end_object) or reserved_by
-            end_call = ":i call $EndGap$ arguments $gapid$ = ${name}$ $score$ = {score} $text$ = {text}".format(
-                name="GENERATED_{}_{}".format(second_name, get_clean_name(other_obj)),
-                score=blub_int(gap_props.score),
-                text=blub_str(gap_props.name))
-        script_code = """
-:i function ${name}$
-    {start_call}
-    {end_call}
-:i endfunction
-""".format(name=script_name, start_call=start_call, end_call=end_call)
     elif t == "Killskater_Water":
         script_name = "GENERATED_Killskater_Water_to_{}".format(target)
         script_code = """
@@ -154,7 +121,10 @@ def export_qb(filename, directory, target_game, operator=None):
         return "%vec3({:6f},{:6f},{:6f})".format(*v)
     def c(s):
         if s not in checksums:
-            checksums[s] = crc_from_string(bytes(s, 'ascii'))
+            if is_hex_string(s):
+                checksums[s] = int(s, 0)
+            else:
+                checksums[s] = crc_from_string(bytes(s, 'ascii'))
         return "$" + s + "$"
     i = blub_int
     f = blub_float
@@ -244,8 +214,6 @@ def export_qb(filename, directory, target_game, operator=None):
                     
                 is_levelobject = col_ob.thug_object_class == "LevelObject"
                 clean_name = get_clean_name(ob)
-                if clean_name.endswith("_SCN"):
-                    clean_name = clean_name[:-4]
                 
                 if not ob.thug_always_export_to_nodearray and \
                     not is_levelobject and \
@@ -263,6 +231,10 @@ def export_qb(filename, directory, target_game, operator=None):
                         continue
                     
                 print("Exporting node definition for " + ob.name + " (" + clean_name + ")...")
+                if is_hex_string(clean_name):
+                    print("Error: Object name must not be a checksum when exporting to the level QB.")
+                    raise Exception("Object {} does not have a proper name. Please assign one before exporting to a level QB.".format(clean_name))
+                    
                 p("\t:i :s{")
                 p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
                 if is_levelobject:
@@ -355,6 +327,7 @@ def export_qb(filename, directory, target_game, operator=None):
             # -----------------------------------------------------------------------------------------------------------
             elif ob.type == "LAMP" and ob.data.type == "POINT":
                 clean_name = get_clean_name(ob)
+                    
                 p("\t:i :s{")
                 p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
                 p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
@@ -390,6 +363,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     continue
                     
                 clean_name = get_clean_name(ob)
+                    
                 if ob.thug_empty_props.empty_type == "GameObject":
                     # Need special logic for exporting CTF nodes, as they use a specific naming convention that
                     # must be followed for everything to work correctly - we should also check for duplicate flags
@@ -1199,7 +1173,10 @@ def export_model_qb(filename, directory, target_game, operator=None):
         return "%vec3({:6f},{:6f},{:6f})".format(*v)
     def c(s):
         if s not in checksums:
-            checksums[s] = crc_from_string(bytes(s, 'ascii'))
+            if is_hex_string(s):
+                checksums[s] = int(s, 0)
+            else:
+                checksums[s] = crc_from_string(bytes(s, 'ascii'))
         return "$" + s + "$"
     i = blub_int
     _string = blub_str
@@ -1233,6 +1210,7 @@ def export_model_qb(filename, directory, target_game, operator=None):
             if ob.type == "MESH" and not ob.get("thug_autosplit_object_no_export_hack"):
                 is_levelobject = ob.thug_object_class == "LevelObject"
                 clean_name = get_clean_name(ob)
+                    
                 if not ob.thug_always_export_to_nodearray and \
                     not is_levelobject and \
                     ob.thug_created_at_start and \

@@ -45,7 +45,7 @@ def import_col(filename, directory):
         ttl = bm.faces.layers.int.new("terrain_type")
 
         p("obj ", i)
-        obj_checksum = p("  checksum: {}", r.u32())
+        obj_checksum = p("  checksum: {}", hex(r.u32()))
 
         blender_mesh = bpy.data.meshes.new("col_mesh_" + str(obj_checksum))
         blender_object = bpy.data.objects.new("col_" + str(obj_checksum), blender_mesh)
@@ -149,6 +149,7 @@ def import_scn_ug2(filename, directory, context, operator):
     read_materials(r, p, num_materials, directory, operator)
     num_sectors = p("num sectors: {}", r.i32())
     read_sectors_ug2(r, p, num_sectors, context, operator)
+    rename_imported_materials()
 
 #----------------------------------------------------------------------------------
 def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, output_file=None):
@@ -165,7 +166,7 @@ def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, outpu
         bm = bmesh.new()
 
         p("sector {}", i)
-        sec_checksum = p("  sector checksum: {}", r.u32())
+        sec_checksum = p("  sector checksum: {}", hex(r.u32()))
 
         blender_mesh = bpy.data.meshes.new("scn_mesh_" + str(sec_checksum))
         blender_object = bpy.data.objects.new("scn_" + str(sec_checksum), blender_mesh)
@@ -223,7 +224,7 @@ def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, outpu
             mesh_flags = r.u32()
             p("    flags: {} ({})".format(mesh_flags, bin(mesh_flags)), None)
 
-            mat_checksum = p("    material checksum: {}", str(r.u32()))
+            mat_checksum = p("    material checksum: {}", hex(r.u32()))
             mat_index = None
             for existing_mat_index, mat_slot in enumerate(blender_object.material_slots):
                 if mat_slot.material.name == mat_checksum:

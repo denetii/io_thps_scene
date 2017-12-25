@@ -105,15 +105,13 @@ def export_scn_sectors_ug2(output_file, operator=None):
                         face_list.append(face)
                     else:
                         mats_to_faces[face.material_index] = [face]
-                ob_checksum = crc_from_string(bytes(get_clean_name(ob), 'ascii'))
-                LOG.debug("the checksum is {}".format(ob_checksum))
-                if ob_checksum in exported_checksums:
-                    if operator:
-                        operator.report({"WARNING"}, "Object {} and {} have the same checksum: {}".format(
-                            ob.name, exported_checksums[ob_checksum], ob_checksum))
+                        
+                
+                clean_name = get_clean_name(ob)
+                if is_hex_string(clean_name):
+                    w("I", int(clean_name, 0))  # checksum
                 else:
-                    exported_checksums[ob_checksum] = ob.name
-                w("I", ob_checksum)  # checksum
+                    w("I", crc_from_string(bytes(clean_name, 'ascii')))  # checksum
                 w("i", -1)  # bone index
                 w("I", flags)  # flags
                 w("I", len([fs for fs in mats_to_faces.values() if fs]))  # number of meshes
@@ -140,7 +138,10 @@ def export_scn_sectors_ug2(output_file, operator=None):
                     the_material = len(ob.material_slots) and ob.material_slots[mat_index].material
                     if not the_material:
                         the_material = bpy.data.materials["_THUG_DEFAULT_MATERIAL_"]
-                    mat_checksum = crc_from_string(bytes(the_material.name, 'ascii'))
+                    if is_hex_string(the_material.name):
+                        mat_checksum = int(the_material.name, 0)
+                    else:
+                        mat_checksum = crc_from_string(bytes(the_material.name, 'ascii'))
                     w("I", mat_checksum)  # material checksum
                     w("I", 1)  # num of index lod levels
 

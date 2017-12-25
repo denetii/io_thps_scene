@@ -16,6 +16,16 @@ LOG = logging.getLogger(ADDON_NAME)
 # METHODS
 #############################################
 #----------------------------------------------------------------------------------
+#- Returns TRUE if the given string is a hex-formatted int32 (name checksum)
+#----------------------------------------------------------------------------------
+def is_hex_string(name):
+    if name.startswith("0x") and (len(name) == 9 or len(name) == 10):
+        #print("{} IS a hex string!".format(name))
+        return True
+    #print("{} is NOT a hex string!".format(name))
+    return False
+    
+#----------------------------------------------------------------------------------
 #- Auto-creates (if needed) and assigns the given object to a group
 #----------------------------------------------------------------------------------
 def to_group(blender_object, group_name):
@@ -235,7 +245,17 @@ def get_clean_string(string):
     return re.sub(r"[^A-Za-z0-9_]", "_", string)
 #----------------------------------------------------------------------------------
 def get_clean_name(ob):
-    return get_clean_string(ob.name)
+    clean_name = get_clean_string(ob.name)
+    
+    # This is from an imported level, so drop the _COL/_SCN part
+    if clean_name.endswith("_COL") or clean_name.endswith("_SCN"): 
+        return clean_name[:-4]
+    # This is from an imported level, so drop the scn_ part
+    elif clean_name.startswith("scn_"):
+        return clean_name[4:] 
+    else:
+        return clean_name
+                        
 #----------------------------------------------------------------------------------
 def get_scale_matrix(ob):
     matrix = mathutils.Matrix.Identity(4)

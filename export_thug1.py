@@ -127,10 +127,12 @@ def export_scn_sectors(output_file, operator=None):
                     
                 split_verts = make_split_verts(final_mesh, bm, flags)
                        
-                if get_clean_name(ob).endswith("_SCN"): # This is from an imported level, so drop the _SCN part
-                    w("I", crc_from_string(bytes(get_clean_name(ob)[:-4], 'ascii')))  # checksum
+                clean_name = get_clean_name(ob)
+                if is_hex_string(clean_name):
+                    w("I", int(clean_name, 0))  # checksum
                 else:
-                    w("I", crc_from_string(bytes(get_clean_name(ob), 'ascii')))  # checksum
+                    w("I", crc_from_string(bytes(clean_name, 'ascii')))  # checksum
+               
                 w("i", -1)  # bone index
                 w("I", flags)  # flags
                 w("I", len([fs for fs in mats_to_faces.values() if fs]))  # number of meshes
@@ -223,7 +225,10 @@ def export_scn_sectors(output_file, operator=None):
                     the_material = len(ob.material_slots) and ob.material_slots[mat_index].material
                     if not the_material:
                         the_material = bpy.data.materials["_THUG_DEFAULT_MATERIAL_"]
-                    mat_checksum = crc_from_string(bytes(the_material.name, 'ascii'))
+                    if is_hex_string(the_material.name):
+                        mat_checksum = int(the_material.name, 0)
+                    else:
+                        mat_checksum = crc_from_string(bytes(the_material.name, 'ascii'))
                     w("L", mat_checksum)  # material checksum
                     w("I", 1)  # num of index lod levels
 

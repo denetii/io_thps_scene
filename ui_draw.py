@@ -261,3 +261,4 @@ class THUGImportTools(bpy.types.Panel):
         self.layout.row().operator(THUGImportSkeleton.bl_idname, text=THUGImportSkeleton.bl_label, icon='PLUGIN')
         self.layout.row().operator(THUGImportNodeArray.bl_idname, text=THUGImportNodeArray.bl_label, icon='PLUGIN')
         self.layout.row().operator(THUGImportTriggerScripts.bl_idname, text=THUGImportTriggerScripts.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THUGRenameObjects.bl_idname, text=THUGRenameObjects.bl_label, icon='FILE_TEXT')

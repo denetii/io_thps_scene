@@ -172,17 +172,23 @@ def import_nodearray(gamemode):
     level_mesh = [o for o in bpy.data.objects if (o.type == "MESH")]
     for ob in level_mesh:
         if ob.name.startswith("scn_"):
-            if ob.name[4:] in KeyTable:
-                print("Renaming " + ob.name + " to " + KeyTable[ob.name[4:]] + "_SCN")
-                ob.name = KeyTable[ob.name[4:]] + "_SCN"
+            name_search = ob.name[4:]
+            if is_hex_string(name_search):
+                name_search = str(int(name_search, 0))
+            if name_search in KeyTable:
+                print("Renaming " + ob.name + " to " + KeyTable[name_search] + "_SCN")
+                ob.name = KeyTable[name_search] + "_SCN"
             ob.thug_export_collision = False
             ob.thug_export_scene = True
                 
         if ob.name.startswith("col_"):
-            if ob.name[4:] in KeyTable:
-                print("Renaming " + ob.name + " to " + KeyTable[ob.name[4:]])
+            name_search = ob.name[4:]
+            if is_hex_string(name_search):
+                name_search = str(int(name_search, 0))
+            if name_search in KeyTable:
+                print("Renaming " + ob.name + " to " + KeyTable[name_search])
                 # We want the collision mesh to have the exact name, no suffix
-                ob.name = KeyTable[ob.name[4:]]
+                ob.name = KeyTable[name_search]
                 ob.thug_always_export_to_nodearray = True # always export named collision!
             ob.thug_export_collision = True
             ob.thug_export_scene = False
@@ -982,3 +988,38 @@ class THUGImportNodeArray(bpy.types.Operator):
         col.label(text="Node Array Import")
         row = col.row()
         row.prop(self, "game_mode")
+        
+        
+class THUGRenameObjects(bpy.types.Operator):
+    bl_idname = "io.import_thug_renameobjects"
+    bl_label = "Rename Objects"
+    bl_description = "This cleans object names and replaces checksums from imported scenes with an exportable name"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        for ob in bpy.data.objects:
+            clean_name = get_clean_string(ob.name)
+            if clean_name.endswith("_COL"):
+                if is_hex_string(clean_name[:-4]):
+                    ob.name = str(int(clean_name[:-4], 0)) + "_COL"
+                    continue
+            if clean_name.endswith("_SCN"): 
+                if is_hex_string(clean_name[:-4]):
+                    ob.name = str(int(clean_name[:-4], 0)) + "_SCN"
+                    continue
+            if clean_name.startswith("scn_"):
+                if is_hex_string(clean_name[4:]):
+                    ob.name = "scn_" + str(int(clean_name[4:], 0))
+                    continue
+            if is_hex_string(clean_name):
+                ob.name = str(int(clean_name, 0))
+            else:
+                ob.name = clean_name
+                
+        return {'FINISHED'}
+
+    #@classmethod
+    #def poll(cls, context):
+    #    return "NodeArray" in bpy.data.texts
+    
+        row.label(text="")

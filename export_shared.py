@@ -470,11 +470,13 @@ def export_col(filename, directory, target_game, operator=None):
             if "thug_checksum" in o:
                 w("i", o["thug_checksum"])
             else:
-                if get_clean_name(o).endswith("_COL"): # This is from an imported level, so drop the _COL part
-                    w("I", crc_from_string(bytes(get_clean_name(o)[:-4], 'ascii')))  # checksum
+                
+                clean_name = get_clean_name(o)
+                if is_hex_string(clean_name):
+                    w("I", int(clean_name, 0))  # checksum
                 else:
-                    w("I", crc_from_string(bytes(get_clean_name(o), 'ascii')))  # checksum
-                #w("I", crc_from_string(bytes(get_clean_name(o), 'ascii')))
+                    w("I", crc_from_string(bytes(clean_name, 'ascii')))  # checksum
+                    
             w("H", o.thug_col_obj_flags)
             if len(bm.verts) > 2**16:
                 raise ExportError("Too many vertices in an object: {} (has {}, max is {}). Consider using Autosplit.".format(o.name, len(bm.verts), 2**16))
