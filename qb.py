@@ -304,7 +304,12 @@ def export_qb(filename, directory, target_game, operator=None):
                 if ob.thug_lightgroup != "None" and ob.thug_export_scene:
                     p("\t\t:i {} = {}".format(c("LightGroup"), c(ob.thug_lightgroup)))
                     
-                if getattr(ob, "thug_is_trickobject", False):
+                if getattr(col_ob, "thug_is_trickobject", False):
+                    p("\t\t:i call {} arguments".format(c("TrickObject")))
+                    p("\t\t\t{} = {}".format(c("Cluster"),
+                                             c(col_ob.thug_cluster_name if col_ob.thug_cluster_name else clean_name)))
+                # Fallback in case someone is setting TrickObject props on the scene mesh instead of the collision
+                elif getattr(ob, "thug_is_trickobject", False):
                     p("\t\t:i call {} arguments".format(c("TrickObject")))
                     p("\t\t\t{} = {}".format(c("Cluster"),
                                              c(ob.thug_cluster_name if ob.thug_cluster_name else clean_name)))

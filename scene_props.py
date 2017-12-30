@@ -366,6 +366,22 @@ class THUGPathNodeProps(bpy.types.PropertyGroup):
     Priority = StringProperty(name="Priority")
     ContinueWeight = FloatProperty(name="Continue Weight")
     SkateAction = StringProperty(name="Skate Action")
+    #SkateAction = EnumProperty(items=(
+    #    ("Continue", "Continue", ""), 
+    #    ("Stop", "Stop", ""), 
+    #    ("Jump", "Jump", ""), 
+    #    ("Grind", "Grind", ""), 
+    #    ("Manual", "Manual", ""), 
+    #    ("Grab_Trick", "Grab_Trick", ""), 
+    #    ("Flip_Trick", "Flip_Trick", ""), 
+    #    ("Vert_Flip", "Vert_Flip", ""), 
+    #    ("Vert_Lip", "Vert_Lip", ""), 
+    #    ("Vert_Grab", "Vert_Grab", ""), 
+    #    ("Vert_Jump", "Vert_Jump", ""), 
+    #    ("Vert_Grind", "Vert_Grind", ""), 
+    #    ("Vert_Land", "Vert_Land", ""), 
+    #    ), 
+    #name="Skate Action", default="Continue", description="The action taken by the AI skater when they reach this point.")
     JumpHeight = FloatProperty(name="Jump Height")
     skaterai_terrain = StringProperty(name="TerrainType")
     ManualType = StringProperty(name="ManualType")

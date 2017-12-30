@@ -26,6 +26,27 @@ from . scene_props import *
 # OPERATORS
 #############################################
 #----------------------------------------------------------------------------------
+class THUGUtilShowFirstPoint(bpy.types.Operator):
+    bl_idname = "io.import_thug_util_showfirstpt"
+    bl_label = "Show 1st Pt"
+    # bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Selects the first point on the path you're currently working with."
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object and context.active_object.type == 'CURVE' and context.active_object.mode == 'EDIT')
+        
+    def execute(self, context):
+        ob = context.active_object
+        if len(ob.data.splines) > 0:
+            if len(ob.data.splines[0].points) > 0:
+                bpy.ops.curve.select_all(action='DESELECT')
+                ob.data.splines[0].points[0].select = True
+        return {'FINISHED'}
+
+    
+        
+#----------------------------------------------------------------------------------
 class THUGUtilFillPedestrians(bpy.types.Operator):
     bl_idname = "io.import_thug_util_fillpedestrians"
     bl_label = "Auto-Fill Pedestrians"
@@ -244,6 +265,12 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
             ("NoLevelLights", "NoLevelLights", ""),
             ("Indoor", "Indoor", "")],
         default="NULL")
+    thug_is_trickobject = EnumProperty(name="Is a TrickObject", items=[
+        ("NULL", " --- ", "This property will not be modified."),
+        ("True", "Yes", ""),
+        ("False", "No", "")
+    ], default="NULL")
+    thug_cluster_name = StringProperty(name="TrickObject Cluster")
         
     # TriggerScript properties
     triggerscript_type = EnumProperty(items=(
@@ -258,7 +285,7 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
     custom_name = StringProperty(name="Custom Script Name")
 
     def execute(self, context):
-        meshes = [o for o in context.selected_objects if o.type == 'MESH']
+        meshes = [o for o in context.selected_objects if o.type == 'MESH' or o.type == 'CURVE']
         for ob in meshes:
             if self.thug_created_at_start != "NULL":
                 print("Updating thug_created_at_start for object {}...".format(ob.name))
@@ -266,15 +293,28 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
             if self.thug_network_option != "NULL":
                 print("Updating thug_network_option for object {}...".format(ob.name))
                 ob.thug_network_option = self.thug_network_option
-            if self.thug_export_collision != "NULL":
-                print("Updating thug_export_collision for object {}...".format(ob.name))
-                ob.thug_export_collision = (self.thug_export_collision == "True")
-            if self.thug_export_scene != "NULL":
-                print("Updating thug_export_scene for object {}...".format(ob.name))
-                ob.thug_export_scene = (self.thug_export_scene == "True")
-            if self.thug_lightgroup != "NULL":
-                print("Updating thug_lightgroup for object {}...".format(ob.name))
-                ob.thug_lightgroup = self.thug_lightgroup
+                
+            # Mesh-only properties start here!
+            if ob.type == 'MESH':
+                if self.thug_export_collision != "NULL":
+                    print("Updating thug_export_collision for object {}...".format(ob.name))
+                    ob.thug_export_collision = (self.thug_export_collision == "True")
+                if self.thug_export_scene != "NULL":
+                    print("Updating thug_export_scene for object {}...".format(ob.name))
+                    ob.thug_export_scene = (self.thug_export_scene == "True")
+                if self.thug_lightgroup != "NULL":
+                    print("Updating thug_lightgroup for object {}...".format(ob.name))
+                    ob.thug_lightgroup = self.thug_lightgroup
+            # Mesh-only properties end here!
+            
+            if self.thug_is_trickobject != "NULL":
+                print("Updating thug_is_trickobject for object {}...".format(ob.name))
+                ob.thug_is_trickobject = (self.thug_is_trickobject == "True")
+                if self.thug_is_trickobject == "True":
+                    print("Updating thug_cluster_name for object {}...".format(ob.name))
+                    ob.thug_cluster_name = self.thug_cluster_name
+                    
+            # TriggerScript props
             if self.triggerscript_type != "NULL":
                 print("Updating triggerscript_type for object {}...".format(ob.name))
                 ob.thug_triggerscript_props.triggerscript_type = self.triggerscript_type
@@ -290,7 +330,7 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        meshes = [o for o in context.selected_objects if o.type == 'MESH']
+        meshes = [o for o in context.selected_objects if o.type == 'MESH' or o.type == 'CURVE']
         return len(meshes) > 0
     
     def invoke(self, context, event):
@@ -306,6 +346,8 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
         col.row().prop(self, "thug_export_collision")
         col.row().prop(self, "thug_export_scene")
         col.row().prop(self, "thug_lightgroup")
+        col.row().prop(self, "thug_is_trickobject")
+        col.row().prop(self, "thug_cluster_name")
         col.row().prop(self, "triggerscript_type")
         col.row().prop_search(
                 self,
@@ -321,7 +363,7 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
 # PANELS
 #############################################
 #----------------------------------------------------------------------------------
-class THUGSceneSettings(bpy.types.Panel):
+class THUGObjectUtils(bpy.types.Panel):
     bl_label = "TH Object Utilities"
     bl_region_type = "TOOLS"
     bl_space_type = "VIEW_3D"
@@ -339,3 +381,4 @@ class THUGSceneSettings(bpy.types.Panel):
         self.layout.row().operator(THUGUtilBatchTerrain.bl_idname, THUGUtilBatchTerrain.bl_label, icon="TEXT")
         self.layout.row().operator(THUGUtilBatchRailTerrain.bl_idname, THUGUtilBatchRailTerrain.bl_label, icon="TEXT")
         self.layout.row().operator(THUGUtilBatchObjectProps.bl_idname, THUGUtilBatchObjectProps.bl_label, icon="TEXT")
+        self.layout.row().operator(THUGUtilShowFirstPoint.bl_idname, THUGUtilShowFirstPoint.bl_label, icon="TEXT")

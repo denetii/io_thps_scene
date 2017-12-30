@@ -503,7 +503,7 @@ def _export_rails(p, c, operator=None):
                     if ob.thug_path_type == "Rail":
                         # Output terrain type - use either the whole rail definition or the 
                         # point-specific definition, depending on which one is set!
-                        if ob.data.thug_pathnode_triggers[p_num].terrain != "" and ob.data.thug_pathnode_triggers[p_num].terrain != "None":
+                        if ob.data.thug_pathnode_triggers[p_num].terrain != "" and ob.data.thug_pathnode_triggers[p_num].terrain != "None" and ob.data.thug_pathnode_triggers[p_num].terrain != "Auto":
                             # Terrain is also used for AI skaters, so don't output twice!
                             rail_type = ob.data.thug_pathnode_triggers[p_num].terrain
                         else:
