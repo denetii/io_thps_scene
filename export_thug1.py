@@ -204,9 +204,15 @@ def export_scn_sectors(output_file, operator=None):
 
                 VC_MULT = 256 if operator.use_vc_hack else 128
                 FULL_WHITE = (1.0, 1.0, 1.0, 1.0)
+                HALF_WHITE = (0.5, 0.5, 0.5, 0.5)
                 if flags & SECFLAGS_HAS_VERTEX_COLORS:
                     for v in split_verts.keys():
                         r, g, b, a = v.vc or FULL_WHITE
+                        if is_levelobject:
+                            if operator.use_vc_hack:
+                                r, g, b, a = HALF_WHITE
+                            else:
+                                r, g, b, a = FULL_WHITE
                         a = (int(a * VC_MULT) & 0xff) << 24
                         r = (int(r * VC_MULT) & 0xff) << 16
                         g = (int(g * VC_MULT) & 0xff) << 8

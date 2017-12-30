@@ -22,10 +22,19 @@ ROTATE_270 = 3
 
 # METHODS
 #############################################
-def parked_place_piece(piece_name, loc_x, loc_y, loc_z, angle, link = True):
+def parked_place_piece(version, piece_name, loc_x, loc_y, loc_z, angle, link = True):
     scene = bpy.context.scene
-    
-    new_piece = append_from_dictionary('sk5ed', piece_name, scene, True)
+    append_scene = 'sk5ed'
+    if version == 6:
+        append_scene = 'sk6ed'
+        
+    new_piece = append_from_dictionary(append_scene, piece_name, scene, True)
+    if new_piece == None:
+        append_scene = 'sk5ed'
+        new_piece = append_from_dictionary(append_scene, piece_name, scene, True)
+    if new_piece == None:
+        raise Exception("Unable to locate piece {} from dictionary scene {}.".format(piece_name, append_scene))
+        
     new_piece.location[0] = loc_y * 120
     new_piece.location[1] = loc_x * 120
     new_piece.location[2] = loc_z * 48
@@ -51,11 +60,15 @@ def parked_place_piece(piece_name, loc_x, loc_y, loc_z, angle, link = True):
     new_piece.rotation_euler[2] = math.radians((90.0 * (final_angle + 2)) - 90)
     return new_piece
     
-def get_composite_piece(piece_name):
+def get_composite_piece(piece_name, version):
     piece_data = {}
     found = False
     pieces = []
-    for cat_name, category in Ed_Pieces_UG1.items():
+    piece_list = Ed_Pieces_UG1
+    if version == 6:
+        piece_list = Ed_Pieces_UG2
+        
+    for cat_name, category in piece_list.items():
         for ob in category:
             # Single object definitions don't use "single" for the mesh name
             if "single" in ob and ob["single"] == piece_name:
@@ -89,9 +102,10 @@ def get_composite_piece(piece_name):
         raise Exception("Unable to find object {} in piece list.".format(piece_name))
     
     piece_data["pieces"] = pieces
+    #print(piece_data)
     return piece_data
 
-def build_floor_grid(grid_data):
+def build_floor_grid(version, grid_data):
     grid_count = -1
     for x in range(0, 58):
         for y in range(0, 58):
@@ -138,14 +152,14 @@ def build_floor_grid(grid_data):
                 elif i < 0: 
                     riser_name = 'Sk3Ed_Rd1m_10x10x4'
                     
-                riser_pieces.append(parked_place_piece(riser_name, loc_x, loc_y, i, 0))
+                riser_pieces.append(parked_place_piece(version, riser_name, loc_x, loc_y, i, 0))
             #bpy.ops.object.select_all(action='DESELECT')
             #for ob in riser_pieces:
             #    bpy.context.scene.objects.active = ob
             #    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
             #    ob.select = True
             #bpy.ops.object.join()
-            parked_place_piece('Sk3Ed_Fd1_10x10', loc_x, loc_y, loc_z, 0)
+            parked_place_piece(version, 'Sk3Ed_Fd1_10x10', loc_x, loc_y, loc_z, 0)
             
 
     
@@ -248,17 +262,23 @@ def import_prk(filename, directory, context, operator):
         piece_pos_z = ((piece_data2 >> 2) & 31) - 16
         piece_rotation = piece_data2 & 3
         
-        piece_name = Ed_Save_Map_UG1[piece_index]
+        if version == 5:
+            piece_name = Ed_Save_Map_UG1[piece_index]
+        elif version == 6:
+            piece_name = Ed_Save_Map_UG2[piece_index]
+        else:
+            raise Exception("Version #{} is not supported by the CAP save importer.".format(version))
+            
         if not piece_name or piece_name == None:
             print("--------------------------")
             print("Piece index {} was not found in list!".format(piece_index))
             print("--------------------------")
             continue
             
-        ob_piece = get_composite_piece(piece_name)
+        ob_piece = get_composite_piece(piece_name, version)
             
         for pc in ob_piece["pieces"]:
-            #print("Piece {}".format(pc["name"]))
+            print("Piece {}".format(pc["name"]))
             if piece_rotation == ROTATE_0:
                 translated_pos = [ piece_pos_x + pc["pos"][0], piece_pos_y + pc["pos"][2], piece_pos_z + pc["pos"][1] ]
             
@@ -279,7 +299,7 @@ def import_prk(filename, directory, context, operator):
             #print("Pos x/y/z: {} {} {}".format(translated_pos[0], translated_pos[1], translated_pos[2]))
             #print("Rotation: {}".format(piece_rotation))
             #print("--------------------------")
-            parked_place_piece(pc["name"], translated_pos[0], translated_pos[1], translated_pos[2], (piece_rotation + extra_rotation))
+            parked_place_piece(version, pc["name"], translated_pos[0], translated_pos[1], translated_pos[2], (piece_rotation + extra_rotation))
         
     empty_slots = (1443 - num_pieces)
     print("Empty piece slots: {}".format(empty_slots))
@@ -299,7 +319,7 @@ def import_prk(filename, directory, context, operator):
         print("Park data processed! Building floor/riser grid...")
         print("****************************************************")
             #p_meta->SetRot(Mth::ERot90(rot));
-        build_floor_grid(riser_data)   
+        build_floor_grid(version, riser_data)   
     
     
     if operator.import_rails == False:

@@ -110,7 +110,7 @@ class THUGSceneSettings(bpy.types.Panel):
     bl_label = "TH Level Settings"
     bl_region_type = "WINDOW"
     bl_space_type = "PROPERTIES"
-    bl_context = "world"
+    bl_context = "scene"
 
     @classmethod
     def poll(cls, context):
@@ -122,6 +122,9 @@ class THUGSceneSettings(bpy.types.Panel):
         self.layout.row().prop(scene.thug_level_props, "level_name")
         self.layout.row().prop(scene.thug_level_props, "level_creator")
         self.layout.row().prop(scene.thug_level_props, "level_skybox")
+        
+        self.layout.row().prop(scene.thug_level_props, "default_terrain")
+        self.layout.row().prop(scene.thug_level_props, "default_terrain_rail")
         
         self.layout.row().label(text="Level Lights", icon='LAMP_DATA')
         box = self.layout.box().column(True)
