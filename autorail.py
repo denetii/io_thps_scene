@@ -160,6 +160,110 @@ def _update_pathnodes_collections():
                             ob.data.thug_pathnode_triggers.add()
                             
 #----------------------------------------------------------------------------------
+# Handles the updating of points along a path node (rail, waypoint, etc)
+# This event is fired from the WindowManager in scene_props.py
+#----------------------------------------------------------------------------------
+def update_pathnode(props, context):
+    #print("Attempting to update pathnode data...")
+    global update_triggered_by_ui_updater
+    if update_triggered_by_ui_updater:
+        #print("Triggered by UI updater")
+        return
+    if not context.edit_object:
+        #print("Not in edit mode")
+        return
+    ob = context.edit_object
+    wm = bpy.context.window_manager
+    
+    if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom"):
+        tmp_idx = -1
+        if len(ob.data.splines):
+            #print("Found curve data...")
+            for sp in ob.data.splines:
+                for p in sp.points:
+                    tmp_idx += 1
+                    # Add an entry to the pathnode_triggers list if it doesn't exist (new path point)
+                    if len(ob.data.thug_pathnode_triggers) < (tmp_idx + 1):
+                        ob.data.thug_pathnode_triggers.add()
+                    # If this point is selected, set its properties with the wm pathnode_triggers data
+                    if p.select:
+                        #print("Found point: {}".format(tmp_idx))
+                        print("Setting props on point {}: {}".format(tmp_idx, props.SkateAction))
+                        ob.data.thug_pathnode_triggers[tmp_idx].name = props.name
+                        ob.data.thug_pathnode_triggers[tmp_idx].script_name = props.script_name
+                        if props.terrain != "":
+                            ob.data.thug_pathnode_triggers[tmp_idx].terrain = props.terrain
+                        ob.data.thug_pathnode_triggers[tmp_idx].spawnobjscript = props.spawnobjscript
+                        ob.data.thug_pathnode_triggers[tmp_idx].PedType = props.PedType
+                        ob.data.thug_pathnode_triggers[tmp_idx].do_continue = props.do_continue
+                        ob.data.thug_pathnode_triggers[tmp_idx].JumpToNextNode = props.JumpToNextNode
+                        if props.Priority != "":
+                            ob.data.thug_pathnode_triggers[tmp_idx].Priority = props.Priority
+                        if props.SkateAction != "":
+                            ob.data.thug_pathnode_triggers[tmp_idx].SkateAction = props.SkateAction
+                        ob.data.thug_pathnode_triggers[tmp_idx].JumpHeight = props.JumpHeight
+                        ob.data.thug_pathnode_triggers[tmp_idx].Deceleration = props.Deceleration
+                        ob.data.thug_pathnode_triggers[tmp_idx].SpinAngle = props.SpinAngle
+                        ob.data.thug_pathnode_triggers[tmp_idx].RandomSpin = props.RandomSpin
+                        ob.data.thug_pathnode_triggers[tmp_idx].SpineTransfer = props.SpineTransfer
+                        if props.SpinDirection != "":
+                            ob.data.thug_pathnode_triggers[tmp_idx].SpinDirection = props.SpinDirection
+                        #return
+                                
+#----------------------------------------------------------------------------------
+# Handles UI updates to path node data (rail, waypoint, etc)
+# This ensures the data for the active point is passed to the WindowManager
+#----------------------------------------------------------------------------------
+@bpy.app.handlers.persistent
+def update_pathnode_ui_properties(scene):
+    global update_triggered_by_ui_updater
+    if update_triggered_by_ui_updater:
+        #print("Triggered by UI updater")
+        return
+    update_triggered_by_ui_updater = True
+    try:
+        ob = scene.objects.active
+        if not ob or ob.mode != "EDIT" or ob.type != "CURVE" or not ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom"):
+            return
+        wm = bpy.context.window_manager
+        tmp_idx = -1
+        if len(ob.data.splines):
+            #print("Attempting to update path node UI props...")
+            for sp in ob.data.splines:
+                for p in sp.points:
+                    tmp_idx += 1
+                    # Add an entry to the pathnode_triggers list if it doesn't exist (new path point)
+                    if len(ob.data.thug_pathnode_triggers) < (tmp_idx + 1):
+                        ob.data.thug_pathnode_triggers.add()
+                    # If this point is selected, set its properties with the wm pathnode_triggers data
+                    if p.select:
+                        wm.thug_pathnode_props.name = ob.data.thug_pathnode_triggers[tmp_idx].name
+                        wm.thug_pathnode_props.script_name = ob.data.thug_pathnode_triggers[tmp_idx].script_name
+                        if ob.data.thug_pathnode_triggers[tmp_idx].terrain != "":
+                            wm.thug_pathnode_props.terrain = ob.data.thug_pathnode_triggers[tmp_idx].terrain
+                        wm.thug_pathnode_props.spawnobjscript = ob.data.thug_pathnode_triggers[tmp_idx].spawnobjscript
+                        #wm.thug_pathnode_props.PedType = ob.data.thug_pathnode_triggers[tmp_idx].PedType
+                        wm.thug_pathnode_props.do_continue = ob.data.thug_pathnode_triggers[tmp_idx].do_continue
+                        wm.thug_pathnode_props.JumpToNextNode = ob.data.thug_pathnode_triggers[tmp_idx].JumpToNextNode
+                        if ob.data.thug_pathnode_triggers[tmp_idx].Priority != "":
+                            wm.thug_pathnode_props.Priority = ob.data.thug_pathnode_triggers[tmp_idx].Priority
+                        if ob.data.thug_pathnode_triggers[tmp_idx].SkateAction != "":
+                            wm.thug_pathnode_props.SkateAction = ob.data.thug_pathnode_triggers[tmp_idx].SkateAction
+                        wm.thug_pathnode_props.JumpHeight = ob.data.thug_pathnode_triggers[tmp_idx].JumpHeight
+                        wm.thug_pathnode_props.Deceleration = ob.data.thug_pathnode_triggers[tmp_idx].Deceleration
+                        wm.thug_pathnode_props.SpinAngle = ob.data.thug_pathnode_triggers[tmp_idx].SpinAngle
+                        wm.thug_pathnode_props.RandomSpin = ob.data.thug_pathnode_triggers[tmp_idx].RandomSpin
+                        wm.thug_pathnode_props.SpineTransfer = ob.data.thug_pathnode_triggers[tmp_idx].SpineTransfer
+                        if ob.data.thug_pathnode_triggers[tmp_idx].SpinDirection != "":
+                            wm.thug_pathnode_props.SpinDirection = ob.data.thug_pathnode_triggers[tmp_idx].SpinDirection
+                        break
+        
+    finally:
+        update_triggered_by_ui_updater = False
+
+
+    
+#----------------------------------------------------------------------------------
 def update_autorail_terrain_type(wm, context):
     global update_triggered_by_ui_updater
     if update_triggered_by_ui_updater:
@@ -186,6 +290,7 @@ def update_autorail_terrain_type(wm, context):
 
     bmesh.update_edit_mesh(context.edit_object.data)
 
+#----------------------------------------------------------------------------------
 def _resolve_autorail_terrain_type(ob, bm, edge, arl):
     if edge[arl] != AUTORAIL_AUTO:
         return edge[arl]
@@ -198,6 +303,7 @@ def _resolve_autorail_terrain_type(ob, bm, edge, arl):
     return TERRAIN_TYPES.index(TERRAIN_TYPE_TO_GRIND.get(TERRAIN_TYPES[face_tt], "DEFAULT"))
 
 
+#----------------------------------------------------------------------------------
 def _get_autorails(mesh_object, operator=None):
     from contextlib import ExitStack
     assert mesh_object.type == "MESH"
@@ -292,6 +398,7 @@ def _get_autorails(mesh_object, operator=None):
     return all_autorails
 
 
+#----------------------------------------------------------------------------------
 def _try_merge_autorails(autorail, other_autorail):
     if autorail.is_cyclical():
         return False
@@ -319,6 +426,7 @@ def _try_merge_autorails(autorail, other_autorail):
             other_autorail.points[0].position = (other_autorail.points[0].position + last_point.position) / 2
             return True
 
+#----------------------------------------------------------------------------------
 def _export_autorails(p, c, i, v3, operator):
     import mathutils
 
@@ -422,6 +530,7 @@ def _export_autorails(p, c, i, v3, operator):
     return rail_node_counter
 
 
+#----------------------------------------------------------------------------------
 def _export_rails(p, c, operator=None):
     def v3(v):
         return "%vec3({:6f},{:6f},{:6f})".format(*v)
@@ -481,8 +590,8 @@ def _export_rails(p, c, operator=None):
                     p("\t\t:i {} = {}".format(c("Class"), c("Waypoint")))
                     #p("\t\t:i {} = {}".format(c("Type"), c("Default")))
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
-                    if ob.data.thug_pathnode_triggers[p_num].waypt_type != "":
-                        p("\t\t:i {} = {}".format(c("Type"), c(ob.data.thug_pathnode_triggers[p_num].waypt_type)))
+                    if ob.thug_waypoint_props.waypt_type != "None":
+                        p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_waypoint_props.waypt_type)))
                     name = "Waypoint_" + str(rail_node_counter)
                 elif ob.thug_path_type == "Custom":
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
@@ -516,22 +625,25 @@ def _export_rails(p, c, operator=None):
                         p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
                         
                     # Output waypoint-specific data below!
-                    elif ob.thug_path_type == "Waypoint" and ob.data.thug_pathnode_triggers[p_num].PedType != "":
-                        p("\t\t:i {} = {}".format(c("PedType"), c(ob.data.thug_pathnode_triggers[p_num].PedType)))
+                    elif ob.thug_path_type == "Waypoint" and ob.thug_waypoint_props.waypt_type != "None":
+                        p("\t\t:i {} = {}".format(c("PedType"), c(ob.thug_waypoint_props.PedType)))
                         # Output skater AI node properties here!
-                        if ob.data.thug_pathnode_triggers[p_num].PedType == "Skate":
-                            if ob.data.thug_pathnode_triggers[p_num].do_continue:
-                                p("\t\t:i {}".format(c("Continue")))
-                                p("\t\t:i {} = {}".format(c("ContinueWeight"), f(ob.data.thug_pathnode_triggers[p_num].ContinueWeight)))
-                            if ob.data.thug_pathnode_triggers[p_num].JumpToNextNode:
-                                p("\t\t:i {}".format(c("JumpToNextNode")))
-                            p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))
+                        if ob.thug_waypoint_props.PedType == "Skate":
                             # Skate action types defined here!
                             _skateaction = ob.data.thug_pathnode_triggers[p_num].SkateAction
+                            # ---
+                            p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))
                             p("\t\t:i {} = {}".format(c("SkateAction"), c(_skateaction)))
-                            if _skateaction == "Flip_Trick" or _skateaction == "Jump" or _skateaction == "Vert_Jump" or \
-                                _skateaction == "Vert_Flip":
+                            # Output specific props depending on the skate action below
+                            #if ob.data.thug_pathnode_triggers[p_num].do_continue:
+                            p("\t\t:i {}".format(c("Continue")))
+                            p("\t\t:i {} = {}".format(c("ContinueWeight"), f(1.0)))
+                            if ob.data.thug_pathnode_triggers[p_num].JumpToNextNode:
+                                p("\t\t:i {}".format(c("JumpToNextNode")))
                                 p("\t\t:i {} = {}".format(c("JumpHeight"), f(ob.data.thug_pathnode_triggers[p_num].JumpHeight)))
+                                if ob.data.thug_pathnode_triggers[p_num].SpinAngle > 0:
+                                    p("\t\t:i {} = {}".format(c("SpinAngle"), f(ob.data.thug_pathnode_triggers[p_num].SpinAngle)))
+                                    p("\t\t:i {} = {}".format(c("SpinDirection"), c(ob.data.thug_pathnode_triggers[p_num].SpinDirection)))
                             elif _skateaction == "Grind":
                                 rail_type = ob.data.thug_pathnode_triggers[p_num].terrain
                                 if rail_type == "Auto":
@@ -539,20 +651,19 @@ def _export_rails(p, c, operator=None):
                                 else:
                                     rail_type = "TERRAIN_" + rail_type
                                 p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
-                            elif _skateaction == "Manual":
-                                p("\t\t:i {} = {}".format(c("ManualType"), c(ob.data.thug_pathnode_triggers[p_num].ManualType)))
-                            elif _skateaction == "Stop":
-                                p("\t\t:i {} = {}".format(c("Deceleration"), f(ob.data.thug_pathnode_triggers[p_num].Deceleration)))
-                                p("\t\t:i {} = {}".format(c("StopTime"), f(ob.data.thug_pathnode_triggers[p_num].StopTime)))
-                            elif _skateaction == "Vert_Grab":
-                                p("\t\t:i {} = {}".format(c("SpinAngle"), f(ob.data.thug_pathnode_triggers[p_num].SpinAngle)))
-                                p("\t\t:i {} = {}".format(c("SpinDirection"), c(ob.data.thug_pathnode_triggers[p_num].SpinDirection)))
+                                
+                            # This stuff should no longer be necessary as these props don't appear to be used by the game
+                            #elif _skateaction == "Manual":
+                            #    p("\t\t:i {} = {}".format(c("ManualType"), c(ob.data.thug_pathnode_triggers[p_num].ManualType)))
+                            #elif _skateaction == "Stop":
+                            #    p("\t\t:i {} = {}".format(c("Deceleration"), f(ob.data.thug_pathnode_triggers[p_num].Deceleration)))
+                            #    p("\t\t:i {} = {}".format(c("StopTime"), f(ob.data.thug_pathnode_triggers[p_num].StopTime)))
+                            #elif _skateaction == "Vert_Grab":
                                 
                         # Walking ped logic goes here!
-                        elif ob.data.thug_pathnode_triggers[p_num].PedType == "Walk":
-                            if ob.data.thug_pathnode_triggers[p_num].do_continue:
-                                p("\t\t:i {}".format(c("Continue")))
-                                p("\t\t:i {} = {}".format(c("ContinueWeight"), f(ob.data.thug_pathnode_triggers[p_num].ContinueWeight)))
+                        elif ob.thug_waypoint_props.PedType == "Walk":
+                            p("\t\t:i {}".format(c("Continue")))
+                            p("\t\t:i {} = {}".format(c("ContinueWeight"), f(1.0)))
                             #if ob.data.thug_pathnode_triggers[p_num].JumpToNextNode:
                             #    p("\t\t:i {}".format(c("JumpToNextNode")))
                             p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))

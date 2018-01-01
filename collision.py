@@ -296,55 +296,47 @@ class THUGCollisionMeshTools(bpy.types.Panel):
             if (context.object.type == "CURVE" and
                         context.object.data.splines and
                         context.object.data.splines[0].points):
-                #_update_pathnodes_collections(self, context)
-                #context.object.data.thug_pathnode_triggers.clear()
-                tmp_idx = -1
-                for p in context.object.data.splines[0].points:
-                    tmp_idx += 1
-                    if p.select and len(context.object.data.thug_pathnode_triggers) > tmp_idx:
-                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "name")
-                        self.layout.prop_search(
-                        context.object.data.thug_pathnode_triggers[tmp_idx], "script_name",
-                        bpy.data,
-                        "texts")
+        
+                self.layout.prop(context.window_manager.thug_pathnode_props, "name")
+                self.layout.prop_search(
+                context.window_manager.thug_pathnode_props, "script_name",
+                bpy.data,
+                "texts")
+                #self.layout.prop(context.window_manager.thug_pathnode_props, "script_name")
+                if context.object.thug_path_type == "Rail":
+                    self.layout.prop(context.window_manager.thug_pathnode_props, "terrain")
+                if context.object.thug_path_type == "Waypoint":
+                    #self.layout.prop(context.window_manager.thug_pathnode_props, "waypt_type")
+                    self.layout.prop(context.window_manager.thug_pathnode_props, "spawnobjscript")
+                    if context.object.thug_waypoint_props.waypt_type == "PedAI":
+                        #self.layout.prop(context.window_manager.thug_pathnode_props, "PedType")
+                        if context.object.thug_waypoint_props.PedType == "Skate":
+                            #self.layout.prop(context.window_manager.thug_pathnode_props, "do_continue")
+                            #self.layout.prop(context.window_manager.thug_pathnode_props, "ContinueWeight")
+                            
+                            # Once I implement branching paths, Priority will be important!
+                            #self.layout.label(text="Priority")
+                            #self.layout.prop(context.window_manager.thug_pathnode_props, "Priority", expand=True)
+                            self.layout.prop(context.window_manager.thug_pathnode_props, "SkateAction")
+                            self.layout.prop(context.window_manager.thug_pathnode_props, "JumpToNextNode")
+                            if context.window_manager.thug_pathnode_props.SkateAction == "Jump" or \
+                                context.window_manager.thug_pathnode_props.JumpToNextNode:
+                                self.layout.prop(context.window_manager.thug_pathnode_props, "JumpHeight")
+                                self.layout.prop(context.window_manager.thug_pathnode_props, "SpinAngle")
+                                self.layout.prop(context.window_manager.thug_pathnode_props, "SpinDirection", expand=True)
+                            
+                            if context.window_manager.thug_pathnode_props.SkateAction == "Grind":
+                                self.layout.prop(context.window_manager.thug_pathnode_props, "terrain")
+                            #if context.window_manager.thug_pathnode_props.SkateAction == "Manual":
+                                #self.layout.prop(context.window_manager.thug_pathnode_props, "ManualType")
+                            #if context.window_manager.thug_pathnode_props.SkateAction == "Stop":
+                                #self.layout.prop(context.window_manager.thug_pathnode_props, "Deceleration")
+                                #self.layout.prop(context.window_manager.thug_pathnode_props, "StopTime")
                         
-                        #self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "script_name")
-                        if context.object.thug_path_type == "Rail":
-                            self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "terrain")
-                        if context.object.thug_path_type == "Waypoint":
-                            self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "waypt_type")
-                            self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "spawnobjscript")
-                            if context.object.data.thug_pathnode_triggers[tmp_idx].waypt_type == "PedAI":
-                                self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "PedType")
-                                if context.object.data.thug_pathnode_triggers[tmp_idx].PedType == "Skate":
-                                    self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "do_continue")
-                                    self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "ContinueWeight")
-                                    self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "Priority")
-                                    self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "SkateAction")
-                                    if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Flip_Trick":
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "JumpHeight")
-                                    if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Jump":
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "JumpHeight")
-                                    if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Vert_Jump":
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "JumpHeight")
-                                    if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Vert_Flip":
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "JumpHeight")
-                                    if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Grind":
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "terrain")
-                                    if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Manual":
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "ManualType")
-                                    if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Stop":
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "Deceleration")
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "StopTime")
-                                    if context.object.data.thug_pathnode_triggers[tmp_idx].SkateAction == "Vert_Grab":
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "SpinAngle")
-                                        self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "SpinDirection")
-                                
-                                elif context.object.data.thug_pathnode_triggers[tmp_idx].PedType == "Walk":
-                                    self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "do_continue")
-                                    self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "ContinueWeight")
-                                    self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "Priority")
-                                    #self.layout.prop(context.object.data.thug_pathnode_triggers[tmp_idx], "SkateAction")
-                        break
-                        
+                        elif context.object.thug_waypoint_props.PedType == "Walk":
+                            #self.layout.prop(context.window_manager.thug_pathnode_props, "do_continue")
+                            #self.layout.prop(context.window_manager.thug_pathnode_props, "ContinueWeight")
+                            self.layout.prop(context.window_manager.thug_pathnode_props, "Priority")
+                            #self.layout.prop(context.window_manager.thug_pathnode_props, "SkateAction")
+                
                 

@@ -349,16 +349,29 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
     SoundType = StringProperty(name="Sound", description="Sound used when colliding with the object.")
     
 #----------------------------------------------------------------------------------
+#- Properties for waypoints curves (applies to all points)
+#----------------------------------------------------------------------------------
+class THUGWaypointProps(bpy.types.PropertyGroup):
+    waypt_type = EnumProperty(items=(
+        ("None", "None", ""), 
+        ("PedAI", "Pedestrian AI", "This path is used for pedestrian navigation."), 
+        ), 
+    name="Waypoint Type", default="None", description="Type of waypoint. Use PedAI for detailed pedestrian movement and AI skaters.")
+    
+    PedType = EnumProperty(items=(
+        ("Walk", "Walk", "Movement logic for pedestrians."), 
+        ("Skate", "Skate", "Movement/trick logic for AI skaters."), 
+        ), 
+    name="PedType", default="Walk", description="The kind of navigation logic to use. 'Skate' is for AI skaters.")
+    
+#----------------------------------------------------------------------------------
 #- Properties for individual nodes along a path (rail, ladder, waypoints)
 #----------------------------------------------------------------------------------
 class THUGPathNodeProps(bpy.types.PropertyGroup):
     name = StringProperty(name="Node Name")
     waypt_type = StringProperty(name="Type")
     script_name = StringProperty(name="TriggerScript Name")
-    terrain = EnumProperty(
-        name="Terrain Type",
-        items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]], default="Auto")
-    #terrain = StringProperty(name="Terrain Type")
+    terrain = StringProperty(name="Terrain Type")
     spawnobjscript = StringProperty(name="SpawnObj Script")
     PedType = StringProperty(name="PedType")
     do_continue = BoolProperty(name="Continue")
@@ -366,31 +379,65 @@ class THUGPathNodeProps(bpy.types.PropertyGroup):
     Priority = StringProperty(name="Priority")
     ContinueWeight = FloatProperty(name="Continue Weight")
     SkateAction = StringProperty(name="Skate Action")
-    #SkateAction = EnumProperty(items=(
-    #    ("Continue", "Continue", ""), 
-    #    ("Stop", "Stop", ""), 
-    #    ("Jump", "Jump", ""), 
-    #    ("Grind", "Grind", ""), 
-    #    ("Manual", "Manual", ""), 
-    #    ("Grab_Trick", "Grab_Trick", ""), 
-    #    ("Flip_Trick", "Flip_Trick", ""), 
-    #    ("Vert_Flip", "Vert_Flip", ""), 
-    #    ("Vert_Lip", "Vert_Lip", ""), 
-    #    ("Vert_Grab", "Vert_Grab", ""), 
-    #    ("Vert_Jump", "Vert_Jump", ""), 
-    #    ("Vert_Grind", "Vert_Grind", ""), 
-    #    ("Vert_Land", "Vert_Land", ""), 
-    #    ), 
-    #name="Skate Action", default="Continue", description="The action taken by the AI skater when they reach this point.")
     JumpHeight = FloatProperty(name="Jump Height")
     skaterai_terrain = StringProperty(name="TerrainType")
     ManualType = StringProperty(name="ManualType")
     Deceleration = FloatProperty(name="Deceleration")
     StopTime = FloatProperty(name="StopTime")
     SpinAngle = FloatProperty(name="SpinAngle")
+    RandomSpin = BoolProperty(name="Random Spin", default=False)
+    SpineTransfer = BoolProperty(name="Spine Transfer", default=False)
     SpinDirection = StringProperty(name="SpinDirection")
-    #def register():
-        #print("adding new path node struct")
+#----------------------------------------------------------------------------------
+#- Properties for individual nodes along a path (rail, ladder, waypoints)
+#- These are shown to the user via the WindowManager, the separate ones above are
+#- what is actually stored on the object
+#----------------------------------------------------------------------------------
+class THUGPathNodeUIProps(bpy.types.PropertyGroup):
+    name = StringProperty(name="Node Name", update=update_pathnode)
+    script_name = StringProperty(name="TriggerScript Name", update=update_pathnode)
+    terrain = EnumProperty(
+        name="Terrain Type",
+        items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]], default="Auto", update=update_pathnode)
+    spawnobjscript = StringProperty(name="SpawnObj Script", update=update_pathnode)
+    PedType = StringProperty(name="PedType", update=update_pathnode)
+    do_continue = BoolProperty(name="Continue", update=update_pathnode)
+    JumpToNextNode = BoolProperty(name="JumpToNextNode", update=update_pathnode)
+    Priority = EnumProperty(items=(
+        ("Normal", "Normal", ""),
+        ("Low", "Low", ""),
+        ), 
+    name="Priority", default="Normal", description="Used for branching paths (coming soon!)", update=update_pathnode)
+    SkateAction = EnumProperty(items=(
+        ("Continue", "Continue", ""),
+        ("Grind", "Grind", ""),
+        ("Vert_Grind", "Vert_Grind", ""),
+        ("Grind_Off", "Grind_Off", ""),
+        ("Flip_Trick", "Flip_Trick", ""),
+        ("Vert_Flip", "Vert_Flip", ""),
+        ("Grab_Trick", "Grab_Trick", ""),
+        ("Vert_Grab", "Vert_Grab", ""),
+        ("Vert_Lip", "Vert_Lip", ""),
+        ("Vert_Land", "Vert_Land", ""),
+        ("Jump", "Jump", ""),
+        ("Vert_Jump", "Vert_Jump", ""),
+        ("Roll_Off", "Roll_Off", ""),
+        ("Manual", "Manual", ""),
+        ("Manual_Down", "Manual_Down", ""),
+        ("Stop", "Stop", ""),
+        ), 
+    name="Skate Action", default="Continue", description="The action taken by the AI skater when they reach this point.", update=update_pathnode)
+    JumpHeight = FloatProperty(name="Jump Height", min=0, max=100000, description="How high the AI skater will jump.", update=update_pathnode)
+    Deceleration = FloatProperty(name="Deceleration", update=update_pathnode)
+    SpinAngle = FloatProperty(name="SpinAngle", min=0, max=10000, description="Rotation done by the AI skater.", update=update_pathnode)
+    RandomSpin = BoolProperty(name="Random Spin", default=False, description="Use a random spin amount instead of the spin angle.", update=update_pathnode)
+    SpineTransfer = BoolProperty(name="Spine Transfer", default=False, description="AI skater should do a spine transfer.", update=update_pathnode)
+    SpinDirection = EnumProperty(items=(
+        ("BS", "BS", ""),
+        ("FS", "FS", ""),
+        ("Rand", "Random", "Random direction."),
+        ), 
+    name="Spin Direction", default="Rand", description="Direction in which the AI skater spins.", update=update_pathnode)
         
 #----------------------------------------------------------------------------------
 #- Restart properties
@@ -733,6 +780,7 @@ def register_props():
     bpy.types.Lamp.thug_light_props = PointerProperty(type=THUGLightProps)
     
     bpy.types.Curve.thug_pathnode_triggers = CollectionProperty(type=THUGPathNodeProps)
+    bpy.types.Object.thug_waypoint_props = PointerProperty(type=THUGWaypointProps)
     
     bpy.types.Image.thug_image_props = PointerProperty(type=THUGImageProps)
 
@@ -741,6 +789,7 @@ def register_props():
 
     bpy.types.WindowManager.thug_all_rails = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_all_restarts = CollectionProperty(type=bpy.types.PropertyGroup)
+    bpy.types.WindowManager.thug_pathnode_props = PointerProperty(type=THUGPathNodeUIProps)
 
     bpy.types.Scene.thug_level_props = PointerProperty(type=THUGLevelProps)
     bpy.types.Scene.thug_lightmap_scale = EnumProperty(
@@ -788,6 +837,7 @@ def register_props():
     # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)
     bpy.app.handlers.scene_update_post.append(draw_stuff_post_update)
     bpy.app.handlers.scene_update_post.append(update_collision_flag_ui_properties)
+    bpy.app.handlers.scene_update_post.append(update_pathnode_ui_properties)
 
     bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
     
@@ -811,6 +861,7 @@ def unregister_props():
 
     if update_collision_flag_ui_properties in bpy.app.handlers.scene_update_post:
         bpy.app.handlers.scene_update_post.remove(update_collision_flag_ui_properties)
+        bpy.app.handlers.scene_update_post.remove(update_pathnode_ui_properties)
 
     if draw_stuff_post_update in bpy.app.handlers.scene_update_post:
         bpy.app.handlers.scene_update_post.remove(draw_stuff_post_update)

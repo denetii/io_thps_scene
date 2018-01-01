@@ -221,6 +221,12 @@ def _thug_object_settings_draw(self, context):
         
     if ob.type == "CURVE":
         self.layout.row().prop(ob, "thug_path_type")
+        if ob.thug_path_type == 'Waypoint':
+            box = self.layout.box().column(True)
+            box.row().label(text="Waypoint type")
+            box.row().prop(ob.thug_waypoint_props, "waypt_type", expand=True)
+            if ob.thug_waypoint_props.waypt_type == 'PedAI':
+                box.row().prop(ob.thug_waypoint_props, "PedType", expand=True)
         
     if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type != "") or ob.type == "EMPTY":
         self.layout.row().prop(ob, "thug_created_at_start")

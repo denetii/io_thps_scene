@@ -301,6 +301,10 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {}".format(c("Occluder")))
                 elif col_ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
+                if col_ob.thug_network_option != "Default":
+                    p("\t\t:i {}".format(c(col_ob.thug_network_option)))
+                    if col_ob.thug_network_option == "NetEnabled":
+                        p("\t\t:i {}".format(c("Permanent")))
                 if ob.thug_lightgroup != "None" and ob.thug_export_scene:
                     p("\t\t:i {} = {}".format(c("LightGroup"), c(ob.thug_lightgroup)))
                     
