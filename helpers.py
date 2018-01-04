@@ -361,6 +361,51 @@ def _generate_lambert_shading(ob):
         ob.data.update()
         return
 
+        
+def is_duplicate_mesh(ob, compare_ob):
+    meshes = [ compare_ob ]
+    is_dupe = False
+    
+    ref_vertices = []
+    for f in ob.data.polygons:
+        for idx in f.vertices:
+            ref_vertices.append(ob.data.vertices[idx].co[0])
+            ref_vertices.append(ob.data.vertices[idx].co[1])
+            ref_vertices.append(ob.data.vertices[idx].co[2])
+    ref_vertices = sorted(ref_vertices, key=float)
+    
+    for obj in meshes:
+        if obj.matrix_world != ob.matrix_world:
+            continue
+        
+        vertices = []
+        for f in obj.data.polygons:
+            for idx in f.vertices:
+                vertices.append(obj.data.vertices[idx].co[0])
+                vertices.append(obj.data.vertices[idx].co[1])
+                vertices.append(obj.data.vertices[idx].co[2])
+        vertices = sorted(vertices, key=float)
+        
+        if len(vertices) != len(ref_vertices):
+            continue
+        
+        vert_index = -1
+        should_continue = False
+        for vert in ref_vertices:
+            vert_index += 1
+            if vert != vertices[vert_index]:
+                should_continue = True
+                break
+        if should_continue:
+            continue
+        is_dupe = True
+        break
+        
+    if is_dupe:
+        print("DUPLICATE OBJECT FOUND: {}".format(ob.name))
+        return True
+    return False
+    
 # CLASSES
 #############################################
 class Reader(object):

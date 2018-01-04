@@ -238,27 +238,3 @@ def unregister_menus():
     clearPresetMesh()
 
 
-
-
-# PANELS
-#############################################
-#----------------------------------------------------------------------------------
-class THUGImportTools(bpy.types.Panel):
-    bl_label = "TH Import Tools"
-    bl_region_type = "TOOLS"
-    bl_space_type = "VIEW_3D"
-    bl_category = "THUG Tools"
-
-    @classmethod
-    def poll(cls, context):
-        return context.user_preferences.addons[ADDON_NAME].preferences.object_settings_tools
-
-    def draw(self, context):
-        self.layout.row().operator(THUG2ColToScene.bl_idname, text=THUG2ColToScene.bl_label, icon='PLUGIN')
-        self.layout.row().operator(THUG2ScnToScene.bl_idname, text=THUG2ScnToScene.bl_label, icon='PLUGIN')
-        self.layout.row().operator(THUG1ScnToScene.bl_idname, text=THUG1ScnToScene.bl_label, icon='PLUGIN')
-        self.layout.row().operator(THPS4ScnToScene.bl_idname, text=THPS4ScnToScene.bl_label, icon='PLUGIN')
-        self.layout.row().operator(THUGImportSkeleton.bl_idname, text=THUGImportSkeleton.bl_label, icon='PLUGIN')
-        self.layout.row().operator(THUGImportNodeArray.bl_idname, text=THUGImportNodeArray.bl_label, icon='PLUGIN')
-        self.layout.row().operator(THUGImportTriggerScripts.bl_idname, text=THUGImportTriggerScripts.bl_label, icon='PLUGIN')
-        self.layout.row().operator(THUGRenameObjects.bl_idname, text=THUGRenameObjects.bl_label, icon='FILE_TEXT')

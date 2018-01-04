@@ -40,6 +40,13 @@ def export_scn_sectors_ug2(output_file, operator=None):
         original_object = ob
         original_object_name = ob.name
         is_levelobject = ob.thug_object_class == "LevelObject"
+        if is_levelobject == False and original_object_name.endswith("_SCN"):
+            # If using separate collision/scene mesh, check the collision mesh
+            if bpy.data.objects.get(original_object_name[:-4]):
+                _omgtmp = bpy.data.objects.get(original_object_name[:-4])
+                if _omgtmp.thug_object_class == "LevelObject":
+                    is_levelobject = True
+                    
         if is_levelobject:
             lo_matrix = mathutils.Matrix.Identity(4)
             lo_matrix[0][0] = ob.scale[0]
@@ -88,6 +95,26 @@ def export_scn_sectors_ug2(output_file, operator=None):
                     bm.clear()
                     bm.from_mesh(final_mesh)
 
+                    
+                # Check texture passes for:
+                # - Environment mapped textures (normals need to be exported)
+                # - Valid UV map assignments (must be in the correct order!)
+                ob_has_env_map = False
+                for env_test in ob.data.materials:
+                    if not hasattr(env_test, 'texture_slots'): continue
+                    _tmp_passes = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
+                    pass_index = -1
+                    for _tmp_tex in _tmp_passes:
+                        pass_index += 1
+                        _uvindex = get_uv_index(ob, _tmp_tex.uv_layer)
+                        if _uvindex != -1 and _uvindex != pass_index and operator:
+                            operator.report({"WARNING"},
+                            "UV/material pass index mismatch on: {} for material: {} assigned to object: {}. UVs will not appear correct in-game.".format(_tmp_tex.name, env_test.name, ob.name))
+                        _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
+                        if _pprops and _pprops.pf_environment:
+                            ob_has_env_map = True
+                            #break
+                            
                 flags = 0 if not is_levelobject else SECFLAGS_HAS_VERTEX_NORMALS
                 # flags = 0 # SECFLAGS_HAS_VERTEX_NORMALS
                 if True or len(bm.loops.layers.uv):
@@ -96,6 +123,7 @@ def export_scn_sectors_ug2(output_file, operator=None):
                     flags |= SECFLAGS_HAS_VERTEX_COLORS
                 if len(original_object.vertex_groups):
                     flags |= SECFLAGS_HAS_VERTEX_WEIGHTS
+                if len(original_object.vertex_groups) or ob_has_env_map:
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
 
                 mats_to_faces = {}

@@ -15,6 +15,7 @@ from . collision import *
 from . material import *
 from . constants import *
 from . qb import *
+from . level_manifest import *
 from . export_thug1 import export_scn_sectors
 from . export_thug2 import export_scn_sectors_ug2
 
@@ -205,7 +206,10 @@ def do_export(operator, context, target_game):
             import platform
             wine = [] if platform.system() == "Windows" else ["wine"]
 
+            # #########################
+            # Build NODEARRAY qb file
             try:
+                print("Compiling {}.txt to QB...".format(filename))
                 roq_output = subprocess.run(wine + [
                     j(base_files_dir, "roq.exe"),
                     "-c",
@@ -222,7 +226,34 @@ def do_export(operator, context, target_game):
 
             finally:
                 os.chdir(old_cwd)
+            # /Build NODEARRAY qb file
+            # #########################
+            
+            # #########################
+            # Build _SCRIPTS qb file
+            if os.path.exists(path + "/" + filename + "_scripts.txt"):
+                print("Compiling {}_scripts.txt to QB...".format(filename))
+                os.chdir(path)
+                try:
+                    roq_output = subprocess.run(wine + [
+                        j(base_files_dir, "roq.exe"),
+                        "-c",
+                        filename + "_scripts.txt"
+                        ], stdout=subprocess.PIPE)
+                    if os.path.exists(filename + "_scripts.qb"):
+                        os.remove(filename + "_scripts.qb")
+                    if os.path.exists(filename + "_scripts.txt.qb"):
+                        os.rename(filename + "_scripts.txt.qb", filename + "_scripts.qb")
+                    else:
+                        self.report({"ERROR"}, "{}\n\nCompiler output:\nFailed to compile the QB file.".format(
+                            '\n'.join(reversed(roq_output.stdout.decode().split("\r\n")))))
+                        compilation_successful = False
 
+                finally:
+                    os.chdir(old_cwd)
+            # /Build _SCRIPTS qb file
+            # #########################
+            
         if self.pack_scripts:
             if target_game == "THUG2":
                 pack_pre(j(directory, filename + "qb"),
@@ -236,6 +267,12 @@ def do_export(operator, context, target_game):
         else:
             print("EXPORT FAILED! Uh oh :(")
             self.report({'WARNING'}, "Failed exporting level {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
+            
+        # -------------------------------------------------
+        # Final step: generate level manifest .json file!
+        # -------------------------------------------------
+        export_level_manifest_json(filename, path, self, context.scene.thug_level_props)
+        
     except ExportError as e:
         self.report({'ERROR'}, "Export failed.\nExport error: {}".format(str(e)))
     except Exception as e:

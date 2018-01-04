@@ -7,7 +7,6 @@ from . autorail import *
 from . collision import *
 from . material import *
 from . ui_draw import *
-from . import_nodes import THUGImportNodeArray
 from . presets import *
 
 # METHODS
@@ -576,25 +575,26 @@ class THUGParticleProps(bpy.types.PropertyGroup):
 #----------------------------------------------------------------------------------
 class THUGLevelProps(bpy.types.PropertyGroup):
     level_name = StringProperty(name="Level Name", description="Name of your level, used for in-game menus.")
-    level_creator = StringProperty(name="Creator Name", description="Name of the person(s) who created this level.")
+    scene_name = StringProperty(name="Scene Name", description="Short name referenced by scripts.")
+    creator_name = StringProperty(name="Creator Name", description="Name of the person(s) who created this level.")
     level_skybox = StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level.")
     
     level_ambient_rgba = FloatVectorProperty(name="Ambient: Color/Mod",
                            subtype='COLOR',
-                           default=(1.0, 1.0, 1.0, 1.0),
+                           default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
                            description="Light color, with alpha used as the mod value.")
     level_light0_rgba = FloatVectorProperty(name="Light #1: Color/Mod",
                            subtype='COLOR',
-                           default=(1.0, 1.0, 1.0, 1.0),
+                           default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
                            description="Light color, with alpha used as the mod value.")
     level_light0_headpitch = FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
     level_light1_rgba = FloatVectorProperty(name="Light #2: Color/Mod",
                            subtype='COLOR',
-                           default=(1.0, 1.0, 1.0, 1.0),
+                           default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
                            description="Light color, with alpha used as the mod value.")

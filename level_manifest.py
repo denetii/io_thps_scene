@@ -9,7 +9,6 @@ import math
 import os
 import numpy
 from bpy.props import *
-from . scene_props import *
 
 
 # METHODS
@@ -23,81 +22,40 @@ def export_level_manifest_json(filename, directory, operator, level_info):
         outp.write("{\n")
         outp.write("\t\"level_name\": \"{}\",\n".format(level_info.level_name))
         outp.write("\t\"scene_name\": \"{}\",\n".format(level_info.scene_name))
-
-        if level_info.creator_name:
-            outp.write("\t\"creator_name\": \"{}\",\n".format(level_info.creator_name))
-        else:
-            outp.write("\t\"creator_name\": \"Unknown\",\n")
+        outp.write("\t\"creator_name\": \"{}\",\n".format((level_info.creator_name if level_info.creator_name else "Unknown")))
 
         outp.write("\t\"level_qb\": \"levels\\\\{}\\\\{}.qb\",\n".format(level_info.scene_name, level_info.scene_name))
         outp.write("\t\"level_scripts_qb\": \"levels\\\\{}\\\\{}_scripts.qb\",\n".format(level_info.scene_name, level_info.scene_name))
         outp.write("\t\"level_sfx_qb\": \"levels\\\\{}\\\\{}_sfx.qb\",\n".format(level_info.scene_name, level_info.scene_name))
         outp.write("\t\"level_thugpro_qb\": \"levels\\\\{}\\\\{}_thugpro.qb\",\n".format(level_info.scene_name, level_info.scene_name))
 
-        if not level_info.FLAG_NO_PRX:
+        if not level_info.level_flag_noprx:
             outp.write("\t\"level_pre\": \"{}_scripts.pre\",\n".format(level_info.scene_name))
             outp.write("\t\"level_scnpre\": \"{}scn.pre\",\n".format(level_info.scene_name))
             outp.write("\t\"level_colpre\": \"{}col.pre\",\n".format(level_info.scene_name))
-
-        # outp.write("\t\"FLAG_NOSUN\": true,\n")
-        # outp.write("\t\"FLAG_DEFAULT_SKY\": true,\n")
-        # outp.write("\t\"FLAG_DISABLE_BACKFACE_HACK\": true,\n")
-        # outp.write("\t\"FLAG_DISABLE_GOALEDITOR\": true,\n")
-        # outp.write("\t\"FLAG_DISABLE_GOALATTACK\": true,\n")
-
-        # 
-        if level_info.FLAG_INDOOR:
-            outp.write("\t\"FLAG_INDOOR\": true,\n")
-        else:
-            outp.write("\t\"FLAG_INDOOR\": false,\n")
-
-        # 
-        if level_info.FLAG_NOSUN:
-            outp.write("\t\"FLAG_NOSUN\": true,\n")
-        else:
-            outp.write("\t\"FLAG_NOSUN\": false,\n")
-
-        # 
-        if level_info.FLAG_DEFAULT_SKY:
-            outp.write("\t\"FLAG_DEFAULT_SKY\": true,\n")
-        else:
-            outp.write("\t\"FLAG_DEFAULT_SKY\": false,\n")
-
-        # 
-        if level_info.FLAG_ENABLE_WALLRIDE_HACK:
-            outp.write("\t\"FLAG_ENABLE_WALLRIDE_HACK\": true,\n")
-        else:
-            outp.write("\t\"FLAG_ENABLE_WALLRIDE_HACK\": false,\n")
-
-        # 
-        if level_info.FLAG_DISABLE_BACKFACE_HACK:
-            outp.write("\t\"FLAG_DISABLE_BACKFACE_HACK\": true,\n")
-        else:
-            outp.write("\t\"FLAG_DISABLE_BACKFACE_HACK\": false,\n")
-
-        # 
-        if level_info.FLAG_MODELS_IN_SCRIPT_PRX:
-            outp.write("\t\"FLAG_MODELS_IN_SCRIPT_PRX\": true,\n")
-        else:
-            outp.write("\t\"FLAG_MODELS_IN_SCRIPT_PRX\": false,\n")
-
-        # 
-        if level_info.FLAG_DISABLE_GOALEDITOR:
-            outp.write("\t\"FLAG_DISABLE_GOALEDITOR\": true,\n")
-        else:
-            outp.write("\t\"FLAG_DISABLE_GOALEDITOR\": false,\n")
-
-        # 
-        if level_info.FLAG_DISABLE_GOALATTACK:
-            outp.write("\t\"FLAG_DISABLE_GOALATTACK\": true,\n")
-        else:
-            outp.write("\t\"FLAG_DISABLE_GOALATTACK\": false,\n")
-
-        # 
-        if level_info.FLAG_NO_PRX:
-            outp.write("\t\"FLAG_NO_PRX\": true\n")
-        else:
-            outp.write("\t\"FLAG_NO_PRX\": false\n")
+            
+        # Export level light color & angles
+        lighta = level_info.level_ambient_rgba
+        lightc0 = level_info.level_light0_rgba
+        lightc1 = level_info.level_light1_rgba
+        lighta0 = level_info.level_light0_headpitch
+        lighta1 = level_info.level_light1_headpitch
+        outp.write("\t\"ambient_rgba\": [{}, {}, {}, {}],\n".format(int(lighta[0]*255), int(lighta[1]*255), int(lighta[2]*255), int(lighta[3]*255)))
+        outp.write("\t\"light0_rgba\": [{}, {}, {}, {}],\n".format(int(lightc0[0]*255), int(lightc0[1]*255), int(lightc0[2]*255), int(lightc0[3]*255)))
+        outp.write("\t\"light1_rgba\": [{}, {}, {}, {}],\n".format(int(lightc1[0]*255), int(lightc1[1]*255), int(lightc1[2]*255), int(lightc1[3]*255)))
+        outp.write("\t\"light0_position\": [{}, {}],\n".format(lighta0[0], lighta0[1]))
+        outp.write("\t\"light1_position\": [{}, {}],\n".format(lighta1[0], lighta1[1]))
+        
+        outp.write("\t\"FLAG_OFFLINE\": {},\n".format(("true" if level_info.level_flag_offline else "false")))
+        outp.write("\t\"FLAG_INDOOR\": {},\n".format(("true" if level_info.level_flag_indoor else "false")))
+        outp.write("\t\"FLAG_NOSUN\": {},\n".format(("true" if level_info.level_flag_nosun else "false")))
+        outp.write("\t\"FLAG_DEFAULT_SKY\": {},\n".format(("true" if level_info.level_flag_defaultsky else "false")))
+        outp.write("\t\"FLAG_ENABLE_WALLRIDE_HACK\": {},\n".format(("true" if level_info.level_flag_wallridehack else "false")))
+        outp.write("\t\"FLAG_DISABLE_BACKFACE_HACK\": {},\n".format(("true" if level_info.level_flag_nobackfacehack else "false")))
+        outp.write("\t\"FLAG_MODELS_IN_SCRIPT_PRX\": {},\n".format(("true" if level_info.level_flag_modelsinprx else "false")))
+        outp.write("\t\"FLAG_DISABLE_GOALEDITOR\": {},\n".format(("true" if level_info.level_flag_nogoaleditor else "false")))
+        outp.write("\t\"FLAG_DISABLE_GOALATTACK\": {},\n".format(("true" if level_info.level_flag_nogoalattack else "false")))
+        outp.write("\t\"FLAG_NO_PRX\": {},\n".format(("true" if level_info.level_flag_noprx else "false")))
 
         outp.write("}\n")
 
@@ -120,11 +78,12 @@ class THUGSceneSettings(bpy.types.Panel):
         if not context.scene: return
         scene = context.scene
         self.layout.row().prop(scene.thug_level_props, "level_name")
-        self.layout.row().prop(scene.thug_level_props, "level_creator")
+        self.layout.row().prop(scene.thug_level_props, "scene_name")
+        self.layout.row().prop(scene.thug_level_props, "creator_name")
         self.layout.row().prop(scene.thug_level_props, "level_skybox")
         
-        self.layout.row().prop(scene.thug_level_props, "default_terrain")
-        self.layout.row().prop(scene.thug_level_props, "default_terrain_rail")
+        #self.layout.row().prop(scene.thug_level_props, "default_terrain")
+        #self.layout.row().prop(scene.thug_level_props, "default_terrain_rail")
         
         self.layout.row().label(text="Level Lights", icon='LAMP_DATA')
         box = self.layout.box().column(True)

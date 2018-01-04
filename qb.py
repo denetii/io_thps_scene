@@ -326,7 +326,10 @@ def export_qb(filename, directory, target_game, operator=None):
                     else:
                         script_name, script_code = _generate_script(col_ob)
                         generated_scripts.setdefault(script_name, script_code)
-                    p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
+                    if script_name != "":
+                        p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
+                    else:
+                        operator.report({'WARNING'}, "Unable to determine a TriggerScript for object {}.".format(col_ob.name))
 
                 if col_ob.thug_node_expansion:
                     p("\t\t:i {}".format(c(col_ob.thug_node_expansion)))
@@ -790,7 +793,11 @@ def export_qb(filename, directory, target_game, operator=None):
                     else:
                         script_name, script_code = _generate_script(ob)
                         generated_scripts.setdefault(script_name, script_code)
-                    p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
+                        
+                    if script_name != "":
+                        p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
+                    else:
+                        operator.report({'WARNING'}, "Unable to determine a TriggerScript for object {}.".format(ob.name))
 
                 if ob.thug_rail_connects_to:
                     if ob.thug_rail_connects_to not in bpy.data.objects:
@@ -1157,16 +1164,20 @@ def export_qb(filename, directory, target_game, operator=None):
         for s, checksum in checksums.items():
             outp.write("#addx 0x{:08x} \"{}\"\n".format(checksum, s))
 
-    if False: # and target_game == "THUG2":
-        _scripts_path = os.path.join(directory, filename + "_scripts.txt")
-        if not os.path.exists(_scripts_path):
-            with open(_scripts_path, "w") as outp:
-                outp.write(":end")
-    else:
-        _scripts_path = os.path.join(directory, filename + "_scripts.qb")
-        if not os.path.exists(_scripts_path):
-            with open(_scripts_path, "wb") as outp:
-                outp.write(b'\x00')
+    with open(os.path.join(directory, filename + "_scripts.txt"), "w") as outp:
+        print("Writing [level]_scripts data...")
+        scripts_text = bpy.data.texts.get("_SCRIPTS", None)
+        if scripts_text:
+            if target_game == "THUG1":
+                # Make sure we don't export the THUG2 if/else conditions!
+                print("omg")
+                outp.write(scripts_text.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
+            else:
+                outp.write(scripts_text.as_string())
+            outp.write("\n")
+            outp.write("#/ level_scripts end")
+            outp.write("\n")
+        outp.write(":end")
 
     if target_game == "THUG2":
         with open(os.path.join(directory, filename + "_thugpro.qb"), "wb") as outp:
@@ -1259,7 +1270,11 @@ def export_model_qb(filename, directory, target_game, operator=None):
                     else:
                         script_name, script_code = _generate_script(ob)
                         generated_scripts.setdefault(script_name, script_code)
-                    p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
+                    
+                    if script_name != "":
+                        p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
+                    else:
+                        operator.report({'WARNING'}, "Unable to determine a TriggerScript for object {}.".format(ob.name))
 
                 if ob.thug_node_expansion:
                     p("\t\t:i {}".format(c(ob.thug_node_expansion)))

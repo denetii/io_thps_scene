@@ -11,7 +11,8 @@ import numpy
 from bpy.props import *
 from . constants import *
 from . scene_props import *
-
+from . import_nodes import *
+import ntpath
 
 # METHODS
 #############################################
@@ -49,7 +50,7 @@ class THUGUtilShowFirstPoint(bpy.types.Operator):
 #----------------------------------------------------------------------------------
 class THUGUtilFillPedestrians(bpy.types.Operator):
     bl_idname = "io.import_thug_util_fillpedestrians"
-    bl_label = "Auto-Fill Pedestrians"
+    bl_label = "Set Pedestrians"
     # bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Fills a selection (or all) pedestrian objects with default settings for THUG1/2/PRO."
     game_mode = EnumProperty(items=(
@@ -94,7 +95,7 @@ class THUGUtilFillPedestrians(bpy.types.Operator):
 #----------------------------------------------------------------------------------
 class THUGUtilFillVehicles(bpy.types.Operator):
     bl_idname = "io.import_thug_util_fillvehicles"
-    bl_label = "Auto-Fill Vehicles"
+    bl_label = "Set Vehicles"
     # bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Fills a selection (or all) vehicle objects with default settings for THUG1/2/PRO."
     game_mode = EnumProperty(items=(
@@ -136,9 +137,9 @@ class THUGUtilFillVehicles(bpy.types.Operator):
 #----------------------------------------------------------------------------------
 class THUGUtilBatchTerrain(bpy.types.Operator):
     bl_idname = "io.import_thug_util_batchterrain"
-    bl_label = "Batch Terrain"
+    bl_label = "Set Terrain"
     # bl_options = {'REGISTER', 'UNDO'}
-    bl_description = "Sets the terrain type on all faces for all selected objects."
+    bl_description = "Sets the terrain type on all faces/points for all selected objects/rail paths."
     terrain_type = EnumProperty(
         name="Terrain Type",
         items=[(t, t, t) for t in ["Auto"] + TERRAIN_TYPES], 
@@ -146,6 +147,7 @@ class THUGUtilBatchTerrain(bpy.types.Operator):
 
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH']
+        curves = [o for o in context.selected_objects if o.type == 'CURVE' and o.thug_path_type != ""]
         for ob in meshes:
             bpy.context.scene.objects.active = ob
             bpy.ops.object.select_all(action='DESELECT')
@@ -166,39 +168,7 @@ class THUGUtilBatchTerrain(bpy.types.Operator):
             bmesh.update_edit_mesh(context.edit_object.data)
             bpy.ops.object.editmode_toggle()
             ob.select = False
-            
-        return {'FINISHED'}
-
-    @classmethod
-    def poll(cls, context):
-        meshes = [o for o in context.selected_objects if o.type == 'MESH']
-        return len(meshes) > 0
-    
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=600, height=250)
-    
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-        #col.label(text="Node Array Import")
-        row = col.row()
-        row.prop(self, "terrain_type")
-
-
-#----------------------------------------------------------------------------------
-class THUGUtilBatchRailTerrain(bpy.types.Operator):
-    bl_idname = "io.import_thug_util_batchrailterrain"
-    bl_label = "Set Rail Terrain"
-    # bl_options = {'REGISTER', 'UNDO'}
-    bl_description = "Sets the terrain type on all points for the selected rails."
-    terrain_type = EnumProperty(
-        name="Terrain Type",
-        items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]],
-        description="Terrain type to set.")
-
-    def execute(self, context):
-        curves = [o for o in context.selected_objects if o.type == 'CURVE' and o.thug_path_type != ""]
+        
         for ob in curves:
             ob.thug_rail_terrain_type = self.terrain_type
             # Set the terrain on any points with terrain defined
@@ -216,8 +186,9 @@ class THUGUtilBatchRailTerrain(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        meshes = [o for o in context.selected_objects if o.type == 'CURVE']
-        return len(meshes) > 0
+        meshes = [o for o in context.selected_objects if o.type == 'MESH']
+        curves = [o for o in context.selected_objects if o.type == 'CURVE' and o.thug_path_type != ""]
+        return len(meshes) > 0 or len(curves) > 0
     
     def invoke(self, context, event):
         wm = context.window_manager
@@ -226,13 +197,14 @@ class THUGUtilBatchRailTerrain(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         col = layout.column()
+        #col.label(text="Node Array Import")
         row = col.row()
         row.prop(self, "terrain_type")
 
 #----------------------------------------------------------------------------------
 class THUGUtilBatchObjectProps(bpy.types.Operator):
     bl_idname = "io.import_thug_util_batchobjprops"
-    bl_label = "Batch Object Properties"
+    bl_label = "Object Properties"
     # bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Apples a selection of properties on all selected objects."
     
@@ -359,6 +331,93 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
                 bpy.data,
                 "texts")
 
+#----------------------------------------------------------------------------------
+class THUGUtilBatchImport(bpy.types.Operator):
+    bl_idname = "io.import_thug_util_batchimport"
+    bl_label = "Import Level/Model"
+    bl_description = "Imports mesh/collision/textures in one process."
+    
+    # Basic object properties
+    game_mode = EnumProperty(name="Game Engine", items=[
+        ("NULL", " --- ", ""),
+        ("THPS4", "THPS4", "Note: THPS4 collision importing not yet supported."),
+        ("THUG1", "THUG1", ""),
+        ("THUG2", "THUG2", "THUG2/THUG PRO."),
+    ], default="NULL")
+    
+    scn_file_path = StringProperty(name="Scene/skin file", default="", description="Path to the .scn/.skin/.mdl file.", subtype="FILE_PATH")
+    col_file_path = StringProperty(name="Collision file", default="", description="Path to the .col file.", subtype="FILE_PATH")
+    tex_file_path = StringProperty(name="Texture file", default="", description="Path to the .tex file.", subtype="FILE_PATH")
+    ske_file_path = StringProperty(name="Skeleton file", default="", description="Path to the .ske file.", subtype="FILE_PATH")
+    
+    def execute(self, context):
+        # IMPORT TEX FILE
+        if self.tex_file_path:
+            head, tail = ntpath.split(self.tex_file_path)
+            if head and tail:
+                print("Running tex import on: {}{}".format(head, tail))
+                bpy.ops.io.thug2_tex("EXEC_DEFAULT", filename=tail, directory=head)
+            else:
+                raise Exception("Unable to parse TEX file path.")
+        # END IMPORT TEX FILE
+        
+        # IMPORT SCN FILE
+        if self.scn_file_path:
+            head, tail = os.path.split(self.scn_file_path)
+            if head and tail:
+                if self.game_mode == "THPS4":
+                    print("Running THPS4 scn import on: {}{}".format(head, tail))
+                    bpy.ops.io.th4_xbx_scn_to_scene("EXEC_DEFAULT", filename=tail, directory=head, load_tex=False, import_custom_normals=True)
+                elif self.game_mode == "THUG1":
+                    print("Running THUG1 scn import on: {}{}".format(head, tail))
+                    bpy.ops.io.thug1_xbx_scn_to_scene("EXEC_DEFAULT", filename=tail, directory=head, load_tex=False, import_custom_normals=True)
+                elif self.game_mode == "THUG2":
+                    print("Running THUG2 scn import on: {}{}".format(head, tail))
+                    bpy.ops.io.thug2_xbx_scn_to_scene("EXEC_DEFAULT", filename=tail, directory=head, load_tex=False, import_custom_normals=True)
+            else:
+                raise Exception("Unable to parse SCN file path.")
+        # END IMPORT SCN FILE
+        
+        # IMPORT COL FILE
+        if self.col_file_path:
+            head, tail = ntpath.split(self.col_file_path)
+            if head and tail:
+                print("Running col import on: {}{}".format(head, tail))
+                bpy.ops.io.thug_xbx_col_to_scene("EXEC_DEFAULT", filename=tail, directory=head)
+            else:
+                raise Exception("Unable to parse COL file path.")
+        # END IMPORT SCN FILE
+        
+        # IMPORT SKE FILE
+        if self.ske_file_path:
+            head, tail = ntpath.split(self.ske_file_path)
+            if head and tail:
+                print("Running ske import on: {}{}".format(head, tail))
+                bpy.ops.io.import_thug_skeleton("EXEC_DEFAULT", filename=tail, directory=head, set_rotation=False)
+            else:
+                raise Exception("Unable to parse SKE file path.")
+        # END IMPORT SKE FILE
+                
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=800, height=350)
+    
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.label(text="                                        ")
+        col.row().prop(self, "game_mode")
+        col.row().prop(self, "scn_file_path")
+        col.row().prop(self, "col_file_path")
+        col.row().prop(self, "tex_file_path")
+        col.row().prop(self, "ske_file_path")
+
 
 # PANELS
 #############################################
@@ -376,9 +435,17 @@ class THUGObjectUtils(bpy.types.Panel):
     def draw(self, context):
         if not context.scene: return
         scene = context.scene
-        self.layout.row().operator(THUGUtilFillPedestrians.bl_idname, THUGUtilFillPedestrians.bl_label, icon="TEXT")
-        self.layout.row().operator(THUGUtilFillVehicles.bl_idname, THUGUtilFillVehicles.bl_label, icon="TEXT")
-        self.layout.row().operator(THUGUtilBatchTerrain.bl_idname, THUGUtilBatchTerrain.bl_label, icon="TEXT")
-        self.layout.row().operator(THUGUtilBatchRailTerrain.bl_idname, THUGUtilBatchRailTerrain.bl_label, icon="TEXT")
-        self.layout.row().operator(THUGUtilBatchObjectProps.bl_idname, THUGUtilBatchObjectProps.bl_label, icon="TEXT")
-        self.layout.row().operator(THUGUtilShowFirstPoint.bl_idname, THUGUtilShowFirstPoint.bl_label, icon="TEXT")
+        row = self.layout.row()
+        row.column().operator(THUGUtilFillPedestrians.bl_idname, THUGUtilFillPedestrians.bl_label, icon="TEXT")
+        row.column().operator(THUGUtilFillVehicles.bl_idname, THUGUtilFillVehicles.bl_label, icon="TEXT")
+        row = self.layout.row()
+        row.column().operator(THUGUtilBatchTerrain.bl_idname, THUGUtilBatchTerrain.bl_label, icon="TEXT")
+        row.column().operator(THUGUtilBatchObjectProps.bl_idname, THUGUtilBatchObjectProps.bl_label, icon="TEXT")
+        if context.edit_object and context.edit_object.type == 'CURVE':
+            self.layout.row().operator(THUGUtilShowFirstPoint.bl_idname, THUGUtilShowFirstPoint.bl_label, icon="TEXT")
+            
+        self.layout.row().operator(THUGUtilBatchImport.bl_idname, text=THUGUtilBatchImport.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THUGImportNodeArray.bl_idname, text=THUGImportNodeArray.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THUGImportTriggerScripts.bl_idname, text=THUGImportTriggerScripts.bl_label, icon='PLUGIN')
+        self.layout.row().operator(THUGRenameObjects.bl_idname, text=THUGRenameObjects.bl_label, icon='FILE_TEXT')
+        self.layout.row().operator(THUGMergeObjects.bl_idname, text=THUGMergeObjects.bl_label, icon='FILE_TEXT')

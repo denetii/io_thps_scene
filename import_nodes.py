@@ -8,7 +8,7 @@ import struct
 import mathutils
 import math
 from . helpers import *
-
+from . scene_props import thug_empty_update
 
 # PROPERTIES
 #############################################
@@ -774,7 +774,7 @@ def import_nodearray(gamemode):
                         ob.thug_particle_props.EmitRate2Delay[2] = node["EmitRate2DelayRnd"][1]
                         
                         
-                elif node["Class"] == "Pedestrian":
+                elif node["Class"] == "Pedestrian" or node["Class"] == "pedestrian":
                     to_group(ob, "Pedestrians")
                     ob.thug_empty_props.empty_type = "Pedestrian"
                     if "Type" in node:
@@ -802,7 +802,7 @@ def import_nodearray(gamemode):
                     if "skeletonName" in node:
                         ob.thug_ped_props.ped_skeleton = node["skeletonName"]
                     
-                elif node["Class"] == "Vehicle":
+                elif node["Class"] == "Vehicle" or node["Class"] == "vehicle":
                     to_group(ob, "Vehicles")
                     ob.thug_empty_props.empty_type = "Vehicle"
                     if "Type" in node:
@@ -873,6 +873,10 @@ def import_nodearray(gamemode):
                 if "Cluster" in node:
                     ob.thug_cluster_name = node["Cluster"]
      
+                custom_context = lambda: None
+                custom_context.object = ob
+                custom_context.scene = bpy.context.scene
+                thug_empty_update(None, custom_context)
     # STEP 4 - SECOND PASS OF NODEARRAY TO RESOLVE LINKS
     for node in NodeArray:           
         if "Links" in node and bpy.data.objects.get(node["Name"]):
@@ -886,7 +890,11 @@ def import_nodearray(gamemode):
                         ob.thug_rail_connects_to = obj_index['name']
                         print("Object " + node["Name"] + " is linked to: " + obj_index['name'] + "(" + str(_idx) + ")")
         
-        
+
+#----------------------------------------------------------------------------------
+#- Reads a chunk of a text block until the desired text is found, 
+#- then returns what was read
+#----------------------------------------------------------------------------------
 def read_until(textblock, start_line, trigger):
     lines = []
     line_num = 0
@@ -900,7 +908,12 @@ def read_until(textblock, start_line, trigger):
             return lines
         lines.append(line)
     
-def import_triggerscripts():
+    
+#----------------------------------------------------------------------------------
+#- Imports TriggerScripts from the single THUG_SCRIPTS block and separates
+#- into individual text blocks - also updates assignments to objects
+#----------------------------------------------------------------------------------
+def import_triggerscripts(should_replace = False):
     old_scripts = bpy.data.texts.get("THUG_SCRIPTS")
     line_number = 0
     for line in old_scripts.lines:
@@ -909,13 +922,18 @@ def import_triggerscripts():
             script_name = line.body.replace(":i function ", "").replace("$", "")
             print("Found script: " + script_name)
             script_text = read_until(old_scripts, line_number, ":i endfunction")
-            if not bpy.data.texts.get("script_" + script_name, None):
-                print("Writing script: " + script_name)
-                script_block = bpy.data.texts.new(name="script_" + script_name)
-                
-                for script_line in script_text:
-                    script_block.write(script_line.body + "\n")
-
+            if bpy.data.texts.get("script_" + script_name, None):
+                if should_replace == False:
+                    continue
+                print("Removing existing script: {}".format(script_name))
+                bpy.data.texts.remove(bpy.data.texts.get("script_" + script_name))
+                    
+            print("Writing script: " + script_name)
+            script_block = bpy.data.texts.new(name="script_" + script_name)
+            
+            for script_line in script_text:
+                script_block.write(script_line.body + "\n")
+                    
 # OPERATORS
 #############################################
 class THUGImportTriggerScripts(bpy.types.Operator):
@@ -925,10 +943,11 @@ class THUGImportTriggerScripts(bpy.types.Operator):
         ("ScriptsOnly", "Scripts only", "Copies scripts from THUG_SCRIPTS into individual text blocks (the new format)."),
         ("ScriptsAndObjects", "Scripts and objects", "Also updates object references to script names."),
         ), name="Import type", default="ScriptsOnly")
+    replace_scripts = BoolProperty(name="Replace Existing Scripts", default=False, description="Existing scripts with the same name will be replaced.")
     # bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        import_triggerscripts()
+        import_triggerscripts(self.replace_scripts)
         if self.import_type == "ScriptsAndObjects":
             for ob in bpy.data.objects:
                 if ob.thug_triggerscript_props and ob.thug_triggerscript_props.triggerscript_type == "Custom":
@@ -950,7 +969,7 @@ class THUGImportTriggerScripts(bpy.types.Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self)
+        return wm.invoke_props_dialog(self, width=500, height=200)
     
     def draw(self, context):
         layout = self.layout
@@ -958,8 +977,12 @@ class THUGImportTriggerScripts(bpy.types.Operator):
         col.label(text="TriggerScript Import")
         row = col.row()
         row.prop(self, "import_type")
+        row = col.row()
+        row.prop(self, "replace_scripts")
         
-        
+
+#----------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------
 class THUGImportNodeArray(bpy.types.Operator):
     bl_idname = "io.import_thug_nodearray"
     bl_label = "Import NodeArray"
@@ -989,7 +1012,9 @@ class THUGImportNodeArray(bpy.types.Operator):
         row = col.row()
         row.prop(self, "game_mode")
         
-        
+    
+#----------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------
 class THUGRenameObjects(bpy.types.Operator):
     bl_idname = "io.import_thug_renameobjects"
     bl_label = "Rename Objects"
@@ -1018,8 +1043,100 @@ class THUGRenameObjects(bpy.types.Operator):
                 
         return {'FINISHED'}
 
-    #@classmethod
-    #def poll(cls, context):
-    #    return "NodeArray" in bpy.data.texts
-    
-        row.label(text="")
+
+#----------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------
+class THUGMergeObjects(bpy.types.Operator):
+    bl_idname = "io.import_thug_mergeobjects"
+    bl_label = "Merge Scene/Collision"
+    bl_description = "Merges separate collision/scene meshes into one, where possible (identical mesh)."
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        scn_mesh = [o for o in bpy.data.objects if (o.type == 'MESH' and o.name.endswith("_SCN"))]
+        for ob in scn_mesh:
+            clean_name = get_clean_name(ob)
+            if not bpy.data.objects.get(clean_name):
+                if not bpy.data.objects.get(clean_name + "_COL"):
+                    print("No scene mesh to compare with for: {}".format(ob.name))
+                    continue
+                else:
+                    col_ob = bpy.data.objects.get(clean_name + "_COL")
+            else:
+                col_ob = bpy.data.objects.get(clean_name)
+                
+            if not is_duplicate_mesh(ob, col_ob):
+                print("Scene mesh does NOT match, skipping!")
+                continue
+                
+            # At this point, we've confirmed the meshes are duplicated, so copy the collision flags 
+            # and other attributes from the COL mesh
+            bm = bmesh.new()
+            bm.from_mesh(ob.data)
+            bm2 = bmesh.new()
+            bm2.from_mesh(col_ob.data)
+            
+            cfl = bm.faces.layers.int.get("collision_flags")
+            ttl = bm.faces.layers.int.get("collision_flags")
+            if not cfl:
+                cfl = bm.faces.layers.int.new("collision_flags")
+                ttl = bm.faces.layers.int.new("terrain_type")
+            cfl2 = bm2.faces.layers.int.get("collision_flags")
+            ttl2 = bm2.faces.layers.int.get("terrain_type")
+                
+            face_flags = []
+            face_terrain = []
+            face_indices = []
+            for face in bm2.faces:
+                face_flags.append(face[cfl2])
+                face_terrain.append(face[ttl2])
+                face_indices.append(face.calc_center_bounds())
+                
+            for face in bm.faces:
+                face_index = face_indices.index(face.calc_center_bounds())
+                face[cfl] = face_flags[face_index]
+                face[ttl] = face_terrain[face_index]
+                
+            bm.to_mesh(ob.data)
+            bm.free()
+            bm2.free()
+            
+            # Now the scene mesh has the terrain/face flags of the collision mesh
+            # All that's left is to apply the object properties from the collision mesh, then delete!
+            ob.thug_object_class = col_ob.thug_object_class
+            ob.thug_occluder = col_ob.thug_occluder
+            ob.thug_triggerscript_props.triggerscript_type = col_ob.thug_triggerscript_props.triggerscript_type
+            ob.thug_triggerscript_props.target_node = col_ob.thug_triggerscript_props.target_node
+            ob.thug_triggerscript_props.custom_name = col_ob.thug_triggerscript_props.custom_name
+            is_levelobject = col_ob.thug_object_class == "LevelObject"
+            if is_levelobject:
+                ob.thug_levelobj_props.obj_type = col_ob.thug_levelobj_props.obj_type
+                ob.thug_levelobj_props.obj_bouncy = col_ob.thug_levelobj_props.obj_bouncy
+                ob.thug_levelobj_props.center_of_mass = col_ob.thug_levelobj_props.center_of_mass
+                ob.thug_levelobj_props.contacts.clear()
+                for contact in col_ob.thug_levelobj_props.contacts:
+                    _contact = ob.thug_levelobj_props.contacts.add()
+                    _contact.contact = contact.contact
+                ob.thug_levelobj_props.coeff_restitution = col_ob.thug_levelobj_props.coeff_restitution
+                ob.thug_levelobj_props.coeff_friction = col_ob.thug_levelobj_props.coeff_friction
+                ob.thug_levelobj_props.skater_collision_impulse_factor = col_ob.thug_levelobj_props.skater_collision_impulse_factor
+                ob.thug_levelobj_props.skater_collision_rotation_factor = col_ob.thug_levelobj_props.skater_collision_rotation_factor
+                ob.thug_levelobj_props.skater_collision_assent = col_ob.thug_levelobj_props.skater_collision_assent
+                ob.thug_levelobj_props.skater_collision_radius = col_ob.thug_levelobj_props.skater_collision_radius
+                ob.thug_levelobj_props.mass_over_moment = col_ob.thug_levelobj_props.mass_over_moment
+                ob.thug_levelobj_props.stuckscript = col_ob.thug_levelobj_props.stuckscript
+                ob.thug_levelobj_props.SoundType = col_ob.thug_levelobj_props.SoundType
+            ob.thug_rail_connects_to = col_ob.thug_rail_connects_to
+            ob.thug_created_at_start = col_ob.thug_created_at_start
+            ob.thug_network_option = col_ob.thug_network_option
+            ob.thug_export_collision = col_ob.thug_export_collision
+            ob.thug_node_expansion = col_ob.thug_node_expansion
+            
+            # Now, let's remove the collision object and rename the scene mesh to match
+            mesh_name = col_ob.name
+            context.scene.objects.unlink(col_ob)
+            bpy.data.objects.remove(col_ob)
+            ob.name = mesh_name
+            
+        return {'FINISHED'}
+

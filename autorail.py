@@ -632,15 +632,24 @@ def _export_rails(p, c, operator=None):
                             # Skate action types defined here!
                             _skateaction = ob.data.thug_pathnode_triggers[p_num].SkateAction
                             # ---
-                            p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))
-                            p("\t\t:i {} = {}".format(c("SkateAction"), c(_skateaction)))
+                            if ob.data.thug_pathnode_triggers[p_num].Priority == "":
+                                p("\t\t:i {} = {}".format(c("Priority"), c("Normal")))
+                            else:
+                                p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))
+                            if _skateaction == "":
+                                p("\t\t:i {} = {}".format(c("SkateAction"), c("Continue")))
+                            else:
+                                p("\t\t:i {} = {}".format(c("SkateAction"), c(_skateaction)))
                             # Output specific props depending on the skate action below
                             #if ob.data.thug_pathnode_triggers[p_num].do_continue:
                             p("\t\t:i {}".format(c("Continue")))
                             p("\t\t:i {} = {}".format(c("ContinueWeight"), f(1.0)))
                             if ob.data.thug_pathnode_triggers[p_num].JumpToNextNode:
                                 p("\t\t:i {}".format(c("JumpToNextNode")))
-                                p("\t\t:i {} = {}".format(c("JumpHeight"), f(ob.data.thug_pathnode_triggers[p_num].JumpHeight)))
+                                if ob.data.thug_pathnode_triggers[p_num].JumpHeight == 0.0:
+                                    p("\t\t:i {} = {}".format(c("JumpHeight"), f(75.0)))
+                                else:
+                                    p("\t\t:i {} = {}".format(c("JumpHeight"), f(ob.data.thug_pathnode_triggers[p_num].JumpHeight)))
                                 if ob.data.thug_pathnode_triggers[p_num].SpinAngle > 0:
                                     p("\t\t:i {} = {}".format(c("SpinAngle"), f(ob.data.thug_pathnode_triggers[p_num].SpinAngle)))
                                     p("\t\t:i {} = {}".format(c("SpinDirection"), c(ob.data.thug_pathnode_triggers[p_num].SpinDirection)))
@@ -651,22 +660,16 @@ def _export_rails(p, c, operator=None):
                                 else:
                                     rail_type = "TERRAIN_" + rail_type
                                 p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
-                                
-                            # This stuff should no longer be necessary as these props don't appear to be used by the game
-                            #elif _skateaction == "Manual":
-                            #    p("\t\t:i {} = {}".format(c("ManualType"), c(ob.data.thug_pathnode_triggers[p_num].ManualType)))
-                            #elif _skateaction == "Stop":
-                            #    p("\t\t:i {} = {}".format(c("Deceleration"), f(ob.data.thug_pathnode_triggers[p_num].Deceleration)))
-                            #    p("\t\t:i {} = {}".format(c("StopTime"), f(ob.data.thug_pathnode_triggers[p_num].StopTime)))
-                            #elif _skateaction == "Vert_Grab":
+                          
                                 
                         # Walking ped logic goes here!
                         elif ob.thug_waypoint_props.PedType == "Walk":
                             p("\t\t:i {}".format(c("Continue")))
                             p("\t\t:i {} = {}".format(c("ContinueWeight"), f(1.0)))
-                            #if ob.data.thug_pathnode_triggers[p_num].JumpToNextNode:
-                            #    p("\t\t:i {}".format(c("JumpToNextNode")))
-                            p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))
+                            if ob.data.thug_pathnode_triggers[p_num].Priority == "":
+                                p("\t\t:i {} = {}".format(c("Priority"), c("Normal")))
+                            else:
+                                p("\t\t:i {} = {}".format(c("Priority"), c(ob.data.thug_pathnode_triggers[p_num].Priority)))
                             
                 # No individual node properties are defined, so use the object-level settings    
                 else:
