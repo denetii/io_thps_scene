@@ -25,10 +25,7 @@ class ExportError(Exception):
 
 # METHODS
 #############################################
-def pack_pre(root_dir, output_file):
-    files = [os.path.join(r, f) for r, ds, fs in os.walk(root_dir) for f in fs]
-    files = [f[2:] if f.startswith(".\\") else f for f in files]
-
+def pack_pre(root_dir, files, output_file):
     pack = struct.pack
     with open(output_file, "wb") as outp:
         outp.write(pack("I", 0))
@@ -89,7 +86,11 @@ def do_export(operator, context, target_game):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-    pre_ext = ".prx" if target_game == "THUG2" else ".pre"
+    ext_pre = (".prx" if target_game == "THUG2" else ".pre")
+    ext_col = (".col" if (target_game == "THUG1" and not self.pack_pre) else ".col.xbx" )
+    ext_scn = (".scn" if (target_game == "THUG1" and not self.pack_pre) else ".scn.xbx" )
+    ext_tex = (".tex" if (target_game == "THUG1" and not self.pack_pre) else ".tex.xbx" )
+    ext_qb = ".qb"
 
     self.report({'OPERATOR'}, "")
     self.report({'INFO'}, "-" * 20)
@@ -111,89 +112,30 @@ def do_export(operator, context, target_game):
         if self.generate_col_file or self.generate_scn_file or self.generate_scripts_files:
             orig_objects, temporary_objects = autosplit._prepare_autosplit_objects(operator, context,target_game)
 
-        if target_game == "THUG1":
-            path = j(directory, "Levels/" + filename)
-        else:
-            path = j(directory, filename + "col/Levels/" + filename)
+        path = j(directory, "Levels\\" + filename)
         md(path)
         if self.generate_col_file:
-            self.report({'OPERATOR'}, "Generating collision file... ")
-            if target_game == "THUG1":
-                export_col(filename + ".col", path, target_game, self)
-            else:
-                export_col(filename + ".col.xbx", path, target_game, self)
-        if self.pack_col:
-            if target_game == "THUG2":
-                pack_pre(j(directory, filename + "col"),
-                         j(directory, filename + "col" + pre_ext))
-                self.report({'OPERATOR'}, "Exported " + j(directory, filename + "col" + pre_ext))
-
-            if target_game == "THUG1":
-                netpath = j(directory, "Levels/" + filename)
-                md(netpath)
-                shutil.copy(j(path, filename + ".col"), j(netpath, filename + "_net.col"))
-                self.report({'OPERATOR'}, "Exported " + j(directory, filename + "_net.col"))
-
-        if target_game == "THUG1":
-            path = j(directory, "Levels/" + filename)
-        else:
-            path = j(directory, filename + "scn/Levels/" + filename)
-        md(path)
+            export_col(filename + ext_col, path, target_game, self)
+            
         if self.generate_scn_file:
             self.report({'OPERATOR'}, "Generating scene file... ")
-            if target_game == "THUG1":
-                export_scn(filename + ".scn", path, target_game, self)
-            else:
-                export_scn(filename + ".scn.xbx", path, target_game, self)
+            export_scn(filename + ext_scn, path, target_game, self)
 
-        if self.properties.generate_tex_file:
+        if self.generate_tex_file:
             md(path)
             self.report({'OPERATOR'}, "Generating tex file... ")
-            if target_game == "THUG1":
-                export_tex(filename + ".tex", path, target_game, self)
-            else:
-                export_tex(filename + ".tex.xbx", path, target_game, self)
-        else:
-            self.report({'OPERATOR'}, "Skipping tex file generation... ")
+            export_tex(filename + ext_tex, path, target_game, self)
 
-        if self.pack_scn:
-            if target_game == "THUG2":
-                md(path + "_sky")
-                shutil.copy(
-                    j(base_files_dir, 'default_sky', DEFAULT_SKY_SCN),
-                    j(path + "_sky", filename + "_sky.scn.xbx"))
-                shutil.copy(
-                    j(base_files_dir, 'default_sky', DEFAULT_SKY_TEX),
-                    j(path + "_sky", filename + "_sky.tex.xbx"))
-                
-                pack_pre(j(directory, filename + "scn"),
-                         j(directory, filename + "scn" + pre_ext))
-                self.report({'OPERATOR'}, "Exported " + j(directory, filename + "scn" + pre_ext))
+        if self.generate_scn_file:
+            skypath = j(directory, "Levels\\" + filename + "_sky")
+            md(skypath)
+            shutil.copy(
+                j(base_files_dir, 'default_sky', DEFAULT_SKY_SCN),
+                j(skypath, filename + "_sky" + ext_scn))
+            shutil.copy(
+                j(base_files_dir, 'default_sky', DEFAULT_SKY_TEX),
+                j(skypath, filename + "_sky" + ext_tex))
 
-            elif target_game == "THUG1":
-                netpath = j(directory, "Levels/" + filename)
-                md(netpath)
-                md(netpath + "_sky")
-                shutil.copy(j(path, filename + ".scn"), j(netpath, filename + "_net.scn"))
-                if os.path.exists(j(path, filename + ".tex")):
-                    shutil.copy(j(path, filename + ".tex"), j(netpath, filename + "_net.tex"))
-                shutil.copy(
-                    j(base_files_dir, 'default_sky', DEFAULT_SKY_SCN),
-                    j(netpath + "_sky", filename + "_sky.scn"))
-                shutil.copy(
-                    j(base_files_dir, 'default_sky', DEFAULT_SKY_TEX),
-                    j(netpath + "_sky", filename + "_sky.tex"))
-
-                if target_game == "THUG2":
-                    pack_pre(j(directory, filename + "scn_NET"),
-                             j(directory, filename + "scn_NET" + pre_ext))
-                    self.report({'OPERATOR'}, "Exported " + j(directory, filename + "scn_NET" + pre_ext))
-
-        if target_game == "THUG1":
-            path = j(directory, "Levels/" + filename)
-        else:
-            path = j(directory, filename + "qb/Levels/" + filename)
-        md(path)
         compilation_successful = None
         if self.generate_scripts_files:
             self.report({'OPERATOR'}, "Generating QB files... ")
@@ -254,12 +196,39 @@ def do_export(operator, context, target_game):
             # /Build _SCRIPTS qb file
             # #########################
             
-        if self.pack_scripts:
-            if target_game == "THUG2":
-                pack_pre(j(directory, filename + "qb"),
-                         j(directory, filename + ("_scripts" if target_game == "THUG2" else "") + pre_ext))
-                self.report({'OPERATOR'}, "Exported " + j(directory, filename + pre_ext))
 
+        # #########################
+        # Build PRE files
+        if self.pack_pre:
+            md(j(directory, "pre"))
+            if self.generate_scripts_files:
+                pack_files = []
+                pack_files.append(j(path, filename + ext_qb))
+                pack_files.append(j(path, filename + "_scripts" + ext_qb))
+                if target_game == "THUG2":
+                    pack_files.append(j(path, filename + "_thugpro" + ext_qb))
+                    pack_pre( directory, pack_files, j(directory, "pre", filename + "_scripts" + ext_pre) )
+                else:
+                    pack_pre( directory, pack_files, j(directory, "pre", filename + ext_pre) )
+                self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + ext_pre))
+                
+            if self.generate_col_file:
+                pack_files = []
+                pack_files.append(j(path, filename + ext_col))
+                pack_pre( directory, pack_files, j(directory, "pre", filename + "col" + ext_pre) )
+                self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + "col" + ext_pre))
+            if self.generate_scn_file:
+                pack_files = []
+                pack_files.append(j(path, filename + ext_scn))
+                pack_files.append(j(path, filename + ext_tex))
+                pack_files.append(j(skypath, filename + "_sky" + ext_scn))
+                pack_files.append(j(skypath, filename + "_sky" + ext_tex))
+                pack_pre( directory, pack_files, j(directory, "pre", filename + "scn" + ext_pre) )
+                self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + "scn" + ext_pre))
+                
+        # /Build PRE files
+        # #########################
+                         
         end_time = datetime.datetime.now()
         if (compilation_successful is None) or compilation_successful:
             print("EXPORT COMPLETE! Thank you for waiting :)")
@@ -311,6 +280,13 @@ def do_export_model(operator, context, target_game):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
+    ext_col = (".col" if target_game == "THUG1" else ".col.xbx" )
+    ext_scn = (".mdl" if target_game == "THUG1" else ".mdl.xbx" )
+    ext_tex = (".tex" if target_game == "THUG1" else ".tex.xbx" )
+    ext_qb = ".qb"
+    if self.model_type == "skin":
+        ext_scn = (".skin" if target_game == "THUG1" else ".skin.xbx" )
+    
     self.report({'OPERATOR'}, "")
     self.report({'INFO'}, "-" * 20)
     self.report({'INFO'}, "Starting export of {} at {}".format(filename, start_time.time()))
@@ -332,28 +308,19 @@ def do_export_model(operator, context, target_game):
 
         path = j(directory, "Models/" + filename)
         md(path)
+        
         # Generate COL file
         self.report({'OPERATOR'}, "Generating collision file... ")
-        if target_game == "THUG2":
-            export_col(filename + ".col.xbx", path, target_game, self)
-        else:
-            export_col(filename + ".col", path, target_game, self)
+        export_col(filename + ext_col, path, target_game, self)
         
         # Generate SCN/MDL file
         self.report({'OPERATOR'}, "Generating scene file... ")
-        if target_game == "THUG2":
-            export_scn(filename + ".mdl.xbx", path, target_game, self)
-        else:
-            export_scn(filename + ".mdl", path, target_game, self)
+        export_scn(filename + ext_scn, path, target_game, self)
 
         # Generate TEX file
         self.report({'OPERATOR'}, "Generating tex file... ")
-        if target_game == "THUG2":
-            export_tex(filename + ".tex.xbx", path, target_game, self)
-        else:
-            export_tex(filename + ".tex", path, target_game, self)
+        export_tex(filename + ext_tex, path, target_game, self)
             
-        
         # Maybe generate QB file
         compilation_successful = None
         if self.generate_scripts_files:
@@ -390,6 +357,7 @@ def do_export_model(operator, context, target_game):
             self.report({'INFO'}, "Exported model {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
         else:
             self.report({'WARNING'}, "Failed exporting model {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
+            
     except ExportError as e:
         self.report({'ERROR'}, "Export failed.\nExport error: {}".format(str(e)))
     except Exception as e:
@@ -707,50 +675,28 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
     directory = StringProperty(name="Directory")
 
     generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack"
-        , description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+    use_vc_hack = BoolProperty(name="Vertex color hack",
+        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)"
-        , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
-        , default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All"
-        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
-        , default=False)
-    autosplit_faces_per_subobject = IntProperty(
-        name="Faces Per Subobject",
+    autosplit_everything = BoolProperty(name="Autosplit All",
+        description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
+    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(
-        name="Max Radius",
+    autosplit_max_radius = FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    is_park_editor = BoolProperty(
-        name="Is Park Editor",
-        description="Use this option when exporting a park editor dictionary.",
-        default=False)
-    generate_tex_file = BoolProperty(
-        name="Generate a .tex file",
-        default=True)
-    generate_scn_file = BoolProperty(
-        name="Generate a .scn file",
-        default=True)
-    pack_scn = BoolProperty(
-        name="Pack the scene .pre",
-        default=True)
-    generate_col_file = BoolProperty(
-        name="Generate a .col file",
-        default=True)
-    pack_col = BoolProperty(
-        name="Pack the col .pre",
-        default=True)
-    generate_scripts_files = BoolProperty(
-        name="Generate scripts",
-        default=True)
-    pack_scripts = BoolProperty(
-        name="Pack the scripts .pre",
-        default=True)
+    pack_pre = BoolProperty(name="Pack files into .prx", default=True)
+    is_park_editor = BoolProperty(name="Is Park Editor",
+        description="Use this option when exporting a park editor dictionary.", default=False)
+    generate_tex_file = BoolProperty(name="Generate a .tex file", default=True)
+    generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
+    generate_col_file = BoolProperty(name="Generate a .col file", default=True)
+    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
 
 #    filepath = StringProperty()
     skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
@@ -780,6 +726,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "pack_pre")
         self.layout.row().prop(self, "generate_tex_file")
         self.layout.row().prop(self, "generate_scn_file")
         self.layout.row().prop(self, "generate_col_file")
@@ -802,28 +749,28 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
 
-    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=True)
+    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
     is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    use_vc_hack = BoolProperty(name="Vertex color hack"
-        , description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
-        , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)"
-        , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
-        , default=False)
+    use_vc_hack = BoolProperty(name="Vertex color hack", description = "Doubles intensity of vertex colours.", default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     
     # AUTOSPLIT SETTINGS
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
-    autosplit_faces_per_subobject = IntProperty(
-        name="Faces Per Subobject",
+    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(
-        name="Max Radius",
+    autosplit_max_radius = FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
+    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
+    model_type = EnumProperty(items = (
+        ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
+        ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
+    ), name="Model Type", default="skin")
     generate_scripts_files = BoolProperty(
         name="Generate scripts",
         default=True)
@@ -852,6 +799,7 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "model_type", expand=True)
         self.layout.row().prop(self, "generate_scripts_files")
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
@@ -862,67 +810,43 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
 #############################################
 class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
     bl_idname = "export.scene_to_thug2_xbx"
-    bl_label = "Scene to THUG2 level files"
-    # bl_options = {'REGISTER', 'UNDO'}
+    bl_label = "Scene to THUG2/PRO level files"
 
     def report(self, category, message):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
-
 
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
 
     generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
     use_vc_hack = BoolProperty(name="Vertex color hack",default=False, options={'HIDDEN'})
-    speed_hack = BoolProperty(name="No modifiers (speed hack)"
-        , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
-        , default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
     autosplit_everything = BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
-    autosplit_faces_per_subobject = IntProperty(
-        name="Faces Per Subobject",
+    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(
-        name="Max Radius",
+    autosplit_max_radius = FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    is_park_editor = BoolProperty(
-        name="Is Park Editor",
-        description="Use this option when exporting a park editor dictionary.",
-        default=False)
+    is_park_editor = BoolProperty(name="Is Park Editor",
+        description="Use this option when exporting a park editor dictionary.", default=False)
+    pack_pre = BoolProperty(name="Pack files into .prx", default=True)
     generate_tex_file = BoolProperty(
         name="Generate a .tex file",
-        description="If you have already generated a .tex file, and didn't change/add any new images in meantime, you can uncheck this.",
-        default=True)
-    generate_scn_file = BoolProperty(
-        name="Generate a .scn file",
-        default=True)
-    pack_scn = BoolProperty(
-        name="Pack the scene .prx",
-        default=True)
-    generate_col_file = BoolProperty(
-        name="Generate a .col file",
-        default=True)
-    pack_col = BoolProperty(
-        name="Pack the col .prx",
-        default=True)
-    generate_scripts_files = BoolProperty(
-        name="Generate scripts",
-        default=True)
-    pack_scripts = BoolProperty(
-        name="Pack the scripts .prx",
-        default=True)
-#    filepath = StringProperty()
+        description="If you have already generated a .tex file, and didn't change/add any new images in meantime, you can uncheck this.", default=True)
+    generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
+    generate_col_file = BoolProperty(name="Generate a .col file", default=True)
+    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
 
     skybox_name = StringProperty(name="Skybox name", default="THUG2_Sky")
     export_scale = FloatProperty(name="Export scale", default=1)
-    mipmap_offset = IntProperty(
-        name="Mipmap offset",
+    mipmap_offset = IntProperty(name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
     only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
@@ -936,7 +860,6 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
 
         return {'RUNNING_MODAL'}
 
-    
     def draw(self, context):
         self.layout.row().prop(self, "skybox_name")
         self.layout.row().prop(self, "generate_vertex_color_shading")
@@ -947,13 +870,11 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "pack_pre")
         self.layout.row().prop(self, "generate_tex_file")
         self.layout.row().prop(self, "generate_scn_file")
-        self.layout.row().prop(self, "pack_scn")
         self.layout.row().prop(self, "generate_col_file")
-        self.layout.row().prop(self, "pack_col")
         self.layout.row().prop(self, "generate_scripts_files")
-        self.layout.row().prop(self, "pack_scripts")
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
         box.row().prop(self, "mipmap_offset")
@@ -972,31 +893,28 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
 
-    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=True)
+    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
     use_vc_hack = BoolProperty(name="Vertex color hack",default=False, options={'HIDDEN'})
-    speed_hack = BoolProperty(name="No modifiers (speed hack)"
-        , description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export."
-        , default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All"
-        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
-        , default=False)
-    autosplit_faces_per_subobject = IntProperty(
-        name="Faces Per Subobject",
+    autosplit_everything = BoolProperty(name="Autosplit All",
+        description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
+    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(
-        name="Max Radius",
+    autosplit_max_radius = FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
     is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    generate_scripts_files = BoolProperty(
-        name="Generate scripts",
-        default=True)
+    model_type = EnumProperty(items = (
+        ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
+        ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
+    ), name="Model Type", default="skin")
+    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
     export_scale = FloatProperty(name="Export scale", default=1)
-    mipmap_offset = IntProperty(
-        name="Mipmap offset",
+    mipmap_offset = IntProperty(name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
     only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
@@ -1019,6 +937,7 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "model_type")
         self.layout.row().prop(self, "generate_scripts_files")
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)

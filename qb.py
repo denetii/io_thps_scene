@@ -1212,13 +1212,22 @@ def export_model_qb(filename, directory, target_game, operator=None):
         p = lambda *args, **kwargs: print(*args, **kwargs, file=string_output)
         p("%include \"qb_table.qbi\"")
 
-        custom_script_text = bpy.data.texts.get("THUG_SCRIPTS", None)
-        if custom_script_text:
-            p(custom_script_text.as_string())
+        # Dump all TriggerScript text blocks here!
+        all_triggerscripts = [s for s in bpy.data.texts if s.name.startswith("script_")]
+        for ts in all_triggerscripts:
+            p(":i function $" + ts.name[7:] + "$")
+            if target_game == "THUG1":
+                # Make sure we don't export the THUG2 if/else conditions!
+                p(ts.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
+            else:
+                p(ts.as_string())
+            p(":i endfunction")
             p("")
-            p("#/ custom script code end")
-            p("")
-
+        p("")
+        p("#/ custom script code end")
+        p("")
+        
+        # Start listing the actual NodeArray...
         p("$" + filename + "_NodeArray$ =")
         p(":i :a{")
 
@@ -1331,21 +1340,6 @@ def export_model_qb(filename, directory, target_game, operator=None):
     with open(os.path.join(directory, "qb_table.qbi"), "w") as outp:
         for s, checksum in checksums.items():
             outp.write("#addx 0x{:08x} \"{}\"\n".format(checksum, s))
-
-    if False: # and target_game == "THUG2":
-        _scripts_path = os.path.join(directory, filename + "_scripts.txt")
-        if not os.path.exists(_scripts_path):
-            with open(_scripts_path, "w") as outp:
-                outp.write(":end")
-    else:
-        _scripts_path = os.path.join(directory, filename + "_scripts.qb")
-        if not os.path.exists(_scripts_path):
-            with open(_scripts_path, "wb") as outp:
-                outp.write(b'\x00')
-
-    if target_game == "THUG2":
-        with open(os.path.join(directory, filename + "_thugpro.qb"), "wb") as outp:
-            outp.write(b'\x00')
 
 
 #----------------------------------------------------------------------------------

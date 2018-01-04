@@ -250,6 +250,8 @@ def export_scn_sectors_ug2(output_file, operator=None):
 
                         if flags & SECFLAGS_HAS_VERTEX_COLORS:
                             r, g, b, a = v.vc or FULL_WHITE
+                            if is_levelobject:
+                                r, g, b, a = FULL_WHITE
                             a = (int(a * VC_MULT) & 0xff) << 24
                             r = (int(r * VC_MULT) & 0xff) << 16
                             g = (int(g * VC_MULT) & 0xff) << 8
