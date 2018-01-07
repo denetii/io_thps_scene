@@ -15,6 +15,7 @@ from . export_thug2 import *
 from . export_shared import *
 from . import_nodes import *
 from . presets import *
+from . import script_template
 
 # PROPERTIES
 #############################################
@@ -229,6 +230,7 @@ def register_menus():
     addPresetNodes()
     addPresetMesh()
     bpy.types.INFO_MT_add.append(add_menu_func)
+    script_template.init_templates()
 #----------------------------------------------------------------------------------
 def unregister_menus():
     bpy.types.INFO_MT_file_import.remove(import_menu_func)

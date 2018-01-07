@@ -14,6 +14,7 @@ from . collision import *
 from . import scene_props
 from . import qb 
 from . qb import *
+from . import script_template
 
 # METHODS
 #############################################
@@ -168,8 +169,7 @@ def _thug_object_settings_draw(self, context):
     if ob.type == "EMPTY" and ob.thug_empty_props.empty_type in ( "Pedestrian", "Vehicle" ):
         self.layout.row().prop_search(
             ob, "thug_rail_connects_to",
-            context.window_manager,
-            "thug_all_rails")
+            context.window_manager.thug_all_nodes, "paths")
         if (ob.thug_rail_connects_to and
                 ob.thug_rail_connects_to in bpy.data.objects and
                 bpy.data.objects[ob.thug_rail_connects_to].type != "CURVE"):
@@ -196,16 +196,7 @@ def _thug_object_settings_draw(self, context):
                     ob.thug_levelobj_props, "stuckscript",
                     bpy.data,
                     "texts")
-            # Display Links option for LevelObjects, as they support scripting
-            box.row().prop_search(
-                ob, "thug_rail_connects_to",
-                context.window_manager,
-                "thug_all_rails")
-            if (ob.thug_rail_connects_to and
-                    ob.thug_rail_connects_to in bpy.data.objects and
-                    bpy.data.objects[ob.thug_rail_connects_to].type != "CURVE"):
-                self.layout.label(text=ob.thug_rail_connects_to + " is not a curve!", icon="ERROR")
-            
+                    
         self.layout.row().prop(ob, "thug_export_collision")
         self.layout.row().prop(ob, "thug_export_scene")
         if ob.thug_export_scene:
@@ -231,29 +222,45 @@ def _thug_object_settings_draw(self, context):
     if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type != "") or ob.type == "EMPTY":
         self.layout.row().prop(ob, "thug_created_at_start")
         self.layout.row().prop(ob, "thug_network_option")
-        self.layout.row().prop(ob.thug_triggerscript_props, "triggerscript_type")
-        if ob.thug_triggerscript_props.triggerscript_type in ("Killskater", "Killskater_Water", "Teleport"):
-            _update_restart_collection(self, context)
-            self.layout.row().prop_search(
-                ob.thug_triggerscript_props,
-                "target_node",
-                context.window_manager,
-                "thug_all_restarts")
-        elif ob.thug_triggerscript_props.triggerscript_type in ("Gap"):
-            ob.thug_triggerscript_props.gap_props.draw(self, context)
-        elif ob.thug_triggerscript_props.triggerscript_type in ("Custom"):
-            
-            box = self.layout.box().column(True)
-            box.row().prop_search(
-                ob.thug_triggerscript_props, "custom_name",
-                bpy.data,
-                "texts")
+                
+        # New template system below!
+        box = self.layout.box().column(True)
+        box.row().prop(ob.thug_triggerscript_props, "template_name")
+        if ob.thug_triggerscript_props.template_name not in [ "None", "Custom" ]:
+            #print("attempting to show template params")
+            tmpl = script_template.get_template(ob.thug_triggerscript_props.template_name)
+            #print(tmpl)
+            paramindex = 0
+            for prm in tmpl['Parameters']:
+                paramindex += 1
+                if prm['Name'] and prm['Type']:
+                    if prm['Type'] == 'String':
+                        box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_string", text=prm['Name'])
+                    elif prm['Type'] == 'Integer':
+                        box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_int", text=prm['Name'])
+                    elif prm['Type'] == 'Float':
+                        box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_float", text=prm['Name'])
+                    elif prm['Type'] == 'Enum':
+                        box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_enum", text=prm['Name'])
+                    elif prm['Type'] == 'Restart':
+                        box.row().prop_search(ob.thug_triggerscript_props, "param" + str(paramindex) + "_string", 
+                        context.window_manager.thug_all_nodes, "restarts", text=prm['Name'])
+                    elif prm['Type'] == 'Rail' or prm['Type'] == 'Path':
+                        box.row().prop_search(ob.thug_triggerscript_props, "param" + str(paramindex) + "_string", 
+                        context.window_manager.thug_all_nodes, "paths", text=prm['Name'])
+                    elif prm['Type'] == 'Script':
+                        box.row().prop_search(ob.thug_triggerscript_props, "param" + str(paramindex) + "_string", 
+                        context.window_manager.thug_all_nodes, "scripts", text=prm['Name'])
+                        
+        elif ob.thug_triggerscript_props.template_name == "Custom":
+            box.row().prop_search(ob.thug_triggerscript_props, "custom_name", bpy.data, "texts")
             box.row().operator(THUGCreateTriggerScript.bl_idname, THUGCreateTriggerScript.bl_label)
             if ob.thug_triggerscript_props.custom_name != '' and not ob.thug_triggerscript_props.custom_name.startswith("script_"):
                 box = self.layout.box().column(True)
                 box.label("Bad TriggerScript name!", icon="ERROR")
                 box.label("Name must start with '_script' to be exported.")
-                
+        # End new template system
+        
         if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type == "Rail"):
             self.layout.row().prop(ob, "thug_is_trickobject")
             self.layout.row().prop(ob, "thug_cluster_name")
@@ -269,18 +276,16 @@ def _thug_object_settings_draw(self, context):
             self.layout.row().operator(AutoRailMesh.bl_idname, AutoRailMesh.bl_label)
             
         self.layout.row().operator(UpdateRails.bl_idname, UpdateRails.bl_label)
-        _update_rails_collection(self, context)
-        #_update_pathnodes_collections()
         self.layout.row().prop_search(
             ob, "thug_rail_connects_to",
-            context.window_manager,
-            "thug_all_rails")
+            context.window_manager.thug_all_nodes, "paths")
         if (ob.thug_rail_connects_to and
                 ob.thug_rail_connects_to in bpy.data.objects and
                 bpy.data.objects[ob.thug_rail_connects_to].type != "CURVE"):
             self.layout.label(text=ob.thug_rail_connects_to + " is not a curve!", icon="ERROR")
 
     self.layout.row().prop(ob, "thug_node_expansion")
+    scene_props.update_node_collection(self, context)
 
                             
 #----------------------------------------------------------------------------------

@@ -8,6 +8,7 @@ from . import autorail, helpers
 from . constants import *
 from . autorail import *
 from . helpers import *
+from . import script_template
 
 # PROPERTIES
 #############################################
@@ -27,61 +28,12 @@ def blub_float(value):
 def blub_str(string):
     return "%s({},\"{}\")".format(len(string), string)
 #----------------------------------------------------------------------------------
-def obj_get_reserved_by(obj):
-    return None
-
-    rb = obj.thug_triggerscript_props.gap_props.reserved_by
-    rbo = bpy.data.objects.get(rb)
-    if rbo:
-        if (rbo.thug_triggerscript_props.triggerscript_type != "Gap" or
-            rbo.thug_triggerscript_props.gap_props.end_object != obj.name):
-            obj.thug_triggerscript_props.gap_props.reserved_by = ""
-            return None
-
-    return rbo
-
-#----------------------------------------------------------------------------------
 def _generate_script(_ob):
     script_props = _ob.thug_triggerscript_props
-    t = script_props.triggerscript_type
-    if t in ("Killskater_Water", "Killskater", "Teleport"):
-        target = script_props.target_node
-        if not target:
-            for ob in bpy.data.objects:
-                if ob.type == "EMPTY" and \
-                    ob.thug_empty_props.empty_type in ("SingleRestart", "MultiRestart", "TeamRestart"):
-                    target = get_clean_name(ob)
-        else:
-            target = get_clean_string(target)
-
-    elif t == "Killskater_Water":
-        script_name = "GENERATED_Killskater_Water_to_{}".format(target)
-        script_code = """
-:i function ${}$
-    :i call $Sk3_Killskater_Water$ arguments
-        $nodename$ = ${}$
-:i endfunction
-""".format(script_name, target)
-    elif t == "Killskater":
-        script_name = "GENERATED_Killskater_to_{}".format(target)
-        script_code = """
-:i function ${}$
-    :i call $Sk3_Killskater$ arguments
-        $nodename$ = ${}$
-:i endfunction
-""".format(script_name, target)
-    elif t == "Teleport":
-        script_name = "GENERATED_Teleport_to_{}".format(target)
-        script_code = """
-:i function ${}$
-    :i call $TeleportSkaterToNode$ arguments
-        $nodename$ = ${}$
-    #/ :i call $create_panel_message$
-    #/    $text$ = %s(11,"Teleported!")
-:i endfunction
-""".format(script_name, target)
-    else:
-        raise Exception("Unknown script type: {}".format(t))
+    tmpl = script_template.get_template(script_props.template_name)
+    
+    script_name, script_code = script_template.generate_template_script(_ob, tmpl, 'Blub')
+    
     return script_name, script_code
 
 #----------------------------------------------------------------------------------
@@ -319,8 +271,8 @@ def export_qb(filename, directory, target_game, operator=None):
                                              c(ob.thug_cluster_name if ob.thug_cluster_name else clean_name)))
                 p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
 
-                if col_ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(col_ob):
-                    if (col_ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(col_ob)):
+                if col_ob.thug_triggerscript_props.template_name != "None":
+                    if col_ob.thug_triggerscript_props.template_name == "Custom":
                         script_name = format_triggerscript_name(col_ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
@@ -786,8 +738,8 @@ def export_qb(filename, directory, target_game, operator=None):
                     if ob.thug_network_option == "NetEnabled":
                         p("\t\t:i {}".format(c("Permanent")))
                         
-                if ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(ob):
-                    if (ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(ob)):
+                if ob.thug_triggerscript_props.template_name != "None":
+                    if ob.thug_triggerscript_props.template_name == "Custom":
                         script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
@@ -1272,8 +1224,8 @@ def export_model_qb(filename, directory, target_game, operator=None):
                                              c(ob.thug_cluster_name if ob.thug_cluster_name else clean_name)))
                 p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
 
-                if ob.thug_triggerscript_props.triggerscript_type != "None" or obj_get_reserved_by(ob):
-                    if (ob.thug_triggerscript_props.triggerscript_type == "Custom" and not obj_get_reserved_by(ob)):
+                if ob.thug_triggerscript_props.template_name != "None":
+                    if ob.thug_triggerscript_props.template_name == "Custom":
                         script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:

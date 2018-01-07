@@ -8,21 +8,14 @@ from . collision import *
 from . material import *
 from . ui_draw import *
 from . presets import *
+from .  import script_template
 
 # METHODS
 #############################################
-def _gap_props_end_object_changed(gap_props, context):
-    eo = bpy.data.objects.get(gap_props.end_object)
-    if not eo:
-        return
-    eo.thug_triggerscript_props.triggerscript_type = "None"
-    eo.thug_triggerscript_props.gap_props.reserved_by = gap_props.id_data.name
-
-# PROPERTIES
-#############################################
-
+#----------------------------------------------------------------------------------
 # Applies a context-specific mesh as a child of the empty when applicable
 # This just makes it easier to see presets like restarts, CTF flags etc
+#----------------------------------------------------------------------------------
 def thug_empty_update(self, context):
     if context.object.type == "EMPTY":
         ob = context.object
@@ -137,8 +130,38 @@ def thug_empty_update(self, context):
             ob.empty_draw_type = 'CUBE'
             ob.empty_draw_size = 42
             
+#----------------------------------------------------------------------------------
+#- Updates the list(s) of TH nodes in the current scene
+#- Used by the WindowManager to fill autocomplete lists on other props
+#----------------------------------------------------------------------------------
+@bpy.app.handlers.persistent
+def update_node_collection(*args):
+    print("Updating node collections...")
+    context = bpy.context
+    context.window_manager.thug_all_nodes.paths.clear()
+    context.window_manager.thug_all_nodes.restarts.clear()
+    context.window_manager.thug_all_nodes.meshes.clear()
+    context.window_manager.thug_all_nodes.scripts.clear()
+    
+    for ob in bpy.data.objects:
+        if ob.type == 'MESH' and ( ob.thug_export_collision or ob.thug_export_scene ):
+            entry = context.window_manager.thug_all_nodes.meshes.add()
+            entry.name = get_clean_name(ob)
+        elif ob.type == 'EMPTY' and ob.thug_empty_props.empty_type == 'Restart':
+            entry = context.window_manager.thug_all_nodes.restarts.add()
+            entry.name = get_clean_name(ob)
+        elif ob.type == 'CURVE' and ob.thug_path_type in [ 'Rail', 'Ladder', 'Waypoint' ]:
+            entry = context.window_manager.thug_all_nodes.paths.add()
+            entry.name = get_clean_name(ob)
             
-        
+    for tx in bpy.data.texts:
+        if tx.name.startswith('script_'):
+            entry = context.window_manager.thug_all_nodes.scripts.add()
+            entry.name = format_triggerscript_name(tx.name)
+            
+            
+# PROPERTIES
+#############################################
 #----------------------------------------------------------------------------------
 #- Defines the Class of an empty
 #----------------------------------------------------------------------------------
@@ -159,90 +182,6 @@ class THUGEmptyProps(bpy.types.PropertyGroup):
 
 
 #----------------------------------------------------------------------------------
-#- Currently unused
-#----------------------------------------------------------------------------------
-class THUGGapProps(bpy.types.PropertyGroup):
-    flags = {
-        "CANCEL_GROUND": 0x00000001,
-        "CANCEL_AIR": 0x00000002,
-        "CANCEL_RAIL": 0x00000004,
-        "CANCEL_WALL": 0x00000008,
-        "CANCEL_LIP": 0x00000010,
-        "CANCEL_WALLPLANT": 0x00000020,
-        "CANCEL_MANUAL": 0x00000040,
-        "CANCEL_HANG": 0x00000080,
-        "CANCEL_LADDER": 0x00000100,
-        "CANCEL_SKATE": 0x00000200,
-        "CANCEL_WALK": 0x00000400,
-        "CANCEL_DRIVE": 0x00000800,
-        "REQUIRE_GROUND": 0x00010000,
-        "REQUIRE_AIR": 0x00020000,
-        "REQUIRE_RAIL": 0x00040000,
-        "REQUIRE_WALL": 0x00080000,
-        "REQUIRE_LIP": 0x00100000,
-        "REQUIRE_WALLPLANT": 0x00200000,
-        "REQUIRE_MANUAL": 0x00400000,
-        "REQUIRE_HANG": 0x00800000,
-        "REQUIRE_LADDER": 0x01000000,
-        "REQUIRE_SKATE": 0x02000000,
-        "REQUIRE_WALK": 0x04000000,
-        "REQUIRE_DRIVE": 0x08000000,
-    }
-
-    CANCEL_MASK = 0x0000FFFF
-    REQUIRE_MASK = 0xFFFF0000
-
-    CANCEL_GROUND = BoolProperty(name="CANCEL_GROUND", default=True)
-    CANCEL_AIR = BoolProperty(name="CANCEL_AIR", default=False)
-    CANCEL_RAIL = BoolProperty(name="CANCEL_RAIL", default=False)
-    CANCEL_WALL = BoolProperty(name="CANCEL_WALL", default=False)
-    CANCEL_LIP = BoolProperty(name="CANCEL_LIP", default=False)
-    CANCEL_WALLPLANT = BoolProperty(name="CANCEL_WALLPLANT", default=False)
-    CANCEL_MANUAL = BoolProperty(name="CANCEL_MANUAL", default=False)
-    CANCEL_HANG = BoolProperty(name="CANCEL_HANG", default=False)
-    CANCEL_LADDER = BoolProperty(name="CANCEL_LADDER", default=False)
-    CANCEL_SKATE = BoolProperty(name="CANCEL_SKATE", default=False)
-    CANCEL_WALK = BoolProperty(name="CANCEL_WALK", default=False)
-    CANCEL_DRIVE = BoolProperty(name="CANCEL_DRIVE", default=False)
-    REQUIRE_GROUND = BoolProperty(name="REQUIRE_GROUND", default=False)
-    REQUIRE_AIR = BoolProperty(name="REQUIRE_AIR", default=False)
-    REQUIRE_RAIL = BoolProperty(name="REQUIRE_RAIL", default=False)
-    REQUIRE_WALL = BoolProperty(name="REQUIRE_WALL", default=False)
-    REQUIRE_LIP = BoolProperty(name="REQUIRE_LIP", default=False)
-    REQUIRE_WALLPLANT = BoolProperty(name="REQUIRE_WALLPLANT", default=False)
-    REQUIRE_MANUAL = BoolProperty(name="REQUIRE_MANUAL", default=False)
-    REQUIRE_HANG = BoolProperty(name="REQUIRE_HANG", default=False)
-    REQUIRE_LADDER = BoolProperty(name="REQUIRE_LADDER", default=False)
-    REQUIRE_SKATE = BoolProperty(name="REQUIRE_SKATE", default=False)
-    REQUIRE_WALK = BoolProperty(name="REQUIRE_WALK", default=False)
-    REQUIRE_DRIVE = BoolProperty(name="REQUIRE_DRIVE", default=False)
-
-    name = StringProperty(name="Gap Name", default="Gap")
-    score = IntProperty(name="Score", min=0, max=2**30, default=100)
-    """
-    trickstring = StringProperty(name="Trick", default="")
-    spin = IntProperty(name="Required Spin", min=0, max=2**31, default=0, description="Should be a multiple of 180.")
-    """
-    end_object = StringProperty(
-        name="End",
-        description="The trigger object that that will end the gap.",
-        default="",
-        update=_gap_props_end_object_changed)
-    two_way = BoolProperty(name="Two way", default=False)
-
-    reserved_by = StringProperty() # the start gap object this object's reserved by
-
-    def draw(self, panel, context):
-        col = panel.layout.box().column()
-        col.prop(self, "name")
-        col.prop(self, "score")
-        col.prop_search(self, "end_object", context.scene, "objects")
-        col.prop(self, "two_way")
-
-        for flag in sorted(self.flags):
-            col.prop(self, flag)
-
-#----------------------------------------------------------------------------------
 class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     triggerscript_type = EnumProperty(items=(
         ("None", "None", ""),
@@ -250,12 +189,32 @@ class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
         ("Killskater_Water", "Killskater (Water)", "Bail the skater and restart them at the given node."),
         ("Teleport", "Teleport", "Teleport the skater to a given node without breaking their combo."),
         ("Custom", "Custom", "Runs a custom script."),
-        # ("Gap", "Gap", "Gap."),
         ), name="TriggerScript Type", default="None")
     target_node = StringProperty(name="Target Node")
     custom_name = StringProperty(name="Custom Script Name")
-    # gap_props = PointerProperty(type=THUGGapProps)
-
+    
+    # New props used by the templating system!
+    template_name = EnumProperty(items=script_template.get_templates, name="Trigger Script", description="This script is executed when the local skater hits the object (or, for nodes, when it is loaded/triggered from another script).")
+    
+    param1_int = IntProperty(name="Parameter 1", description="")
+    param1_float = FloatProperty(name="Parameter 1", description="")
+    param1_string = StringProperty(name="Parameter 1", description="")
+    param1_enum = EnumProperty(items=script_template.get_param1_values, name="Parameter 1", description="")
+    
+    param2_int = IntProperty(name="Parameter 1", description="")
+    param2_float = FloatProperty(name="Parameter 1", description="")
+    param2_string = StringProperty(name="Parameter 1", description="")
+    param2_enum = EnumProperty(items=script_template.get_param2_values, name="Parameter 1", description="")
+    
+    param3_int = IntProperty(name="Parameter 1", description="")
+    param3_float = FloatProperty(name="Parameter 1", description="")
+    param3_string = StringProperty(name="Parameter 1", description="")
+    param3_enum = EnumProperty(items=script_template.get_param3_values, name="Parameter 1", description="")
+    
+    param4_int = IntProperty(name="Parameter 1", description="")
+    param4_float = FloatProperty(name="Parameter 1", description="")
+    param4_string = StringProperty(name="Parameter 1", description="")
+    param4_enum = EnumProperty(items=script_template.get_param4_values, name="Parameter 1", description="")
 
 #----------------------------------------------------------------------------------
 #- Proximity node properties
@@ -328,6 +287,16 @@ class THUGGameObjectProps(bpy.types.PropertyGroup):
     
 class THUGBouncyProps(bpy.types.PropertyGroup):
     contact = FloatVectorProperty(name="Contact", description="A point used for collision detection.")
+    
+#----------------------------------------------------------------------------------
+#- A list of node names by type, used by the WindowManager to fill
+#- autocomplete lists on other properties
+#----------------------------------------------------------------------------------
+class THUGNodeListProps(bpy.types.PropertyGroup):
+    paths = CollectionProperty(type=bpy.types.PropertyGroup)
+    restarts = CollectionProperty(type=bpy.types.PropertyGroup)
+    meshes = CollectionProperty(type=bpy.types.PropertyGroup)
+    scripts = CollectionProperty(type=bpy.types.PropertyGroup)
     
 #----------------------------------------------------------------------------------
 #- Level obj properties! There's a lot of them!
@@ -576,6 +545,12 @@ class THUGParticleProps(bpy.types.PropertyGroup):
 class THUGLevelProps(bpy.types.PropertyGroup):
     level_name = StringProperty(name="Level Name", description="Name of your level, used for in-game menus.")
     scene_name = StringProperty(name="Scene Name", description="Short name referenced by scripts.")
+    
+    #target_game = EnumProperty(name="Target Game", items=(
+    #    ( 'THUG1', 'THUG1', 'THUG1 and/or Underground+'),
+    #    ( 'THUG2', 'THUG2', 'Base THUG2'),
+    #    ( 'THUGPRO', 'THUG PRO', 'THUG PRO Mod'),
+    #), default="THUGPRO")
     creator_name = StringProperty(name="Creator Name", description="Name of the person(s) who created this level.")
     level_skybox = StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level.")
     
@@ -787,6 +762,7 @@ def register_props():
     bpy.types.Material.thug_material_props = PointerProperty(type=THUGMaterialProps)
     bpy.types.Texture.thug_material_pass_props = PointerProperty(type=THUGMaterialPassProps)
 
+    bpy.types.WindowManager.thug_all_nodes = PointerProperty(type=THUGNodeListProps)
     bpy.types.WindowManager.thug_all_rails = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_all_restarts = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_pathnode_props = PointerProperty(type=THUGPathNodeUIProps)
@@ -840,6 +816,7 @@ def register_props():
     bpy.app.handlers.scene_update_post.append(update_pathnode_ui_properties)
 
     bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
+    bpy.app.handlers.load_post.append(update_node_collection)
     
     
 #----------------------------------------------------------------------------------
@@ -861,10 +838,12 @@ def unregister_props():
 
     if update_collision_flag_ui_properties in bpy.app.handlers.scene_update_post:
         bpy.app.handlers.scene_update_post.remove(update_collision_flag_ui_properties)
-        bpy.app.handlers.scene_update_post.remove(update_pathnode_ui_properties)
-
     if draw_stuff_post_update in bpy.app.handlers.scene_update_post:
         bpy.app.handlers.scene_update_post.remove(draw_stuff_post_update)
+    if update_pathnode_ui_properties in bpy.app.handlers.scene_update_post:
+        bpy.app.handlers.scene_update_post.remove(update_pathnode_ui_properties)
 
     if draw_stuff_pre_load_cleanup in bpy.app.handlers.load_pre:
         bpy.app.handlers.load_pre.remove(draw_stuff_pre_load_cleanup)
+    if update_node_collection in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_pre.remove(update_node_collection)
