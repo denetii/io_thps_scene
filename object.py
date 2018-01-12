@@ -242,6 +242,8 @@ def _thug_object_settings_draw(self, context):
                         box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_float", text=prm['Name'])
                     elif prm['Type'] == 'Enum':
                         box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_enum", text=prm['Name'])
+                    elif prm['Type'] == 'Flags':
+                        box.row().prop_menu_enum(ob.thug_triggerscript_props, "param" + str(paramindex) + "_flags", text=prm['Name'], icon='SETTINGS')
                     elif prm['Type'] == 'Restart':
                         box.row().prop_search(ob.thug_triggerscript_props, "param" + str(paramindex) + "_string", 
                         context.window_manager.thug_all_nodes, "restarts", text=prm['Name'])

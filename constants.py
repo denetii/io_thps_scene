@@ -1,5 +1,6 @@
 __reload_order_index__ = -108
 ADDON_NAME = "io_thps_scene"
+ADDON_VERSION = '1.0'
 
 CRCTable = [  # CRC polynomial 0xedb88320
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba,

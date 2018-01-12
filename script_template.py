@@ -10,6 +10,8 @@ from . helpers import *
 from . import prefs
 import configparser
 import glob
+import binascii
+from operator import itemgetter
 
 # PROPERTIES
 #############################################
@@ -41,8 +43,10 @@ def get_templates(self, context):
     ob = context.object
     global SCRIPT_TEMPLATES
     items = []
-    items.append( ('None', 'None', '') )
-    items.append( ('Custom', 'Custom', 'Write your own Trigger Script.') )
+    items.append( ('None', 'None', '', 'EMPTY', 0) )
+    items.append( ('Custom', 'Custom', 'Write your own Trigger Script.', 'SCRIPT', 1) )
+    
+    add_items = []
     for tmp in SCRIPT_TEMPLATES:
         # Based on the type of object selected, determine which script templates should be selectable
         should_append = True if ('All' in tmp['Types']) else False
@@ -53,8 +57,15 @@ def get_templates(self, context):
         elif ob.type == 'CURVE' and (ob.thug_path_type in tmp['Types'] or 'Path' in tmp['Types']):
                 should_append = True
                 
+        template_hash = binascii.crc_hqx(bytes(tmp['Name'], 'ascii'), 0x00)
+        #print("Template hash: {}".format(template_hash))
         if should_append:
-            items.append((tmp['Name'], tmp['Name'], tmp['Description']))
+            add_items.append((tmp['Name'], tmp['Name'], tmp['Description'], 'SCRIPTWIN', template_hash))
+            
+    add_items.sort()
+    for item in add_items:
+        items.append(item)
+        
     return items
     
 def get_template(name):
@@ -118,13 +129,18 @@ def parse_template(config_path):
             param['Name'] = scr_cfg['Parameter' + str(i)]['Name']
             param['Description'] = scr_cfg['Parameter' + str(i)].get('Description', 'No description available.')
             param['Type'] = scr_cfg['Parameter' + str(i)].get('Type', 'String')
+            param['Default'] = scr_cfg['Parameter' + str(i)].get('Default', '')
+            # Export type is Name by default
+            param['ExportType'] = scr_cfg['Parameter' + str(i)].get('ExportType', 'Name')
             if 'Values' in scr_cfg['Parameter' + str(i)]:
                 param['Values'] = []
                 for val in str(scr_cfg['Parameter' + str(i)]['Values']).split('\n'):
                     val_clean = val.strip().split(';')
-                    if len(val_clean) < 2:
+                    if len(val_clean) < 3:
+                        if len(val_clean) < 2:
+                            val_clean.append(val_clean[0])
                         val_clean.append('Parameter value.')
-                    param['Values'].append( (val_clean[0], val_clean[0], val_clean[1]) )
+                    param['Values'].append( (val_clean[0], val_clean[1], val_clean[2]) )
                     
             obj_template['Parameters'].append(param)
     
@@ -167,8 +183,28 @@ def generate_template_script(ob, template, compiler):
             paramname += "int"
         elif param['Type'] == 'Enum':
             paramname += "enum"
+        elif param['Type'] == 'Flags':
+            paramname += "flags"
         if getattr(ob.thug_triggerscript_props, paramname, ""):
-            base_replace.append( [ '~' + param['Name'] + '~', getattr(ob.thug_triggerscript_props, paramname, "")] )
+            # Get the value entered by the user for the current parameter
+            # If it's blank, fill in the default value...
+            # If THAT's also blank, then fail (TriggerScripts are unlikely to compile with missing parameters!)
+            param_value = getattr(ob.thug_triggerscript_props, paramname, "")
+            if param_value == "":
+                param_value = param['Default']
+                if param_value == "":
+                    raise Exception("Required parameter is missing for TriggerScript: {} attached to object: {}".format(template['Name'], ob.name))
+                    
+            if param['ExportType'] == 'Name':
+                param_value = '$' + param_value + '$'
+            elif param['ExportType'] == 'String':
+                param_value = blub_str(param_value)
+            elif param['ExportType'] == 'Int':
+                param_value = blub_int(param_value)
+            elif param['ExportType'] == 'Float':
+                param_value = blub_float(param_value)
+                
+            base_replace.append( [ '~' + param['Name'] + '~', param_value] )
             
     print(base_replace)
     final_text = script_text

@@ -17,126 +17,86 @@ from .  import script_template
 # This just makes it easier to see presets like restarts, CTF flags etc
 #----------------------------------------------------------------------------------
 def thug_empty_update(self, context):
-    if context.object.type == "EMPTY":
-        ob = context.object
+    if context.object.type != "EMPTY":
+        return
+    ob = context.object
+    for mdl_ob in ob.children:
+        if mdl_ob.name.endswith('_MDL'):
+            context.scene.objects.unlink(mdl_ob)
+            bpy.data.objects.remove(mdl_ob)
         
-        for mdl_ob in ob.children:
-            if mdl_ob.name.endswith('_MDL'):
-                context.scene.objects.unlink(mdl_ob)
-                bpy.data.objects.remove(mdl_ob)
+    if ob.thug_empty_props.empty_type == 'Restart':
+        mdl_mesh = 'Sk3Ed_RS_1p'
+        if ob.thug_restart_props.restart_type == 'Player2':
+            mdl_mesh = 'Sk3Ed_RS_Mp'
+        elif ob.thug_restart_props.restart_type == 'Multiplayer':
+            mdl_mesh = 'Sk3Ed_RS_Ho'
+        elif ob.thug_restart_props.restart_type == 'Horse':
+            mdl_mesh = 'Sk3Ed_RS_Ho'
+        elif ob.thug_restart_props.restart_type == 'CTF':
+            mdl_mesh = 'Sk3Ed_RS_Ho'
+        
+    if ob.thug_empty_props.empty_type == 'GameObject':
+        mdl_mesh = ''
+        if ob.thug_go_props.go_type == 'Flag_Blue' or ob.thug_go_props.go_type == 'Team_Blue' :
+            mdl_mesh = 'CTF_Flag_Blue'
+        elif ob.thug_go_props.go_type == 'Flag_Red' or ob.thug_go_props.go_type == 'Team_Red':
+            mdl_mesh = 'CTF_Flag_Red'
+        elif ob.thug_go_props.go_type == 'Flag_Green' or ob.thug_go_props.go_type == 'Team_Green':
+            mdl_mesh = 'CTF_Flag_Green'
+        elif ob.thug_go_props.go_type == 'Flag_Yellow' or ob.thug_go_props.go_type == 'Team_Yellow':
+            mdl_mesh = 'CTF_Flag_Yellow'
+        if ob.thug_go_props.go_type == 'Flag_Blue_Base' or ob.thug_go_props.go_type == 'Team_Blue_Base':
+            mdl_mesh = 'CTF_Base_Blue'
+        elif ob.thug_go_props.go_type == 'Flag_Red_Base' or ob.thug_go_props.go_type == 'Team_Red_Base':
+            mdl_mesh = 'CTF_Base_Red'
+        elif ob.thug_go_props.go_type == 'Flag_Green_Base' or ob.thug_go_props.go_type == 'Team_Green_Base':
+            mdl_mesh = 'CTF_Base_Green'
+        elif ob.thug_go_props.go_type == 'Flag_Yellow_Base' or ob.thug_go_props.go_type == 'Team_Yellow_Base':
+            mdl_mesh = 'CTF_Base_Yellow'
+        elif ob.thug_go_props.go_type == 'Secret_Tape':
+            mdl_mesh = 'SecretTape'
+        elif ob.thug_go_props.go_type.startswith('Combo_'):
+            mdl_mesh = ob.thug_go_props.go_type
             
-        if ob.thug_empty_props.empty_type == 'Restart':
-            mdl_mesh = 'Sk3Ed_RS_1p'
-            if ob.thug_restart_props.restart_type == 'Player2':
-                mdl_mesh = 'Sk3Ed_RS_Mp'
-            elif ob.thug_restart_props.restart_type == 'Multiplayer':
-                mdl_mesh = 'Sk3Ed_RS_Ho'
-            elif ob.thug_restart_props.restart_type == 'Horse':
-                mdl_mesh = 'Sk3Ed_RS_Ho'
-            elif ob.thug_restart_props.restart_type == 'CTF':
-                mdl_mesh = 'Sk3Ed_RS_Ho'
-            mdl_ob = append_from_dictionary('presets', mdl_mesh, context.scene)
-            mdl_ob.name = ob.name + '_MDL'
-            mdl_ob.location = [ 0, 0, 0 ]
-            mdl_ob.rotation_euler = [ 0, 0, 0 ]
-            mdl_ob.parent = ob
-            mdl_ob.hide_select = True
-            mdl_ob.hide_render = True
-            mdl_ob.thug_export_scene = False
-            mdl_ob.thug_export_collision = False
-            to_group(mdl_ob, "Visual Helpers")
-            ob.empty_draw_type = 'CUBE'
-            ob.empty_draw_size = 36
-            
-        if ob.thug_empty_props.empty_type == 'GameObject':
-            mdl_mesh = ''
-            if ob.thug_go_props.go_type == 'Flag_Blue' or ob.thug_go_props.go_type == 'Team_Blue' :
-                mdl_mesh = 'CTF_Flag_Blue'
-            elif ob.thug_go_props.go_type == 'Flag_Red' or ob.thug_go_props.go_type == 'Team_Red':
-                mdl_mesh = 'CTF_Flag_Red'
-            elif ob.thug_go_props.go_type == 'Flag_Green' or ob.thug_go_props.go_type == 'Team_Green':
-                mdl_mesh = 'CTF_Flag_Green'
-            elif ob.thug_go_props.go_type == 'Flag_Yellow' or ob.thug_go_props.go_type == 'Team_Yellow':
-                mdl_mesh = 'CTF_Flag_Yellow'
-                
-            if ob.thug_go_props.go_type == 'Flag_Blue_Base' or ob.thug_go_props.go_type == 'Team_Blue_Base':
-                mdl_mesh = 'CTF_Base_Blue'
-            elif ob.thug_go_props.go_type == 'Flag_Red_Base' or ob.thug_go_props.go_type == 'Team_Red_Base':
-                mdl_mesh = 'CTF_Base_Red'
-            elif ob.thug_go_props.go_type == 'Flag_Green_Base' or ob.thug_go_props.go_type == 'Team_Green_Base':
-                mdl_mesh = 'CTF_Base_Green'
-            elif ob.thug_go_props.go_type == 'Flag_Yellow_Base' or ob.thug_go_props.go_type == 'Team_Yellow_Base':
-                mdl_mesh = 'CTF_Base_Yellow'
-            elif ob.thug_go_props.go_type == 'Secret_Tape':
-                mdl_mesh = 'SecretTape'
-                
-            elif ob.thug_go_props.go_type.startswith('Combo_'):
-                mdl_mesh = ob.thug_go_props.go_type
-                
-            if mdl_mesh != '':
-                mdl_ob = append_from_dictionary('presets', mdl_mesh, context.scene)
-                mdl_ob.name = ob.name + '_MDL'
-                mdl_ob.location = [ 0, 0, 0 ]
-                mdl_ob.rotation_euler = [ 0, 0, 0 ]
-                mdl_ob.parent = ob
-                mdl_ob.hide_select = True
-                mdl_ob.hide_render = True
-                mdl_ob.thug_export_scene = False
-                mdl_ob.thug_export_collision = False
-                to_group(mdl_ob, "Visual Helpers")
-            ob.empty_draw_type = 'CUBE'
-            ob.empty_draw_size = 36
-            
-        elif ob.thug_empty_props.empty_type == 'GenericNode' and \
-        ob.thug_generic_props.generic_type == 'Crown':
-            mdl_ob = append_from_dictionary('presets', 'Sk3Ed_RS_KOTH', context.scene)
-            mdl_ob.name = ob.name + '_MDL'
-            mdl_ob.location = [ 0, 0, 0 ]
-            mdl_ob.rotation_euler = [ 0, 0, 0 ]
-            mdl_ob.parent = ob
-            mdl_ob.hide_select = True
-            mdl_ob.hide_render = True
-            mdl_ob.thug_export_scene = False
-            mdl_ob.thug_export_collision = False
-            to_group(mdl_ob, "Visual Helpers")
-            ob.empty_draw_type = 'CUBE'
-            ob.empty_draw_size = 42
-            
-        elif ob.thug_empty_props.empty_type == 'Pedestrian':
-            mdl_ob = append_from_dictionary('presets', 'Ped01', context.scene)
-            mdl_ob.name = ob.name + '_MDL'
-            mdl_ob.location = [ 0, 0, 0 ]
-            mdl_ob.rotation_euler = [ 0, 0, 0 ]
-            mdl_ob.parent = ob
-            mdl_ob.hide_select = True
-            mdl_ob.hide_render = True
-            mdl_ob.thug_export_scene = False
-            mdl_ob.thug_export_collision = False
-            to_group(mdl_ob, "Visual Helpers")
-            ob.empty_draw_type = 'CUBE'
-            ob.empty_draw_size = 42
-            
-        elif ob.thug_empty_props.empty_type == 'Vehicle':
-            mdl_ob = append_from_dictionary('presets', 'Veh_Taxi', context.scene)
-            mdl_ob.name = ob.name + '_MDL'
-            mdl_ob.location = [ 0, 0, 0 ]
-            mdl_ob.rotation_euler = [ 0, 0, 0 ]
-            mdl_ob.parent = ob
-            mdl_ob.hide_select = True
-            mdl_ob.hide_render = True
-            mdl_ob.thug_export_scene = False
-            mdl_ob.thug_export_collision = False
-            to_group(mdl_ob, "Visual Helpers")
-            ob.empty_draw_type = 'CUBE'
-            ob.empty_draw_size = 42
-            
+        ob.empty_draw_type = 'CUBE'
+        ob.empty_draw_size = 36
+        
+    elif ob.thug_empty_props.empty_type == 'GenericNode' and ob.thug_generic_props.generic_type == 'Crown':
+        mdl_mesh = 'Sk3Ed_RS_KOTH'
+        ob.empty_draw_type = 'CUBE'
+        ob.empty_draw_size = 42
+        
+    elif ob.thug_empty_props.empty_type == 'Pedestrian':
+        mdl_mesh = 'Ped01'
+        ob.empty_draw_type = 'CUBE'
+        ob.empty_draw_size = 42
+        
+    elif ob.thug_empty_props.empty_type == 'Vehicle':
+        mdl_mesh = 'Veh_Taxi'
+        ob.empty_draw_type = 'CUBE'
+        ob.empty_draw_size = 42
+        
+    # Add the helper mesh if it applies to this object
+    if mdl_mesh != '':
+        mdl_ob = append_from_dictionary('presets', mdl_mesh, context.scene)
+        mdl_ob.name = ob.name + '_MDL'
+        mdl_ob.location = [ 0, 0, 0 ]
+        mdl_ob.rotation_euler = [ 0, 0, 0 ]
+        mdl_ob.parent = ob
+        mdl_ob.hide_select = True
+        mdl_ob.hide_render = True
+        mdl_ob.thug_export_scene = False
+        mdl_ob.thug_export_collision = False
+        to_group(mdl_ob, "Visual Helpers")
+        
 #----------------------------------------------------------------------------------
 #- Updates the list(s) of TH nodes in the current scene
 #- Used by the WindowManager to fill autocomplete lists on other props
 #----------------------------------------------------------------------------------
 @bpy.app.handlers.persistent
 def update_node_collection(*args):
-    print("Updating node collections...")
+    #print("Updating node collections...")
     context = bpy.context
     context.window_manager.thug_all_nodes.paths.clear()
     context.window_manager.thug_all_nodes.restarts.clear()
@@ -158,6 +118,69 @@ def update_node_collection(*args):
         if tx.name.startswith('script_'):
             entry = context.window_manager.thug_all_nodes.scripts.add()
             entry.name = format_triggerscript_name(tx.name)
+            
+#----------------------------------------------------------------------------------
+#- Determines the version of the Blender plugin that the scene was created with
+#- and if it's out of date, attempts to automatically convert old nodes to any
+#- systems that have been updated - e.g., empty nodes on the asdf plugin need to be
+#- migrated, along with TriggerScript references
+#----------------------------------------------------------------------------------
+@bpy.app.handlers.persistent
+def maybe_upgrade_scene(*args):
+    should_upgrade = False
+    something_was_updated = False
+    fix_objects = []
+    
+    #print("Updating node collections...")
+    context = bpy.context
+    if 'io_thps_scene_version' not in context.scene:
+        print("This blend file was built with the asdf plugin, or a pre-release version of io_thps_scene. Needs to be updated!")
+        should_upgrade = True
+    elif context.scene['io_thps_scene_version'] != ADDON_VERSION:
+        print("This blend file was built with an older version io_thps_scene. May need to be updated in the future!")
+        # Any future versions which require node conversions can be handled here!
+        
+    if should_upgrade:
+        print("Attempting to update nodes in scene to match current version of io_thps_scene...")
+        # This is where we actually conver the nodes!
+        for ob in bpy.data.objects:
+            if ob.type == 'MESH' and ob.thug_triggerscript_props.triggerscript_type:
+                ob_ts = ob.thug_triggerscript_props
+                if ob_ts.triggerscript_type == 'None':
+                    continue
+                # Should be able to do a straight conversion of these over to the template system, 
+                # as the base templates should include everything from the old setup
+                old_ts_name = ob_ts.triggerscript_type
+                ob_ts.template_name = old_ts_name
+                if ob_ts.target_node and bpy.data.objects.get(ob_ts.target_node):
+                    # Target node (for Teleport/Killskater) should always be param1 on the new template(s)
+                    ob.thug_triggerscript_props.param1_string = get_clean_name(bpy.data.objects.get(ob_ts.target_node))
+                something_was_updated = True
+                print("Updated TriggerScript reference for object: {}. Previous TriggerScript was: {}".format(ob.name, ob_ts.triggerscript_type))
+        
+            elif ob.type == 'EMPTY' and ob.thug_empty_props.empty_type != 'None':
+                # No easy solution for converting these, just warn the user
+                something_was_updated = True
+                fix_objects.append(ob.name)
+                print("Updated empty data for object: {}".format(ob.name))
+                    
+        # Auto-update the old THUG_SCRIPTS block!
+        if 'THUG_SCRIPTS' in bpy.data.texts:
+            bpy.ops.io.import_thug_triggerscripts("EXEC_DEFAULT", import_type='ScriptsAndObjects', replace_scripts=False)
+            
+    context.scene['io_thps_scene_version'] = ADDON_VERSION
+    
+    def draw(self, context):
+        self.layout.label("This scene was built on an older version of the THPS Blender plugin (io_thug_tools). Your scene has been auto-converted to be compatible with this version of the plugin.")
+        self.layout.label("However, it may no longer be BACKWARD compatible with the previous plugin. If this is not desired, please make a backup copy before saving the scene.")
+        if len(fix_objects) > 0:
+            self.layout.label("-------------------------------------------")
+            self.layout.label("Some nodes were unable to be converted automatically, such as restarts/CTF Flags. Please review the following objects, as they may need to be re-configured:")
+            for obname in fix_objects:
+                self.layout.label("        " + obname)
+            
+    if something_was_updated:
+        bpy.context.window_manager.popup_menu(draw, title="Conversion Notice", icon='INFO')
             
             
 # PROPERTIES
@@ -183,6 +206,9 @@ class THUGEmptyProps(bpy.types.PropertyGroup):
 
 #----------------------------------------------------------------------------------
 class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
+    # LEGACY PROPERTY - NO LONGER USED
+    # List is maintained so the scene converter can still read the value, scripts are assigned
+    # using the new template properties below
     triggerscript_type = EnumProperty(items=(
         ("None", "None", ""),
         ("Killskater", "Killskater", "Bail the skater and restart them at the given node."),
@@ -196,25 +222,29 @@ class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     # New props used by the templating system!
     template_name = EnumProperty(items=script_template.get_templates, name="Trigger Script", description="This script is executed when the local skater hits the object (or, for nodes, when it is loaded/triggered from another script).")
     
-    param1_int = IntProperty(name="Parameter 1", description="")
-    param1_float = FloatProperty(name="Parameter 1", description="")
-    param1_string = StringProperty(name="Parameter 1", description="")
-    param1_enum = EnumProperty(items=script_template.get_param1_values, name="Parameter 1", description="")
+    param1_int = IntProperty(name="Temp", description="")
+    param1_float = FloatProperty(name="Temp", description="")
+    param1_string = StringProperty(name="Temp", description="")
+    param1_enum = EnumProperty(items=script_template.get_param1_values, name="Temp", description="")
+    param1_flags = EnumProperty(items=script_template.get_param1_values, name="Temp", description="", options={'ENUM_FLAG'})
     
-    param2_int = IntProperty(name="Parameter 1", description="")
-    param2_float = FloatProperty(name="Parameter 1", description="")
-    param2_string = StringProperty(name="Parameter 1", description="")
-    param2_enum = EnumProperty(items=script_template.get_param2_values, name="Parameter 1", description="")
+    param2_int = IntProperty(name="Temp", description="")
+    param2_float = FloatProperty(name="Temp", description="")
+    param2_string = StringProperty(name="Temp", description="")
+    param2_enum = EnumProperty(items=script_template.get_param2_values, name="Temp", description="")
+    param2_flags = EnumProperty(items=script_template.get_param2_values, name="Temp", description="", options={'ENUM_FLAG'})
     
-    param3_int = IntProperty(name="Parameter 1", description="")
-    param3_float = FloatProperty(name="Parameter 1", description="")
-    param3_string = StringProperty(name="Parameter 1", description="")
-    param3_enum = EnumProperty(items=script_template.get_param3_values, name="Parameter 1", description="")
+    param3_int = IntProperty(name="Temp", description="")
+    param3_float = FloatProperty(name="Temp", description="")
+    param3_string = StringProperty(name="Temp", description="")
+    param3_enum = EnumProperty(items=script_template.get_param3_values, name="Temp", description="")
+    param3_flags = EnumProperty(items=script_template.get_param3_values, name="Temp", description="", options={'ENUM_FLAG'})
     
-    param4_int = IntProperty(name="Parameter 1", description="")
-    param4_float = FloatProperty(name="Parameter 1", description="")
-    param4_string = StringProperty(name="Parameter 1", description="")
-    param4_enum = EnumProperty(items=script_template.get_param4_values, name="Parameter 1", description="")
+    param4_int = IntProperty(name="Temp", description="")
+    param4_float = FloatProperty(name="Temp", description="")
+    param4_string = StringProperty(name="Temp", description="")
+    param4_enum = EnumProperty(items=script_template.get_param4_values, name="Temp", description="")
+    param4_flags = EnumProperty(items=script_template.get_param4_values, name="Temp", description="", options={'ENUM_FLAG'})
 
 #----------------------------------------------------------------------------------
 #- Proximity node properties
@@ -801,13 +831,6 @@ def register_props():
         default="LIGHT", 
         description="Type of bakes to use for this scene.")
                            
-    # bpy.utils.unregister_class(ExtractRail)
-    # bpy.utils.register_class(ExtractRail)
-    # bpy.utils.unregister_class(THUGImportNodeArray)
-    # bpy.utils.register_class(THUGImportNodeArray)
-    
-    #_update_pathnodes_collections()
-    
     global draw_handle
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
     # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)
@@ -817,14 +840,12 @@ def register_props():
 
     bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
     bpy.app.handlers.load_post.append(update_node_collection)
+    bpy.app.handlers.load_post.append(maybe_upgrade_scene)
     
     
 #----------------------------------------------------------------------------------
 def unregister_props():
     bgl.glDeleteLists(draw_stuff_display_list_id, 1)
-
-    # bpy.utils.unregister_class(ExtractRail)
-    # bpy.utils.unregister_class(THUGImportNodeArray)
 
     global draw_handle
     if draw_handle:
@@ -847,3 +868,5 @@ def unregister_props():
         bpy.app.handlers.load_pre.remove(draw_stuff_pre_load_cleanup)
     if update_node_collection in bpy.app.handlers.load_post:
         bpy.app.handlers.load_pre.remove(update_node_collection)
+    if maybe_upgrade_scene in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_pre.remove(maybe_upgrade_scene)
