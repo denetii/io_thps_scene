@@ -30,7 +30,7 @@ def blub_str(string):
 #----------------------------------------------------------------------------------
 def _generate_script(_ob):
     script_props = _ob.thug_triggerscript_props
-    tmpl = script_template.get_template(script_props.template_name)
+    tmpl = script_template.get_template(script_props.template_name_txt)
     
     script_name, script_code = script_template.generate_template_script(_ob, tmpl, 'Blub')
     
@@ -176,7 +176,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     not ob.name.lower().startswith("NightOn") and \
                     not ob.name.lower().startswith("NightOff") :
                     if (not getattr(ob, "thug_is_trickobject", False) and
-                            col_ob.thug_triggerscript_props.triggerscript_type == "None") \
+                            col_ob.thug_triggerscript_props.template_name_txt == "None") \
                         or not \
                         (getattr(ob, "thug_export_collision", True) or
                          getattr(ob, "thug_export_scene", True)):
@@ -271,8 +271,8 @@ def export_qb(filename, directory, target_game, operator=None):
                                              c(ob.thug_cluster_name if ob.thug_cluster_name else clean_name)))
                 p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
 
-                if col_ob.thug_triggerscript_props.template_name != "None":
-                    if col_ob.thug_triggerscript_props.template_name == "Custom":
+                if col_ob.thug_triggerscript_props.template_name_txt != "None":
+                    if col_ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = format_triggerscript_name(col_ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
@@ -667,8 +667,8 @@ def export_qb(filename, directory, target_game, operator=None):
                     # Override the TriggerScript settings for CTF nodes
                     # We want to use an auto-generated script which sets the appropriate game logic
                     if ob.thug_go_props.go_type.startswith("Flag_") or ob.thug_go_props.go_type.startswith("Team_"):
-                        if ob.thug_triggerscript_props.triggerscript_type == "None" or ob.thug_triggerscript_props.custom_name == "":
-                            ob.thug_triggerscript_props.triggerscript_type = "Custom"
+                        if ob.thug_triggerscript_props.template_name_txt == "None" or ob.thug_triggerscript_props.custom_name == "":
+                            ob.thug_triggerscript_props.template_name_txt = "Custom"
                             ob.thug_triggerscript_props.custom_name = "script_" + clean_name + "Script"
                             
                     # Removing temporarily to make imported levels easier to work with!
@@ -738,8 +738,8 @@ def export_qb(filename, directory, target_game, operator=None):
                     if ob.thug_network_option == "NetEnabled":
                         p("\t\t:i {}".format(c("Permanent")))
                         
-                if ob.thug_triggerscript_props.template_name != "None":
-                    if ob.thug_triggerscript_props.template_name == "Custom":
+                if ob.thug_triggerscript_props.template_name_txt != "None":
+                    if ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
@@ -1224,8 +1224,8 @@ def export_model_qb(filename, directory, target_game, operator=None):
                                              c(ob.thug_cluster_name if ob.thug_cluster_name else clean_name)))
                 p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
 
-                if ob.thug_triggerscript_props.template_name != "None":
-                    if ob.thug_triggerscript_props.template_name == "Custom":
+                if ob.thug_triggerscript_props.template_name_txt != "None":
+                    if ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:

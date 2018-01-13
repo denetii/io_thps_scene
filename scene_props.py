@@ -89,7 +89,7 @@ def thug_empty_update(self, context):
         mdl_ob.thug_export_scene = False
         mdl_ob.thug_export_collision = False
         to_group(mdl_ob, "Visual Helpers")
-        
+    
 #----------------------------------------------------------------------------------
 #- Updates the list(s) of TH nodes in the current scene
 #- Used by the WindowManager to fill autocomplete lists on other props
@@ -106,13 +106,13 @@ def update_node_collection(*args):
     for ob in bpy.data.objects:
         if ob.type == 'MESH' and ( ob.thug_export_collision or ob.thug_export_scene ):
             entry = context.window_manager.thug_all_nodes.meshes.add()
-            entry.name = get_clean_name(ob)
+            entry.name = ob.name
         elif ob.type == 'EMPTY' and ob.thug_empty_props.empty_type == 'Restart':
             entry = context.window_manager.thug_all_nodes.restarts.add()
-            entry.name = get_clean_name(ob)
+            entry.name = ob.name
         elif ob.type == 'CURVE' and ob.thug_path_type in [ 'Rail', 'Ladder', 'Waypoint' ]:
             entry = context.window_manager.thug_all_nodes.paths.add()
-            entry.name = get_clean_name(ob)
+            entry.name = ob.name
             
     for tx in bpy.data.texts:
         if tx.name.startswith('script_'):
@@ -152,6 +152,7 @@ def maybe_upgrade_scene(*args):
                 # as the base templates should include everything from the old setup
                 old_ts_name = ob_ts.triggerscript_type
                 ob_ts.template_name = old_ts_name
+                ob_ts.template_name_txt = old_ts_name
                 if ob_ts.target_node and bpy.data.objects.get(ob_ts.target_node):
                     # Target node (for Teleport/Killskater) should always be param1 on the new template(s)
                     ob.thug_triggerscript_props.param1_string = get_clean_name(bpy.data.objects.get(ob_ts.target_node))
@@ -220,31 +221,33 @@ class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     custom_name = StringProperty(name="Custom Script Name")
     
     # New props used by the templating system!
-    template_name = EnumProperty(items=script_template.get_templates, name="Trigger Script", description="This script is executed when the local skater hits the object (or, for nodes, when it is loaded/triggered from another script).")
+    template_name = EnumProperty(items=script_template.get_templates, name="Trigger Script", description="This script is executed when the local skater hits the object (or, for nodes, when it is loaded/triggered from another script).", update=script_template.store_triggerscript_params)
+    # This is what we actually use for exporting!
+    template_name_txt = StringProperty(name="Trigger Script", default="None")
     
     param1_int = IntProperty(name="Temp", description="")
     param1_float = FloatProperty(name="Temp", description="")
     param1_string = StringProperty(name="Temp", description="")
-    param1_enum = EnumProperty(items=script_template.get_param1_values, name="Temp", description="")
-    param1_flags = EnumProperty(items=script_template.get_param1_values, name="Temp", description="", options={'ENUM_FLAG'})
+    param1_enum = EnumProperty(items=script_template.get_param1_values, name="Temp", description="", update=script_template.store_triggerscript_params)
+    param1_flags = EnumProperty(items=script_template.get_param1_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
     param2_int = IntProperty(name="Temp", description="")
     param2_float = FloatProperty(name="Temp", description="")
     param2_string = StringProperty(name="Temp", description="")
-    param2_enum = EnumProperty(items=script_template.get_param2_values, name="Temp", description="")
-    param2_flags = EnumProperty(items=script_template.get_param2_values, name="Temp", description="", options={'ENUM_FLAG'})
+    param2_enum = EnumProperty(items=script_template.get_param2_values, name="Temp", description="", update=script_template.store_triggerscript_params)
+    param2_flags = EnumProperty(items=script_template.get_param2_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
     param3_int = IntProperty(name="Temp", description="")
     param3_float = FloatProperty(name="Temp", description="")
     param3_string = StringProperty(name="Temp", description="")
-    param3_enum = EnumProperty(items=script_template.get_param3_values, name="Temp", description="")
-    param3_flags = EnumProperty(items=script_template.get_param3_values, name="Temp", description="", options={'ENUM_FLAG'})
+    param3_enum = EnumProperty(items=script_template.get_param3_values, name="Temp", description="", update=script_template.store_triggerscript_params)
+    param3_flags = EnumProperty(items=script_template.get_param3_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
     param4_int = IntProperty(name="Temp", description="")
     param4_float = FloatProperty(name="Temp", description="")
     param4_string = StringProperty(name="Temp", description="")
-    param4_enum = EnumProperty(items=script_template.get_param4_values, name="Temp", description="")
-    param4_flags = EnumProperty(items=script_template.get_param4_values, name="Temp", description="", options={'ENUM_FLAG'})
+    param4_enum = EnumProperty(items=script_template.get_param4_values, name="Temp", description="", update=script_template.store_triggerscript_params)
+    param4_flags = EnumProperty(items=script_template.get_param4_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
 
 #----------------------------------------------------------------------------------
 #- Proximity node properties

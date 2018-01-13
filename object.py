@@ -234,9 +234,9 @@ def _thug_object_settings_draw(self, context):
             for prm in tmpl['Parameters']:
                 paramindex += 1
                 if prm['Name'] and prm['Type']:
-                    if prm['Type'] == 'String':
+                    if prm['Type'] == 'String' or prm['Type'] == 'Name':
                         box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_string", text=prm['Name'])
-                    elif prm['Type'] == 'Integer':
+                    elif prm['Type'] == 'Integer' or prm['Type'] == 'Int':
                         box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_int", text=prm['Name'])
                     elif prm['Type'] == 'Float':
                         box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_float", text=prm['Name'])

@@ -12,6 +12,7 @@ import configparser
 import glob
 import binascii
 from operator import itemgetter
+from . import qb
 
 # PROPERTIES
 #############################################
@@ -131,7 +132,10 @@ def parse_template(config_path):
             param['Type'] = scr_cfg['Parameter' + str(i)].get('Type', 'String')
             param['Default'] = scr_cfg['Parameter' + str(i)].get('Default', '')
             # Export type is Name by default
-            param['ExportType'] = scr_cfg['Parameter' + str(i)].get('ExportType', 'Name')
+            param['ExportType'] = scr_cfg['Parameter' + str(i)].get('ExportType', '')
+            if param['ExportType'] == '':
+                param['ExportType'] = param['Type'] if param['Type'] in [ 'Integer','Int','Float','String' ] else 'Name'
+                
             if 'Values' in scr_cfg['Parameter' + str(i)]:
                 param['Values'] = []
                 for val in str(scr_cfg['Parameter' + str(i)]['Values']).split('\n'):
@@ -152,6 +156,40 @@ def parse_template(config_path):
     #print("Template: {}".format(obj_template))
     return obj_template
         
+#----------------------------------------------------------------------------------
+#- Stores the temporary TriggerScript properties
+#- Some values are dynamically generated (template name, enum/flag values), and
+#- we store them in a TextProperty, as we lose the value when the UI changes
+#----------------------------------------------------------------------------------
+def store_triggerscript_params(self, context):
+    ob = context.object
+    ob.thug_triggerscript_props.template_name_txt = ob.thug_triggerscript_props.template_name
+    
+    for i in range(1,5):
+        ob['thug_param' + str(i) +'_enum'] = ""
+        ob['thug_param' + str(i) +'_flags'] = ""
+    template = get_template(ob.thug_triggerscript_props.template_name_txt)
+    paramindex = 0
+    for param in template['Parameters']:
+        paramindex += 1
+        if not param['Name'] or not param['Type']:
+            continue
+        paramname = "param" + str(paramindex) + "_"
+        paramvalue = ""
+        if param['Type'] == 'Enum':
+            paramname += "enum"
+            paramvalue = getattr(ob.thug_triggerscript_props, paramname, "")
+        elif param['Type'] == 'Flags':
+            paramname += "flags"
+            paramvalue = getattr(ob.thug_triggerscript_props, paramname, [])
+            paramvalue = ';'.join(paramvalue)
+        else:
+            continue
+            
+        print("Storing thug_{} from {}".format(paramname, paramname))
+        ob['thug_' + paramname] = paramvalue
+        
+
 def generate_template_script(ob, template, compiler):
     script_text = template['Script_Blub']
     script_name = get_clean_name(ob) + "_Script"
@@ -164,7 +202,7 @@ def generate_template_script(ob, template, compiler):
         script_footer = "endscript"
         
     base_replace = [
-        [ '~this.object~', get_clean_name(ob) ]
+        [ '~this.object~', '$' + get_clean_name(ob) + '$' ]
         ,[ '~this.level~', "Test" ]
         ,[ '~this.scene~', "Test2" ]
     ]
@@ -175,36 +213,41 @@ def generate_template_script(ob, template, compiler):
         if not param['Name'] or not param['Type']:
             continue
         paramname = "param" + str(paramindex) + "_"
-        if param['Type'] in [ 'String', 'Restart', 'Rail', 'Path', 'Waypoint', 'Script', 'Mesh' ]:
+        if param['Type'] in [ 'String', 'Restart', 'Rail', 'Path', 'Waypoint', 'Script', 'Mesh', 'Name' ]:
             paramname += "string"
         elif param['Type'] == 'Float':
             paramname += "float"
-        elif param['Type'] == 'Int':
+        elif param['Type'] == 'Integer' or param['Type'] == 'Int':
             paramname += "int"
         elif param['Type'] == 'Enum':
             paramname += "enum"
         elif param['Type'] == 'Flags':
             paramname += "flags"
-        if getattr(ob.thug_triggerscript_props, paramname, ""):
-            # Get the value entered by the user for the current parameter
-            # If it's blank, fill in the default value...
-            # If THAT's also blank, then fail (TriggerScripts are unlikely to compile with missing parameters!)
+        # Get the value entered by the user for the current parameter
+        # If it's blank, fill in the default value...
+        # If THAT's also blank, then fail (TriggerScripts are unlikely to compile with missing parameters!)
+        if param['Type'] == 'Enum' or param['Type'] == 'Flags':
+            param_value = ob['thug_' + paramname] if ob['thug_' + paramname] else ""
+        else:
             param_value = getattr(ob.thug_triggerscript_props, paramname, "")
+        if param_value == "":
+            param_value = param['Default']
             if param_value == "":
-                param_value = param['Default']
-                if param_value == "":
-                    raise Exception("Required parameter is missing for TriggerScript: {} attached to object: {}".format(template['Name'], ob.name))
-                    
+                raise Exception("Required parameter {} is missing for TriggerScript: {} attached to object: {}".format(paramname, template['Name'], ob.name))
+            
+        param_values = param_value.split(';') if param['Type'] == 'Flags' else [ param_value ]
+        formatted_values = []
+        for pval in param_values:
             if param['ExportType'] == 'Name':
-                param_value = '$' + param_value + '$'
+                formatted_values.append('$' + str(pval) + '$')
             elif param['ExportType'] == 'String':
-                param_value = blub_str(param_value)
-            elif param['ExportType'] == 'Int':
-                param_value = blub_int(param_value)
+                formatted_values.append(qb.blub_str(pval))
+            elif param['ExportType'] == 'Integer' or param['ExportType'] == 'Int':
+                formatted_values.append(qb.blub_int(pval))
             elif param['ExportType'] == 'Float':
-                param_value = blub_float(param_value)
-                
-            base_replace.append( [ '~' + param['Name'] + '~', param_value] )
+                formatted_values.append(qb.blub_float(pval))
+            
+        base_replace.append( [ '~' + param['Name'] + '~', ' '.join(formatted_values) ] )
             
     print(base_replace)
     final_text = script_text

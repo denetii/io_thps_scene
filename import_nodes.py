@@ -952,9 +952,12 @@ class THUGImportTriggerScripts(bpy.types.Operator):
             for ob in bpy.data.objects:
                 if ob.thug_triggerscript_props and ob.thug_triggerscript_props.triggerscript_type == "Custom":
                     old_name = ob.thug_triggerscript_props.custom_name
+                    if old_name == None or old_name == '':
+                        continue
                     if bpy.data.texts.get(old_name, None):
                         # This was already converted, don't modify
                         continue
+                    print("Updating script reference for {}...".format(ob.name))
                     new_name = "script_" + old_name
                     if not bpy.data.texts.get(new_name, None):
                         # Converted name was not found! Make sure they know there's an invalid reference
