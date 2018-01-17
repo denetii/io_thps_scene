@@ -920,15 +920,15 @@ def import_triggerscripts(should_replace = False):
         line_number += 1
         if line.body.startswith(":i function "):
             script_name = line.body.replace(":i function ", "").replace("$", "")
-            print("Found script: " + script_name)
+            #print("Found script: " + script_name)
             script_text = read_until(old_scripts, line_number, ":i endfunction")
             if bpy.data.texts.get("script_" + script_name, None):
                 if should_replace == False:
                     continue
-                print("Removing existing script: {}".format(script_name))
+                #print("Removing existing script: {}".format(script_name))
                 bpy.data.texts.remove(bpy.data.texts.get("script_" + script_name))
                     
-            print("Writing script: " + script_name)
+            #print("Writing script: " + script_name)
             script_block = bpy.data.texts.new(name="script_" + script_name)
             
             for script_line in script_text:
@@ -952,13 +952,13 @@ class THUGImportTriggerScripts(bpy.types.Operator):
             for ob in bpy.data.objects:
                 if ob.thug_triggerscript_props and ob.thug_triggerscript_props.triggerscript_type == "Custom":
                     old_name = ob.thug_triggerscript_props.custom_name
-                    if old_name == None or old_name == '':
+                    if old_name == None or old_name == '' or old_name.startswith('script_'):
                         continue
                     if bpy.data.texts.get(old_name, None):
                         # This was already converted, don't modify
                         continue
-                    print("Updating script reference for {}...".format(ob.name))
-                    new_name = "script_" + old_name
+                    #print("Updating script reference {} for {}...".format(old_name, ob.name))
+                    new_name = 'script_' + old_name
                     if not bpy.data.texts.get(new_name, None):
                         # Converted name was not found! Make sure they know there's an invalid reference
                         raise Exception("Updated script name " + new_name + " was not found.")

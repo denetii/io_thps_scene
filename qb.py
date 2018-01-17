@@ -176,8 +176,8 @@ def export_qb(filename, directory, target_game, operator=None):
                     not ob.name.lower().startswith("NightOn") and \
                     not ob.name.lower().startswith("NightOff") :
                     if (not getattr(ob, "thug_is_trickobject", False) and
-                            col_ob.thug_triggerscript_props.template_name_txt == "None") \
-                        or not \
+                            (col_ob.thug_triggerscript_props.template_name_txt == "None" or \
+                            col_ob.thug_triggerscript_props.template_name_txt == "")) or not \
                         (getattr(ob, "thug_export_collision", True) or
                          getattr(ob, "thug_export_scene", True)):
                         continue
@@ -271,7 +271,7 @@ def export_qb(filename, directory, target_game, operator=None):
                                              c(ob.thug_cluster_name if ob.thug_cluster_name else clean_name)))
                 p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
 
-                if col_ob.thug_triggerscript_props.template_name_txt != "None":
+                if col_ob.thug_triggerscript_props.template_name_txt != "" and col_ob.thug_triggerscript_props.template_name_txt != "None":
                     if col_ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = format_triggerscript_name(col_ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
@@ -667,7 +667,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     # Override the TriggerScript settings for CTF nodes
                     # We want to use an auto-generated script which sets the appropriate game logic
                     if ob.thug_go_props.go_type.startswith("Flag_") or ob.thug_go_props.go_type.startswith("Team_"):
-                        if ob.thug_triggerscript_props.template_name_txt == "None" or ob.thug_triggerscript_props.custom_name == "":
+                        if ob.thug_triggerscript_props.template_name_txt == "" or ob.thug_triggerscript_props.template_name_txt == "None" or ob.thug_triggerscript_props.custom_name == "":
                             ob.thug_triggerscript_props.template_name_txt = "Custom"
                             ob.thug_triggerscript_props.custom_name = "script_" + clean_name + "Script"
                             
@@ -738,7 +738,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     if ob.thug_network_option == "NetEnabled":
                         p("\t\t:i {}".format(c("Permanent")))
                         
-                if ob.thug_triggerscript_props.template_name_txt != "None":
+                if ob.thug_triggerscript_props.template_name_txt != "" and ob.thug_triggerscript_props.template_name_txt != "None":
                     if ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
@@ -899,33 +899,55 @@ def export_qb(filename, directory, target_game, operator=None):
         p(":i :a}") # end node array =======================
 
         print("Exporting base TriggerScripts...")
-        
-        if target_game == "THUG2":
-            p("""
-:i function ${}_Goals$
-{}
-    :i if $InMultiplayerGame$
-        :i call $add_multiplayer_mode_goals$
-    :i endif
-:i endfunction
-            """.format(filename, custom_func_code.get("goals", "").strip('\n')))
-        else:
-            p("""
-:i function ${}_Goals$
-{}
-    :i doIf $InMultiplayerGame$
-        :i call $add_multiplayer_mode_goals$
-    :i doElse
-    :i endif
-:i endfunction
-            """.format(filename, custom_func_code.get("goals", "").strip('\n')))
-
-        p("""
-:i function ${}_Startup$
-{}
-:i endfunction
-        """.format(filename, custom_func_code.get("startup", "").strip('\n')))
-
+        # -------------------------------------
+        # Export GOALS script
+        scr_goals = bpy.data.texts.get("_Goals", None)
+        if not scr_goals:
+            # Auto-fill goals script if it doesn't exist
+            scr_goals = bpy.data.texts.new(name="_Goals")
+            scr_goals.write("    :i if $InMultiplayerGame$" + "\n")
+            scr_goals.write("        :i call $add_multiplayer_mode_goals$" + "\n")
+            scr_goals.write("    :i endif" + "\n")
+        p(":i function $" + filename + "_Goals" + "$")
+        if target_game == "THUG1" and scr_goals:
+            # Make sure we don't export the THUG2 if/else conditions!
+            print("Writing _Goals script...")
+            p(scr_goals.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
+        elif scr_goals:
+            print("Writing _Goals script...")
+            p(scr_goals.as_string())
+        p(":i endfunction")
+        p("")
+        # -------------------------------------
+        # -------------------------------------
+        # Export STARTUP script (if it exists)
+        scr_start = bpy.data.texts.get("_Startup", None)
+        p(":i function $" + filename + "_Startup" + "$")
+        if target_game == "THUG1" and scr_start:
+            # Make sure we don't export the THUG2 if/else conditions!
+            print("Writing _Startup script...")
+            p(scr_start.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
+        elif scr_start:
+            print("Writing _Startup script...")
+            p(scr_start.as_string())
+        p(":i endfunction")
+        p("")
+        # -------------------------------------
+        # -------------------------------------
+        # Export SETUP script (if it exists)
+        scr_setup = bpy.data.texts.get("_Setup", None)
+        p(":i function $" + filename + "_Setup" + "$")
+        if target_game == "THUG1" and scr_setup:
+            # Make sure we don't export the THUG2 if/else conditions!
+            print("Writing _Setup script...")
+            p(scr_setup.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
+        elif scr_setup:
+            print("Writing _Setup script...")
+            p(scr_setup.as_string())
+        p(":i endfunction")
+        p("")
+        # -------------------------------------
+            
         if target_game == "THUG1": # not sure if this is needed?
             p("""\n:i $TriggerScripts$ =
 :i :a{
@@ -1224,7 +1246,7 @@ def export_model_qb(filename, directory, target_game, operator=None):
                                              c(ob.thug_cluster_name if ob.thug_cluster_name else clean_name)))
                 p("\t\t:i {} = {}".format(c("CollisionMode"), c("Geometry")))
 
-                if ob.thug_triggerscript_props.template_name_txt != "None":
+                if ob.thug_triggerscript_props.template_name_txt != "" and ob.thug_triggerscript_props.template_name_txt != "None":
                     if ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)

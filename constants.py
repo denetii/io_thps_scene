@@ -118,7 +118,9 @@ FACE_FLAGS = {
 SETTABLE_FACE_FLAGS = [
     "mFD_VERT", "mFD_WALL_RIDABLE",
     "mFD_NON_COLLIDABLE", "mFD_NO_SKATER_SHADOW",
-    "mFD_NO_SKATER_SHADOW_WALL", "mFD_TRIGGER"
+    "mFD_NO_SKATER_SHADOW_WALL", "mFD_TRIGGER",
+    # Adding these, hope nothing breaks!
+    "mFD_SKATABLE", "mFD_NOT_SKATABLE", "mFD_UNDER_OK", "mFD_INVISIBLE"
 ]
 
 mSD_INVISIBLE           = 0x0001  # Invisible in primary viewport

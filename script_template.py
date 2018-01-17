@@ -34,7 +34,7 @@ def init_templates():
     for temp_path in template_files:
         new_template = parse_template(temp_path)
         if not template_exists(new_template['Name'], SCRIPT_TEMPLATES):
-            SCRIPT_TEMPLATES.append(parse_template(temp_path))
+            SCRIPT_TEMPLATES.append(new_template)
     
     return
     
@@ -134,7 +134,7 @@ def parse_template(config_path):
             # Export type is Name by default
             param['ExportType'] = scr_cfg['Parameter' + str(i)].get('ExportType', '')
             if param['ExportType'] == '':
-                param['ExportType'] = param['Type'] if param['Type'] in [ 'Integer','Int','Float','String' ] else 'Name'
+                param['ExportType'] = param['Type'] if param['Type'] in [ 'Integer','Int','Float','String','Boolean' ] else 'Name'
                 
             if 'Values' in scr_cfg['Parameter' + str(i)]:
                 param['Values'] = []
@@ -164,7 +164,9 @@ def parse_template(config_path):
 def store_triggerscript_params(self, context):
     ob = context.object
     ob.thug_triggerscript_props.template_name_txt = ob.thug_triggerscript_props.template_name
-    
+    if ob.thug_triggerscript_props.template_name in [ 'None', 'Custom' ]:
+        return
+        
     for i in range(1,5):
         ob['thug_param' + str(i) +'_enum'] = ""
         ob['thug_param' + str(i) +'_flags'] = ""
@@ -186,7 +188,7 @@ def store_triggerscript_params(self, context):
         else:
             continue
             
-        print("Storing thug_{} from {}".format(paramname, paramname))
+        #print("Storing thug_{} from {}".format(paramname, paramname))
         ob['thug_' + paramname] = paramvalue
         
 
@@ -219,6 +221,8 @@ def generate_template_script(ob, template, compiler):
             paramname += "float"
         elif param['Type'] == 'Integer' or param['Type'] == 'Int':
             paramname += "int"
+        elif param['Type'] == 'Boolean':
+            paramname += "bool"
         elif param['Type'] == 'Enum':
             paramname += "enum"
         elif param['Type'] == 'Flags':
@@ -231,7 +235,7 @@ def generate_template_script(ob, template, compiler):
         else:
             param_value = getattr(ob.thug_triggerscript_props, paramname, "")
         if param_value == "":
-            param_value = param['Default']
+            param_value = param['Default'] if param['Type'] != 'Boolean' else False
             if param_value == "":
                 raise Exception("Required parameter {} is missing for TriggerScript: {} attached to object: {}".format(paramname, template['Name'], ob.name))
             
@@ -244,6 +248,11 @@ def generate_template_script(ob, template, compiler):
                 formatted_values.append(qb.blub_str(pval))
             elif param['ExportType'] == 'Integer' or param['ExportType'] == 'Int':
                 formatted_values.append(qb.blub_int(pval))
+            elif param['ExportType'] == 'Boolean':
+                if pval == True:
+                    formatted_values.append(qb.blub_int(1))
+                else:
+                    formatted_values.append(qb.blub_int(0))
             elif param['ExportType'] == 'Float':
                 formatted_values.append(qb.blub_float(pval))
             

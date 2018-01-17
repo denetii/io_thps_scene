@@ -245,16 +245,16 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
     thug_cluster_name = StringProperty(name="TrickObject Cluster")
         
     # TriggerScript properties
-    triggerscript_type = EnumProperty(items=(
-        ("NULL", " --- ", "This property will not be modified."),
-        ("None", "None", ""),
-        ("Killskater", "Killskater", "Bail the skater and restart them at the given node."),
-        ("Killskater_Water", "Killskater (Water)", "Bail the skater and restart them at the given node."),
-        ("Teleport", "Teleport", "Teleport the skater to a given node without breaking their combo."),
-        ("Custom", "Custom", "Runs a custom script."),
-        ), name="TriggerScript Type", default="NULL")
-    target_node = StringProperty(name="Target Node")
-    custom_name = StringProperty(name="Custom Script Name")
+    #triggerscript_type = EnumProperty(items=(
+    #    ("NULL", " --- ", "This property will not be modified."),
+    #    ("None", "None", ""),
+    #    ("Killskater", "Killskater", "Bail the skater and restart them at the given node."),
+    #    ("Killskater_Water", "Killskater (Water)", "Bail the skater and restart them at the given node."),
+    #    ("Teleport", "Teleport", "Teleport the skater to a given node without breaking their combo."),
+    #    ("Custom", "Custom", "Runs a custom script."),
+    #    ), name="TriggerScript Type", default="NULL")
+    #target_node = StringProperty(name="Target Node")
+    #custom_name = StringProperty(name="Custom Script Name")
 
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH' or o.type == 'CURVE']
@@ -287,15 +287,15 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
                     ob.thug_cluster_name = self.thug_cluster_name
                     
             # TriggerScript props
-            if self.triggerscript_type != "NULL":
-                print("Updating triggerscript_type for object {}...".format(ob.name))
-                ob.thug_triggerscript_props.triggerscript_type = self.triggerscript_type
-                if self.triggerscript_type == "Custom":
-                    print("Updating custom_name for object {}...".format(ob.name))
-                    ob.thug_triggerscript_props.custom_name = self.custom_name
-                elif self.triggerscript_type != "None":
-                    print("Updating target_node for object {}...".format(ob.name))
-                    ob.thug_triggerscript_props.target_node = self.target_node
+            #if self.triggerscript_type != "NULL":
+            #    print("Updating triggerscript_type for object {}...".format(ob.name))
+            #    ob.thug_triggerscript_props.triggerscript_type = self.triggerscript_type
+            #    if self.triggerscript_type == "Custom":
+            #        print("Updating custom_name for object {}...".format(ob.name))
+            #        ob.thug_triggerscript_props.custom_name = self.custom_name
+            #    elif self.triggerscript_type != "None":
+            #        print("Updating target_node for object {}...".format(ob.name))
+            #        ob.thug_triggerscript_props.target_node = self.target_node
                     
             
         return {'FINISHED'}

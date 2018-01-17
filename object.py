@@ -25,8 +25,9 @@ def _thug_object_settings_draw(self, context):
     # * LEVEL LIGHT
     # ********************************************************
     if ob.type == "LAMP" and ob.data.type == "POINT":
-        self.layout.row().prop(ob, "thug_created_at_start")
-        self.layout.row().prop(ob, "thug_network_option")
+        box = self.layout.box().column(True)
+        box.row().prop(ob, "thug_created_at_start")
+        box.row().prop(ob, "thug_network_option")
         box = self.layout.box().column(True)
         box.row().prop(ob.data, "color")
         box.row().prop(ob.data, "energy")
@@ -40,8 +41,9 @@ def _thug_object_settings_draw(self, context):
         # * RESTART
         # ********************************************************
         if ob.thug_empty_props.empty_type == "Restart":
-            self.layout.row().prop(ob.thug_restart_props, "restart_type")
-            self.layout.row().prop(ob.thug_restart_props, "restart_name")
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_restart_props, "restart_type")
+            box.row().prop(ob.thug_restart_props, "restart_name")
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_restart_props, "restart_p1")
             box.row().prop(ob.thug_restart_props, "restart_p2")
@@ -197,14 +199,14 @@ def _thug_object_settings_draw(self, context):
                     bpy.data,
                     "texts")
                     
-        self.layout.row().prop(ob, "thug_export_collision")
-        self.layout.row().prop(ob, "thug_export_scene")
+        box = self.layout.column(True)
+        box.row().prop(ob, "thug_export_collision")
+        box.row().prop(ob, "thug_export_scene")
+        box.row().prop(ob, "thug_always_export_to_nodearray")
         if ob.thug_export_scene:
-            self.layout.row().prop(ob, "thug_lightgroup")
-        
-        self.layout.row().prop(ob, "thug_occluder")
-        self.layout.row().prop(ob, "thug_always_export_to_nodearray")
-        self.layout.row().prop(ob, "thug_do_autosplit")
+            box.row().prop(ob, "thug_lightgroup")
+        box.row().prop(ob, "thug_occluder")
+        box.row().prop(ob, "thug_do_autosplit")
         if ob.thug_do_autosplit:
             box = self.layout.column(True)
             box.prop(ob, "thug_do_autosplit_faces_per_subobject")
@@ -220,8 +222,9 @@ def _thug_object_settings_draw(self, context):
                 box.row().prop(ob.thug_waypoint_props, "PedType", expand=True)
         
     if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type != "") or ob.type == "EMPTY":
-        self.layout.row().prop(ob, "thug_created_at_start")
-        self.layout.row().prop(ob, "thug_network_option")
+        box = self.layout.box().column(True)
+        box.row().prop(ob, "thug_created_at_start")
+        box.row().prop(ob, "thug_network_option")
                 
         # New template system below!
         box = self.layout.box().column(True)
@@ -240,6 +243,8 @@ def _thug_object_settings_draw(self, context):
                         box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_int", text=prm['Name'])
                     elif prm['Type'] == 'Float':
                         box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_float", text=prm['Name'])
+                    elif prm['Type'] == 'Boolean':
+                        box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_bool", text=prm['Name'])
                     elif prm['Type'] == 'Enum':
                         box.row().prop(ob.thug_triggerscript_props, "param" + str(paramindex) + "_enum", text=prm['Name'])
                     elif prm['Type'] == 'Flags':
@@ -264,8 +269,9 @@ def _thug_object_settings_draw(self, context):
         # End new template system
         
         if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type == "Rail"):
-            self.layout.row().prop(ob, "thug_is_trickobject")
-            self.layout.row().prop(ob, "thug_cluster_name")
+            box = self.layout.box().column(True)
+            box.row().prop(ob, "thug_is_trickobject")
+            box.row().prop(ob, "thug_cluster_name")
             if not is_string_clean(ob.thug_cluster_name):
                 box = self.layout.box().column(True)
                 box.label("Bad cluster name!", icon="ERROR")
@@ -277,7 +283,6 @@ def _thug_object_settings_draw(self, context):
             self.layout.row().prop(ob, "thug_rail_terrain_type")
             self.layout.row().operator(AutoRailMesh.bl_idname, AutoRailMesh.bl_label)
             
-        self.layout.row().operator(UpdateRails.bl_idname, UpdateRails.bl_label)
         self.layout.row().prop_search(
             ob, "thug_rail_connects_to",
             context.window_manager.thug_all_nodes, "paths")

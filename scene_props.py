@@ -35,6 +35,8 @@ def thug_empty_update(self, context):
             mdl_mesh = 'Sk3Ed_RS_Ho'
         elif ob.thug_restart_props.restart_type == 'CTF':
             mdl_mesh = 'Sk3Ed_RS_Ho'
+        ob.empty_draw_type = 'CUBE'
+        ob.empty_draw_size = 36
         
     if ob.thug_empty_props.empty_type == 'GameObject':
         mdl_mesh = ''
@@ -58,7 +60,6 @@ def thug_empty_update(self, context):
             mdl_mesh = 'SecretTape'
         elif ob.thug_go_props.go_type.startswith('Combo_'):
             mdl_mesh = ob.thug_go_props.go_type
-            
         ob.empty_draw_type = 'CUBE'
         ob.empty_draw_size = 36
         
@@ -142,24 +143,24 @@ def maybe_upgrade_scene(*args):
         
     if should_upgrade:
         print("Attempting to update nodes in scene to match current version of io_thps_scene...")
-        # This is where we actually conver the nodes!
+        # This is where we actually convert the nodes!
         for ob in bpy.data.objects:
-            if ob.type == 'MESH' and ob.thug_triggerscript_props.triggerscript_type:
+            if ob.type in ['MESH', 'EMPTY', 'CURVE'] and ob.thug_triggerscript_props.triggerscript_type:
                 ob_ts = ob.thug_triggerscript_props
                 if ob_ts.triggerscript_type == 'None':
                     continue
                 # Should be able to do a straight conversion of these over to the template system, 
                 # as the base templates should include everything from the old setup
                 old_ts_name = ob_ts.triggerscript_type
-                ob_ts.template_name = old_ts_name
-                ob_ts.template_name_txt = old_ts_name
+                ob.thug_triggerscript_props.template_name = old_ts_name
+                ob.thug_triggerscript_props.template_name_txt = old_ts_name
                 if ob_ts.target_node and bpy.data.objects.get(ob_ts.target_node):
                     # Target node (for Teleport/Killskater) should always be param1 on the new template(s)
                     ob.thug_triggerscript_props.param1_string = get_clean_name(bpy.data.objects.get(ob_ts.target_node))
                 something_was_updated = True
-                print("Updated TriggerScript reference for object: {}. Previous TriggerScript was: {}".format(ob.name, ob_ts.triggerscript_type))
+                print("Updated TriggerScript reference for object: {}. Previous TriggerScript was: {}".format(ob.name, old_ts_name))
         
-            elif ob.type == 'EMPTY' and ob.thug_empty_props.empty_type != 'None':
+            if ob.type == 'EMPTY' and ob.thug_empty_props.empty_type != 'None':
                 # No easy solution for converting these, just warn the user
                 something_was_updated = True
                 fix_objects.append(ob.name)
@@ -223,29 +224,33 @@ class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     # New props used by the templating system!
     template_name = EnumProperty(items=script_template.get_templates, name="Trigger Script", description="This script is executed when the local skater hits the object (or, for nodes, when it is loaded/triggered from another script).", update=script_template.store_triggerscript_params)
     # This is what we actually use for exporting!
-    template_name_txt = StringProperty(name="Trigger Script", default="None")
+    template_name_txt = StringProperty(name="Trigger Script", default="")
     
     param1_int = IntProperty(name="Temp", description="")
     param1_float = FloatProperty(name="Temp", description="")
     param1_string = StringProperty(name="Temp", description="")
+    param1_bool = BoolProperty(name="Temp", description="", default=False)
     param1_enum = EnumProperty(items=script_template.get_param1_values, name="Temp", description="", update=script_template.store_triggerscript_params)
     param1_flags = EnumProperty(items=script_template.get_param1_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
     param2_int = IntProperty(name="Temp", description="")
     param2_float = FloatProperty(name="Temp", description="")
     param2_string = StringProperty(name="Temp", description="")
+    param2_bool = BoolProperty(name="Temp", description="", default=False)
     param2_enum = EnumProperty(items=script_template.get_param2_values, name="Temp", description="", update=script_template.store_triggerscript_params)
     param2_flags = EnumProperty(items=script_template.get_param2_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
     param3_int = IntProperty(name="Temp", description="")
     param3_float = FloatProperty(name="Temp", description="")
     param3_string = StringProperty(name="Temp", description="")
+    param3_bool = BoolProperty(name="Temp", description="", default=False)
     param3_enum = EnumProperty(items=script_template.get_param3_values, name="Temp", description="", update=script_template.store_triggerscript_params)
     param3_flags = EnumProperty(items=script_template.get_param3_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
     param4_int = IntProperty(name="Temp", description="")
     param4_float = FloatProperty(name="Temp", description="")
     param4_string = StringProperty(name="Temp", description="")
+    param4_bool = BoolProperty(name="Temp", description="", default=False)
     param4_enum = EnumProperty(items=script_template.get_param4_values, name="Temp", description="", update=script_template.store_triggerscript_params)
     param4_flags = EnumProperty(items=script_template.get_param4_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
 
@@ -632,7 +637,26 @@ def __init_wm_props():
         "mFD_NON_COLLIDABLE": ("Non-Collidable", "Non-Collidable. The skater won't collide with this face. Used for triggers."),
         "mFD_NO_SKATER_SHADOW": ("No Skater Shadow", "No Skater Shadow"),
         "mFD_NO_SKATER_SHADOW_WALL": ("No Skater Shadow Wall", "No Skater Shadow Wall"),
-        "mFD_TRIGGER": ("Trigger", "Trigger. The object's TriggerScript will be called when a skater goes through this face. Caution: if the object doesn't have a triggerscript defined the game will crash!"),
+        "mFD_TRIGGER": ("Trigger", "Trigger. The object's TriggerScript will be called when a skater goes through this face."),
+        
+        # Newly added flags!
+        "mFD_SKATABLE": ( "Skatable", "Explicitly marks the surface skatable." ),
+        "mFD_NOT_SKATABLE": ( "Not Skatable", "Collidable, but not skateable. Players can walk on this surface." ),
+        "mFD_UNDER_OK": ( "Under OK", "Description goes here." ),
+        "mFD_INVISIBLE": ( "Invisible", "Object won't be rendered." ),
+        #"mFD_DECAL": ( "mFD_DECAL", "Description goes here." ),
+        #"mFD_CAMERA_COLLIDABLE": ( "Camera Collidable", "Description goes here." ),
+        #"mFD_SKATER_SHADOW": ( "mFD_SKATER_SHADOW", "Description goes here." ),
+        #"mFD_CASFACEFLAGSEXIST": ( "mFD_CASFACEFLAGSEXIST", "Description goes here." ),
+        #"mFD_PASS_1_DISABLED": ( "mFD_PASS_1_DISABLED", "Description goes here." ),
+        #"mFD_PASS_2_ENABLED": ( "mFD_PASS_2_ENABLED", "Description goes here." ),
+        #"mFD_PASS_3_ENABLED": ( "mFD_PASS_3_ENABLED", "Description goes here." ),
+        #"mFD_PASS_4_ENABLED": ( "mFD_PASS_4_ENABLED", "Description goes here." ),
+        #"mFD_RENDER_SEPARATE": ( "mFD_RENDER_SEPARATE", "Description goes here." ),
+        #"mFD_LIGHTMAPPED": ( "mFD_LIGHTMAPPED", "Description goes here." ),
+        #"mFD_NON_WALL_RIDABLE": ( "mFD_NON_WALL_RIDABLE", "Description goes here." ),
+        #"mFD_NON_CAMERA_COLLIDABLE": ( "mFD_NON_CAMERA_COLLIDABLE", "Description goes here." ),
+        #"mFD_EXPORT_COLLISION": ( "mFD_EXPORT_COLLISION", "Description goes here." )
     }
 
     for ff in SETTABLE_FACE_FLAGS:
@@ -712,7 +736,7 @@ def register_props():
         default=False,
         description="This must be checked if you want this object to be taggable in Graffiti.")
     bpy.types.Object.thug_cluster_name = StringProperty(
-        name="TrickObject Cluster",
+        name="Cluster",
         description="The name of the graffiti group this object belongs to. If this is empty and this is a rail with a mesh object parent this will be set to the parent's name. Otherwise it will be set to this object's name.")
     bpy.types.Object.thug_path_type = EnumProperty(
         name="Path Type",

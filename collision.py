@@ -273,19 +273,26 @@ class THUGCollisionMeshTools(bpy.types.Panel):
             collision_flag_layer = bm.faces.layers.int.get("collision_flags")
             terrain_type_layer = bm.faces.layers.int.get("terrain_type")
             if any_face_selected:
-                cf_box = self.layout.box()
+                box = self.layout.box().column(True)
+                tmp_row = box.split()
+                col = tmp_row.column()
                 for idx, ff in enumerate(SETTABLE_FACE_FLAGS):
-                    cf_box.prop(context.window_manager, "thug_face_" + ff)
+                    if idx == 5:
+                        col = tmp_row.column()
+                    col.prop(context.window_manager, "thug_face_" + ff, toggle=True)
                 self.layout.prop(context.window_manager, "thug_face_terrain_type")
             else:
                 self.layout.label("No faces selected.")
 
             if any_face_selected or any(edge for edge in bm.edges if edge.select):
-                col = self.layout.column(True)
+                box = self.layout.box().column(True)
+                tmp_row = box.split()
+                col = tmp_row.column()
                 col.operator(MarkAutorail.bl_idname)
+                col = tmp_row.column()
                 col.operator(ClearAutorail.bl_idname)
-                self.layout.prop(context.window_manager, "thug_autorail_terrain_type")
-                self.layout.operator(ExtractRail.bl_idname)
+                box.row().prop(context.window_manager, "thug_autorail_terrain_type")
+                box.row().operator(ExtractRail.bl_idname)
             else:
                 self.layout.label("No edges selected.")
         elif False and context.mode == "OBJECT":
