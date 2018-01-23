@@ -76,6 +76,21 @@ def get_uv_index(obj, uv_name):
         return -1
         
 #----------------------------------------------------------------------------------
+#- Returns an existing material given a name, or creates one with that name
+#----------------------------------------------------------------------------------
+def get_material(name):
+    if not bpy.data.materials.get(str(name)):
+        blender_mat = bpy.data.materials.new(str(name)) 
+        blender_mat.use_transparency = True
+        blender_mat.diffuse_color = (1, 1, 1)
+        blender_mat.diffuse_intensity = 1
+        blender_mat.specular_intensity = 0.25
+        blender_mat.alpha = 1
+    else:
+        blender_mat = bpy.data.materials.get(str(name)) 
+    return blender_mat
+    
+#----------------------------------------------------------------------------------
 def get_index(seq, value, key=lambda x: x, default=-1):
     i = 0
     for item in seq:
@@ -376,6 +391,8 @@ def is_duplicate_mesh(ob, compare_ob):
     
     for obj in meshes:
         if obj.matrix_world != ob.matrix_world:
+            continue
+        if not hasattr(obj.data, 'polygons'):
             continue
         
         vertices = []

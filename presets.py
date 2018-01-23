@@ -100,6 +100,8 @@ def preset_place_node(node_type, position):
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
         curveData.bevel_depth = 2
+        curveData.bevel_resolution = 2
+        curveData.fill_mode = 'FULL'
         # map coords to spline
         polyline = curveData.splines.new('POLY')
         polyline.points.add(1)
@@ -112,15 +114,22 @@ def preset_place_node(node_type, position):
         curveOB.thug_rail_terrain_type = "GRINDMETAL"
         curveOB.data.thug_pathnode_triggers.add()
         curveOB.data.thug_pathnode_triggers.add()
+        
+        # Add shared rail material to curve (lets the user customize rail/path colors)
+        rail_mat = get_material('io_thps_scene_RailMaterial')
+        if not curveOB.data.materials.get(rail_mat.name):
+            curveOB.data.materials.append(rail_mat)
+            
         # attach to scene and validate context
         scene.objects.link(curveOB)
         scene.objects.active = curveOB
         curveOB.select = True
         to_group(curveOB, "RailNodes")
+        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
         if node_type == 'RAIL_PREMADE':
             build_rail_mesh(curveOB)
     
-    elif node_type == 'RAIL_POINT':
+    elif node_type == 'RAIL_POINT' or node_type == 'RAIL_POINT_PREMADE':
         rail_path_name = "TRG_RailPoint0"
         rail_name_idx = 0
         # Create new rail path
@@ -134,48 +143,83 @@ def preset_place_node(node_type, position):
         # map coords to spline
         polyline = curveData.splines.new('POLY')
         rail_pos = mathutils.Vector([position[0], position[1], position[2], 0])
-        polyline.points[0].co = mathutils.Vector([ 0, 0, 24, 0])
+        
+        if node_type == 'RAIL_POINT':
+            polyline.points[0].co = mathutils.Vector([ 0, 0, 0, 0])
+        else:
+            polyline.points[0].co = mathutils.Vector([ 0, 0, 24, 0])
         
         curveOB = bpy.data.objects.new(rail_path_name, curveData)
         curveOB.location = [ 0, 0, 0 ]
+        if node_type == 'RAIL_POINT':
+            curveOB.location = position
         curveOB.thug_path_type = "Rail"
         curveOB.thug_rail_terrain_type = "GRINDMETAL"
         curveOB.data.thug_pathnode_triggers.add()
         
-        meshOB = append_from_dictionary('presets', 'Rail_Post', scene)
-        meshOB.location = position
+        # Add shared rail material to curve (lets the user customize rail/path colors)
+        rail_mat = get_material('io_thps_scene_RailMaterial')
+        if not curveOB.data.materials.get(rail_mat.name):
+            curveOB.data.materials.append(rail_mat)
+        
+        if node_type == 'RAIL_POINT_PREMADE':
+            meshOB = append_from_dictionary('presets', 'Rail_Post', scene)
+            meshOB.location = position
         
         # attach to scene and validate context
         scene.objects.link(curveOB)
         scene.objects.active = curveOB
-        curveOB.parent = meshOB
+        if node_type == 'RAIL_POINT_PREMADE':
+            curveOB.parent = meshOB
         curveOB.select = True
+        curveOB.show_texture_space = True
+        curveOB.show_name = True
         to_group(curveOB, "RailNodes")
+        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
         
     
-    elif node_type == 'WAYPOINT':
+    elif node_type == 'WAYPOINT' or node_type == 'LADDER':
         path_name = "TRG_Waypoint"
         curveData = bpy.data.curves.new(path_name, type='CURVE')
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
         curveData.bevel_depth = 2
+        curveData.bevel_resolution = 2
+        curveData.fill_mode = 'FULL'
         # map coords to spline
         polyline = curveData.splines.new('POLY')
         polyline.points.add(1)
         rail_pos = mathutils.Vector([position[0], position[1], position[2], 0])
         polyline.points[0].co = rail_pos + mathutils.Vector([ 0, 0, 0, 0])
-        polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 500, 0, 0])
+        if node_type == 'LADDER':
+            polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 0, 500, 0])
+        else:
+            polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 500, 0, 0])
         
         curveOB = bpy.data.objects.new(path_name, curveData)
-        curveOB.thug_path_type = "Waypoint"
+        curveOB.thug_path_type = 'Waypoint' if node_type == 'WAYPOINT' else 'Ladder'
         curveOB.data.thug_pathnode_triggers.add()
         curveOB.data.thug_pathnode_triggers.add()
+        
+        # Add shared rail material to curve (lets the user customize rail/path colors)
+        if node_type == 'LADDER':
+            rail_mat = get_material('io_thps_scene_LadderMaterial')
+        else:
+            rail_mat = get_material('io_thps_scene_WaypointMaterial')
+        if not curveOB.data.materials.get(rail_mat.name):
+            curveOB.data.materials.append(rail_mat)
+            
         # attach to scene and validate context
         scene.objects.link(curveOB)
         scene.objects.active = curveOB
         curveOB.select = True
-        to_group(curveOB, "Waypoints")
-        
+        if node_type == 'WAYPOINT':
+            to_group(curveOB, 'Waypoints')
+        else:
+            to_group(curveOB, 'ClimbingNodes')
+        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
+    
+    
 def append_from_dictionary(dict_name, piece_name, scn, use_existing = False):
     # Get the path to the dictionary .blend file - it should always be within the
     # base files as defined in the plugin configuration
@@ -276,7 +320,9 @@ preset_node_list = [
     { 'name': 'RAIL_NODE', 'title': 'Rail Node', 'desc': 'Add a new rail with 2 points (no mesh).' },
     { 'name': 'RAIL_PREMADE', 'title': 'Premade Rail', 'desc': 'Add a new rail with 2 points and mesh.' },
     { 'name': 'RAIL_POINT', 'title': 'Point Rail', 'desc': 'Add a new rail with 1 point.' },
+    { 'name': 'RAIL_POINT_PREMADE', 'title': 'Premade Point Rail', 'desc': 'Add a 1-point rail with a post.' },
     { 'name': 'WAYPOINT', 'title': 'Waypoint', 'desc': 'Add a waypoint path with 2 points.' },
+    { 'name': 'LADDER', 'title': 'Ladder', 'desc': 'Add a climbing path with 2 points.' },
     { 'name': 'GAMEOBJECT', 'title': 'GameObject', 'desc': 'Add a new GameObject.' },
     
     { 'name': 'CTF_FLAG', 'title': 'CTF Flag', 'desc': 'Add a CTF Flag.' },

@@ -273,7 +273,7 @@ def export_qb(filename, directory, target_game, operator=None):
 
                 if col_ob.thug_triggerscript_props.template_name_txt != "" and col_ob.thug_triggerscript_props.template_name_txt != "None":
                     if col_ob.thug_triggerscript_props.template_name_txt == "Custom":
-                        script_name = format_triggerscript_name(col_ob.thug_triggerscript_props.custom_name)
+                        script_name = col_ob.thug_triggerscript_props.custom_name
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(col_ob)
@@ -669,7 +669,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     if ob.thug_go_props.go_type.startswith("Flag_") or ob.thug_go_props.go_type.startswith("Team_"):
                         if ob.thug_triggerscript_props.template_name_txt == "" or ob.thug_triggerscript_props.template_name_txt == "None" or ob.thug_triggerscript_props.custom_name == "":
                             ob.thug_triggerscript_props.template_name_txt = "Custom"
-                            ob.thug_triggerscript_props.custom_name = "script_" + clean_name + "Script"
+                            ob.thug_triggerscript_props.custom_name = clean_name + "Script"
                             
                     # Removing temporarily to make imported levels easier to work with!
                     #if ob.thug_go_props.go_model != "":
@@ -740,7 +740,7 @@ def export_qb(filename, directory, target_game, operator=None):
                         
                 if ob.thug_triggerscript_props.template_name_txt != "" and ob.thug_triggerscript_props.template_name_txt != "None":
                     if ob.thug_triggerscript_props.template_name_txt == "Custom":
-                        script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
+                        script_name = ob.thug_triggerscript_props.custom_name
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(ob)
@@ -1248,7 +1248,7 @@ def export_model_qb(filename, directory, target_game, operator=None):
 
                 if ob.thug_triggerscript_props.template_name_txt != "" and ob.thug_triggerscript_props.template_name_txt != "None":
                     if ob.thug_triggerscript_props.template_name_txt == "Custom":
-                        script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
+                        script_name = ob.thug_triggerscript_props.custom_name
                         custom_triggerscript_names.append(script_name)
                     else:
                         script_name, script_code = _generate_script(ob)
@@ -1323,10 +1323,10 @@ def maybe_create_triggerscript(self, context):
     if context.object.thug_triggerscript_props.custom_name != '':
         script_name = context.object.thug_triggerscript_props.custom_name
     else:
-        script_name = "script_" + context.object.name + "Script"
+        script_name = context.object.name + "Script"
         
-    if not script_name in bpy.data.texts:
-        bpy.data.texts.new(script_name)
+    if not script_name in context.window_manager.thug_all_nodes.scripts:
+        bpy.data.texts.new('script_' + script_name)
     
     if context.object.thug_triggerscript_props.custom_name == '':
         context.object.thug_triggerscript_props.custom_name = script_name
@@ -1338,7 +1338,7 @@ def maybe_create_triggerscript(self, context):
             break
 
     if editor_found:
-        area.spaces[0].text = bpy.data.texts[script_name]
+        area.spaces[0].text = bpy.data.texts['script_' + script_name]
         
 
 

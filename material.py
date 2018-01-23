@@ -339,9 +339,9 @@ def _material_pass_settings_draw(self, context):
         "blend_mode",
         "blend_fixed_alpha",
         "u_addressing",
-        "v_addressing",
-        "filtering_mode",
-        "test_passes"]
+        "v_addressing"]
+        #"filtering_mode",
+        #"test_passes"]
     pass_props = ob.active_material.active_texture.thug_material_pass_props
     for attr in attrs:
         self.layout.prop(

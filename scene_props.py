@@ -24,7 +24,8 @@ def thug_empty_update(self, context):
         if mdl_ob.name.endswith('_MDL'):
             context.scene.objects.unlink(mdl_ob)
             bpy.data.objects.remove(mdl_ob)
-        
+    mdl_mesh = ''
+    
     if ob.thug_empty_props.empty_type == 'Restart':
         mdl_mesh = 'Sk3Ed_RS_1p'
         if ob.thug_restart_props.restart_type == 'Player2':
@@ -157,6 +158,12 @@ def maybe_upgrade_scene(*args):
                 if ob_ts.target_node and bpy.data.objects.get(ob_ts.target_node):
                     # Target node (for Teleport/Killskater) should always be param1 on the new template(s)
                     ob.thug_triggerscript_props.param1_string = get_clean_name(bpy.data.objects.get(ob_ts.target_node))
+                    
+                # Custom TriggerScript names now use a filtered list of formatted text block names, so we need to
+                # update references to remove any leading 'script_' names
+                if old_ts_name == 'Custom':
+                    ob.thug_triggerscript_props.custom_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
+                    
                 something_was_updated = True
                 print("Updated TriggerScript reference for object: {}. Previous TriggerScript was: {}".format(ob.name, old_ts_name))
         
@@ -406,9 +413,9 @@ class THUGPathNodeUIProps(bpy.types.PropertyGroup):
         name="Terrain Type",
         items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]], default="Auto", update=update_pathnode)
     spawnobjscript = StringProperty(name="SpawnObj Script", update=update_pathnode)
-    PedType = StringProperty(name="PedType", update=update_pathnode)
+    PedType = StringProperty(name="Ped Type", update=update_pathnode)
     do_continue = BoolProperty(name="Continue", update=update_pathnode)
-    JumpToNextNode = BoolProperty(name="JumpToNextNode", update=update_pathnode)
+    JumpToNextNode = BoolProperty(name="Jump To Next Node", description="The AI skater will jump to the next point.", update=update_pathnode)
     Priority = EnumProperty(items=(
         ("Normal", "Normal", ""),
         ("Low", "Low", ""),
@@ -435,7 +442,7 @@ class THUGPathNodeUIProps(bpy.types.PropertyGroup):
     name="Skate Action", default="Continue", description="The action taken by the AI skater when they reach this point.", update=update_pathnode)
     JumpHeight = FloatProperty(name="Jump Height", min=0, max=100000, description="How high the AI skater will jump.", update=update_pathnode)
     Deceleration = FloatProperty(name="Deceleration", update=update_pathnode)
-    SpinAngle = FloatProperty(name="SpinAngle", min=0, max=10000, description="Rotation done by the AI skater.", update=update_pathnode)
+    SpinAngle = FloatProperty(name="Spin Angle", min=0, max=10000, description="Rotation done by the AI skater.", update=update_pathnode)
     RandomSpin = BoolProperty(name="Random Spin", default=False, description="Use a random spin amount instead of the spin angle.", update=update_pathnode)
     SpineTransfer = BoolProperty(name="Spine Transfer", default=False, description="AI skater should do a spine transfer.", update=update_pathnode)
     SpinDirection = EnumProperty(items=(

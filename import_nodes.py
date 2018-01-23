@@ -44,6 +44,8 @@ def fill_ncomp_data(node):
     for name, value in node.items():
         if name.startswith("ncomp_"):
             ncomp_names.append(name)
+        elif name == "ncomp":
+            ncomp_names.append(value)
             
     for ncomp_name in ncomp_names:
         if ncomp_name in ncomp:
@@ -309,6 +311,7 @@ def import_nodearray(gamemode):
                 
                         
             #curveData.bevel_depth = 0.01
+            tmp_mat_name = 'io_thps_scene_RailMaterial'
             if node["Class"] == "RailNode":
                 curveOB.thug_path_type = "Rail"
                 if "TerrainType" in node:
@@ -321,12 +324,14 @@ def import_nodearray(gamemode):
                     to_group(curveOB, "Circular RailNodes")
                     
             elif node["Class"] == "Waypoint":
+                tmp_mat_name = 'io_thps_scene_WaypointMaterial'
                 curveOB.thug_path_type = "Waypoint"
                 to_group(curveOB, "Waypoints")
                 if test_cyclic:
                     to_group(curveOB, "Circular Waypoints")
                 
             elif node["Class"] == "ClimbingNode":
+                tmp_mat_name = 'io_thps_scene_LadderMaterial'
                 curveOB.thug_path_type = "Ladder"
                 to_group(curveOB, "ClimbingNodes")
                 if test_cyclic:
@@ -336,6 +341,7 @@ def import_nodearray(gamemode):
                 # The importer is meant for THPS3/4 levels, so ClimbingNodes are not currently implemented
                 # but the paths should still be created for you
                 curveOB.thug_path_type = "Custom"
+                tmp_mat_name = 'io_thps_scene_CustomPathMaterial'
                 to_group(curveOB, "OtherPathNodes")
                 
             if "TrickObject" in node:
@@ -348,6 +354,15 @@ def import_nodearray(gamemode):
             scn.objects.link(curveOB)
             scn.objects.active = curveOB
             
+            # Fill some default rail/path settings, also used by presets and extracted rails!
+            curveOB.data.dimensions = '3D'
+            curveOB.data.resolution_u = 12
+            curveOB.data.bevel_depth = 1
+            curveOB.data.bevel_resolution = 2
+            curveOB.data.fill_mode = 'FULL'
+            rail_mat = get_material(tmp_mat_name)
+            curveOB.data.materials.append(rail_mat)
+        
         # STEP 3 - ATTACH TRIGGERSCRIPTS/FLAGS TO MESH, CREATE EMPTY NODES
         if "Name" in node and "Class" in node:
             node_name = node["Name"]
@@ -860,7 +875,7 @@ def import_nodearray(gamemode):
                     
                 if "TriggerScript" in node:
                     ob.thug_triggerscript_props.triggerscript_type = "Custom"
-                    ob.thug_triggerscript_props.custom_name = "script_" + node["TriggerScript"]
+                    ob.thug_triggerscript_props.custom_name = node["TriggerScript"]
                     script_text = bpy.data.texts.get("script_" + node["TriggerScript"], None)
                     if not script_text:
                         script_text = bpy.data.texts.new(name="script_" + node["TriggerScript"])
@@ -962,7 +977,7 @@ class THUGImportTriggerScripts(bpy.types.Operator):
                     if not bpy.data.texts.get(new_name, None):
                         # Converted name was not found! Make sure they know there's an invalid reference
                         raise Exception("Updated script name " + new_name + " was not found.")
-                    ob.thug_triggerscript_props.custom_name = new_name
+                    ob.thug_triggerscript_props.custom_name = old_name
                         
         return {'FINISHED'}
 

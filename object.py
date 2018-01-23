@@ -260,12 +260,14 @@ def _thug_object_settings_draw(self, context):
                         context.window_manager.thug_all_nodes, "scripts", text=prm['Name'])
                         
         elif ob.thug_triggerscript_props.template_name == "Custom":
-            box.row().prop_search(ob.thug_triggerscript_props, "custom_name", bpy.data, "texts")
+            box.row().prop_search(ob.thug_triggerscript_props, "custom_name", 
+                        context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT' )
+            #box.row().prop_search(ob.thug_triggerscript_props, "custom_name", bpy.data, "texts")
             box.row().operator(THUGCreateTriggerScript.bl_idname, THUGCreateTriggerScript.bl_label)
-            if ob.thug_triggerscript_props.custom_name != '' and not ob.thug_triggerscript_props.custom_name.startswith("script_"):
-                box = self.layout.box().column(True)
-                box.label("Bad TriggerScript name!", icon="ERROR")
-                box.label("Name must start with '_script' to be exported.")
+            #if ob.thug_triggerscript_props.custom_name != '' and not ob.thug_triggerscript_props.custom_name.startswith("script_"):
+            #    box = self.layout.box().column(True)
+            #    box.label("Bad TriggerScript name!", icon="ERROR")
+            #    box.label("Name must start with '_script' to be exported.")
         # End new template system
         
         if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type == "Rail"):

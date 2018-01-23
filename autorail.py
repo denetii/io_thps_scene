@@ -847,6 +847,8 @@ class ExtractRail(bpy.types.Operator):
         return context.mode == "EDIT_MESH" and context.object.type == "MESH"
 
     def execute(self, context):
+        # If the current edge(s) are marked as rails, clear them so we don't get duplicate rails!
+        bpy.ops.mesh.thug_clear_autorail('EXEC_DEFAULT')
         old_object = context.object
         bpy.ops.mesh.duplicate()
         before = set(bpy.data.objects)
@@ -867,7 +869,17 @@ class ExtractRail(bpy.types.Operator):
         new_object.parent = old_object
         new_object.matrix_parent_inverse = old_object.matrix_basis.inverted()
         new_object.thug_path_type = "Rail"
+        
+        # Configure bevels and materials to match imported rails and placed presets!
+        new_object.data.dimensions = '3D'
+        new_object.data.resolution_u = 12
+        new_object.data.bevel_depth = 1
+        new_object.data.bevel_resolution = 2
+        new_object.data.fill_mode = 'FULL'
+        rail_mat = helpers.get_material('io_thps_scene_RailMaterial')
+        new_object.data.materials.append(rail_mat)
 
+        
         return {"FINISHED"}
 
         

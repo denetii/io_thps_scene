@@ -31,21 +31,6 @@ def invert_image(img, clamp_factor):
     img.pixels[:] = pixels
     img.update()
     #return img
-
-#----------------------------------------------------------------------------------
-#- Returns an existing material given a name, or creates one with that name
-#----------------------------------------------------------------------------------
-def get_material(name):
-    if not bpy.data.materials.get(str(name)):
-        blender_mat = bpy.data.materials.new(str(name)) 
-        blender_mat.use_transparency = True
-        blender_mat.diffuse_color = (1, 1, 1)
-        blender_mat.diffuse_intensity = 1
-        blender_mat.specular_intensity = 0.25
-        blender_mat.alpha = 1
-    else:
-        blender_mat = bpy.data.materials.get(str(name)) 
-    return blender_mat
     
 #----------------------------------------------------------------------------------
 #- Checks for the temp baking material
