@@ -135,7 +135,7 @@ def maybe_upgrade_scene(*args):
     
     #print("Updating node collections...")
     context = bpy.context
-    if 'io_thps_scene_version' not in context.scene:
+    if 'io_thps_scene_version' not in context.scene or context.scene['io_thps_scene_version'] == None:
         print("This blend file was built with the asdf plugin, or a pre-release version of io_thps_scene. Needs to be updated!")
         should_upgrade = True
     elif context.scene['io_thps_scene_version'] != ADDON_VERSION:
@@ -147,6 +147,16 @@ def maybe_upgrade_scene(*args):
         # This is where we actually convert the nodes!
         for ob in bpy.data.objects:
             if ob.type in ['MESH', 'EMPTY', 'CURVE'] and ob.thug_triggerscript_props.triggerscript_type:
+            
+                # Per-point script references need to be updated from pre-release builds, as they still used the unfiltered script names
+                if hasattr(ob.data, 'thug_pathnode_triggers'):
+                    tmp_idx = -1
+                    for tmp_trig in ob.data.thug_pathnode_triggers:
+                        tmp_idx += 1
+                        if tmp_trig.script_name != '':
+                            print("Updating point script reference {}".format(tmp_trig.script_name))
+                            ob.data.thug_pathnode_triggers[tmp_idx].script_name = format_triggerscript_name(tmp_trig.script_name)
+                            
                 ob_ts = ob.thug_triggerscript_props
                 if ob_ts.triggerscript_type == 'None':
                     continue
@@ -164,6 +174,7 @@ def maybe_upgrade_scene(*args):
                 if old_ts_name == 'Custom':
                     ob.thug_triggerscript_props.custom_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                     
+                
                 something_was_updated = True
                 print("Updated TriggerScript reference for object: {}. Previous TriggerScript was: {}".format(ob.name, old_ts_name))
         

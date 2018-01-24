@@ -106,7 +106,7 @@ def get_param4_values(self, context):
     
 def parse_template(config_path):
     print("Attempting to read script file: {}".format(config_path))
-    scr_cfg = configparser.ConfigParser()
+    scr_cfg = configparser.RawConfigParser()
     scr_cfg.read(config_path)
     obj_template = {}
     if not 'Script' in scr_cfg:

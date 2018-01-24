@@ -307,8 +307,7 @@ class THUGCollisionMeshTools(bpy.types.Panel):
                 self.layout.prop(context.window_manager.thug_pathnode_props, "name")
                 self.layout.prop_search(
                 context.window_manager.thug_pathnode_props, "script_name",
-                bpy.data,
-                "texts")
+                context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT')
                 #self.layout.prop(context.window_manager.thug_pathnode_props, "script_name")
                 if context.object.thug_path_type == "Rail":
                     self.layout.prop(context.window_manager.thug_pathnode_props, "terrain")

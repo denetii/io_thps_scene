@@ -4,7 +4,7 @@ import bmesh
 import mathutils
 from bpy.props import *
 from pprint import pprint
-from . import collision, helpers
+from . import collision, helpers, qb
 from . collision import update_triggered_by_ui_updater 
 from . constants import *
 from . helpers import *
@@ -705,12 +705,12 @@ def _export_rails(p, c, operator=None):
 
                 # Select TriggerScripts to export below - basically, if there is a script defined
                 # for the whole rail, then use that. Otherwise, use the point-specific setting
-                if ob.thug_triggerscript_props.triggerscript_type != "None":
-                    if ob.thug_triggerscript_props.triggerscript_type == "Custom":
+                if ob.thug_triggerscript_props.template_name_txt != "None" and ob.thug_triggerscript_props.template_name_txt != "":
+                    if ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
                         custom_triggerscript_names.append(script_name)
                     else:
-                        script_name, script_code = _generate_script(ob)
+                        script_name, script_code = qb._generate_script(ob)
                         generated_scripts.setdefault(script_name, script_code)
                     p("\t\t:i {} = {}".format(c("TriggerScript"), c(script_name)))
                     
