@@ -912,6 +912,6 @@ def unregister_props():
     if draw_stuff_pre_load_cleanup in bpy.app.handlers.load_pre:
         bpy.app.handlers.load_pre.remove(draw_stuff_pre_load_cleanup)
     if update_node_collection in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_pre.remove(update_node_collection)
+        bpy.app.handlers.load_post.remove(update_node_collection)
     if maybe_upgrade_scene in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_pre.remove(maybe_upgrade_scene)
+        bpy.app.handlers.load_post.remove(maybe_upgrade_scene)

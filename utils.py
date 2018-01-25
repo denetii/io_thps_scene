@@ -132,6 +132,53 @@ class THUGUtilFillVehicles(bpy.types.Operator):
         col.label(text="Node Array Import")
         row = col.row()
         row.prop(self, "game_mode")
+        
+#----------------------------------------------------------------------------------
+class THUGUtilAutoWall(bpy.types.Operator):
+    bl_idname = "io.import_thug_util_autowall"
+    bl_label = "Auto-Wall"
+    bl_description = "Detects walls in your scene and marks them wallrideable."
+    pass_options = EnumProperty(items=(
+        ("ClearInvalid", "Clear Invalid", "Unsets the wallride flag on faces that are not considered walls."),
+        ("MarkValid", "Mark Valid", "Sets the wallride flag on faces considered walls."),
+        ), name="Options", default={"MarkValid"}, options={'ENUM_FLAG'})
+
+    def execute(self, context):
+        objects = [o for o in bpy.data.objects if o.type == 'MESH' and o.thug_export_collision == True ]
+        for ob in objects:
+            bm = bmesh.new()
+            bm.from_mesh(ob.data)
+            cfl = bm.faces.layers.int.get("collision_flags")
+            
+            for f in bm.faces:
+                flags = f[cfl]
+                if f.normal[2] > -0.15 and f.normal[2] < 0.15:
+                    if "MarkValid" in self.pass_options \
+                    and not (flags & FACE_FLAGS['mFD_VERT']) and not (flags & FACE_FLAGS['mFD_NON_COLLIDABLE']):
+                        flags |= FACE_FLAGS['mFD_WALL_RIDABLE']
+                else:
+                    if "ClearInvalid" in self.pass_options:
+                        flags &= ~FACE_FLAGS['mFD_WALL_RIDABLE']
+                f[cfl] = flags
+            bm.to_mesh(ob.data)
+            bm.free()
+        return {'FINISHED'}
+
+    @classmethod
+    def poll(cls, context):
+        objects = [o for o in bpy.data.objects if o.type == 'MESH' and o.thug_export_collision == True ]
+        return len(objects) > 0
+    
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=600, height=350)
+    
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.label(text="Auto-Wall Utility")
+        row = col.row()
+        row.prop_menu_enum(self, "pass_options", icon='SETTINGS')
 
 
 #----------------------------------------------------------------------------------
@@ -244,18 +291,6 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
     ], default="NULL")
     thug_cluster_name = StringProperty(name="TrickObject Cluster")
         
-    # TriggerScript properties
-    #triggerscript_type = EnumProperty(items=(
-    #    ("NULL", " --- ", "This property will not be modified."),
-    #    ("None", "None", ""),
-    #    ("Killskater", "Killskater", "Bail the skater and restart them at the given node."),
-    #    ("Killskater_Water", "Killskater (Water)", "Bail the skater and restart them at the given node."),
-    #    ("Teleport", "Teleport", "Teleport the skater to a given node without breaking their combo."),
-    #    ("Custom", "Custom", "Runs a custom script."),
-    #    ), name="TriggerScript Type", default="NULL")
-    #target_node = StringProperty(name="Target Node")
-    #custom_name = StringProperty(name="Custom Script Name")
-
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH' or o.type == 'CURVE']
         for ob in meshes:
@@ -286,18 +321,6 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
                     print("Updating thug_cluster_name for object {}...".format(ob.name))
                     ob.thug_cluster_name = self.thug_cluster_name
                     
-            # TriggerScript props
-            #if self.triggerscript_type != "NULL":
-            #    print("Updating triggerscript_type for object {}...".format(ob.name))
-            #    ob.thug_triggerscript_props.triggerscript_type = self.triggerscript_type
-            #    if self.triggerscript_type == "Custom":
-            #        print("Updating custom_name for object {}...".format(ob.name))
-            #        ob.thug_triggerscript_props.custom_name = self.custom_name
-            #    elif self.triggerscript_type != "None":
-            #        print("Updating target_node for object {}...".format(ob.name))
-            #        ob.thug_triggerscript_props.target_node = self.target_node
-                    
-            
         return {'FINISHED'}
 
     @classmethod
@@ -449,3 +472,4 @@ class THUGObjectUtils(bpy.types.Panel):
         self.layout.row().operator(THUGImportTriggerScripts.bl_idname, text=THUGImportTriggerScripts.bl_label, icon='PLUGIN')
         self.layout.row().operator(THUGRenameObjects.bl_idname, text=THUGRenameObjects.bl_label, icon='FILE_TEXT')
         self.layout.row().operator(THUGMergeObjects.bl_idname, text=THUGMergeObjects.bl_label, icon='FILE_TEXT')
+        self.layout.row().operator(THUGUtilAutoWall.bl_idname, text=THUGUtilAutoWall.bl_label, icon='MESH_PLANE')

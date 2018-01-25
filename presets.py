@@ -411,8 +411,15 @@ def clearPresetNodes():
         bpy.utils.unregister_class(c)
         
 def clearPresetMesh():
-    for c in preset_nodes:
-        bpy.utils.unregister_class(c)
+    for template_name in preset_mesh:
+        for category in preset_mesh[template_name]:
+            for mesh_op in preset_mesh[template_name][category]:
+                print("Unregistering: {}".format(mesh_op))
+                try:
+                    bpy.utils.unregister_class(mesh_op)
+                except RuntimeError:
+                    print("Unregister failed!")
+                
     for menu in mesh_submenus:
         bpy.utils.unregister_class(menu)
         
@@ -453,7 +460,6 @@ class THUGNodesMenu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        #layout.row().label("This is a submenu")
         for o in preset_nodes:
             layout.operator(o.bl_idname)
             
@@ -493,15 +499,10 @@ class THUGMeshMenu(bpy.types.Menu):
     def draw(self, context):
         print("drawing mesh menu")
         layout = self.layout
-        #layout.row().label("This is a submenu")
         for template_name in preset_mesh:
             for category in template_name:
                 layout.menu(THUGMeshSubMenu.bl_idname + '_' + template_name + '_' + category)
                 
-            #piece_search = [obj for obj in bpy.data.objects if obj.type == 'MESH' and fnmatch.fnmatch(obj.name, o.piece_name)]
-            #if not piece_search:
-            #    continue
-            #layout.operator(o.bl_idname, icon='OUTLINER_OB_ARMATURE')
 
 
 class THUGPresetsMenu(bpy.types.Menu):
@@ -511,7 +512,6 @@ class THUGPresetsMenu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
 
-        #layout.label("This is a main menu")
         layout.row().menu(THUGNodesMenu.bl_idname)
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'presets')
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk5ed')
