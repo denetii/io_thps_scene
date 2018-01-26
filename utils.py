@@ -253,7 +253,7 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
     bl_idname = "io.import_thug_util_batchobjprops"
     bl_label = "Object Properties"
     # bl_options = {'REGISTER', 'UNDO'}
-    bl_description = "Apples a selection of properties on all selected objects."
+    bl_description = "Applies a selection of properties on all selected objects."
     
     # Basic object properties
     thug_created_at_start = EnumProperty(name="Created At Start", items=[

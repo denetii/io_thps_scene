@@ -874,7 +874,8 @@ def import_nodearray(gamemode):
                     ob.thug_empty_props.empty_type = "BouncyObject"
                     
                 if "TriggerScript" in node:
-                    ob.thug_triggerscript_props.triggerscript_type = "Custom"
+                    ob.thug_triggerscript_props.template_name = "Custom"
+                    ob.thug_triggerscript_props.template_name_txt = "Custom"
                     ob.thug_triggerscript_props.custom_name = node["TriggerScript"]
                     script_text = bpy.data.texts.get("script_" + node["TriggerScript"], None)
                     if not script_text:
@@ -965,7 +966,7 @@ class THUGImportTriggerScripts(bpy.types.Operator):
         import_triggerscripts(self.replace_scripts)
         if self.import_type == "ScriptsAndObjects":
             for ob in bpy.data.objects:
-                if ob.thug_triggerscript_props and ob.thug_triggerscript_props.triggerscript_type == "Custom":
+                if ob.thug_triggerscript_props and ob.thug_triggerscript_props.template_name_txt == "Custom":
                     old_name = ob.thug_triggerscript_props.custom_name
                     if old_name == None or old_name == '' or old_name.startswith('script_'):
                         continue
@@ -1087,6 +1088,8 @@ class THUGMergeObjects(bpy.types.Operator):
                 print("Scene mesh does NOT match, skipping!")
                 continue
                 
+            context.scene.objects.active = ob
+            
             # At this point, we've confirmed the meshes are duplicated, so copy the collision flags 
             # and other attributes from the COL mesh
             bm = bmesh.new()
@@ -1123,9 +1126,13 @@ class THUGMergeObjects(bpy.types.Operator):
             # All that's left is to apply the object properties from the collision mesh, then delete!
             ob.thug_object_class = col_ob.thug_object_class
             ob.thug_occluder = col_ob.thug_occluder
-            ob.thug_triggerscript_props.triggerscript_type = col_ob.thug_triggerscript_props.triggerscript_type
-            ob.thug_triggerscript_props.target_node = col_ob.thug_triggerscript_props.target_node
+            # Set the TriggerScript on the SCN object if there was any applied previously
+            # This will only work with custom scripts, but that's all we should have at this point
+            if col_ob.thug_triggerscript_props.template_name_txt != '':
+                ob.thug_triggerscript_props.template_name = col_ob.thug_triggerscript_props.template_name
+                ob.thug_triggerscript_props.template_name_txt = col_ob.thug_triggerscript_props.template_name_txt
             ob.thug_triggerscript_props.custom_name = col_ob.thug_triggerscript_props.custom_name
+            ob.thug_triggerscript_props.target_node = col_ob.thug_triggerscript_props.target_node
             is_levelobject = col_ob.thug_object_class == "LevelObject"
             if is_levelobject:
                 ob.thug_levelobj_props.obj_type = col_ob.thug_levelobj_props.obj_type
