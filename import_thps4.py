@@ -79,8 +79,9 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
             tex_slot.texture = blender_tex
             pps = blender_tex.thug_material_pass_props
             p("  pass #{}", j)
-            tex_checksum = p("    pass texture checksum: {}", hex(r.u32()))
-            image_name = str(tex_checksum) + ".png"
+            tex_checksum = p("    pass texture checksum: {}", r.u32())
+            actual_tex_checksum = hex(tex_checksum)
+            image_name = str(actual_tex_checksum) #+ ".png"
             blender_tex.image = bpy.data.images.get(image_name)
             full_path = os.path.join(directory, image_name)
             full_path2 = os.path.join(directory, str("tex\\{:08x}.tga".format(tex_checksum)))
