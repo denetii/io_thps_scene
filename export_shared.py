@@ -126,7 +126,7 @@ def do_export(operator, context, target_game):
             self.report({'OPERATOR'}, "Generating tex file... ")
             export_tex(filename + ext_tex, path, target_game, self)
 
-        if self.generate_scn_file:
+        if self.generate_scn_file and self.generate_sky:
             skypath = j(directory, "Levels\\" + filename + "_sky")
             md(skypath)
             shutil.copy(
@@ -221,8 +221,9 @@ def do_export(operator, context, target_game):
                 pack_files = []
                 pack_files.append(j(path, filename + ext_scn))
                 pack_files.append(j(path, filename + ext_tex))
-                pack_files.append(j(skypath, filename + "_sky" + ext_scn))
-                pack_files.append(j(skypath, filename + "_sky" + ext_tex))
+                if self.generate_sky:
+                    pack_files.append(j(skypath, filename + "_sky" + ext_scn))
+                    pack_files.append(j(skypath, filename + "_sky" + ext_tex))
                 pack_pre( directory, pack_files, j(directory, "pre", filename + "scn" + ext_pre) )
                 self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + "scn" + ext_pre))
                 
@@ -696,6 +697,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         description="Use this option when exporting a park editor dictionary.", default=False)
     generate_tex_file = BoolProperty(name="Generate a .tex file", default=True)
     generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
+    generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
     generate_col_file = BoolProperty(name="Generate a .col file", default=True)
     generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
 
@@ -718,20 +720,23 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
         
     def draw(self, context):
-        self.layout.row().prop(self, "skybox_name")
-        self.layout.row().prop(self, "generate_vertex_color_shading")
-        self.layout.row().prop(self, "use_vc_hack")
-        self.layout.row().prop(self, "speed_hack")
-        self.layout.row().prop(self, "autosplit_everything")
+        self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
+        if self.generate_sky:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "skybox_name")
+        self.layout.row().prop(self, "generate_vertex_color_shading", toggle=True, icon='TEXTURE_SHADED')
+        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
+        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
+        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "pack_pre")
-        self.layout.row().prop(self, "generate_tex_file")
-        self.layout.row().prop(self, "generate_scn_file")
-        self.layout.row().prop(self, "generate_col_file")
-        self.layout.row().prop(self, "generate_scripts_files")
+        self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
+        self.layout.row().prop(self, "generate_tex_file", toggle=True, icon='TEXTURE_DATA')
+        self.layout.row().prop(self, "generate_scn_file", toggle=True, icon='SCENE_DATA')
+        self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')
+        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
         box.row().prop(self, "mipmap_offset")
@@ -752,7 +757,9 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
 
     generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
     is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    use_vc_hack = BoolProperty(name="Vertex color hack", description = "Doubles intensity of vertex colours.", default=False)
+    use_vc_hack = BoolProperty(name="Vertex color hack",
+        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+        , default=False)
     speed_hack = BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     
@@ -767,7 +774,6 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
     model_type = EnumProperty(items = (
         ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
         ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
@@ -792,16 +798,16 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
         
     def draw(self, context):
-        self.layout.row().prop(self, "generate_vertex_color_shading")
-        self.layout.row().prop(self, "use_vc_hack")
-        self.layout.row().prop(self, "speed_hack")
-        self.layout.row().prop(self, "autosplit_everything")
+        self.layout.row().prop(self, "generate_vertex_color_shading", toggle=True, icon='TEXTURE_SHADED')
+        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
+        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
+        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
         self.layout.row().prop(self, "model_type", expand=True)
-        self.layout.row().prop(self, "generate_scripts_files")
+        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
         box.row().prop(self, "mipmap_offset")
@@ -821,7 +827,9 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
     directory = StringProperty(name="Directory")
 
     generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack",default=False, options={'HIDDEN'})
+    use_vc_hack = BoolProperty(name="Vertex color hack",
+        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+        , default=False)
     speed_hack = BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
@@ -843,6 +851,7 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         description="If you have already generated a .tex file, and didn't change/add any new images in meantime, you can uncheck this.", default=True)
     generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
     generate_col_file = BoolProperty(name="Generate a .col file", default=True)
+    generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
     generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
 
     skybox_name = StringProperty(name="Skybox name", default="THUG2_Sky")
@@ -862,20 +871,23 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
 
     def draw(self, context):
-        self.layout.row().prop(self, "skybox_name")
-        self.layout.row().prop(self, "generate_vertex_color_shading")
-        self.layout.row().prop(self, "use_vc_hack")
-        self.layout.row().prop(self, "speed_hack")
-        self.layout.row().prop(self, "autosplit_everything")
+        self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
+        if self.generate_sky:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "skybox_name")
+        self.layout.row().prop(self, "generate_vertex_color_shading", toggle=True, icon='TEXTURE_SHADED')
+        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
+        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
+        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "pack_pre")
-        self.layout.row().prop(self, "generate_tex_file")
-        self.layout.row().prop(self, "generate_scn_file")
-        self.layout.row().prop(self, "generate_col_file")
-        self.layout.row().prop(self, "generate_scripts_files")
+        self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
+        self.layout.row().prop(self, "generate_tex_file", toggle=True, icon='TEXTURE_DATA')
+        self.layout.row().prop(self, "generate_scn_file", toggle=True, icon='SCENE_DATA')
+        self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')
+        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
         box.row().prop(self, "mipmap_offset")
@@ -895,7 +907,9 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
     directory = StringProperty(name="Directory")
 
     generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack",default=False, options={'HIDDEN'})
+    use_vc_hack = BoolProperty(name="Vertex color hack",
+        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+        , default=False)
     speed_hack = BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
@@ -930,16 +944,16 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
     
     def draw(self, context):
-        self.layout.row().prop(self, "generate_vertex_color_shading")
-        self.layout.row().prop(self, "use_vc_hack")
-        self.layout.row().prop(self, "speed_hack")
-        self.layout.row().prop(self, "autosplit_everything")
+        self.layout.row().prop(self, "generate_vertex_color_shading", toggle=True, icon='TEXTURE_SHADED')
+        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
+        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
+        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
             box = self.layout.box().column(True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "model_type")
-        self.layout.row().prop(self, "generate_scripts_files")
+        self.layout.row().prop(self, "model_type", expand=True)
+        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
         box.row().prop(self, "mipmap_offset")
