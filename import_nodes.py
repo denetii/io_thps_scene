@@ -267,9 +267,7 @@ def import_nodearray(gamemode):
                 if "TriggerScript" in _pnode and _pnode["TriggerScript"] != "":
                     # If there is a TriggerScript defined, assign to the blender obj and create text block if needed
                     curveOB.data.thug_pathnode_triggers[i].script_name = _pnode["TriggerScript"]
-                    script_text = bpy.data.texts.get("script_" + _pnode["TriggerScript"], None)
-                    if not script_text:
-                        script_text = bpy.data.texts.new(name="script_" + _pnode["TriggerScript"])
+                    get_triggerscript(_pnode["TriggerScript"])
                 # Assign terrain type
                 if "TerrainType" in _pnode and _pnode["TerrainType"] != "":
                     try:
@@ -280,34 +278,38 @@ def import_nodearray(gamemode):
                 # Assign spawnobj script
                 if "spawnobjscript" in _pnode and _pnode["spawnobjscript"] != "":
                     curveOB.data.thug_pathnode_triggers[i].spawnobjscript = _pnode["spawnobjscript"]
+                    get_triggerscript(_pnode["spawnobjscript"])
                     
                 # Assign skater AI properties (if defined!)
-                if "Type" in _pnode and _pnode["Type"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].waypt_type = _pnode["Type"]
-                if "PedType" in _pnode and _pnode["PedType"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].PedType = _pnode["PedType"]
-                if "Continue" in _pnode:
-                    curveOB.data.thug_pathnode_triggers[i].do_continue = True
-                if "JumpToNextNode" in _pnode:
-                    curveOB.data.thug_pathnode_triggers[i].JumpToNextNode = True
-                if "Priority" in _pnode and _pnode["Priority"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].Priority = _pnode["Priority"]
-                if "ContinueWeight" in _pnode and _pnode["ContinueWeight"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].ContinueWeight = _pnode["ContinueWeight"]
-                if "SkateAction" in _pnode and _pnode["SkateAction"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].SkateAction = _pnode["SkateAction"]
-                if "JumpHeight" in _pnode and _pnode["JumpHeight"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].JumpHeight = _pnode["JumpHeight"]
-                if "ManualType" in _pnode and _pnode["ManualType"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].ManualType = _pnode["ManualType"]
-                if "Deceleration" in _pnode and _pnode["Deceleration"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].Deceleration = _pnode["Deceleration"]
-                if "StopTime" in _pnode and _pnode["StopTime"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].StopTime = _pnode["StopTime"]
-                if "SpinAngle" in _pnode and _pnode["SpinAngle"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].SpinAngle = _pnode["SpinAngle"]
-                if "SpinDirection" in _pnode and _pnode["SpinDirection"] != "":
-                    curveOB.data.thug_pathnode_triggers[i].SpinDirection = _pnode["SpinDirection"]
+                if node["Class"] == "Waypoint":
+                    if "Type" in _pnode and _pnode["Type"] != "":
+                        #curveOB.data.thug_pathnode_triggers[i].waypt_type = _pnode["Type"]
+                        curveOB.thug_waypoint_props.waypt_type = _pnode["Type"]
+                    if "PedType" in _pnode and _pnode["PedType"] != "":
+                        #curveOB.data.thug_pathnode_triggers[i].PedType = _pnode["PedType"]
+                        curveOB.thug_waypoint_props.PedType = _pnode["PedType"]
+                    if "Continue" in _pnode:
+                        curveOB.data.thug_pathnode_triggers[i].do_continue = True
+                    if "JumpToNextNode" in _pnode:
+                        curveOB.data.thug_pathnode_triggers[i].JumpToNextNode = True
+                    if "Priority" in _pnode and _pnode["Priority"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].Priority = _pnode["Priority"]
+                    if "ContinueWeight" in _pnode and _pnode["ContinueWeight"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].ContinueWeight = _pnode["ContinueWeight"]
+                    if "SkateAction" in _pnode and _pnode["SkateAction"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].SkateAction = _pnode["SkateAction"]
+                    if "JumpHeight" in _pnode and _pnode["JumpHeight"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].JumpHeight = _pnode["JumpHeight"]
+                    if "ManualType" in _pnode and _pnode["ManualType"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].ManualType = _pnode["ManualType"]
+                    if "Deceleration" in _pnode and _pnode["Deceleration"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].Deceleration = _pnode["Deceleration"]
+                    if "StopTime" in _pnode and _pnode["StopTime"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].StopTime = _pnode["StopTime"]
+                    if "SpinAngle" in _pnode and _pnode["SpinAngle"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].SpinAngle = _pnode["SpinAngle"]
+                    if "SpinDirection" in _pnode and _pnode["SpinDirection"] != "":
+                        curveOB.data.thug_pathnode_triggers[i].SpinDirection = _pnode["SpinDirection"]
                 
                         
             #curveData.bevel_depth = 0.01
@@ -552,13 +554,9 @@ def import_nodearray(gamemode):
                         ob.thug_levelobj_props.skater_collision_radius = node["skater_collision_radius"]
                     if "mass_over_moment" in node:
                         ob.thug_levelobj_props.mass_over_moment = node["mass_over_moment"]
-                    if "stuckscript" in node:
-                        if node["stuckscript"] != "":
-                            script_text = bpy.data.texts.get("script_" + node["stuckscript"], None)
-                            if not script_text:
-                                script_text = bpy.data.texts.new(name="script_" + node["stuckscript"])
-                        
+                    if "stuckscript" in node and node["stuckscript"] != "":
                         ob.thug_levelobj_props.stuckscript = node["stuckscript"]
+                        get_triggerscript(node["stuckscript"])
                     if "SoundType" in node:
                         ob.thug_levelobj_props.SoundType = node["SoundType"]
                         
@@ -873,14 +871,12 @@ def import_nodearray(gamemode):
                 elif node["Class"] == "BouncyObject":
                     ob.thug_empty_props.empty_type = "BouncyObject"
                     
-                if "TriggerScript" in node:
+                if "TriggerScript" in node and node["TriggerScript"] != "":
                     ob.thug_triggerscript_props.template_name = "Custom"
                     ob.thug_triggerscript_props.template_name_txt = "Custom"
                     ob.thug_triggerscript_props.custom_name = node["TriggerScript"]
-                    script_text = bpy.data.texts.get("script_" + node["TriggerScript"], None)
-                    if not script_text:
-                        script_text = bpy.data.texts.new(name="script_" + node["TriggerScript"])
-                        
+                    get_triggerscript(node["TriggerScript"])
+                    
                     #script_text.write(":i function $" + node["TriggerScript"] + "$\n")
                     #script_text.write(":i endfunction\n")
                     

@@ -313,7 +313,9 @@ class THUGCollisionMeshTools(bpy.types.Panel):
                     self.layout.prop(context.window_manager.thug_pathnode_props, "terrain")
                 if context.object.thug_path_type == "Waypoint":
                     #self.layout.prop(context.window_manager.thug_pathnode_props, "waypt_type")
-                    self.layout.prop(context.window_manager.thug_pathnode_props, "spawnobjscript")
+                    self.layout.prop_search(
+                        context.window_manager.thug_pathnode_props, "spawnobjscript",
+                        context.window_manager.thug_all_nodes, "scripts", icon='SCRIPTPLUGINS')
                     if context.object.thug_waypoint_props.waypt_type == "PedAI":
                         #self.layout.prop(context.window_manager.thug_pathnode_props, "PedType")
                         if context.object.thug_waypoint_props.PedType == "Skate":

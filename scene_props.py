@@ -378,7 +378,9 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
 class THUGWaypointProps(bpy.types.PropertyGroup):
     waypt_type = EnumProperty(items=(
         ("None", "None", ""), 
-        ("PedAI", "Pedestrian AI", "This path is used for pedestrian navigation."), 
+        ("PedAI", "Ped AI", "This path is used for pedestrian navigation."), 
+        ("Accel", "Accel", "(THUG2+) Used for vehicle motion/acceleration."), 
+        ("Default", "Default", "(THUG2+) Default waypoint, not needed for THUG1."), 
         ), 
     name="Waypoint Type", default="None", description="Type of waypoint. Use PedAI for detailed pedestrian movement and AI skaters.")
     
@@ -871,8 +873,11 @@ def register_props():
     bpy.types.Scene.thug_bake_type = EnumProperty(
         name="Bake Type",
         items=[
-            ("LIGHT", "Lighting Only", "Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting."),
-            ("FULL", "Full Diffuse", "Bake lighting onto textures. Accurate lighting, but lowers base texture resolution.")],
+            ("LIGHT", "Lighting Only (Cycles)", "(Uses the Cycles render engine) Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting."),
+            ("FULL", "Full Diffuse (Cycles)", "(Uses the Cycles render engine) Bake everything onto a single texture. The most accurate results, but lowers base texture resolution."),
+            ("VERTEX_COLORS", "Vertex Colors", "Bake lighting to vertex colors. Fast and cheap, accuracy depends on mesh density."),
+            ("LIGHT_BI", "Lighting Only (BR)", "Bake lighting to texture and mix with original textures."),
+            ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture.")],
         default="LIGHT", 
         description="Type of bakes to use for this scene.")
                            
