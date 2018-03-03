@@ -208,9 +208,19 @@ def export_tex(filename, directory, target_game, operator=None):
 
     # denetii - only export images that are from materials with enabled texture slots
     # this should avoid exporting normal/spec map textures used for baking
-    out_materials = bpy.data.materials[:]
+    #out_materials = bpy.data.materials[:]
+    out_materials = []
+    for ob in bpy.data.objects:
+        if ob.type != 'MESH': continue
+        if not hasattr(ob, 'thug_export_scene') or ob.thug_export_scene == False: continue
+        for mat in ob.data.materials:
+            if mat.name in out_materials: continue
+            out_materials.append(mat.name)
+            
     out_images = []
-    for m in out_materials:
+    for m_name in out_materials:
+        m = bpy.data.materials[m_name]
+        
         # denetii - only include texture slots that affect the diffuse color in the Blender material
         passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
         if len(passes) > 4:

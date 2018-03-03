@@ -285,6 +285,13 @@ def export_materials(output_file, target_game, operator=None):
                 pass_flags |= MATFLAG_SMOOTH
             if pprops and pprops.pf_environment:
                 pass_flags |= MATFLAG_ENVIRONMENT
+            if pprops and pprops.pf_bump:
+                print("EXPORTING BUMP MAP TEXTURE!")
+                pass_flags |= MATFLAG_BUMP_SIGNED_TEXTURE
+                pass_flags |= MATFLAG_BUMP_LOAD_MATRIX
+            if pprops and pprops.pf_water:
+                print("EXPORTING WATER TEXTURE!")
+                pass_flags |= MATFLAG_WATER_EFFECT
                 
             w("I", pass_flags)  # flags # 4132
             w("?", True)  # has color flag; seems to be ignored
@@ -353,6 +360,8 @@ def _material_pass_settings_draw(self, context):
     img = getattr(ob.active_material.active_texture, 'image', None)
     if img and pass_props.pf_textured:
         box.row().prop(img.thug_image_props, 'compression_type')
+    box.row().prop(pass_props, "pf_bump")
+    box.row().prop(pass_props, "pf_water")
     box.row().prop(pass_props, "pf_environment")
     if pass_props.pf_environment:
         box.row().prop(pass_props, "envmap_multiples")
@@ -654,6 +663,8 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
     
     pf_textured = BoolProperty(name="Textured", default=True)
     pf_environment = BoolProperty(name="Environment texture", default=False) 
+    pf_bump = BoolProperty(name="Bump texture", default=False) 
+    pf_water = BoolProperty(name="Water texture", default=False) 
     pf_decal = BoolProperty(name="Decal", default=False) 
     pf_smooth = BoolProperty(name="Smooth", default=True) 
     pf_transparent = BoolProperty(name="Use Transparency", default=True)

@@ -880,7 +880,9 @@ def register_props():
             ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture.")],
         default="LIGHT", 
         description="Type of bakes to use for this scene.")
-                           
+        
+    bpy.types.Scene.thug_bake_automargin = BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings.")                       
+    
     global draw_handle
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
     # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)

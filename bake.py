@@ -381,7 +381,8 @@ def bake_thug_lightmaps(meshes, context):
         scene.render.use_bake_to_vertex_color = False
         scene.render.use_bake_selected_to_active = False
         scene.render.use_bake_multires = False
-        scene.render.bake_margin = 1
+        if scene.thug_bake_automargin:
+            scene.render.bake_margin = 1
         
     # Set the correct render engine used for baking
     if is_cycles:
@@ -576,7 +577,8 @@ def bake_thug_lightmaps(meshes, context):
             else:
                 blender_tex = bpy.data.textures.get("Baked_{}".format(ob.name))
             blender_tex.image = image
-            blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_SUBTRACT'
+            blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_MODULATE'
+            blender_tex.thug_material_pass_props.blend_fixed_alpha = 108
             blender_mat = get_material("Lightmap_" + ob.name)
             if not blender_mat.texture_slots.get(blender_tex.name):
                 tex_slot = blender_mat.texture_slots.add()
@@ -623,7 +625,8 @@ def bake_thug_lightmaps(meshes, context):
                 bpy.context.scene.render.bake.use_pass_color = True
             else:
                 bpy.context.scene.render.bake.use_pass_color = False
-            scene.render.bake_margin = 1 # Used to be bake_margin
+            if scene.thug_bake_automargin:
+                scene.render.bake_margin = 1 # Used to be bake_margin
             if ob.thug_lightmap_quality != 'Custom':
                 if ob.thug_lightmap_quality == 'Draft':
                     scene.cycles.samples = 16
@@ -665,7 +668,7 @@ def bake_thug_lightmaps(meshes, context):
             bpy.data.materials.remove(blender_mat)
             # Assign the texture pass from the bake material to the base material(s)
             ob.active_material_index = orig_index
-            invert_image(blender_tex.image, scene.thug_lightmap_clamp)
+            #invert_image(blender_tex.image, scene.thug_lightmap_clamp)
             
         save_baked_texture(blender_tex.image, _folder)
         ob.data.uv_textures[orig_uv].active = True
@@ -704,14 +707,21 @@ def bake_thug_lightmaps(meshes, context):
             if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI':
                 slot.blend_type = 'MIX'
             else:
-                slot.blend_type = 'SUBTRACT'
+                slot.blend_type = 'MULTIPLY'
         print("Processed object: {}".format(obname))
-            
+          
     print("COMPLETE! Thank you for your patience!")
     # Switch back to the original engine, if it wasn't Cycles
-    if previous_engine != 'CYCLES':
+    if previous_engine != scene.render.engine:
         scene.render.engine = previous_engine
-        
+    # Toggle use_nodes on the whole scene materials, if desired (depending on the engine we are on)
+    if previous_engine == 'BLENDER_RENDER':
+        for mat in bpy.data.materials:
+            mat.use_nodes = False
+    elif previous_engine == 'CYCLES':
+        for mat in bpy.data.materials:
+            mat.use_nodes = True
+    
         
 #----------------------------------------------------------------------------------
 #- Fills baked materials with empty material passes to ensure that the 
@@ -921,11 +931,11 @@ class AutoLightmapResolution(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     @classmethod
     def poll(cls, context):
-        meshes = [o for o in bpy.data.objects if o.type == 'MESH' and ("is_baked" not in o or o["is_baked"] == False) ]
+        meshes = [o for o in bpy.data.objects if o.type == 'MESH' ]
         return len(meshes) > 0
 
     def execute(self, context):
-        meshes = [o for o in bpy.data.objects if o.type == 'MESH' and ("is_baked" not in o or o["is_baked"] == False) ]
+        meshes = [o for o in bpy.data.objects if o.type == 'MESH' ]
         
         for ob in meshes:
             # We will use the object's area and density (number of faces) to determine
@@ -1003,6 +1013,7 @@ class THUGSceneLightingTools(bpy.types.Panel):
         scene = context.scene
         self.layout.row().prop(scene, "thug_lightmap_scale")
         self.layout.row().prop(scene, "thug_bake_type")
+        self.layout.row().prop(scene, "thug_bake_automargin")
         if scene.thug_bake_type == 'LIGHT':
             self.layout.row().prop(scene, "thug_lightmap_uglymode")
             self.layout.row().prop(scene, "thug_lightmap_color")
