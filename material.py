@@ -66,10 +66,10 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
         ps.no_backface_culling = p("  no backface culling: {}", r.bool())
         ps.z_bias = p("  z bias: {}", r.i32())
 
-        grassify = p("  grassify: {}", r.bool())
-        if grassify:
-            p("  grass height: {}", r.f32())
-            p("  grass layers: {}", r.i32())
+        ps.grassify = p("  grassify: {}", r.bool())
+        if ps.grassify:
+            ps.grass_height = p("  grass height: {}", r.f32())
+            ps.grass_layers = p("  grass layers: {}", r.i32())
 
         ps.specular_power = p("  specular power: {}", r.f32())
         if ps.specular_power > 0.0:
@@ -198,7 +198,142 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 r.read("4I")
 
 
+def export_ugplus_material(m, output_file, target_game, operator=None):
+    def w(fmt, *args):
+        output_file.write(struct.pack(fmt, *args))
+    
+    mprops = m.thug_material_props
+    if is_hex_string(m.name):
+        checksum = int(m.name, 0)
+    else:
+        checksum = crc_from_string(bytes(m.name, 'ascii'))
+    
+    w("I", checksum)  # material checksum
+    w("I", checksum)  # material name checksum
+    w("I", 4)  # material passes
+    w("I", mprops.alpha_cutoff)  # alpha cutoff (actually an unsigned byte)
+    w("?", mprops.sorted)  # sorted?
+    w("f", mprops.draw_order)  # draw order
+    w("?", mprops.single_sided)  # single sided
+    w("?", mprops.no_backface_culling)  # no backface culling
+    w("i", mprops.z_bias)  # z-bias
 
+    #grassify = False
+    w("?", mprops.grassify)  # grassify
+    if mprops.grassify:  # if grassify
+        print("EXPORTING GRASS MATERIAL!")
+        w("f", mprops.grass_height)  # grass height
+        w("i", mprops.grass_layers)  # grass layers
+
+    shader_id = -5.40 # PBR
+    if mprops.ugplus_shader == 'Water':
+        shader_id = -1.08
+    elif mprops.ugplus_shader == 'Skybox':
+        shader_id = -8.15
+    w("f", shader_id)  # specular power (used to mark the shader ID for the new shaders)
+
+    export_textures = []
+    # Now we export the textures in a specific order, depending on the shader
+    if mprops.ugplus_shader == 'PBR':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': MATFLAG_BUMP_SIGNED_TEXTURE })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_rainmask, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_snowmask, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
+        
+    elif mprops.ugplus_shader == 'Skybox':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_evening, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_night, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_morning, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_cloud, 'flags': 0 })
+        
+    elif mprops.ugplus_shader == 'Water':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': MATFLAG_WATER_EFFECT })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+ 
+    # Export all the textures we need for the shader, as gathered above
+    tex_count = -1
+    for node in export_textures:
+        tex_count += 1
+        tex = node['mat_node']
+        tex_flags = node['flags']
+        
+        # Use the name of the texture image, or generate the color name (will be generated during .tex export)
+        if tex.tex_image == None or tex.tex_image.name == '':
+            colortex_name = 'Color_' + ''.join('{:02X}'.format(int(255/a)) for a in tex.tex_color)
+            tex_checksum = crc_from_string(bytes(colortex_name, 'ascii'))
+            
+        elif is_hex_string(tex.tex_image.name):
+            tex_checksum = int(tex.tex_image.name, 0)
+        else:
+            tex_checksum = crc_from_string(bytes(tex.tex_image.name, 'ascii'))
+        
+        # If the texture count is beyond the 4 texture limit, we are simply exporting frames for an animated texture
+        # which is created at the bottom of this loop
+        if tex_count > 3:
+            w("I", (tex_count - 3))
+            w("I", tex_checksum)  # texture checksum
+            continue
+            
+        w("I", tex_checksum)  # texture checksum
+        pass_flags = MATFLAG_SMOOTH | MATFLAG_TEXTURED
+        pass_flags |= tex_flags
+        if tex_count == 3 and len(export_textures) > 4:
+            pass_flags |= MATFLAG_PASS_TEXTURE_ANIMATES
+            
+        w("I", pass_flags)  # flags # 4132
+        w("?", True)  # has color flag; seems to be ignored
+        w("3f",  *(m.diffuse_color / 2.0))  # color
+        
+        #w("I", globals()[pprops.blend_mode] if pprops else vBLEND_MODE_DIFFUSE)
+        w("I", vBLEND_MODE_BLEND)
+        #w("I", pprops.blend_fixed_alpha if pprops else 0)
+        w("I", 0)
+
+        w("I", 0)  # u adressing (wrap, clamp, etc)
+        w("I", 0)  # v adressing
+        w("2f", *((3.0, 3.0)))  # envmap multiples
+        w("I", 65540)  # filtering mode
+        
+        # If we're going beyond pass 4, place additional textures in the animated texture slot for pass 4
+        if tex_count == 3 and len(export_textures) > 4:
+            w("i", len(export_textures) - 3)
+            w("i", 108) # period
+            w("i", 0) # iterations
+            w("i", 0) # phase
+            #for keyframe in at.keyframes:
+            # Export the first animated frame here, since it will be the 4th texture slot we want anyway
+            w("I", tex_count - 3)
+            
+            # Use the name of the texture image, or generate the color name (will be generated during .tex export)
+            if tex.tex_image == None or tex.tex_image.name == '':
+                colortex_name = 'Color_' + ''.join('{:02X}'.format(int(255/a)) for a in tex.tex_color)
+                tex_checksum = crc_from_string(bytes(colortex_name, 'ascii'))
+                
+            elif is_hex_string(tex.tex_image.name):
+                tex_checksum = int(tex.tex_image.name, 0)
+            else:
+                tex_checksum = crc_from_string(bytes(tex.tex_image.name, 'ascii'))
+            w("I", tex_checksum)  # texture checksum
+            continue
+
+        w("I", 1)  # MMAG
+        w("I", 4)  # MMIN
+        w("f", -8.0)  # K
+        w("f", -8.0)  # L
+    
+    if tex_count > 3:
+        # Need to write these after for the final texture pass if the material uses more than 4 passes
+        w("I", 1)  # MMAG
+        w("I", 4)  # MMIN
+        w("f", -8.0)  # K
+        w("f", -8.0)  # L
+        
+        
 def export_materials(output_file, target_game, operator=None):
     def w(fmt, *args):
         output_file.write(struct.pack(fmt, *args))
@@ -214,7 +349,14 @@ def export_materials(output_file, target_game, operator=None):
     w("I", num_materials)
     for m in out_materials:
         LOG.debug("writing material: {}".format(m.name))
-
+        mprops = m.thug_material_props
+        
+        # Export shader 
+        if mprops.ugplus_shader != 'None':
+            LOG.debug("exporting new material system properties...")
+            export_ugplus_material(m, output_file, target_game, operator)
+            continue 
+            
         #denetii - only include texture slots that affect the diffuse color in the Blender material
         passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
         if len(passes) > 4:
@@ -235,7 +377,6 @@ def export_materials(output_file, target_game, operator=None):
         
         w("I", checksum)  # material checksum
         w("I", checksum)  # material name checksum
-        mprops = m.thug_material_props
         w("I", len(passes) or 1)  # material passes
         w("I", mprops.alpha_cutoff)  # alpha cutoff (actually an unsigned byte)
         w("?", mprops.sorted)  # sorted?
@@ -244,18 +385,19 @@ def export_materials(output_file, target_game, operator=None):
         w("?", mprops.no_backface_culling)  # no backface culling
         w("i", mprops.z_bias)  # z-bias
 
-        grassify = False
-        w("?", grassify)  # grassify
-        if grassify:  # if grassify
-            w("f", 1.0)  # grass height
-            w("i", 1)  # grass layers
+        #grassify = False
+        w("?", mprops.grassify)  # grassify
+        if mprops.grassify:  # if grassify
+            print("EXPORTING GRASS MATERIAL!")
+            w("f", mprops.grass_height)  # grass height
+            w("i", mprops.grass_layers)  # grass layers
 
         w("f", mprops.specular_power)  # specular power
         if mprops.specular_power > 0.0:
             w("3f", *mprops.specular_color)  # specular color
 
         # using_default_texture = not passes
-
+        
         for texture in passes:
             pprops = texture and texture.thug_material_pass_props
             tex_checksum = 0
@@ -287,8 +429,9 @@ def export_materials(output_file, target_game, operator=None):
                 pass_flags |= MATFLAG_ENVIRONMENT
             if pprops and pprops.pf_bump:
                 print("EXPORTING BUMP MAP TEXTURE!")
-                pass_flags |= MATFLAG_BUMP_SIGNED_TEXTURE
-                pass_flags |= MATFLAG_BUMP_LOAD_MATRIX
+                #pass_flags |= MATFLAG_BUMP_SIGNED_TEXTURE
+                pass_flags |= MATFLAG_NORMAL_TEST
+                #pass_flags |= MATFLAG_BUMP_LOAD_MATRIX
             if pprops and pprops.pf_water:
                 print("EXPORTING WATER TEXTURE!")
                 pass_flags |= MATFLAG_WATER_EFFECT
@@ -413,9 +556,39 @@ def _material_settings_draw(self, context):
     row.prop(mps, "specular_power")
     row = self.layout.row()
     row.prop(mps, "specular_color")
+    self.layout.row().prop(mps, "grassify", toggle=True, icon="HAIR")
+    if mps.grassify:
+        row = self.layout.row()
+        col = row.column(True)
+        col.prop(mps, "grass_height")
+        col.prop(mps, "grass_layers")
 
 
-
+    self.layout.row().prop(mps, "use_new_mats", toggle=True, icon="MATERIAL")
+    if mps.use_new_mats:
+        box = self.layout.box().column()
+        row = box.row(True)
+        row.prop(mps, "ugplus_shader")
+        if mps.ugplus_shader == 'PBR':
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box.row(True), title='Diffuse')
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box.row(True), title='Detail')
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box.row(True), title='Normal/Bump')
+            ugplus_matslot_draw(mps.ugplus_matslot_specular, box.row(True), title='Specular')
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box.row(True), title='Reflection')
+            #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box.row(True), title='Smoothness')
+            ugplus_matslot_draw(mps.ugplus_matslot_rainmask, box.row(True), title='Rain Mask')
+            ugplus_matslot_draw(mps.ugplus_matslot_snowmask, box.row(True), title='Snow Mask')
+            ugplus_matslot_draw(mps.ugplus_matslot_snow, box.row(True), title='Snow')
+        elif mps.ugplus_shader == 'Water':
+            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box.row(True), title='Fallback')
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box.row(True), title='Reflection')
+        elif mps.ugplus_shader == 'Skybox':
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box.row(True), title='Diffuse (Day)')
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_evening, box.row(True), title='Evening')
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_night, box.row(True), title='Night')
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_morning, box.row(True), title='Morning')
+            ugplus_matslot_draw(mps.ugplus_matslot_cloud, box.row(True), title='Cloud')
+            
 
 # PROPERTIES
 #############################################
@@ -592,6 +765,38 @@ class THUGMaterialPassSettings(bpy.types.Panel):
     def draw(self, context):
         _material_pass_settings_draw(self, context)
 
+def set_ugplus_materialslot(self, context):
+    if self.tex_image:
+        self.tex_image_name = self.tex_image.name
+    else:
+        self.tex_image_name = ''
+#----------------------------------------------------------------------------------
+class UGPlusMaterialSlotProps(bpy.types.PropertyGroup):
+    #tex_image = StringProperty(name="Texture", description="Texture to be used.")
+    tex_image = PointerProperty(name="Texture", type=bpy.types.Image, update=set_ugplus_materialslot)
+    tex_image_name = StringProperty(name="ImageName")
+    tex_color = FloatVectorProperty(name="Color",
+                           subtype='COLOR',
+                           default=(1.0, 1.0, 1.0, 1.0),
+                           size=4,
+                           min=0.0, max=1.0,
+                           description="Color used if no texture provided.")
+                           
+    
+def ugplus_matslot_draw(self, layout, title, mat_icon='FILE_IMAGE'):
+    #self.tex_image.description = 'test'
+    col = layout.column(align=True)
+    #col.prop_search(self, 'tex_image', bpy.data, "images", text=title, icon=mat_icon)
+    #col.operator("image.open")
+    col.scale_x = 0.3
+    col.label(title)
+    col = layout.column(align=True)
+    col.scale_x = 0.5
+    col.template_ID(self, "tex_image", open="image.open")
+    col = layout.column(align=True)
+    col.scale_x = 0.2
+    col.prop(self, 'tex_color', text='')
+    
 #----------------------------------------------------------------------------------
 class THUGMaterialProps(bpy.types.PropertyGroup):
     alpha_cutoff = IntProperty(
@@ -610,11 +815,47 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         description="Adjust this value to prevent Z-fighting on overlapping meshes.")
     specular_power = FloatProperty(name="Specular Power", default=0.0)
     specular_color = FloatVectorProperty(name="Specular Color", subtype="COLOR", min=0, max=1)
+    grassify = BoolProperty(name="Grass Effect", description="Use generated grass particles on this material.")
+    grass_height = FloatProperty(name="Grass Height", min=0.0, max=1000.0, description="Height of the grass particles.")
+    grass_layers = IntProperty(name="Grass Layers", min=0, max=5, description="Number of layers.")
     terrain_type = EnumProperty(
         name="Terrain Type",
         description="The terrain type that will be used for faces using this material when their terrain type is set to \"Auto\".",
         items=[(tt, tt, tt) for tt in TERRAIN_TYPES])
 
+    ###############################################################
+    # NEW MATERIAL SYSTEM PROPERTIES
+    ###############################################################
+    use_new_mats = BoolProperty(name="Use New Material System", description="Use the new material/shader setup for Underground+ (THUG PRO coming soon).")
+    ugplus_shader = EnumProperty(
+        name="Shader",
+        description="The shader to use for this material. Changes the available texture fields.",
+        items=[
+        ("None", "None", ""),
+        ("PBR", "Fake PBR", "General material shader. Allows you to control diffuse, bump mapping, specular highlights, and weather masks."),
+        ("Skybox", "Skybox", "Skybox shader supporting 4 separate textures based on TOD."),
+        ("Water", "Water", "Water effect shader, creates an animated water surface."),
+        ])
+    ugplus_matslot_diffuse = PointerProperty(type=UGPlusMaterialSlotProps, name="Diffuse", description="Base texture.")
+    ugplus_matslot_detail = PointerProperty(type=UGPlusMaterialSlotProps, name="Detail", description="Detail texture which is multiplied onto the diffuse pass.")
+    ugplus_matslot_normal = PointerProperty(type=UGPlusMaterialSlotProps, name="Bump/Normal", description="Bump/normal map (currently renders as bump map).")
+    ugplus_matslot_specular = PointerProperty(type=UGPlusMaterialSlotProps, name="Specular", description="Intensity of specular reflections.")
+    # Eventually, roughness will be a separate texture that is mixed into the alpha channel for the normal texture, 
+    # but for now let's just 
+    #ugplus_matslot_smoothness = PointerProperty(type=UGPlusMaterialSlotProps, name="Smoothness", description="Sharpness of specular reflections.")
+    ugplus_matslot_reflection = PointerProperty(type=UGPlusMaterialSlotProps, name="Reflection", description="Texture used for specular reflections.")
+    ugplus_matslot_lightmap = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Texture used for specular reflections.")
+    ugplus_matslot_rainmask = PointerProperty(type=UGPlusMaterialSlotProps, name="Rain Mask", description="Mask used for rain effect.")
+    ugplus_matslot_snowmask = PointerProperty(type=UGPlusMaterialSlotProps, name="Snow Mask", description="Mask used for snow effect.")
+    ugplus_matslot_snow = PointerProperty(type=UGPlusMaterialSlotProps, name="Snow", description="Snow texture.")
+        
+    ugplus_matslot_fallback = PointerProperty(type=UGPlusMaterialSlotProps, name="Fallback", description="Texture used on lower graphics settings/lower shader detail settings.")
+    ugplus_matslot_diffuse_night = PointerProperty(type=UGPlusMaterialSlotProps, name="Night", description="Texture used when the TOD is night.")
+    ugplus_matslot_diffuse_evening = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is evening.")
+    ugplus_matslot_diffuse_morning = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is morning.")
+    ugplus_matslot_diffuse_cloud = PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active.")
+    ###############################################################
+    
 #----------------------------------------------------------------------------------
 class THUGMaterialPassProps(bpy.types.PropertyGroup):
     color = FloatVectorProperty(

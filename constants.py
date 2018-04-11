@@ -246,6 +246,7 @@ MATFLAG_PASS_IGNORE_VERTEX_ALPHA = (1 << 12)  # This pass should not have the te
 MATFLAG_EXPLICIT_UV_WIBBLE =       (1 << 14)  # Uses explicit uv wibble (set via script) rather than calculated.
 MATFLAG_WATER_EFFECT =             (1 << 27)  # This material should be processed to provide the water effect.
 MATFLAG_NO_MAT_COL_MOD =           (1 << 28)  # No material color modulation required (all passes have m.rgb = 0.5).
+MATFLAG_NORMAL_TEST =              (1 << 29)    # TEST
 
 vBLEND_MODE_DIFFUSE = 0                                # ( 0 - 0 ) * 0 + Src
 vBLEND_MODE_ADD = 1                                    # ( Src - 0 ) * Src + Dst

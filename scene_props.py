@@ -133,6 +133,35 @@ def maybe_upgrade_scene(*args):
     something_was_updated = False
     fix_objects = []
     
+    newmat_passes = [
+        'ugplus_matslot_diffuse'
+        ,'ugplus_matslot_detail'
+        ,'ugplus_matslot_normal'
+        ,'ugplus_matslot_specular'
+        #,'ugplus_matslot_smoothness'
+        ,'ugplus_matslot_reflection'
+        ,'ugplus_matslot_lightmap'
+        ,'ugplus_matslot_rainmask'
+        ,'ugplus_matslot_snowmask'
+        ,'ugplus_matslot_snow'
+        ,'ugplus_matslot_fallback'
+        ,'ugplus_matslot_diffuse_night'
+        ,'ugplus_matslot_diffuse_evening'
+        ,'ugplus_matslot_diffuse_morning'
+        ,'ugplus_matslot_diffuse_cloud'
+    ]
+    # Hack for the new material system's image fields - read from the txt reference and set the image
+    for mat in bpy.data.materials:
+        if hasattr(mat, 'thug_material_props') and hasattr(mat.thug_material_props, 'ugplus_shader') \
+            and mat.thug_material_props.ugplus_shader != '':
+            for passname in newmat_passes:
+                thispass = getattr(mat.thug_material_props, passname)
+                if thispass and thispass.tex_image_name:
+                    thisimage = bpy.data.images.get(thispass.tex_image_name)
+                    if thisimage:
+                        thispass.tex_image = thisimage
+                    
+                    
     #print("Updating node collections...")
     context = bpy.context
     if 'io_thps_scene_version' not in context.scene or context.scene['io_thps_scene_version'] == None:
@@ -877,7 +906,8 @@ def register_props():
             ("FULL", "Full Diffuse (Cycles)", "(Uses the Cycles render engine) Bake everything onto a single texture. The most accurate results, but lowers base texture resolution."),
             ("VERTEX_COLORS", "Vertex Colors", "Bake lighting to vertex colors. Fast and cheap, accuracy depends on mesh density."),
             ("LIGHT_BI", "Lighting Only (BR)", "Bake lighting to texture and mix with original textures."),
-            ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture.")],
+            ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture."),
+            ("AO", "Ambient Occlusion", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting.")],
         default="LIGHT", 
         description="Type of bakes to use for this scene.")
         

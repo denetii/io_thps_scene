@@ -676,7 +676,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
 
-    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
+    always_export_normals = BoolProperty(name="Export normals", default=False)
     use_vc_hack = BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
@@ -724,7 +724,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         if self.generate_sky:
             box = self.layout.box().column(True)
             box.row().prop(self, "skybox_name")
-        self.layout.row().prop(self, "generate_vertex_color_shading", toggle=True, icon='TEXTURE_SHADED')
+        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
@@ -755,7 +755,7 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
 
-    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
+    always_export_normals = BoolProperty(name="Export normals", default=False)
     is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
     use_vc_hack = BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
@@ -798,7 +798,7 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
         
     def draw(self, context):
-        self.layout.row().prop(self, "generate_vertex_color_shading", toggle=True, icon='TEXTURE_SHADED')
+        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
@@ -826,7 +826,7 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
 
-    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
+    always_export_normals = BoolProperty(name="Export normals", default=False)
     use_vc_hack = BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
@@ -875,7 +875,7 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         if self.generate_sky:
             box = self.layout.box().column(True)
             box.row().prop(self, "skybox_name")
-        self.layout.row().prop(self, "generate_vertex_color_shading", toggle=True, icon='TEXTURE_SHADED')
+        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
@@ -906,7 +906,7 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
 
-    generate_vertex_color_shading = BoolProperty(name="Generate vertex color shading", default=False)
+    always_export_normals = BoolProperty(name="Export normals", default=False)
     use_vc_hack = BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
@@ -944,7 +944,7 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
     
     def draw(self, context):
-        self.layout.row().prop(self, "generate_vertex_color_shading", toggle=True, icon='TEXTURE_SHADED')
+        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')

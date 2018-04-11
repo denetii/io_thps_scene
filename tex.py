@@ -198,6 +198,24 @@ def read_tex(reader, printer):
 
             r.offset += data_size
 
+def get_colortex(color):
+    colortex_name = 'Color_' + ''.join('{:02X}'.format(int(255/a)) for a in color)
+    if bpy.data.images.get(colortex_name):
+        return bpy.data.images.get(colortex_name)
+    size = 16, 16
+    img = bpy.data.images.new(name=colortex_name, width=size[0], height=size[1])
+    pixels = [None] * size[0] * size[1]
+    for x in range(size[0]):
+        for y in range(size[1]):
+            r = color[0]
+            g = color[1]
+            b = color[2]
+            a = color[3]
+            pixels[(y * size[0]) + x] = [r, g, b, a]
+    pixels = [chan for px in pixels for chan in px]
+    img.pixels = pixels
+    #img.use_fake_user = True
+    return img.name
 
 #----------------------------------------------------------------------------------
 def export_tex(filename, directory, target_game, operator=None):
@@ -220,7 +238,37 @@ def export_tex(filename, directory, target_game, operator=None):
     out_images = []
     for m_name in out_materials:
         m = bpy.data.materials[m_name]
-        
+        if hasattr(m.thug_material_props, 'ugplus_shader') and m.thug_material_props.ugplus_shader != '':
+            # Make sure we always export textures which are plugged into the new material/shader system
+            # Also need to generate a texture based on a specified color, if no texture was used
+            export_textures = []
+            if m.thug_material_props.ugplus_shader == 'PBR':
+                export_textures.append(m.thug_material_props.ugplus_matslot_normal)
+                export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
+                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                export_textures.append(m.thug_material_props.ugplus_matslot_rainmask)
+                export_textures.append(m.thug_material_props.ugplus_matslot_snowmask)
+                export_textures.append(m.thug_material_props.ugplus_matslot_snow)
+                export_textures.append(m.thug_material_props.ugplus_matslot_specular)
+                
+            elif m.thug_material_props.ugplus_shader == 'Skybox':
+                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
+                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_evening)
+                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_night)
+                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_morning)
+                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_cloud)
+                
+            elif m.thug_material_props.ugplus_shader == 'Water':
+                export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
+                export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
+            
+            for tex in export_textures:
+                if tex.tex_image == None or tex.tex_image == '':
+                    out_images.append(get_colortex(tex.tex_color))
+                else:
+                    out_images.append(tex.tex_image.name)
+                
         # denetii - only include texture slots that affect the diffuse color in the Blender material
         passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
         if len(passes) > 4:

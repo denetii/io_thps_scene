@@ -377,7 +377,10 @@ def bake_thug_lightmaps(meshes, context):
     else:
         print("Using Blender Render engine for baking.")
         # For BI, configure bake settings here since we won't need to change anything per-object
-        scene.render.bake_type = "FULL"
+        if scene.thug_bake_type == 'AO':
+            scene.render.bake_type = "AO"
+        else:
+            scene.render.bake_type = "FULL"
         scene.render.use_bake_to_vertex_color = False
         scene.render.use_bake_selected_to_active = False
         scene.render.use_bake_multires = False
@@ -444,8 +447,8 @@ def bake_thug_lightmaps(meshes, context):
             print("Object lightmap resolution is: {}x{}".format(img_res, img_res))
         if scene.thug_lightmap_scale:
             img_res = int(img_res * float(scene.thug_lightmap_scale))
-            if img_res < 32:
-                img_res = 32
+            if img_res < 16:
+                img_res = 16
             print("Resolution after scene scale is: {}x{}".format(img_res, img_res))
             
         # Blender's UV margins seem to scale with resolution, so we need to make them smaller
@@ -586,7 +589,7 @@ def bake_thug_lightmaps(meshes, context):
                 tex_slot = blender_mat.texture_slots.get(blender_tex.name)
             tex_slot.texture = blender_tex
             tex_slot.uv_layer = str('Lightmap')
-            tex_slot.blend_type = 'SUBTRACT'
+            tex_slot.blend_type = 'MIX'
             blender_mat.use_textures[0] = True
             if not ob.data.materials.get(blender_mat.name):
                 ob.data.materials.append(blender_mat)
@@ -759,7 +762,7 @@ def fill_bake_materials():
                 _slot = mat.texture_slots.add()
                 _slot.texture = baked_slot
                 _slot.uv_layer = "Lightmap"
-                _slot.blend_type = "SUBTRACT"
+                _slot.blend_type = "MIX"
             processed_mats.append(mat.name)
             
 # OPERATORS

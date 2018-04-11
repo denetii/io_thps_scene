@@ -69,12 +69,6 @@ def export_scn_sectors(output_file, operator=None):
                     if helpers._need_to_flip_normals(ob):
                         helpers._flip_normals(temporary_object)
                     
-                    if (operator and
-                        operator.generate_vertex_color_shading and
-                        len(temporary_object.data.polygons) != 0 and
-                        not ob.get("thug_this_is_autosplit_temp_object")):
-                        helpers._generate_lambert_shading(temporary_object)
-
                     ob = temporary_object
                     object_counter += 1
                     final_mesh = ob.data
@@ -92,8 +86,14 @@ def export_scn_sectors(output_file, operator=None):
                 # Check texture passes for:
                 # - Environment mapped textures (normals need to be exported)
                 # - Valid UV map assignments (must be in the correct order!)
-                ob_has_env_map = False
+                need_vertex_normals = False
                 for env_test in ob.data.materials:
+                    if hasattr(env_test, 'thug_material_props') and env_test.thug_material_props.specular_power > 0.0:
+                        #print("-----------------------------------------------")
+                        #print("Exporting vertex normals for specular material")
+                        #print("-----------------------------------------------")
+                        need_vertex_normals = True
+                        
                     if not hasattr(env_test, 'texture_slots'): continue
                     _tmp_passes = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
                     pass_index = -1
@@ -104,17 +104,19 @@ def export_scn_sectors(output_file, operator=None):
                             operator.report({"WARNING"},
                             "UV/material pass index mismatch on: {} for material: {} assigned to object: {}. UVs will not appear correct in-game.".format(_tmp_tex.name, env_test.name, ob.name))
                         _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
-                        if _pprops and _pprops.pf_environment:
-                            ob_has_env_map = True
+                        if _pprops and (_pprops.pf_environment or _pprops.pf_bump or _pprops.pf_water or _pprops.blend_mode == 'vBLEND_MODE_GLOSS_MAP'):
+                            need_vertex_normals = True
                             #break
-                            
+                
+                if operator.always_export_normals:
+                    need_vertex_normals = True
                 if True or len(bm.loops.layers.uv):
                     flags |= SECFLAGS_HAS_TEXCOORDS
                 if True or len(bm.loops.layers.color):
                     flags |= SECFLAGS_HAS_VERTEX_COLORS
                 if len(original_object.vertex_groups):
                     flags |= SECFLAGS_HAS_VERTEX_WEIGHTS
-                if len(original_object.vertex_groups) or ob_has_env_map:
+                if len(original_object.vertex_groups) or need_vertex_normals:
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
 
                 mats_to_faces = {}
