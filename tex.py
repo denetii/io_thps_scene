@@ -199,11 +199,12 @@ def read_tex(reader, printer):
             r.offset += data_size
 
 def get_colortex(color):
-    colortex_name = 'Color_' + ''.join('{:02X}'.format(int(255/a)) for a in color)
+    colortex_name = 'io_thps_scene_Color_' + ''.join('{:02X}'.format(int(255*a)) for a in color)
     if bpy.data.images.get(colortex_name):
         return bpy.data.images.get(colortex_name)
     size = 16, 16
     img = bpy.data.images.new(name=colortex_name, width=size[0], height=size[1])
+    img.thug_image_props.compression_type = 'DXT5'
     pixels = [None] * size[0] * size[1]
     for x in range(size[0]):
         for y in range(size[1]):
@@ -217,6 +218,16 @@ def get_colortex(color):
     #img.use_fake_user = True
     return img.name
 
+def cleanup_colortex():
+    for image in bpy.data.images:
+        if image.name.startswith('io_thps_scene_Color_'):
+            image.user_clear()
+            bpy.data.images.remove(image)
+
+def set_image_compression(matslot, compression):
+    if matslot.tex_image:
+        matslot.tex_image.thug_image_props.compression_type = compression
+        
 #----------------------------------------------------------------------------------
 def export_tex(filename, directory, target_game, operator=None):
     import time
@@ -244,8 +255,11 @@ def export_tex(filename, directory, target_game, operator=None):
             export_textures = []
             if m.thug_material_props.ugplus_shader == 'PBR':
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)
+                set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
+                set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
                 export_textures.append(m.thug_material_props.ugplus_matslot_rainmask)
                 export_textures.append(m.thug_material_props.ugplus_matslot_snowmask)
@@ -384,6 +398,8 @@ def export_tex(filename, directory, target_game, operator=None):
         outp.seek(4)
         w("I", exported_images_count)
 
+    # Remove temp solid-color images generated during export
+    cleanup_colortex()
 
 
 # OPERATORS

@@ -500,8 +500,8 @@ def export_col(filename, directory, target_game, operator=None):
             w("?", False) # use fixed verts
             w("I", obj_face_offset)
             obj_face_offset += SIZEOF_LARGE_FACE * len(bm.faces)
-            #obj_matrix = get_scale_matrix(o) if o.thug_object_class == "LevelObject" else o.matrix_world
-            obj_matrix = o.matrix_world
+            obj_matrix = get_scale_matrix(o) if o.thug_object_class == "LevelObject" else o.matrix_world
+            #obj_matrix = o.matrix_world
             if operator.is_park_editor: 
                 # AFAIK we don't modify the bounding box for dictionary collision, only the scene.
                 # But if this changes I'll update it here!
@@ -513,7 +513,7 @@ def export_col(filename, directory, target_game, operator=None):
             w("I", obj_vert_offset)
             obj_vert_offset += SIZEOF_FLOAT_VERT * len(bm.verts)
             w("I", obj_bsp_offset)
-            obj_bsp_tree = make_bsp_tree(o, bm.faces[:])
+            obj_bsp_tree = make_bsp_tree(o, bm.faces[:], obj_matrix)
             obj_bsp_offset += len(list(iter_tree(obj_bsp_tree))) * SIZEOF_BSP_NODE
             w("I", obj_intensity_offset)
             obj_intensity_offset += len(bm.verts)

@@ -35,9 +35,9 @@ def _resolve_face_terrain_type(ob, bm, face):
         tt = face[ttl]
     return tt
 
-def make_bsp_tree(ob, faces):
-    def vv(vert):
-        return to_thug_coords(ob.matrix_world * vert.co)
+def make_bsp_tree(ob, faces, matrix):
+    def vv(vert, matrix):
+        return to_thug_coords(matrix * vert.co)
 
     def inner(faces, split_axis, level, cant_split=set()):
         # print(level)
@@ -54,7 +54,7 @@ def make_bsp_tree(ob, faces):
         for split_axis in range(3):
             if split_axis in cant_split: continue
             split_point = statistics.median(
-                vv(vert)[split_axis] for face in random.sample(faces, min(20, len(faces))) for vert in face.verts)
+                vv(vert, matrix)[split_axis] for face in random.sample(faces, min(20, len(faces))) for vert in face.verts)
             """
             split_point = statistics.median(
                 vv(vert)[split_axis] for face in faces for vert in face.verts)
@@ -69,9 +69,9 @@ def make_bsp_tree(ob, faces):
                 left = False
                 right = False
                 for vert in face.verts:
-                    if vv(vert)[split_axis] < split_point:
+                    if vv(vert, matrix)[split_axis] < split_point:
                         left = True
-                    if vv(vert)[split_axis] >= split_point:
+                    if vv(vert, matrix)[split_axis] >= split_point:
                         right = True
                 if left:
                     left_faces.append(face)

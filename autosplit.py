@@ -78,6 +78,7 @@ def get_split_vert_for_loop(mesh, bm, l, flags):
     if flags & SECFLAGS_HAS_VERTEX_NORMALS:
         normal = mesh.loops[l.index].normal.copy().freeze()
     else:
+        #print("no normals")
         normal = None
 
     return SplitVert(l.vert.co.copy().freeze(), uvs, vcs, normal, weights)
@@ -369,9 +370,6 @@ def _prepare_autosplit_objects(operator, context, target_game):
 
         if helpers._need_to_flip_normals(ob):
             helpers._flip_normals(temporary_object)
-
-        if operator and operator.generate_vertex_color_shading:
-            helpers._generate_lambert_shading(temporary_object)
 
         temporary_object.select = True
         bpy.context.scene.objects.active = temporary_object

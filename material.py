@@ -187,7 +187,7 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 for k in range(num_keyframes):
                     atkf = at.keyframes.add()
                     atkf.time = r.u32()
-                    atkf.image = str(r.u32())
+                    atkf.image = hex(r.u32())
 
             if tex_checksum:  # mipmap info
                 p("    mmag: {}", r.u32())
@@ -238,6 +238,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': MATFLAG_BUMP_SIGNED_TEXTURE })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_rainmask, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_snowmask, 'flags': 0 })
@@ -264,7 +265,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         
         # Use the name of the texture image, or generate the color name (will be generated during .tex export)
         if tex.tex_image == None or tex.tex_image.name == '':
-            colortex_name = 'Color_' + ''.join('{:02X}'.format(int(255/a)) for a in tex.tex_color)
+            colortex_name = 'io_thps_scene_Color_' + ''.join('{:02X}'.format(int(255*a)) for a in tex.tex_color)
             tex_checksum = crc_from_string(bytes(colortex_name, 'ascii'))
             
         elif is_hex_string(tex.tex_image.name):
@@ -308,17 +309,8 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
             #for keyframe in at.keyframes:
             # Export the first animated frame here, since it will be the 4th texture slot we want anyway
             w("I", tex_count - 3)
-            
-            # Use the name of the texture image, or generate the color name (will be generated during .tex export)
-            if tex.tex_image == None or tex.tex_image.name == '':
-                colortex_name = 'Color_' + ''.join('{:02X}'.format(int(255/a)) for a in tex.tex_color)
-                tex_checksum = crc_from_string(bytes(colortex_name, 'ascii'))
-                
-            elif is_hex_string(tex.tex_image.name):
-                tex_checksum = int(tex.tex_image.name, 0)
-            else:
-                tex_checksum = crc_from_string(bytes(tex.tex_image.name, 'ascii'))
             w("I", tex_checksum)  # texture checksum
+            
             continue
 
         w("I", 1)  # MMAG
@@ -352,7 +344,7 @@ def export_materials(output_file, target_game, operator=None):
         mprops = m.thug_material_props
         
         # Export shader 
-        if mprops.ugplus_shader != 'None':
+        if mprops.use_new_mats and mprops.ugplus_shader != 'None':
             LOG.debug("exporting new material system properties...")
             export_ugplus_material(m, output_file, target_game, operator)
             continue 
@@ -575,6 +567,7 @@ def _material_settings_draw(self, context):
             ugplus_matslot_draw(mps.ugplus_matslot_normal, box.row(True), title='Normal/Bump')
             ugplus_matslot_draw(mps.ugplus_matslot_specular, box.row(True), title='Specular')
             ugplus_matslot_draw(mps.ugplus_matslot_reflection, box.row(True), title='Reflection')
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box.row(True), title='Lightmap')
             #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box.row(True), title='Smoothness')
             ugplus_matslot_draw(mps.ugplus_matslot_rainmask, box.row(True), title='Rain Mask')
             ugplus_matslot_draw(mps.ugplus_matslot_snowmask, box.row(True), title='Snow Mask')

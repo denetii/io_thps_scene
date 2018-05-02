@@ -62,6 +62,7 @@ def export_scn_sectors(output_file, operator=None):
                     object_counter += 1
                     bm.clear()
                     bm.from_mesh(final_mesh)
+                    final_mesh.calc_normals_split()
                 else:
                     bpy.context.scene.objects.link(temporary_object)
                     temporary_object.matrix_world = ob.matrix_world
@@ -167,7 +168,9 @@ def export_scn_sectors(output_file, operator=None):
                         for v in split_verts.keys():
                             w("3f", *to_thug_coords_ns(v.normal))
                     else:
+                        #print("Exporting vertex normals...")
                         for v in split_verts.keys():
+                            #print("normal: {}".format(v.normal))
                             w("3f", *to_thug_coords_ns(v.normal))
                         
                 # Let me know if this works!
