@@ -12,6 +12,9 @@ from bpy.props import *
 from . helpers import *
 from . material import *
 
+from . import prefs
+from . prefs import *
+
 
 # METHODS
 #############################################
@@ -169,9 +172,9 @@ def mat_get_pass(blender_mat, type):
         if p is None:
             continue
         if type == 'Diffuse' and p.use_map_color_diffuse:
-            return p.texture.image
+            return p.texture
         elif type == 'Normal' and p.use_map_normal:
-            return p.texture.image
+            return p.texture
             
     return None
     
@@ -602,7 +605,7 @@ def bake_thug_lightmaps(meshes, context):
             tx_d = mat_get_pass(test_mat, 'Diffuse')
             tx_n = mat_get_pass(test_mat, 'Normal')
             if is_cycles:
-                setup_cycles_nodes(blender_mat.node_tree, tx_d, tx_n, scene.thug_lightmap_color, orig_uv)
+                setup_cycles_nodes(blender_mat.node_tree, tx_d.image, tx_n.image, scene.thug_lightmap_color, orig_uv)
                 # Finally, add the result texture, this is what will actually store the bake
                 node_bake = get_cycles_node(blender_mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
                 node_bake.image = blender_tex.image
@@ -701,6 +704,10 @@ def bake_thug_lightmaps(meshes, context):
         for mat_slot in ob.material_slots:
             mat_slot.material = mat_slot.material.copy()
             blender_tex = bpy.data.textures.get("Baked_{}".format(obname))
+            # Add the lightmap into the new UG+ material system
+            mat_slot.material.thug_material_props.ugplus_matslot_lightmap.tex_image = blender_tex.image
+            
+            # Also add the image to the legacy material system
             if not mat_slot.material.texture_slots.get(blender_tex.name):
                 slot = mat_slot.material.texture_slots.add()
             else:
@@ -765,6 +772,128 @@ def fill_bake_materials():
                 _slot.blend_type = "MIX"
             processed_mats.append(mat.name)
             
+
+#----------------------------------------------------------------------------------
+#- Renders the faces of the desired cubemap
+#----------------------------------------------------------------------------------
+def render_cubemap(probe):
+    import subprocess, shutil, datetime
+    import platform
+    wine = [] if platform.system() == "Windows" else ["wine"]
+    j = os.path.join
+    
+    scene = bpy.context.scene
+    orig_res_x = scene.render.resolution_x
+    orig_res_y = scene.render.resolution_y
+    orig_res_pct = scene.render.resolution_percentage
+    
+    print("Attempting to render cubemap from probe {}...".format(probe.name))
+        
+    # Set render resolution to match the probe setting
+    scene.render.resolution_x = int(probe.thug_cubemap_props.resolution)
+    scene.render.resolution_y = int(probe.thug_cubemap_props.resolution)
+    scene.render.resolution_percentage = 100
+    
+    # Look for camera
+    cam_found = False
+    for obj in probe.children:
+        if obj.type == 'CAMERA':
+            camera_ob = obj
+            cam_found = True
+            
+    if not cam_found:
+        print("Unable to find camera object D:")
+        raise Exception("Camera attached to cubemap probe {} not found.".format(probe.name))
+    
+    # Set camera properties
+    camera_ob.data.lens_unit = 'FOV'
+    camera_ob.data.angle = math.radians(90)
+    camera_ob.data.clip_start = 0.1
+    camera_ob.data.clip_end = 1000000.0
+    camera_ob.data.shift_x = 0
+    camera_ob.data.shift_y = 0
+    
+    scene.camera = camera_ob
+    
+    # Create destination folder for the textures
+    _lightmap_folder = bpy.path.basename(bpy.context.blend_data.filepath)[:-6] # = Name of blend file
+    _folder = bpy.path.abspath("//Tx_Cubemap/{}".format(_lightmap_folder))
+    os.makedirs(_folder, 0o777, True)
+    
+    # Rotate camera and render each face!
+    print("Rendering FRONT face...")
+    probe.rotation_euler = [math.radians(90), 0, 0] # FRONT
+    scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'front')
+    bpy.ops.render.render( write_still=True )
+    
+    print("Rendering BACK face...")
+    probe.rotation_euler = [math.radians(90), 0, math.radians(180)] # BACK
+    scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'back')
+    bpy.ops.render.render( write_still=True )
+    
+    print("Rendering LEFT face...")
+    probe.rotation_euler = [math.radians(90), 0, math.radians(90)] # LEFT
+    scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'left')
+    bpy.ops.render.render( write_still=True )
+    
+    print("Rendering RIGHT face...")
+    probe.rotation_euler = [math.radians(90), 0, math.radians(-90)] # RIGHT
+    scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'right')
+    bpy.ops.render.render( write_still=True )
+    
+    print("Rendering UP face...")
+    probe.rotation_euler = [math.radians(180), 0, math.radians(-270)] # UP
+    scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'up')
+    bpy.ops.render.render( write_still=True )
+    
+    print("Rendering DOWN face...")
+    probe.rotation_euler = [0, 0, math.radians(-270)] # DOWN
+    scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'down')
+    bpy.ops.render.render( write_still=True )
+    
+    print("Finished rendering! Restoring render settings...")
+    # Return to front-facing orientation
+    probe.rotation_euler = [math.radians(90), 0, 0]
+    # Restore render settings
+    scene.render.resolution_x = orig_res_x
+    scene.render.resolution_y = orig_res_y
+    scene.render.resolution_percentage = orig_res_pct
+    
+    # Attempt to auto-generate the DX9 DDS cubemap!
+    print("Done. Attempting to generate DDS file {}.dds...".format(probe.name))
+    
+    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
+    if base_files_dir_error:
+        self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Unable to generate DDS file.".format(base_files_dir_error))
+        return False
+    base_files_dir = addon_prefs.base_files_dir
+    
+    texassemble_args = [
+        j(base_files_dir, "texassemble.exe"),
+        "cube",
+        "-w",
+        "{}".format(probe.thug_cubemap_props.resolution),
+        "-h",
+        "{}".format(probe.thug_cubemap_props.resolution),
+        "-o",
+        "{}/{}.dds".format(_folder, probe.name),
+        "-y",
+        "{}/{}_{}.png".format(_folder, probe.name, 'front'),
+        "{}/{}_{}.png".format(_folder, probe.name, 'back'),
+        "{}/{}_{}.png".format(_folder, probe.name, 'up'),
+        "{}/{}_{}.png".format(_folder, probe.name, 'down'),
+        "{}/{}_{}.png".format(_folder, probe.name, 'left'),
+        "{}/{}_{}.png".format(_folder, probe.name, 'right')
+    ]
+    
+    dds_output = subprocess.run(wine + texassemble_args, stdout=subprocess.PIPE)
+    
+    print(dds_output)
+    
+    probe.thug_cubemap_props.exported = True
+    print("Finished!")
+    
 # OPERATORS
 #############################################
 class ToggleLightmapPreview(bpy.types.Operator):
@@ -975,6 +1104,27 @@ class AutoLightmapResolution(bpy.types.Operator):
             print("**************************************************")
         return {"FINISHED"}
 
+        
+class RenderCubemaps(bpy.types.Operator):
+    bl_idname = "object.thug_render_cubemaps"
+    bl_label = "Render Cubemap"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        probes = [o for o in context.selected_objects if o.type == 'EMPTY' \
+            and o.thug_empty_props and o.thug_empty_props.empty_type == 'CubemapProbe']
+        return len(probes) > 0
+
+    def execute(self, context):
+        probes = [o for o in context.selected_objects if o.type == 'EMPTY' \
+            and o.thug_empty_props and o.thug_empty_props.empty_type == 'CubemapProbe']
+        
+        for probe in probes:
+            render_cubemap(probe)
+            
+        return {"FINISHED"}
+        
 # PANELS
 #############################################
 #----------------------------------------------------------------------------------
@@ -1000,6 +1150,10 @@ class THUGLightingTools(bpy.types.Panel):
             tmp_row = box.row().split()
             tmp_row.column().operator(BakeLightmaps.bl_idname, text=BakeLightmaps.bl_label, icon='LIGHTPAINT')
             tmp_row.column().operator(UnBakeLightmaps.bl_idname, text=UnBakeLightmaps.bl_label, icon='SMOOTH')
+        elif ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type == 'CubemapProbe':
+            box = self.layout.box().column(True)
+            tmp_row = box.row().split()
+            tmp_row.column().operator(RenderCubemaps.bl_idname, text=RenderCubemaps.bl_label, icon='MAT_SPHERE_SKY')
 
 class THUGSceneLightingTools(bpy.types.Panel):
     bl_label = "TH Lighting Settings"

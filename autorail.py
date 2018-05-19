@@ -435,7 +435,7 @@ def _export_autorails(p, c, i, v3, operator):
     for ob in bpy.data.objects:
         if ob.get("thug_autosplit_object_no_export_hack"):
             continue
-        if ob.type == "MESH":
+        if ob.type == "MESH" and not ob.name.startswith("GEN_ShadowCaster_"):
             autorails = _get_autorails(ob, operator)
             all_autorails += autorails
     del ob

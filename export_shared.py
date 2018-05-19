@@ -109,6 +109,9 @@ def do_export(operator, context, target_game):
         LOG.addHandler(logging_ch)
         LOG.setLevel(logging.DEBUG)
 
+        # Create shadow caster objects (hacky!)
+        generate_shadowcasters()
+        
         if self.generate_col_file or self.generate_scn_file or self.generate_scripts_files:
             orig_objects, temporary_objects = autosplit._prepare_autosplit_objects(operator, context,target_game)
 
@@ -125,7 +128,19 @@ def do_export(operator, context, target_game):
             md(path)
             self.report({'OPERATOR'}, "Generating tex file... ")
             export_tex(filename + ext_tex, path, target_game, self)
-
+            
+            # ********************************************************
+            # Export cubemap DDS textures
+            if True:
+                _lightmap_folder = bpy.path.basename(bpy.context.blend_data.filepath)[:-6] # = Name of blend file
+                _folder = bpy.path.abspath("//Tx_Cubemap/{}".format(_lightmap_folder))
+                for ob in bpy.data.objects:
+                    if ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type == 'CubemapProbe' \
+                        and ob.thug_cubemap_props and ob.thug_cubemap_props.exported == True:
+                        shutil.copy("{}/{}.dds".format(_folder, ob.name),
+                            j(path, "{}.dds".format(ob.name)))
+            # ********************************************************
+                
         if self.generate_scn_file and self.generate_sky:
             skypath = j(directory, "Levels\\" + filename + "_sky")
             md(skypath)
@@ -229,7 +244,10 @@ def do_export(operator, context, target_game):
                 
         # /Build PRE files
         # #########################
-                         
+        
+        # Remove shadow caster objects (so hacky!)
+        cleanup_shadowcasters()      
+        
         end_time = datetime.datetime.now()
         if (compilation_successful is None) or compilation_successful:
             print("EXPORT COMPLETE! Thank you for waiting :)")
@@ -304,7 +322,7 @@ def do_export_model(operator, context, target_game):
         LOG.addHandler(logging_fh)
         LOG.addHandler(logging_ch)
         LOG.setLevel(logging.DEBUG)
-
+        
         orig_objects, temporary_objects = autosplit._prepare_autosplit_objects(operator, context,target_game)
 
         path = j(directory, "Models/" + filename)
@@ -371,7 +389,62 @@ def do_export_model(operator, context, target_game):
         autosplit._cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)
     return {'FINISHED'}
 
-
+#----------------------------------------------------------------------------------
+def generate_shadowcasters():
+    print("Creating shadow casters...")
+    out_objects = [o for o in bpy.data.objects
+                   if (o.type == "MESH"
+                    and getattr(o, 'thug_export_scene', True)
+                    and not o.get("thug_autosplit_object_no_export_hack", False))]
+    scene = bpy.context.scene
+    sc_count = -1
+    sc_mat_count = -1
+    
+    for ob in out_objects:
+        if not ob.thug_cast_shadow:
+            continue
+        ob_name = ob.name
+        if ob.name.endswith("_SCN"):
+            ob_name = ob.name[:-4]
+        print("Creating shadow caster object(s) for mesh: {}".format(ob_name))
+        sc_count += 1
+        new_ob = ob.copy()
+        new_ob.data = ob.data.copy()
+        # Create empty collision mesh, and an SCN mesh
+        new_col_mesh = bpy.data.meshes.new(name="GEN_ShadowCaster_" + str(sc_count) + "_MESH")
+        new_col_ob = bpy.data.objects.new(name="GEN_ShadowCaster_" + str(sc_count), object_data=new_col_mesh)
+        new_ob.name = "GEN_ShadowCaster_" + str(sc_count) + "_SCN"
+        new_col_ob.thug_object_class = "LevelObject"
+        new_ob.thug_object_class = "LevelGeometry"
+        new_ob.thug_export_scene = True
+        new_ob.thug_export_collision = False
+        #new_ob.scale[0] = 1.1
+        #new_ob.scale[1] = 1.1
+        #new_ob.scale[2] = 1.1
+        new_col_ob.thug_export_scene = False
+        new_col_ob.thug_export_collision = True
+        for mat_slot in new_ob.material_slots:
+            sc_mat_count += 1
+            orig_mat = mat_slot.material
+            mat_slot.material = mat_slot.material.copy()
+            mat_slot.material.thug_material_props.use_new_mats = False
+            mat_slot.material.thug_material_props.specular_power = -0.23
+            mat_slot.material.name = "GEN_Mat_ShadowCaster_" + str(sc_mat_count)
+        
+        scene.objects.link(new_ob)
+        scene.objects.link(new_col_ob)
+        
+        #helpers._flip_normals(new_ob)
+        
+def cleanup_shadowcasters():
+    print("Removing shadow casters...")
+    for ob in bpy.data.objects:
+        if ob.name.startswith("GEN_ShadowCaster_"):
+            bpy.data.objects.remove(ob)
+    for mat in bpy.data.materials:
+        if mat.name.startswith("GEN_Mat_ShadowCaster_"):
+            bpy.data.materials.remove(mat)
+            
 #----------------------------------------------------------------------------------
 def export_scn(filename, directory, target_game, operator=None):
     def w(fmt, *args):

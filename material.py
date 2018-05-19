@@ -235,9 +235,9 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     export_textures = []
     # Now we export the textures in a specific order, depending on the shader
     if mprops.ugplus_shader == 'PBR':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': MATFLAG_BUMP_SIGNED_TEXTURE })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_rainmask, 'flags': 0 })

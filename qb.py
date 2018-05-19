@@ -199,7 +199,10 @@ def export_qb(filename, directory, target_game, operator=None):
                 p("\t\t:i {} = {}".format(c("Class"), c("LevelGeometry") if not is_levelobject else c("LevelObject")))
                 # Exporting LevelObject specific properties below
                 if is_levelobject:
-                    p("\t\t:i {} = {}".format(c("Type"), c(col_ob.thug_levelobj_props.obj_type)))
+                    if col_ob.thug_levelobj_props.obj_type != '':
+                        p("\t\t:i {} = {}".format(c("Type"), c(col_ob.thug_levelobj_props.obj_type)))
+                    else:
+                        p("\t\t:i {} = {}".format(c("Type"), c("Normal")))
                     if col_ob.thug_levelobj_props.obj_bouncy:
                         # Bouncy Object properties go here!
                         p("\t\t:i {}".format(c("Bouncy")))
@@ -1074,6 +1077,17 @@ def export_qb(filename, directory, target_game, operator=None):
             p(":i function $LoadAllParticleTextures$")
             p(":i endfunction")
 
+        # Export script for adding cubemap probes into the level
+        p(":i function $LoadCubemaps$")
+        for ob in bpy.data.objects:
+            if ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type == 'CubemapProbe' \
+                and ob.thug_cubemap_props and ob.thug_cubemap_props.exported == True:
+                cm_pos = to_thug_coords(ob.location)
+                cm_file = "{}\{}.dds".format(filename, ob.name)
+                p("\t:i $UGPlus_AddCubemapProbe$ $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $tex_file$ = {}".format( f(cm_pos[0]), f(cm_pos[1]), f(cm_pos[2]), blub_str(cm_file)) )
+                
+        p(":i endfunction")
+        
         print("Writing generated scripts...")
         for script_name, script_code in generated_scripts.items():
             p("")

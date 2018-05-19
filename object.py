@@ -53,6 +53,13 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_restart_props, "restart_horse")
             box.row().prop(ob.thug_restart_props, "restart_ctf")
         # ********************************************************
+        # * CUBEMAP PROBE 
+        # ********************************************************
+        if ob.thug_empty_props.empty_type == 'CubemapProbe':
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_cubemap_props, "resolution")
+            
+        # ********************************************************
         # * PROXIMNODE 
         # ********************************************************
         elif ob.thug_empty_props.empty_type == "ProximNode":
@@ -196,12 +203,15 @@ def _thug_object_settings_draw(self, context):
                 box.row().prop(ob.thug_levelobj_props, "SoundType")
                 
                 box.row().prop_search(ob.thug_levelobj_props, "stuckscript", 
-                        context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT' )
-                    
+                        context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT' )        
+        elif ob.thug_object_class == "LevelGeometry":  
+            box = self.layout.box().column(True)          
+            box.row().prop(ob, "thug_cast_shadow")
         box = self.layout.column(True)
         box.row().prop(ob, "thug_export_collision")
         box.row().prop(ob, "thug_export_scene")
         box.row().prop(ob, "thug_always_export_to_nodearray")
+        #box.row().prop(ob, "thug_is_shadow_volume")
         if ob.thug_export_scene:
             box.row().prop(ob, "thug_lightgroup")
         box.row().prop(ob, "thug_occluder")

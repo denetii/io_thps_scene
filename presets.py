@@ -8,6 +8,7 @@ import bmesh
 import struct
 import mathutils
 import math
+import numpy
 from bpy.props import *
 from . helpers import *
 from . material import *
@@ -31,7 +32,7 @@ def preset_place_node(node_type, position):
     ob = bpy.data.objects.new( "empty", None ) 
     ob.location = position
     if node_type == 'RESTART':
-        ob.name = 'TRG_Restart'
+        ob.name = get_unique_name('TRG_Restart')
         scene.objects.link( ob )
         scene.objects.active = ob 
         ob.select = True
@@ -41,7 +42,7 @@ def preset_place_node(node_type, position):
         to_group(ob, "Restarts")
         
     elif node_type == 'KOTH_CROWN':
-        ob.name = 'TRG_KOTH'
+        ob.name = get_unique_name('TRG_KOTH')
         scene.objects.link( ob )
         scene.objects.active = ob 
         ob.select = True
@@ -50,7 +51,7 @@ def preset_place_node(node_type, position):
         to_group(ob, "GenericNodes")
         
     elif node_type == 'PEDESTRIAN':
-        ob.name = 'TRG_Pedestrian'
+        ob.name = get_unique_name('TRG_Pedestrian')
         scene.objects.link( ob )
         scene.objects.active = ob 
         ob.select = True
@@ -63,7 +64,7 @@ def preset_place_node(node_type, position):
         to_group(ob, "Pedestrians")
         
     elif node_type == 'VEHICLE':
-        ob.name = 'TRG_Vehicle'
+        ob.name = get_unique_name('TRG_Vehicle')
         scene.objects.link( ob )
         scene.objects.active = ob 
         ob.select = True
@@ -71,11 +72,34 @@ def preset_place_node(node_type, position):
         ob.thug_veh_props.veh_type = "Generic"
         to_group(ob, "Vehicles")
         
+    elif node_type == 'CUBEMAP_PROBE':
+        ob.name = get_unique_name('Cubemap')
+        ob.rotation_euler[0] = math.radians(90)
+        scene.objects.link( ob )
+        ob.thug_empty_props.empty_type = 'CubemapProbe'
+        ob.empty_draw_type = 'SPHERE'
+        ob.empty_draw_size = 64
+        ob.show_name = True
+        ob.show_x_ray = True
+        to_group(ob, "Cubemaps")
+        
+        # Also add a camera used in cubemap rendering, with the correct settings filled in
+        bpy.ops.object.camera_add(view_align=False,
+                          location=[0, 0, 0],
+                          rotation=[0, 0, 0])
+        camera_ob = bpy.context.object
+        camera_ob.name = get_unique_name('CAM_Cubemap')
+        camera_ob.parent = ob
+        camera_ob.data.draw_size = 48.0
+        
+        scene.objects.active = ob 
+        ob.select = True
+        
     elif node_type == 'GAMEOBJECT' or node_type == 'CTF_FLAG' or node_type == 'CTF_BASE':
         if node_type.startswith('CTF_'):
-            ob.name = 'TRG_CTF'
+            ob.name = get_unique_name('TRG_CTF')
         else:
-            ob.name = 'TRG_GO'
+            ob.name = get_unique_name('TRG_GO')
         scene.objects.link( ob )
         scene.objects.active = ob 
         ob.select = True
@@ -90,12 +114,7 @@ def preset_place_node(node_type, position):
         
         
     elif node_type == 'RAIL_NODE' or node_type == 'RAIL_PREMADE':
-        rail_path_name = "TRG_RailPath0"
-        rail_name_idx = 0
-        # Create new rail path
-        while rail_path_name in bpy.data.objects:
-            rail_name_idx += 1
-            rail_path_name = "TRG_RailPath" + str(rail_name_idx)
+        rail_path_name = get_unique_name('TRG_RailPath')
         curveData = bpy.data.curves.new(rail_path_name, type='CURVE')
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
@@ -130,12 +149,7 @@ def preset_place_node(node_type, position):
             build_rail_mesh(curveOB)
     
     elif node_type == 'RAIL_POINT' or node_type == 'RAIL_POINT_PREMADE':
-        rail_path_name = "TRG_RailPoint0"
-        rail_name_idx = 0
-        # Create new rail path
-        while rail_path_name in bpy.data.objects:
-            rail_name_idx += 1
-            rail_path_name = "TRG_RailPoint" + str(rail_name_idx)
+        rail_path_name = get_unique_name('TRG_RailPoint')
         curveData = bpy.data.curves.new(rail_path_name, type='CURVE')
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
@@ -179,7 +193,7 @@ def preset_place_node(node_type, position):
         
     
     elif node_type == 'WAYPOINT' or node_type == 'LADDER':
-        path_name = "TRG_Waypoint"
+        path_name = get_unique_name('TRG_Waypoint')
         curveData = bpy.data.curves.new(path_name, type='CURVE')
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
@@ -327,6 +341,8 @@ preset_node_list = [
     
     { 'name': 'CTF_FLAG', 'title': 'CTF Flag', 'desc': 'Add a CTF Flag.' },
     { 'name': 'CTF_BASE', 'title': 'CTF Base', 'desc': 'Add a CTF Base.' },
+    
+    { 'name': 'CUBEMAP_PROBE', 'title': 'Cubemap Probe', 'desc': 'Add a Cubemap probe.' },
 ]
 
 preset_template_list = [

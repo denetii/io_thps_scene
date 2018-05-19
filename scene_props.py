@@ -64,6 +64,13 @@ def thug_empty_update(self, context):
         ob.empty_draw_type = 'CUBE'
         ob.empty_draw_size = 36
         
+    elif ob.thug_empty_props.empty_type == 'CubemapProbe':
+        mdl_mesh = ''
+        ob.empty_draw_type = 'SPHERE'
+        ob.empty_draw_size = 64
+        ob.show_name = True
+        ob.show_x_ray = True
+        
     elif ob.thug_empty_props.empty_type == 'GenericNode' and ob.thug_generic_props.generic_type == 'Crown':
         mdl_mesh = 'Sk3Ed_RS_KOTH'
         ob.empty_draw_type = 'CUBE'
@@ -242,8 +249,9 @@ class THUGEmptyProps(bpy.types.PropertyGroup):
         ("None", "None", ""),
         ("Restart", "Restart", "Player restarts."),
         ("GenericNode", "Generic Node", "KOTH crown and other objects."),
-        ("Pedestrian", "Pedestrian", "Not currently implemented."),
-        ("Vehicle", "Vehicle", "Not currently implemented."),
+        ("Pedestrian", "Pedestrian", ""),
+        ("Vehicle", "Vehicle", ""),
+        ("CubemapProbe", "Cubemap Probe", "Point used to generate a cubemap. Used by nearby objects for specular reflections."),
         ("ProximNode", "Proximity Node", "Node that can fire events when objects are inside its radius."),
         ("EmitterObject", "Emitter Object", "Node used to play audio streams (typically, ambient sounds in a level)."),
         ("GameObject", "Game Object", "CTF Flags, COMBO letters, etc."),
@@ -325,6 +333,25 @@ class THUGProximNodeProps(bpy.types.PropertyGroup):
 class THUGEmitterProps(bpy.types.PropertyGroup):
     emit_type = StringProperty(name="Type", default="BoundingBox")
     emit_radius = FloatProperty(name="Radius", min=0, max=1000000, default=0)
+    
+
+#----------------------------------------------------------------------------------
+#- Cubemap probe properties
+#----------------------------------------------------------------------------------
+class THUGCubemapProps(bpy.types.PropertyGroup):
+    resolution = EnumProperty(
+        name="Resolution",
+        items=[
+            ("128", "128", ""),
+            ("256", "256", ""),
+            ("512", "512", ""),
+            ("1024", "1024", ""),
+            ("2048", "2048", ""),
+            ("4096", "4096", ""),
+            ("8192", "8192", "")],
+        default="512", 
+        description="Maximum resolution for each side of the baked cubemap.")
+    exported = BoolProperty(name="Exported", default=False)
     
 #----------------------------------------------------------------------------------
 #- If you know of another thing GenericNode is used for, let me know!
@@ -779,6 +806,9 @@ def register_props():
     bpy.types.Object.thug_export_collision = BoolProperty(name="Export to Collisions", default=True)
     bpy.types.Object.thug_export_scene = BoolProperty(name="Export to Scene", default=True)
     bpy.types.Object.thug_always_export_to_nodearray = BoolProperty(name="Always Export to Nodearray", default=False)
+    bpy.types.Object.thug_cast_shadow = BoolProperty(name="Cast Shadow", default=False, 
+        description="(UG+ only) If selected, this object will render dynamic shadows. Use carefully!")
+    bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Shadow Volume", default=False, description="Testing!")
     bpy.types.Object.thug_occluder = BoolProperty(name="Occluder", description="Occludes (hides) geometry behind this mesh. Used for performance improvements.", default=False)
     bpy.types.Object.thug_is_trickobject = BoolProperty(
         name="Is a TrickObject",
@@ -849,6 +879,7 @@ def register_props():
     bpy.types.Object.thug_levelobj_props = PointerProperty(type=THUGLevelObjectProps)
     bpy.types.Object.thug_triggerscript_props = PointerProperty(type=THUGObjectTriggerScriptProps)
     bpy.types.Object.thug_empty_props = PointerProperty(type=THUGEmptyProps)
+    bpy.types.Object.thug_cubemap_props = PointerProperty(type=THUGCubemapProps)
     bpy.types.Object.thug_proxim_props = PointerProperty(type=THUGProximNodeProps)
     bpy.types.Object.thug_emitter_props = PointerProperty(type=THUGEmitterProps)
     bpy.types.Object.thug_generic_props = PointerProperty(type=THUGGenericNodeProps)

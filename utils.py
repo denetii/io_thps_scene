@@ -150,6 +150,9 @@ class THUGUtilAutoWall(bpy.types.Operator):
             bm.from_mesh(ob.data)
             cfl = bm.faces.layers.int.get("collision_flags")
             
+            if not cfl:
+                cfl = bm.faces.layers.int.new("collision_flags")
+            
             for f in bm.faces:
                 flags = f[cfl]
                 if f.normal[2] > -0.15 and f.normal[2] < 0.15:

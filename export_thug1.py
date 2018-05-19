@@ -119,6 +119,9 @@ def export_scn_sectors(output_file, operator=None):
                     flags |= SECFLAGS_HAS_VERTEX_WEIGHTS
                 if len(original_object.vertex_groups) or need_vertex_normals:
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
+                if original_object.thug_is_shadow_volume:
+                    print("EXPORTING SHADOW VOLUME!")
+                    flags = SECFLAGS_SHADOW_VOLUME
 
                 mats_to_faces = {}
                 for face in bm.faces:
@@ -196,13 +199,13 @@ def export_scn_sectors(output_file, operator=None):
                         
                     print("Done...")
                     
-                uv_total = 0
-                for v in split_verts.keys():
-                    if len(v.uvs) > uv_total:
-                        uv_total = len(v.uvs)
-                        
-                w("i", (uv_total or 1) if flags & SECFLAGS_HAS_TEXCOORDS else 0)
                 if flags & SECFLAGS_HAS_TEXCOORDS:
+                    uv_total = 0
+                    for v in split_verts.keys():
+                        if len(v.uvs) > uv_total:
+                            uv_total = len(v.uvs)
+                            
+                    w("i", (uv_total or 1) if flags & SECFLAGS_HAS_TEXCOORDS else 0)
                     for v in split_verts.keys():
                         for i in range(0, uv_total):
                             w("2f", *v.uvs[i])
@@ -214,10 +217,7 @@ def export_scn_sectors(output_file, operator=None):
                     for v in split_verts.keys():
                         r, g, b, a = v.vc or FULL_WHITE
                         if is_levelobject:
-                            if operator.use_vc_hack:
-                                r, g, b, a = HALF_WHITE
-                            else:
-                                r, g, b, a = FULL_WHITE
+                            r, g, b, a = HALF_WHITE
                         a = (int(a * VC_MULT) & 0xff) << 24
                         r = (int(r * VC_MULT) & 0xff) << 16
                         g = (int(g * VC_MULT) & 0xff) << 8

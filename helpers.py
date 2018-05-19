@@ -16,6 +16,18 @@ LOG = logging.getLogger(ADDON_NAME)
 # METHODS
 #############################################
 #----------------------------------------------------------------------------------
+#- Returns a numbered, unique version of the desired name
+#----------------------------------------------------------------------------------
+def get_unique_name(name):
+    ob_name = name
+    name_idx = 0
+    # Create new rail path
+    while ob_name in bpy.data.objects:
+        name_idx += 1
+        ob_name = name + '_' + "{:02d}".format(name_idx)
+    return ob_name
+    
+#----------------------------------------------------------------------------------
 #- Returns TRUE if the given string is a hex-formatted int32 (name checksum)
 #----------------------------------------------------------------------------------
 def is_hex_string(name):
