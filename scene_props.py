@@ -144,18 +144,23 @@ def maybe_upgrade_scene(*args):
         'ugplus_matslot_diffuse'
         ,'ugplus_matslot_detail'
         ,'ugplus_matslot_normal'
+        ,'ugplus_matslot_normal2'
+        ,'ugplus_matslot_displacement'
+        ,'ugplus_matslot_displacement2'
         ,'ugplus_matslot_specular'
         #,'ugplus_matslot_smoothness'
         ,'ugplus_matslot_reflection'
         ,'ugplus_matslot_lightmap'
-        ,'ugplus_matslot_rainmask'
-        ,'ugplus_matslot_snowmask'
+        ,'ugplus_matslot_lightmap2'
+        ,'ugplus_matslot_lightmap3'
+        ,'ugplus_matslot_lightmap4'
+        ,'ugplus_matslot_weathermask'
         ,'ugplus_matslot_snow'
         ,'ugplus_matslot_fallback'
         ,'ugplus_matslot_diffuse_night'
         ,'ugplus_matslot_diffuse_evening'
         ,'ugplus_matslot_diffuse_morning'
-        ,'ugplus_matslot_diffuse_cloud'
+        ,'ugplus_matslot_cloud'
     ]
     # Hack for the new material system's image fields - read from the txt reference and set the image
     for mat in bpy.data.materials:
@@ -238,7 +243,28 @@ def maybe_upgrade_scene(*args):
     if something_was_updated:
         bpy.context.window_manager.popup_menu(draw, title="Conversion Notice", icon='INFO')
             
-            
+def change_bake_slot(self, context):
+    scene = context.scene
+    if scene.thug_bake_slot == 'DAY':
+        search_for = 'LM_DAY_'
+    elif scene.thug_bake_slot == 'EVENING':
+        search_for = 'LM_EVENING_'
+    elif scene.thug_bake_slot == 'NIGHT':
+        search_for = 'LM_NIGHT_'
+    elif scene.thug_bake_slot == 'MORNING':
+        search_for = 'LM_MORNING_'
+        
+    for mat in bpy.data.materials:
+        if not hasattr(mat, 'texture_slots'): continue
+        passes = [tex_slot for tex_slot in mat.texture_slots]
+        for slot in passes:
+            if hasattr(slot, 'texture') and slot.texture.name.startswith("Baked_"):
+                ob_name = slot.texture.name[6:]
+                print("Searching for...{}{}".format(search_for, ob_name))
+                if bpy.data.images.get('{}{}'.format(search_for, ob_name)):
+                    slot.texture.image = bpy.data.images.get('{}{}'.format(search_for, ob_name))
+                    
+    
 # PROPERTIES
 #############################################
 #----------------------------------------------------------------------------------
@@ -808,6 +834,8 @@ def register_props():
     bpy.types.Object.thug_always_export_to_nodearray = BoolProperty(name="Always Export to Nodearray", default=False)
     bpy.types.Object.thug_cast_shadow = BoolProperty(name="Cast Shadow", default=False, 
         description="(UG+ only) If selected, this object will render dynamic shadows. Use carefully!")
+        
+    bpy.types.Object.thug_is_billboard = BoolProperty(name="Billboard", description="Testing!", default=False)
     bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Shadow Volume", default=False, description="Testing!")
     bpy.types.Object.thug_occluder = BoolProperty(name="Occluder", description="Occludes (hides) geometry behind this mesh. Used for performance improvements.", default=False)
     bpy.types.Object.thug_is_trickobject = BoolProperty(
@@ -941,6 +969,15 @@ def register_props():
             ("AO", "Ambient Occlusion", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting.")],
         default="LIGHT", 
         description="Type of bakes to use for this scene.")
+    bpy.types.Scene.thug_bake_slot = EnumProperty(
+        name="Bake Slot",
+        items=[
+            ("DAY", "Day (Default)", "Bakes lighting into the Day TOD slot."),
+            ("EVENING", "Evening", "Bakes lighting into the Evening TOD slot."),
+            ("NIGHT", "Night", "Bakes lighting into the Night TOD slot."),
+            ("MORNING", "Morning", "Bakes lighting into the Morning TOD slot.")],
+        default="DAY", 
+        description="(Underground+ only) TOD slot to bake lighting into. Multiple TOD bakes are only supported by the new material system.", update=change_bake_slot)
         
     bpy.types.Scene.thug_bake_automargin = BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings.")                       
     

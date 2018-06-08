@@ -168,6 +168,7 @@ def export_qb(filename, directory, target_game, operator=None):
                 clean_name = get_clean_name(ob)
                 
                 if not ob.thug_always_export_to_nodearray and \
+                    not operator.is_park_editor and \
                     not is_levelobject and \
                     col_ob.thug_created_at_start and \
                     not custom_node_props.get(clean_name) and \

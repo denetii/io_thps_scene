@@ -95,6 +95,10 @@ def export_scn_sectors(output_file, operator=None):
                         #print("-----------------------------------------------")
                         need_vertex_normals = True
                         
+                    # Always export normals when using Underground+ materials/shaders
+                    if hasattr(env_test, 'thug_material_props') and env_test.thug_material_props.use_new_mats:
+                        need_vertex_normals = True
+                    
                     if not hasattr(env_test, 'texture_slots'): continue
                     _tmp_passes = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
                     pass_index = -1
@@ -121,7 +125,9 @@ def export_scn_sectors(output_file, operator=None):
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
                 if original_object.thug_is_shadow_volume:
                     print("EXPORTING SHADOW VOLUME!")
-                    flags = SECFLAGS_SHADOW_VOLUME
+                    flags |= SECFLAGS_SHADOW_VOLUME
+                if original_object.thug_is_billboard:
+                    flags |= SECFLAGS_BILLBOARD_PRESENT
 
                 mats_to_faces = {}
                 for face in bm.faces:
@@ -147,7 +153,7 @@ def export_scn_sectors(output_file, operator=None):
                     # bbox = get_bbox2(final_mesh.vertices, mathutils.Matrix.Identity(4))
                     bbox = get_bbox2(final_mesh.vertices, lo_matrix)
                 else:
-                    bbox = get_bbox2(final_mesh.vertices, ob.matrix_world)
+                    bbox = get_bbox2(final_mesh.vertices, ob.matrix_world, operator.is_park_editor)
                     
                 w("6f",
                     bbox[0][0], bbox[0][1], bbox[0][2],
@@ -155,6 +161,14 @@ def export_scn_sectors(output_file, operator=None):
                 bsphere = get_sphere_from_bbox(bbox)
                 w("4f", *bsphere)  # bounding sphere
 
+                # Export billboard data - testing
+                if flags & SECFLAGS_BILLBOARD_PRESENT:
+                    print("EXPORTING BILLBOARD DATA!")
+                    w("i", 1) # billboard type
+                    w("3f", *to_thug_coords(mathutils.Vector([0, 0, 0]))) # billboard origin
+                    w("3f", *to_thug_coords(mathutils.Vector([0, 0, 20]))) # billboard pivot pos
+                    w("3f", *to_thug_coords(mathutils.Vector([0, 1, 0]))) # billboard pivot axis
+                    
                 w("i", len(split_verts))
                 w("i", 0) # vertex data stride, this seems to be ignored
 

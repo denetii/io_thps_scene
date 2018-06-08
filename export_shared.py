@@ -578,7 +578,7 @@ def export_col(filename, directory, target_game, operator=None):
             if operator.is_park_editor: 
                 # AFAIK we don't modify the bounding box for dictionary collision, only the scene.
                 # But if this changes I'll update it here!
-                bbox = get_bbox2(bm.verts, obj_matrix)
+                bbox = get_bbox2(bm.verts, obj_matrix, operator.is_park_editor)
             else:
                 bbox = get_bbox2(bm.verts, obj_matrix)
             w("4f", *bbox[0])
@@ -613,8 +613,8 @@ def export_col(filename, directory, target_game, operator=None):
             # Face flags are output here!
             for face in bm.faces:
                 if cfl and (face[cfl] & FACE_FLAGS["mFD_TRIGGER"]):
-                    if o.thug_triggerscript_props.template_name == "None" or \
-                    (o.thug_triggerscript_props.template_name == "Custom" and o.thug_triggerscript_props.custom_name == ""):
+                    if o.thug_triggerscript_props.template_name_txt == "None" or \
+                    (o.thug_triggerscript_props.template_name_txt == "Custom" and o.thug_triggerscript_props.custom_name == ""):
                         # This object has a Trigger face, but no TriggerScript assigned
                         # Normally this would crash the game, so let's create and assign a blank script!
                         get_triggerscript("io_thps_scene_NullScript")
@@ -806,6 +806,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
         self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
+        self.layout.row().prop(self, "is_park_editor", toggle=True, icon='PACKAGE')
         self.layout.row().prop(self, "generate_tex_file", toggle=True, icon='TEXTURE_DATA')
         self.layout.row().prop(self, "generate_scn_file", toggle=True, icon='SCENE_DATA')
         self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')

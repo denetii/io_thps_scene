@@ -203,6 +203,90 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         output_file.write(struct.pack(fmt, *args))
     
     mprops = m.thug_material_props
+    
+    shader_id = -5.40 # PBR
+    if mprops.ugplus_shader == 'PBR_Lightmapped':
+        shader_id = -8.0
+    elif mprops.ugplus_shader == 'Water':
+        shader_id = -1.08
+    elif mprops.ugplus_shader == 'Water_Custom':
+        shader_id = -3.16
+    elif mprops.ugplus_shader == 'Water_Displacement':
+        shader_id = -23.42
+    elif mprops.ugplus_shader == 'Skybox':
+        shader_id = -8.15
+    elif mprops.ugplus_shader == 'Cloud':
+        shader_id = -16.0
+
+    export_textures = []
+    # Now we export the textures in a specific order, depending on the shader
+    if mprops.ugplus_shader == 'PBR':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_weathermask, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
+    elif mprops.ugplus_shader == 'PBR_Lightmapped':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_weathermask, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
+        
+    elif mprops.ugplus_shader == 'Skybox':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_evening, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_night, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_morning, 'flags': 0 })
+        
+    elif mprops.ugplus_shader == 'Cloud':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_cloud, 'flags': 0 })
+        
+    elif mprops.ugplus_shader == 'Water':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
+        
+    elif mprops.ugplus_shader == 'Water_Custom':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal2, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
+        #export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 }) 
+        
+    elif mprops.ugplus_shader == 'Water_Displacement':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal2, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_displacement, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_displacement2, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
+        #export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
+        
+    num_passes = 4 if len(export_textures) > 4 else len(export_textures)
+    print("Material {} has {} passes".format(m.name, num_passes))
+    
     if is_hex_string(m.name):
         checksum = int(m.name, 0)
     else:
@@ -210,7 +294,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     
     w("I", checksum)  # material checksum
     w("I", checksum)  # material name checksum
-    w("I", 4)  # material passes
+    w("I", num_passes)  # material passes
     w("I", mprops.alpha_cutoff)  # alpha cutoff (actually an unsigned byte)
     w("?", mprops.sorted)  # sorted?
     w("f", mprops.draw_order)  # draw order
@@ -224,38 +308,9 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         print("EXPORTING GRASS MATERIAL!")
         w("f", mprops.grass_height)  # grass height
         w("i", mprops.grass_layers)  # grass layers
-
-    shader_id = -5.40 # PBR
-    if mprops.ugplus_shader == 'Water':
-        shader_id = -1.08
-    elif mprops.ugplus_shader == 'Skybox':
-        shader_id = -8.15
+        
     w("f", shader_id)  # specular power (used to mark the shader ID for the new shaders)
 
-    export_textures = []
-    # Now we export the textures in a specific order, depending on the shader
-    if mprops.ugplus_shader == 'PBR':
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': MATFLAG_BUMP_SIGNED_TEXTURE })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_rainmask, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_snowmask, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
-        
-    elif mprops.ugplus_shader == 'Skybox':
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_evening, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_night, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_morning, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_cloud, 'flags': 0 })
-        
-    elif mprops.ugplus_shader == 'Water':
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': MATFLAG_WATER_EFFECT })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
- 
     # Export all the textures we need for the shader, as gathered above
     tex_count = -1
     for node in export_textures:
@@ -284,14 +339,25 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         pass_flags = MATFLAG_SMOOTH | MATFLAG_TEXTURED
         pass_flags |= tex_flags
         if tex_count == 3 and len(export_textures) > 4:
+            print("ANIMATED TEXTURE")
             pass_flags |= MATFLAG_PASS_TEXTURE_ANIMATES
-            
+        if tex_count <= 3 and tex.has_uv_wibbles:
+            print("UV WIBBLES")
+            pass_flags |= MATFLAG_UV_WIBBLE
+        if tex_count == 0 and mprops.ugplus_trans:
+            pass_flags |= MATFLAG_TRANSPARENT
+        
         w("I", pass_flags)  # flags # 4132
         w("?", True)  # has color flag; seems to be ignored
         w("3f",  *(m.diffuse_color / 2.0))  # color
         
         #w("I", globals()[pprops.blend_mode] if pprops else vBLEND_MODE_DIFFUSE)
-        w("I", vBLEND_MODE_BLEND)
+        
+        if tex_count == 0 and mprops.ugplus_trans:
+            w("I", vBLEND_MODE_BLEND)
+        else:
+            w("I", vBLEND_MODE_DIFFUSE)
+            
         #w("I", pprops.blend_fixed_alpha if pprops else 0)
         w("I", 0)
 
@@ -300,6 +366,13 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         w("2f", *((3.0, 3.0)))  # envmap multiples
         w("I", 65540)  # filtering mode
         
+        # Export UV wibbles on the first 4 passes
+        if pass_flags & MATFLAG_UV_WIBBLE:
+            w("2f", *tex.uv_wibbles.uv_velocity)
+            w("2f", *tex.uv_wibbles.uv_frequency)
+            w("2f", *tex.uv_wibbles.uv_amplitude)
+            w("2f", *tex.uv_wibbles.uv_phase)
+            
         # If we're going beyond pass 4, place additional textures in the animated texture slot for pass 4
         if tex_count == 3 and len(export_textures) > 4:
             w("i", len(export_textures) - 3)
@@ -559,28 +632,81 @@ def _material_settings_draw(self, context):
     self.layout.row().prop(mps, "use_new_mats", toggle=True, icon="MATERIAL")
     if mps.use_new_mats:
         box = self.layout.box().column()
-        row = box.row(True)
+        row = box.row(True).column()
         row.prop(mps, "ugplus_shader")
+        if mps.ugplus_shader != 'None':
+            row.separator()
+            row.prop(mps, "ugplus_trans")
+            row.separator()
+        
         if mps.ugplus_shader == 'PBR':
-            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box.row(True), title='Diffuse')
-            ugplus_matslot_draw(mps.ugplus_matslot_detail, box.row(True), title='Detail')
-            ugplus_matslot_draw(mps.ugplus_matslot_normal, box.row(True), title='Normal/Bump')
-            ugplus_matslot_draw(mps.ugplus_matslot_specular, box.row(True), title='Specular')
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box.row(True), title='Reflection')
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box.row(True), title='Lightmap')
-            #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box.row(True), title='Smoothness')
-            ugplus_matslot_draw(mps.ugplus_matslot_rainmask, box.row(True), title='Rain Mask')
-            ugplus_matslot_draw(mps.ugplus_matslot_snowmask, box.row(True), title='Snow Mask')
-            ugplus_matslot_draw(mps.ugplus_matslot_snow, box.row(True), title='Snow')
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse')
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_specular, box, title='Specular', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Lightmap', allow_uv_wibbles=False)
+            #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box, title='Smoothness')
+            ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
+            ugplus_matslot_draw(mps.ugplus_matslot_snow, box, title='Snow', allow_uv_wibbles=False)
+        if mps.ugplus_shader == 'PBR_Lightmapped':
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse')
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_specular, box, title='Specular', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection', allow_uv_wibbles=False)
+            #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box, title='Smoothness')
+            ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
+            ugplus_matslot_draw(mps.ugplus_matslot_snow, box, title='Snow', allow_uv_wibbles=False)
+            box.separator()
+            box.label("Lightmaps")
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Day')
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap2, box, title='Evening')
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap3, box, title='Night')
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap4, box, title='Morning')
         elif mps.ugplus_shader == 'Water':
-            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box.row(True), title='Fallback')
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box.row(True), title='Reflection')
+            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Diffuse')
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
+            box.separator()
+            box.label("Lightmaps")
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Day', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap2, box, title='Evening', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap3, box, title='Night', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap4, box, title='Morning', allow_uv_wibbles=False)
+        elif mps.ugplus_shader == 'Water_Custom':
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal Map 1')
+            ugplus_matslot_draw(mps.ugplus_matslot_normal2, box, title='Normal Map 2')
+            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Diffuse')
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
+            box.separator()
+            box.label("Lightmaps")
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Day', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap2, box, title='Evening', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap3, box, title='Night', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap4, box, title='Morning', allow_uv_wibbles=False)
+        elif mps.ugplus_shader == 'Water_Displacement':
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal Map 1')
+            ugplus_matslot_draw(mps.ugplus_matslot_normal2, box, title='Normal Map 2')
+            ugplus_matslot_draw(mps.ugplus_matslot_displacement, box, title='Displacement Map 1')
+            ugplus_matslot_draw(mps.ugplus_matslot_displacement2, box, title='Displacement Map 2')
+            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Diffuse')
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
+            box.separator()
+            box.label("Lightmaps")
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Day', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap2, box, title='Evening', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap3, box, title='Night', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_lightmap4, box, title='Morning', allow_uv_wibbles=False)
         elif mps.ugplus_shader == 'Skybox':
-            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box.row(True), title='Diffuse (Day)')
-            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_evening, box.row(True), title='Evening')
-            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_night, box.row(True), title='Night')
-            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_morning, box.row(True), title='Morning')
-            ugplus_matslot_draw(mps.ugplus_matslot_cloud, box.row(True), title='Cloud')
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Day')
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_evening, box, title='Evening')
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_night, box, title='Night')
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_morning, box, title='Morning')
+        elif mps.ugplus_shader == 'Cloud':
+            ugplus_matslot_draw(mps.ugplus_matslot_cloud, box, title='Cloud')
             
 
 # PROPERTIES
@@ -671,10 +797,10 @@ class THUGAnimatedTexture(bpy.types.PropertyGroup):
     keyframes_index = IntProperty()
 #----------------------------------------------------------------------------------
 class THUGUVWibbles(bpy.types.PropertyGroup):
-    uv_velocity = FloatVectorProperty(name="UV velocity", size=2, default=(1.0, 1.0), soft_min=-100, soft_max=100)
-    uv_frequency = FloatVectorProperty(name="UV frequency", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
-    uv_amplitude = FloatVectorProperty(name="UV amplitude", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
-    uv_phase = FloatVectorProperty(name="UV phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_velocity = FloatVectorProperty(name="Velocity", size=2, default=(1.0, 1.0), soft_min=-100, soft_max=100)
+    uv_frequency = FloatVectorProperty(name="Frequency", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_amplitude = FloatVectorProperty(name="Amplitude", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_phase = FloatVectorProperty(name="Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
 #----------------------------------------------------------------------------------
 class THUGMaterialSettingsTools(bpy.types.Panel):
     bl_label = "TH Material Settings"
@@ -775,21 +901,45 @@ class UGPlusMaterialSlotProps(bpy.types.PropertyGroup):
                            min=0.0, max=1.0,
                            description="Color used if no texture provided.")
                            
+    has_uv_wibbles = BoolProperty(name="Animate UVs", default=False, description='Animate UVs for this slot.')
+    uv_wibbles = PointerProperty(type=THUGUVWibbles)
     
-def ugplus_matslot_draw(self, layout, title, mat_icon='FILE_IMAGE'):
-    #self.tex_image.description = 'test'
-    col = layout.column(align=True)
-    #col.prop_search(self, 'tex_image', bpy.data, "images", text=title, icon=mat_icon)
-    #col.operator("image.open")
-    col.scale_x = 0.3
-    col.label(title)
-    col = layout.column(align=True)
-    col.scale_x = 0.5
-    col.template_ID(self, "tex_image", open="image.open")
-    col = layout.column(align=True)
-    col.scale_x = 0.2
-    col.prop(self, 'tex_color', text='')
-    
+def ugplus_matslot_draw(self, layout, title, allow_uv_wibbles=True, mat_icon='FILE_IMAGE'):
+    c = layout.column()
+    row = c.row()
+    split = row.split(percentage=0.3)
+    c = split.column()
+    c.label(title)
+    split = split.split(percentage=0.7)
+    c = split.column()
+    c.scale_x = 0.8
+    c.template_ID(self, "tex_image", open="image.open")
+    c = split.column()
+    c.scale_x = 0.1
+    c.prop(self, 'tex_color', text='')
+    if allow_uv_wibbles:
+        col = split.column(align=True)
+        col.scale_x = 0.1
+        col.prop(self, 'has_uv_wibbles', toggle=True, icon='PLAY', text='')
+        
+        if (self.has_uv_wibbles):
+            row = layout.row(True)
+            col = row.column(align=True)
+            col.scale_x = 0.5
+            row = col.row()
+            row.prop(self.uv_wibbles, "uv_velocity")
+            row = col.row()
+            row.prop(self.uv_wibbles, "uv_frequency")
+            row = col.row()
+            row.prop(self.uv_wibbles, "uv_amplitude")
+            row = col.row()
+            row.prop(self.uv_wibbles, "uv_phase")
+    else:
+        col = split.column(align=True)
+        col.scale_x = 0.1
+        col.label("")
+        
+
 #----------------------------------------------------------------------------------
 class THUGMaterialProps(bpy.types.PropertyGroup):
     alpha_cutoff = IntProperty(
@@ -825,28 +975,38 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         description="The shader to use for this material. Changes the available texture fields.",
         items=[
         ("None", "None", ""),
-        ("PBR", "Fake PBR", "General material shader. Allows you to control diffuse, bump mapping, specular highlights, and weather masks."),
-        ("Skybox", "Skybox", "Skybox shader supporting 4 separate textures based on TOD."),
-        ("Water", "Water", "Water effect shader, creates an animated water surface."),
+        ("PBR", "Fake PBR", "General material shader. Supports diffuse lighting, normal mapping, specular highlights/reflections, and weather masks."),
+        ("PBR_Lightmapped", "Lightmapped PBR", "Lightmapped material shader with up to 4 TOD-specific lightmaps. Primarily used for scene meshes."),
+        ("Skybox", "Skybox", "Material shader supporting 4 separate textures based on TOD."),
+        ("Cloud", "Cloud", "Material with an appearance that fades/changes based on in-game weather settings."),
+        ("Water", "Water", "Built-in water effect, creates a water surface using an animated texture."),
+        ("Water_Custom", "Water (Custom)", "Custom water effect using two normal maps and UV wibbles."),
+        ("Water_Displacement", "Water (Displacement)", "Custom water effect using two normal maps, two displacement maps, and UV wibbles."),
         ])
+    ugplus_trans = BoolProperty(name="Transparency", description="Enable transparency on this material.")
+    
     ugplus_matslot_diffuse = PointerProperty(type=UGPlusMaterialSlotProps, name="Diffuse", description="Base texture.")
     ugplus_matslot_detail = PointerProperty(type=UGPlusMaterialSlotProps, name="Detail", description="Detail texture which is multiplied onto the diffuse pass.")
-    ugplus_matslot_normal = PointerProperty(type=UGPlusMaterialSlotProps, name="Bump/Normal", description="Bump/normal map (currently renders as bump map).")
+    ugplus_matslot_normal = PointerProperty(type=UGPlusMaterialSlotProps, name="Normal", description="Normal map.")
+    ugplus_matslot_normal2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Normal #2", description="Normal map.")
+    ugplus_matslot_displacement = PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement", description="Displacement map.")
+    ugplus_matslot_displacement2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement 2", description="Displacement map #2.")
     ugplus_matslot_specular = PointerProperty(type=UGPlusMaterialSlotProps, name="Specular", description="Intensity of specular reflections.")
-    # Eventually, roughness will be a separate texture that is mixed into the alpha channel for the normal texture, 
-    # but for now let's just 
+    # Eventually, roughness will be a separate texture that is mixed into the alpha channel for the normal texture
     #ugplus_matslot_smoothness = PointerProperty(type=UGPlusMaterialSlotProps, name="Smoothness", description="Sharpness of specular reflections.")
     ugplus_matslot_reflection = PointerProperty(type=UGPlusMaterialSlotProps, name="Reflection", description="Texture used for specular reflections.")
-    ugplus_matslot_lightmap = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Texture used for specular reflections.")
-    ugplus_matslot_rainmask = PointerProperty(type=UGPlusMaterialSlotProps, name="Rain Mask", description="Mask used for rain effect.")
-    ugplus_matslot_snowmask = PointerProperty(type=UGPlusMaterialSlotProps, name="Snow Mask", description="Mask used for snow effect.")
+    ugplus_matslot_lightmap = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture.")
+    ugplus_matslot_lightmap2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture.")
+    ugplus_matslot_lightmap3 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture.")
+    ugplus_matslot_lightmap4 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture.")
+    ugplus_matslot_weathermask = PointerProperty(type=UGPlusMaterialSlotProps, name="Rain Mask", description="Mask used for rain/snow effects.")
     ugplus_matslot_snow = PointerProperty(type=UGPlusMaterialSlotProps, name="Snow", description="Snow texture.")
         
     ugplus_matslot_fallback = PointerProperty(type=UGPlusMaterialSlotProps, name="Fallback", description="Texture used on lower graphics settings/lower shader detail settings.")
     ugplus_matslot_diffuse_night = PointerProperty(type=UGPlusMaterialSlotProps, name="Night", description="Texture used when the TOD is night.")
     ugplus_matslot_diffuse_evening = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is evening.")
     ugplus_matslot_diffuse_morning = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is morning.")
-    ugplus_matslot_diffuse_cloud = PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active.")
+    ugplus_matslot_cloud = PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active.")
     ###############################################################
     
 #----------------------------------------------------------------------------------

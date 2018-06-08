@@ -202,7 +202,7 @@ def get_bbox2(vertices, matrix=mathutils.Matrix.Identity(4), is_park_editor=Fals
         max_z = max(v[2], max_z)
         
     # bounding box is calculated differently for park dictionaries!
-    if is_park_editor: 
+    if is_park_editor and len(vertices): 
         print("bounding box was: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
         new_min_x = (min_x / 60.0)
         new_min_z = (min_z / 60.0)

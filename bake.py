@@ -208,12 +208,12 @@ def setup_cycles_nodes(node_tree, diffuse_tex = None, normal_tex = None, color =
     node_d.location = (-680,40)
     
     node_t = get_cycles_node(nodes, 'Diffuse Texture', 'ShaderNodeTexImage')
-    if diffuse_tex:
-        node_t.image = diffuse_tex
+    if diffuse_tex and hasattr(diffuse_tex, 'image'):
+        node_t.image = diffuse_tex.image
     node_t.location = (-660,320)
         
     node_n = get_cycles_node(nodes, 'Normal Texture', 'ShaderNodeTexImage')
-    if normal_tex:
+    if normal_tex and hasattr(normal_tex, 'image'):
         node_n.image = normal_tex
     node_n.color_space = 'NONE'
     node_n.location = (-680,-220)
@@ -438,6 +438,10 @@ def bake_thug_lightmaps(meshes, context):
             print("Object {} has no UV maps. Cannot bake lighting!".format(ob.name))
             continue
             
+        if not ob.data.materials:
+            print("Object {} has no materials. Cannot bake lighting!".format(ob.name))
+            continue
+            
         # Set it to active and go into edit mode
         scene.objects.active = ob
         ob.select = True
@@ -445,6 +449,7 @@ def bake_thug_lightmaps(meshes, context):
         # Set the desired resolution, both for the UV map and the lightmap texture
         img_res = 128
         bake_margin = 1.0
+        lightmap_name = 'LM_{}_{}'.format(scene.thug_bake_slot, ob.name)
         if ob.thug_lightmap_resolution:
             img_res = int(ob.thug_lightmap_resolution)
             print("Object lightmap resolution is: {}x{}".format(img_res, img_res))
@@ -481,8 +486,8 @@ def bake_thug_lightmaps(meshes, context):
             print("Resolution and/or UV type has changed, removing existing images/UV maps.")
             if ob.data.uv_layers.get('Lightmap'):
                 ob.data.uv_textures.remove(ob.data.uv_textures['Lightmap'])
-            if bpy.data.images.get("LM_{}".format(ob.name)):
-                _img = bpy.data.images.get("LM_{}".format(ob.name))
+            if bpy.data.images.get(lightmap_name):
+                _img = bpy.data.images.get(lightmap_name)
                 _img.user_clear()
                 bpy.data.images.remove(_img)
                 
@@ -521,13 +526,14 @@ def bake_thug_lightmaps(meshes, context):
             orig_index = ob.active_material_index
             
             # Create a new image to bake the lighting in to, if it doesn't exist
-            if not bpy.data.images.get('LM_' + ob.name):
-                bpy.ops.image.new(name="LM_" + ob.name, width=img_res, height=img_res)
-                image = bpy.data.images['LM_' + ob.name]
+            if not bpy.data.images.get(lightmap_name):
+                bpy.ops.image.new(name=lightmap_name, width=img_res, height=img_res)
+                image = bpy.data.images[lightmap_name]
             else:
-                image = bpy.data.images.get('LM_' + ob.name)
+                image = bpy.data.images.get(lightmap_name)
             image.generated_width = img_res
             image.generated_height = img_res
+            image.use_fake_user = True
             
             # Create or retrieve the lightmap texture
             if not bpy.data.textures.get("Baked_{}".format(ob.name)):
@@ -564,14 +570,15 @@ def bake_thug_lightmaps(meshes, context):
                 orig_index = 0
                 
             # Create a new image to bake the lighting in to, if it doesn't exist
-            if not bpy.data.images.get('LM_' + ob.name):
-                bpy.ops.image.new(name="LM_" + ob.name, width=img_res, height=img_res)
-                image = bpy.data.images['LM_' + ob.name]
+            if not bpy.data.images.get(lightmap_name):
+                bpy.ops.image.new(name=lightmap_name, width=img_res, height=img_res)
+                image = bpy.data.images[lightmap_name]
             else:
-                image = bpy.data.images.get('LM_' + ob.name)
+                image = bpy.data.images.get(lightmap_name)
             # Always set width and height, in case the user changed the lightmap res
             image.generated_width = img_res
             image.generated_height = img_res
+            image.use_fake_user = True
             
             if not is_cycles:
                 for d in ob.data.uv_textures['Lightmap'].data:
@@ -605,7 +612,7 @@ def bake_thug_lightmaps(meshes, context):
             tx_d = mat_get_pass(test_mat, 'Diffuse')
             tx_n = mat_get_pass(test_mat, 'Normal')
             if is_cycles:
-                setup_cycles_nodes(blender_mat.node_tree, tx_d.image, tx_n.image, scene.thug_lightmap_color, orig_uv)
+                setup_cycles_nodes(blender_mat.node_tree, tx_d, tx_n, scene.thug_lightmap_color, orig_uv)
                 # Finally, add the result texture, this is what will actually store the bake
                 node_bake = get_cycles_node(blender_mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
                 node_bake.image = blender_tex.image
@@ -704,8 +711,15 @@ def bake_thug_lightmaps(meshes, context):
         for mat_slot in ob.material_slots:
             mat_slot.material = mat_slot.material.copy()
             blender_tex = bpy.data.textures.get("Baked_{}".format(obname))
-            # Add the lightmap into the new UG+ material system
-            mat_slot.material.thug_material_props.ugplus_matslot_lightmap.tex_image = blender_tex.image
+            # Add the lightmap into the new UG+ material system, for the corresponding lightmap slot
+            if scene.thug_bake_slot == 'DAY':
+                mat_slot.material.thug_material_props.ugplus_matslot_lightmap.tex_image = blender_tex.image
+            elif scene.thug_bake_slot == 'EVENING':
+                mat_slot.material.thug_material_props.ugplus_matslot_lightmap2.tex_image = blender_tex.image
+            elif scene.thug_bake_slot == 'NIGHT':
+                mat_slot.material.thug_material_props.ugplus_matslot_lightmap3.tex_image = blender_tex.image
+            elif scene.thug_bake_slot == 'MORNING':
+                mat_slot.material.thug_material_props.ugplus_matslot_lightmap4.tex_image = blender_tex.image
             
             # Also add the image to the legacy material system
             if not mat_slot.material.texture_slots.get(blender_tex.name):
@@ -1170,11 +1184,12 @@ class THUGSceneLightingTools(bpy.types.Panel):
         scene = context.scene
         self.layout.row().prop(scene, "thug_lightmap_scale")
         self.layout.row().prop(scene, "thug_bake_type")
+        self.layout.row().prop(scene, "thug_bake_slot")
         self.layout.row().prop(scene, "thug_bake_automargin")
-        if scene.thug_bake_type == 'LIGHT':
-            self.layout.row().prop(scene, "thug_lightmap_uglymode")
-            self.layout.row().prop(scene, "thug_lightmap_color")
-            self.layout.row().prop(scene, "thug_lightmap_clamp")
+        #if scene.thug_bake_type == 'LIGHT':
+        #    self.layout.row().prop(scene, "thug_lightmap_uglymode")
+        #    self.layout.row().prop(scene, "thug_lightmap_color")
+        #    self.layout.row().prop(scene, "thug_lightmap_clamp")
         self.layout.row().operator(ToggleLightmapPreview.bl_idname, text=ToggleLightmapPreview.bl_label, icon='SEQ_PREVIEW')
         
         tmp_row = self.layout.split()

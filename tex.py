@@ -261,8 +261,22 @@ def export_tex(filename, directory, target_game, operator=None):
                 set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
-                export_textures.append(m.thug_material_props.ugplus_matslot_rainmask)
-                export_textures.append(m.thug_material_props.ugplus_matslot_snowmask)
+                export_textures.append(m.thug_material_props.ugplus_matslot_weathermask)
+                export_textures.append(m.thug_material_props.ugplus_matslot_snow)
+                export_textures.append(m.thug_material_props.ugplus_matslot_specular)
+                
+            if m.thug_material_props.ugplus_shader == 'PBR_Lightmapped':
+                export_textures.append(m.thug_material_props.ugplus_matslot_normal)
+                set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
+                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
+                set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
+                export_textures.append(m.thug_material_props.ugplus_matslot_weathermask)
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
                 export_textures.append(m.thug_material_props.ugplus_matslot_specular)
                 
@@ -271,11 +285,48 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_evening)
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_night)
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_morning)
-                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_cloud)
+                
+            elif m.thug_material_props.ugplus_shader == 'Cloud':
+                export_textures.append(m.thug_material_props.ugplus_matslot_cloud)
                 
             elif m.thug_material_props.ugplus_shader == 'Water':
                 export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
+                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
+                
+            elif m.thug_material_props.ugplus_shader == 'Water_Custom':
+                export_textures.append(m.thug_material_props.ugplus_matslot_normal)
+                set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_normal2)
+                set_image_compression(m.thug_material_props.ugplus_matslot_normal2, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
+                export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
+                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
+                
+            elif m.thug_material_props.ugplus_shader == 'Water_Displacement':
+                export_textures.append(m.thug_material_props.ugplus_matslot_normal)
+                set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_normal2)
+                set_image_compression(m.thug_material_props.ugplus_matslot_normal2, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_displacement)
+                set_image_compression(m.thug_material_props.ugplus_matslot_displacement, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_displacement2)
+                set_image_compression(m.thug_material_props.ugplus_matslot_displacement2, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
+                export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
+                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
             
             for tex in export_textures:
                 if tex.tex_image == None or tex.tex_image == '':
