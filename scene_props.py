@@ -680,17 +680,75 @@ class THUGParticleProps(bpy.types.PropertyGroup):
     
     
 #----------------------------------------------------------------------------------
+#- Properties for new 'Quick Export' option - same as the level export operators
+#----------------------------------------------------------------------------------
+class THUGLevelExportProps(bpy.types.PropertyGroup):
+
+    def report(self, category, message):
+        LOG.debug("OP: {}: {}".format(category, message))
+        #super().report(category, message)
+        
+    # The following properties are unique to the quick export option
+    use_quick_export = BoolProperty(name="Quick Export", description="When this option is enabled, the settings below will be used by default when exporting.", default=False)
+    filename = StringProperty(name="Filename")
+    directory = StringProperty(name="Export Path", description="Path the scene/model will be exported to when using the 'Quick Export' option. If exporting directly to a TH game, choose the 'Data' folder.", subtype='DIR_PATH')
+    target_game = EnumProperty(name="Target Game", items=(
+        ( 'THUG1', 'THUG1', 'THUG1/Underground+'),
+        ( 'THUG2', 'THUG2', 'THUG2/THUG PRO'),
+    ), default="THUG2")
+    scene_type = EnumProperty(name="Scene Type", items=(
+        ( 'Level', 'Level', 'Export this scene as a level.'),
+        ( 'Model', 'Model', 'Export this scene as a model.'),
+    ), default="Level")
+    # These are the same as the normal export operators
+    
+    always_export_normals = BoolProperty(name="Export normals", default=False)
+    use_vc_hack = BoolProperty(name="Vertex color hack",
+        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+        , default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
+    # AUTOSPLIT SETTINGS
+    autosplit_everything = BoolProperty(name="Autosplit All",
+        description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
+    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+        description="The max amount of faces for every created subobject.",
+        default=800, min=50, max=6000)
+    autosplit_max_radius = FloatProperty(name="Max Radius",
+        description="The max radius of for every created subobject.",
+        default=2000, min=100, max=5000)
+    # /AUTOSPLIT SETTINGS
+    pack_pre = BoolProperty(name="Pack files into .prx", default=True)
+    is_park_editor = BoolProperty(name="Is Park Editor",
+        description="Use this option when exporting a park editor dictionary.", default=False)
+    generate_tex_file = BoolProperty(name="Generate a .tex file", default=True)
+    generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
+    generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_col_file = BoolProperty(name="Generate a .col file", default=True)
+    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
+    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
+    export_scale = FloatProperty(name="Export scale", default=1)
+    mipmap_offset = IntProperty(
+        name="Mipmap offset",
+        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
+        min=0, max=4, default=0)
+    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+
+    # The following props are specific to models
+    model_type = EnumProperty(items = (
+        ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
+        ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
+    ), name="Model Type", default="skin")
+        
+#----------------------------------------------------------------------------------
 #- Properties for the entire level
 #----------------------------------------------------------------------------------
 class THUGLevelProps(bpy.types.PropertyGroup):
     level_name = StringProperty(name="Level Name", description="Name of your level, used for in-game menus.")
     scene_name = StringProperty(name="Scene Name", description="Short name referenced by scripts.")
     
-    #target_game = EnumProperty(name="Target Game", items=(
-    #    ( 'THUG1', 'THUG1', 'THUG1 and/or Underground+'),
-    #    ( 'THUG2', 'THUG2', 'Base THUG2'),
-    #    ( 'THUGPRO', 'THUG PRO', 'THUG PRO Mod'),
-    #), default="THUGPRO")
+    export_props = PointerProperty(type=THUGLevelExportProps)
+    
     creator_name = StringProperty(name="Creator Name", description="Name of the person(s) who created this level.")
     level_skybox = StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level.")
     

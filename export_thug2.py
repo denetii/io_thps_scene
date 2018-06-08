@@ -104,13 +104,7 @@ def export_scn_sectors_ug2(output_file, operator=None):
                         
                     if not hasattr(env_test, 'texture_slots'): continue
                     _tmp_passes = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
-                    pass_index = -1
                     for _tmp_tex in _tmp_passes:
-                        pass_index += 1
-                        _uvindex = get_uv_index(ob, _tmp_tex.uv_layer)
-                        if _uvindex != -1 and _uvindex != pass_index and operator:
-                            operator.report({"WARNING"},
-                            "UV/material pass index mismatch on: {} for material: {} assigned to object: {}. UVs will not appear correct in-game.".format(_tmp_tex.name, env_test.name, ob.name))
                         _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
                         if _pprops and (_pprops.pf_environment or _pprops.pf_bump or _pprops.pf_water or _pprops.blend_mode == 'vBLEND_MODE_GLOSS_MAP'):
                             need_vertex_normals = True

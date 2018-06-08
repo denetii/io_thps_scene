@@ -430,7 +430,7 @@ def export_materials(output_file, target_game, operator=None):
                     {"WARNING"},
                     "Material {} has more than 4 passes (enabled texture slots). Using only the first 4.".format(m.name))
             passes = passes[:4]
-        if not passes and m.name != "_THUG_DEFAULT_MATERIAL_":
+        if not passes and m.name != "_THUG_DEFAULT_MATERIAL_" and not m.name.startswith('io_thps_scene_'):
             if operator:
                 operator.report({"WARNING"}, "Material {} has no passes (enabled texture slots). Using it's diffuse color.".format(m.name))
                 passes = [None]

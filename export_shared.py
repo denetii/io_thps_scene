@@ -733,7 +733,34 @@ def calc_alignment_diff(offset, alignment):
         return 0
     return alignment - (offset % alignment)
 
-
+    
+#----------------------------------------------------------------------------------
+#- Runs the 'Quick export', validating the settings first
+#----------------------------------------------------------------------------------
+def maybe_export_scene(operator, scene):
+    def scene_settings_are_valid(level_props):
+        return (level_props.scene_name != '' and level_props.export_props.target_game != '' and \
+            level_props.export_props.directory != '' and level_props.export_props.scene_type != ''  )
+            
+    if not hasattr(scene, 'thug_level_props') or not hasattr(scene.thug_level_props, 'export_props'):
+        operator.report({'ERROR'}, "Unable to run quick export - scene settings were not found!")
+        #raise Exception('Unable to run quick export - scene settings were not found!')
+        return False
+        
+    if not scene_settings_are_valid(scene.thug_level_props):
+        operator.report({'ERROR'}, "Invalid scene settings. Enter a scene name and select the game/export dir/export type first!")
+        #raise Exception('Unable to run quick export - scene settings are not valid. Make sure you enter a scene name and select the game/export dir/export type first!')
+        return False
+        
+    scene.thug_level_props.export_props.filename = scene.thug_level_props.scene_name
+    scene.thug_level_props.export_props.directory = bpy.path.abspath(scene.thug_level_props.export_props.directory)
+    
+    if scene.thug_level_props.export_props.scene_type == 'Level':
+        do_export(scene.thug_level_props.export_props, bpy.context, scene.thug_level_props.export_props.target_game)
+    else:
+        do_export_model(scene.thug_level_props.export_props, bpy.context, scene.thug_level_props.export_props.target_game)
+    
+    return True
 
 # OPERATORS
 #############################################
@@ -1033,3 +1060,34 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         box.row().prop(self, "mipmap_offset")
         box.row().prop(self, "only_offset_lightmap")
         
+        
+
+class THUGQuickExport(bpy.types.Operator):
+    bl_idname = "export.thug_quick_export"
+    bl_label = "Quick Export"
+
+    def execute(self, context):
+        if maybe_export_scene(self, context.scene):
+            self.report({'INFO'}, "Quick export successfully completed!")
+        return {'FINISHED'}
+
+# PANELS
+#############################################
+#----------------------------------------------------------------------------------
+class THUGExportTools(bpy.types.Panel):
+    bl_label = "TH Export Tools"
+    bl_region_type = "TOOLS"
+    bl_space_type = "VIEW_3D"
+    bl_category = "THUG Tools"
+
+    @classmethod
+    def poll(cls, context):
+        return context.user_preferences.addons[ADDON_NAME].preferences.object_settings_tools
+
+    def draw(self, context):
+        if not context.scene: return
+        scene = context.scene
+        box = self.layout.box().column(True)
+        box.row().operator(THUGQuickExport.bl_idname, text=THUGQuickExport.bl_label, icon='PACKAGE')
+            
+            

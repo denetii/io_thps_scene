@@ -60,7 +60,6 @@ def export_level_manifest_json(filename, directory, operator, level_info):
         outp.write("}\n")
 
 
-
 # PANELS
 #############################################
 #----------------------------------------------------------------------------------
@@ -81,6 +80,40 @@ class THUGSceneSettings(bpy.types.Panel):
         self.layout.row().prop(scene.thug_level_props, "scene_name")
         self.layout.row().prop(scene.thug_level_props, "creator_name")
         self.layout.row().prop(scene.thug_level_props, "level_skybox")
+        
+        self.layout.row().prop(scene.thug_level_props.export_props, "use_quick_export")
+        # QUICK EXPORT SETTINGS
+        if scene.thug_level_props.export_props.use_quick_export:
+            box = self.layout.box().column()
+            box.row().prop(scene.thug_level_props.export_props, "target_game")
+            box.row().prop(scene.thug_level_props.export_props, "directory")
+            box.row().prop(scene.thug_level_props.export_props, "scene_type", expand=True)
+            if scene.thug_level_props.export_props.scene_type == 'Model':
+                box.row().prop(scene.thug_level_props.export_props, "model_type", toggle=True, icon='MOD_EDGESPLIT')
+            box.separator()
+            
+            box.row().prop(scene.thug_level_props.export_props, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
+            if scene.thug_level_props.export_props.generate_sky:
+                box.row().prop(scene.thug_level_props.export_props, "skybox_name")
+                
+            box.row().prop(scene.thug_level_props.export_props, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
+            box.row().prop(scene.thug_level_props.export_props, "speed_hack", toggle=True, icon='FF')
+            box.row().prop(scene.thug_level_props.export_props, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
+            if scene.thug_level_props.export_props.autosplit_everything:
+                box2 = box.box().column(True)
+                box2.row().prop(scene.thug_level_props.export_props, "autosplit_faces_per_subobject")
+                box2.row().prop(scene.thug_level_props.export_props, "autosplit_max_radius")
+                
+            box.row().prop(scene.thug_level_props.export_props, "pack_pre", toggle=True, icon='PACKAGE')
+            box.row().prop(scene.thug_level_props.export_props, "is_park_editor", toggle=True, icon='PACKAGE')
+            box.row().prop(scene.thug_level_props.export_props, "generate_tex_file", toggle=True, icon='TEXTURE_DATA')
+            box.row().prop(scene.thug_level_props.export_props, "generate_scn_file", toggle=True, icon='SCENE_DATA')
+            box.row().prop(scene.thug_level_props.export_props, "generate_col_file", toggle=True, icon='OBJECT_DATA')
+            box.row().prop(scene.thug_level_props.export_props, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
+            box.row().prop(scene.thug_level_props.export_props, "export_scale")
+            box2 = box.box().column(True)
+            box2.row().prop(scene.thug_level_props.export_props, "mipmap_offset")
+            #box2.row().prop(scene.thug_level_props.export_props, "only_offset_lightmap")
         
         #self.layout.row().prop(scene.thug_level_props, "default_terrain")
         #self.layout.row().prop(scene.thug_level_props, "default_terrain_rail")

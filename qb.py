@@ -1331,6 +1331,81 @@ def export_model_qb(filename, directory, target_game, operator=None):
             outp.write("#addx 0x{:08x} \"{}\"\n".format(checksum, s))
 
 
+
+#----------------------------------------------------------------------------------
+#- Skips through the level QB until the checksum table is found
+#- In the future, this could be updated to a full QB parser
+#----------------------------------------------------------------------------------
+def seek_to_checksum_table(r, fileLen):
+    while (r.offset < fileLen):
+        token = r.u8()
+        len = 0
+
+        if token == 0x02: # newline
+            r.i32()
+        elif token == 0x16: # checksum
+            r.i32()
+        elif token == 0x17: # int
+            r.i32()
+        elif token == 0x1a: # float
+            r.i32()
+        elif (token == 0x1b) or (token == 0x1c):
+            len = r.i32()
+            r.offset += len
+        elif token == 0x1e: # vec3
+            r.i32()
+            r.i32()
+            r.i32()
+        elif token == 0x1f: # vec2
+            r.i32()
+            r.i32()
+        elif (token == 0x47) or (token == 0x48) or (token == 0x49):
+            len = r.u16()
+            r.offset += len
+        elif token == 0x2B: # table
+            r.offset -= 1
+            break
+#----------------------------------------------------------------------------------
+#- Reads object names from the level .QB file
+#- Currently, this is the only QB importing that can be done directly
+#----------------------------------------------------------------------------------
+def parse_qb_checksums(filename, directory):
+    p = Printer()
+    input_file = os.path.join(directory, filename)
+
+    if os.path.isfile(input_file):
+        p("input_file={}", input_file)
+        with open(input_file, "rb") as inp:
+            r = Reader(inp.read())
+        statinfo = os.stat(input_file)
+        fileLen = statinfo.st_size
+        seek_to_checksum_table(r, fileLen)
+        while (r.offset < fileLen):
+
+            if r.u8() == 0x2b:
+                checksumName = ''
+                checksum = r.u32()
+
+                stringBytes = []
+                while (r.u8() != 0x00):
+                    r.offset -= 1
+                    stringBytes.append(chr(r.u8()))
+                    checksumName = ''.join(stringBytes)
+
+                p("checksumName: {}", checksumName)
+                if checksum not in checksumLookupTable:
+                    checksumLookupTable[checksum] = checksumName 
+    else:
+        p("cant find file: \"{}\"", input_file)
+        return
+        
+    # Find any objects in the scene with this checksum in the name and rename!
+    for checksum, name in checksumLookupTable:
+        if bpy.data.objects.get(checksum):
+            ob = bpy.data.objects.get(checksum)
+            print("Renamed {} to: {}".format(ob.name, name))
+            ob.name = name
+
 #----------------------------------------------------------------------------------
 #- Either switches view to the assigned script, or creates a new one
 #----------------------------------------------------------------------------------
