@@ -1068,15 +1068,17 @@ class THUGMergeObjects(bpy.types.Operator):
     # bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        scn_mesh = [o for o in bpy.data.objects if (o.type == 'MESH' and o.name.endswith("_SCN"))]
+        scn_mesh = [o for o in bpy.data.objects if (o.type == 'MESH' and (o.name.endswith("_SCN") or o.name.startswith('scn_')) )]
         for ob in scn_mesh:
             clean_name = get_clean_name(ob)
             if not bpy.data.objects.get(clean_name):
-                if not bpy.data.objects.get(clean_name + "_COL"):
+                if bpy.data.objects.get(clean_name + "_COL"):
+                    col_ob = bpy.data.objects.get(clean_name + "_COL")
+                elif bpy.data.objects.get('col_' + clean_name):
+                    col_ob = bpy.data.objects.get('col_' + clean_name)
+                else:
                     print("No scene mesh to compare with for: {}".format(ob.name))
                     continue
-                else:
-                    col_ob = bpy.data.objects.get(clean_name + "_COL")
             else:
                 col_ob = bpy.data.objects.get(clean_name)
                 

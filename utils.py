@@ -99,7 +99,7 @@ class THUGUtilFillVehicles(bpy.types.Operator):
     # bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Fills a selection (or all) vehicle objects with default settings for THUG1/2/PRO."
     game_mode = EnumProperty(items=(
-        ("THUG1", "THUG1", ""),
+        ("THUG1", "THUG1/Underground+", ""),
         ("THUG2", "THUG2/PRO", ""),
         ), name="Target Game", default="THUG1")
 

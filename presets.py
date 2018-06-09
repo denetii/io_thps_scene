@@ -258,16 +258,30 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False):
             
     # This is where we append the object and determine the name when it is added to the scene
     filepath = base_files_dir + "scenes\\" + dict_name + ".blend"
-    # link all objects starting with 'Cube'
+    linked_obs = []
     with bpy.data.libraries.load(filepath, link=False) as (data_from, data_to):
-        data_to.objects = [name for name in data_from.objects if fnmatch.fnmatch(name, piece_name)]
+        data_to.objects = [name for name in data_from.objects if fnmatch.fnmatch(name, piece_name + '*')]
 
-    #link object to current scene
+    # Link object(s) to the scene, then figure out which one should be parent (if there are multiple)
     for obj in data_to.objects:
         if obj is not None:
+            #print(obj.name)
             scn.objects.link(obj)
-            return obj
-        
+            linked_obs.append(obj.name)
+            
+    parent_ob = None
+    for ob_name in linked_obs:
+        if bpy.data.objects.get(ob_name).type == 'MESH' and bpy.data.objects.get(ob_name).thug_export_scene:
+            parent_ob = bpy.data.objects.get(ob_name)
+    if parent_ob:
+        for ob_name in linked_obs:
+            if ob_name != parent_ob.name:
+                child_ob = bpy.data.objects.get(ob_name)
+                # Use the relative position to the parent object
+                child_ob.location =  child_ob.location - parent_ob.location
+                child_ob.parent = parent_ob
+                
+    return parent_ob
         
 def preset_place_mesh(dictionary_name, piece_name, position):
     scene = bpy.context.scene
@@ -277,8 +291,8 @@ def preset_place_mesh(dictionary_name, piece_name, position):
     new_piece.location = position
     new_piece.hide = False
     new_piece.hide_render = False
-    new_piece.thug_export_scene = True
-    new_piece.thug_export_collision = True
+    #new_piece.thug_export_scene = True
+    #new_piece.thug_export_collision = True
     #scene.objects.link(new_piece)
     scene.objects.active = new_piece
     new_piece.select = True
@@ -350,6 +364,7 @@ preset_template_list = [
     , { "name": "sk5ed", "title": "Park Editor (UG+)", "list": Ed_Pieces_UG1 }
     , { "name": "sk6ed", "title": "Park Editor (THUG PRO)", "list": Ed_Pieces_UG2}
     , { "name": "sk4ed", "title": "Park Editor (THPS4)", "list": Ed_Pieces_THPS4}
+    , { "name": "sk3ed_bch", "title": "Park Editor (THPS3)", "list": Ed_Pieces_THPS3}
 ]
 
 # this holds the custom operators so we can cleanup when turned off
@@ -533,3 +548,4 @@ class THUGPresetsMenu(bpy.types.Menu):
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk5ed')
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk6ed')
         layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk4ed')
+        layout.row().menu(THUGMeshSubMenu.bl_idname + '_' + 'sk3ed_bch')
