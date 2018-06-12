@@ -603,6 +603,8 @@ def _material_pass_settings_draw(self, context):
 
 #----------------------------------------------------------------------------------
 def _material_settings_draw(self, context):
+    if not context.scene: return
+    scn = context.scene
     if not context.object: return
     ob = context.object
     if not ob.active_material: return
@@ -629,7 +631,10 @@ def _material_settings_draw(self, context):
         col.prop(mps, "grass_height")
         col.prop(mps, "grass_layers")
 
-
+    
+    if scn.thug_level_props.export_props.target_game != 'THUG1':
+        return
+        
     self.layout.row().prop(mps, "use_new_mats", toggle=True, icon="MATERIAL")
     if mps.use_new_mats:
         box = self.layout.box().column()
@@ -970,19 +975,19 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
     ###############################################################
     # NEW MATERIAL SYSTEM PROPERTIES
     ###############################################################
-    use_new_mats = BoolProperty(name="Use New Material System", description="Use the new material/shader setup for Underground+ (THUG PRO coming soon).")
+    use_new_mats = BoolProperty(name="Use New Material System", description="(UG+ only) Use the new modern material/shader system.")
     ugplus_shader = EnumProperty(
         name="Shader",
         description="The shader to use for this material. Changes the available texture fields.",
         items=[
         ("None", "None", ""),
-        ("PBR", "Fake PBR", "General material shader. Supports diffuse lighting, normal mapping, specular highlights/reflections, and weather masks."),
-        ("PBR_Lightmapped", "Lightmapped PBR", "Lightmapped material shader with up to 4 TOD-specific lightmaps. Primarily used for scene meshes."),
+        ("PBR", "Fake PBR", "General material shader. Supports diffuse/point lights, normal mapping, specular highlights/reflections, and weather masks."),
+        ("PBR_Lightmapped", "Lightmapped PBR", "Lightmapped material shader with up to 4 TOD-specific lightmaps. Primarily used for static scene mesh."),
         ("Skybox", "Skybox", "Material shader supporting 4 separate textures based on TOD."),
-        ("Cloud", "Cloud", "Material with an appearance that fades/changes based on in-game weather settings."),
+        ("Cloud", "Cloud", "Material with an appearance that fades/changes based on in-game weather settings (cloudiness)."),
         ("Water", "Water", "Built-in water effect, creates a water surface using an animated texture."),
         ("Water_Custom", "Water (Custom)", "Custom water effect using two normal maps and UV wibbles."),
-        ("Water_Displacement", "Water (Displacement)", "Custom water effect using two normal maps, two displacement maps, and UV wibbles."),
+        ("Water_Displacement", "Water (Displacement)", "More expensive custom water effect using two normal maps, two displacement maps, and UV wibbles."),
         ])
     ugplus_trans = BoolProperty(name="Transparency", description="Enable transparency on this material.")
     

@@ -203,7 +203,7 @@ def get_bbox2(vertices, matrix=mathutils.Matrix.Identity(4), is_park_editor=Fals
         
     # bounding box is calculated differently for park dictionaries!
     if is_park_editor and len(vertices): 
-        print("bounding box was: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
+        #print("bounding box was: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
         new_min_x = (min_x / 60.0)
         new_min_z = (min_z / 60.0)
         new_max_x = (max_x / 60.0)
@@ -224,17 +224,9 @@ def get_bbox2(vertices, matrix=mathutils.Matrix.Identity(4), is_park_editor=Fals
         elif (max_x + min_x) < 0: max_x = (min_x * -1.0)
         if (max_z + min_z) > 0: min_z = (max_z * -1.0)
         elif (max_z + min_z) < 0: max_z = (min_z * -1.0)
-        
-        # This handles half-size dimensions
-        #if (min_x + min_z) % 120 != 0:
-        #    if(min_x != min_z and min_x > min_z): min_x -= 60
-        #    else: min_z -= 60
-        #if (max_x + max_z) % 120 != 0:
-        #    if(max_x != max_z and max_x > max_z): max_z += 60
-        #    else: max_x += 60
             
         min_y = 0.0
-        print("NEW bounding box is: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
+        #print("NEW bounding box is: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
     return ((min_x, min_y, min_z, 1.0), (max_x, max_y, max_z, 1.0))
 
 def to_thug_coords(v):
@@ -278,7 +270,7 @@ def get_clean_name(ob):
     if clean_name.endswith("_COL") or clean_name.endswith("_SCN"): 
         return clean_name[:-4]
     # This is from an imported level, so drop the scn_ part
-    elif clean_name.startswith("scn_"):
+    elif clean_name.startswith("scn_") or clean_name.startswith("col_"):
         return clean_name[4:] 
     else:
         return clean_name

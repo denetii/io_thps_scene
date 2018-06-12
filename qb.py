@@ -12,6 +12,7 @@ from . import script_template
 
 # PROPERTIES
 #############################################
+checksumLookupTable = {0x00000000: ''}
 
 
 # METHODS
@@ -1384,7 +1385,7 @@ def parse_qb_checksums(filename, directory):
 
             if r.u8() == 0x2b:
                 checksumName = ''
-                checksum = r.u32()
+                checksum = str(hex(r.u32()))
 
                 stringBytes = []
                 while (r.u8() != 0x00):
@@ -1392,7 +1393,7 @@ def parse_qb_checksums(filename, directory):
                     stringBytes.append(chr(r.u8()))
                     checksumName = ''.join(stringBytes)
 
-                p("checksumName: {}", checksumName)
+                p("checksum: {} checksumName: {}", checksum, checksumName)
                 if checksum not in checksumLookupTable:
                     checksumLookupTable[checksum] = checksumName 
     else:
@@ -1400,12 +1401,18 @@ def parse_qb_checksums(filename, directory):
         return
         
     # Find any objects in the scene with this checksum in the name and rename!
-    for checksum, name in checksumLookupTable:
-        if bpy.data.objects.get(checksum):
-            ob = bpy.data.objects.get(checksum)
-            print("Renamed {} to: {}".format(ob.name, name))
-            ob.name = name
-
+    for ob in bpy.data.objects:
+        if not ob.type == 'MESH': continue
+        ob_name = get_clean_name(ob)
+        if ob_name in checksumLookupTable:
+            if ob.thug_export_collision:
+                new_name = checksumLookupTable[ob_name]
+            else:
+                new_name = checksumLookupTable[ob_name] + '_SCN'
+                
+            print("Renamed {} to: {}".format(ob.name, new_name))
+            ob.name = new_name
+            
 #----------------------------------------------------------------------------------
 #- Either switches view to the assigned script, or creates a new one
 #----------------------------------------------------------------------------------
@@ -1446,3 +1453,26 @@ class THUGCreateTriggerScript(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         return context.mode == "OBJECT"
+
+class THUGImportLevelQB(bpy.types.Operator):
+    bl_idname = "io.thug_import_levelqb"
+    bl_label = "THPS Level QB (.qb)"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    filter_glob = StringProperty(default="*.qb", options={"HIDDEN"})
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+    
+    def execute(self, context):
+        filename = self.filename
+        directory = self.directory
+
+        parse_qb_checksums(filename, directory)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}

@@ -891,10 +891,10 @@ def register_props():
     bpy.types.Object.thug_export_scene = BoolProperty(name="Export to Scene", default=True)
     bpy.types.Object.thug_always_export_to_nodearray = BoolProperty(name="Always Export to Nodearray", default=False)
     bpy.types.Object.thug_cast_shadow = BoolProperty(name="Cast Shadow", default=False, 
-        description="(UG+ only) If selected, this object will render dynamic shadows. Use carefully!")
+        description="(UG+ only) If selected, this object will render dynamic shadows. Expensive effect - use carefully!")
         
     bpy.types.Object.thug_is_billboard = BoolProperty(name="Billboard", description="Testing!", default=False)
-    bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Shadow Volume", default=False, description="Testing!")
+    bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Detail Mesh", default=False, description="(UG+ only) This mesh is treated as extra detail, and will be culled based on distance from camera (or not rendered at all on lower graphics settings)")
     bpy.types.Object.thug_occluder = BoolProperty(name="Occluder", description="Occludes (hides) geometry behind this mesh. Used for performance improvements.", default=False)
     bpy.types.Object.thug_is_trickobject = BoolProperty(
         name="Is a TrickObject",
@@ -1021,10 +1021,10 @@ def register_props():
         items=[
             ("LIGHT", "Lighting Only (Cycles)", "(Uses the Cycles render engine) Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting."),
             ("FULL", "Full Diffuse (Cycles)", "(Uses the Cycles render engine) Bake everything onto a single texture. The most accurate results, but lowers base texture resolution."),
-            ("VERTEX_COLORS", "Vertex Colors", "Bake lighting to vertex colors. Fast and cheap, accuracy depends on mesh density."),
+            ("VERTEX_COLORS", "Vertex Colors (BR)", "Bake lighting to vertex colors. Fast and cheap, accuracy depends on mesh density."),
             ("LIGHT_BI", "Lighting Only (BR)", "Bake lighting to texture and mix with original textures."),
             ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture."),
-            ("AO", "Ambient Occlusion", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting.")],
+            ("AO", "Ambient Occlusion (BR)", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting.")],
         default="LIGHT", 
         description="Type of bakes to use for this scene.")
     bpy.types.Scene.thug_bake_slot = EnumProperty(

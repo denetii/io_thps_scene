@@ -260,7 +260,8 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False):
     filepath = base_files_dir + "scenes\\" + dict_name + ".blend"
     linked_obs = []
     with bpy.data.libraries.load(filepath, link=False) as (data_from, data_to):
-        data_to.objects = [name for name in data_from.objects if fnmatch.fnmatch(name, piece_name + '*')]
+        data_to.objects = [name for name in data_from.objects if ( fnmatch.fnmatch(name, piece_name) or \
+            fnmatch.fnmatch(name, piece_name + '_SCN*') or fnmatch.fnmatch(name, piece_name + '_RAIL*') )]
 
     # Link object(s) to the scene, then figure out which one should be parent (if there are multiple)
     for obj in data_to.objects:
