@@ -517,7 +517,10 @@ def _export_autorails(p, c, i, v3, operator):
                 else:
                     links = [i(rail_node_counter + 1)]
 
-                p("\t\t:i {} = :a{{ {} :a}}".format(c("Links"), ' '.join(links)))
+                # Bugfix: the park editor specifically does not like an empty array of Links (crashes), 
+                # so only output the Links property if there are actually links
+                if len(links):
+                    p("\t\t:i {} = :a{{ {} :a}}".format(c("Links"), ' '.join(links)))
                 if autorail.object.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
                 p("\t:i :s}")
