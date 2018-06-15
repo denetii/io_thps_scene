@@ -894,6 +894,7 @@ def register_props():
         description="(UG+ only) If selected, this object will render dynamic shadows. Expensive effect - use carefully!")
         
     bpy.types.Object.thug_is_billboard = BoolProperty(name="Billboard", description="Testing!", default=False)
+    bpy.types.Object.thug_no_skater_shadow = BoolProperty(name="No Skater Shadow", description="Dynamic shadows will not render on this object.", default=False)
     bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Detail Mesh", default=False, description="(UG+ only) This mesh is treated as extra detail, and will be culled based on distance from camera (or not rendered at all on lower graphics settings)")
     bpy.types.Object.thug_occluder = BoolProperty(name="Occluder", description="Occludes (hides) geometry behind this mesh. Used for performance improvements.", default=False)
     bpy.types.Object.thug_is_trickobject = BoolProperty(

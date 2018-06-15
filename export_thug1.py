@@ -240,7 +240,6 @@ def export_scn_sectors(output_file, operator=None):
                     w("6f",
                         bbox[0][0], bbox[0][1], bbox[0][2],
                         bbox[1][0], bbox[1][1], bbox[1][2])  # bbox
-                    w("I", 0)  # flags
                     the_material = len(ob.material_slots) and ob.material_slots[mat_index].material
                     if not the_material:
                         the_material = bpy.data.materials["_THUG_DEFAULT_MATERIAL_"]
@@ -248,6 +247,12 @@ def export_scn_sectors(output_file, operator=None):
                         mat_checksum = int(the_material.name, 0)
                     else:
                         mat_checksum = crc_from_string(bytes(the_material.name, 'ascii'))
+                    
+                    # Determine if we need to set any mesh flags
+                    mesh_flags = 0
+                    if the_material.thug_material_props.no_skater_shadow or original_object.thug_no_skater_shadow:
+                        mesh_flags |= 0x400
+                    w("I", mesh_flags)  # mesh flags
                     w("L", mat_checksum)  # material checksum
                     w("I", 1)  # num of index lod levels
 

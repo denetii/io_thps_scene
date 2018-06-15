@@ -622,6 +622,7 @@ def _material_settings_draw(self, context):
     row.prop(mps, "no_backface_culling")
     row = self.layout.row()
     row.prop(mps, "specular_power")
+    row.prop(mps, "no_skater_shadow")
     row = self.layout.row()
     row.prop(mps, "specular_color")
     self.layout.row().prop(mps, "grassify", toggle=True, icon="HAIR")
@@ -960,6 +961,8 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         description="If the material is not using the Diffuse blend mode this can be toggled to force it to be single sided.")
     no_backface_culling = BoolProperty(name="No Backface Culling", default=False,
         description="Makes material with Diffuse blend mode double sided")
+    no_skater_shadow = BoolProperty(name="No Skater Shadow", default=False,
+        description="Any mesh using this material will not render dynamic shadows.")
     z_bias = IntProperty(name="Z-Bias", default=0,
         description="Adjust this value to prevent Z-fighting on overlapping meshes.")
     specular_power = FloatProperty(name="Specular Power", default=0.0)

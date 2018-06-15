@@ -208,6 +208,7 @@ def _thug_object_settings_draw(self, context):
             box = self.layout.box().column(True)          
             box.row().prop(ob, "thug_cast_shadow")
             box.row().prop(ob, "thug_is_shadow_volume")
+            box.row().prop(ob, "thug_no_skater_shadow")
             #box.row().prop(ob, "thug_is_billboard")
         box = self.layout.column(True)
         box.row().prop(ob, "thug_export_collision")
