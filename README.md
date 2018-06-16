@@ -26,6 +26,7 @@ Here's the full list of changes and bug fixes since the previous public release 
      - Added import support for node arrays from existing levels!
         * Rails, waypoints, object settings and more are parsed and placed into the scene
      - Trigger scripts from existing levels can now be imported!
+     - Import your custom parks (.PRK) from THUG1/2/PRO and the plugin will generate the scene for you! (Experimental feature)
  - Totally revamped object/node scripting, using an all-new template system that gives you more built-in TriggerScripts
      - Custom scripting is now easier and more foolproof, using separate text blocks rather than `THUG_SCRIPTS`
  - Greatly expanded/improved export options:
