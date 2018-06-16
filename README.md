@@ -6,6 +6,11 @@ This version fixes tons of bugs and adds a whole host of new features to make le
 Your .blend scenes that were built for the previous plugin, `io_thug_tools`, will need a little converting before they'll export correctly here. The plugin can detect old scenes, and automatically converts what it can, but there will be a few things that need to be done manually.
 1. Player restarts, CTF Flags, and KOTH nodes need to be reconfigured, as the interface has been revamped a little bit and the options lists changed.
 2. Restarts and other nodes may need to be rotated, as the exporter no longer auto-rotates these elements. This was changed so that THUG1/2/PRO scenes would export the same way, as well as imported levels.
+3. `THUG_SCRIPTS` is no longer used - your custom TriggerScripts should be auto-converted to the new format, but don't keep writing scripts in here, as they will not be exported!
+4. `THUG_FUNCS` is also no longer used, but your startup scripts will not be converted automatically. See the full documentation below to find out where you'll need to move them to.
+
+## Documentation
+The full documentation can be found at http://tharchive.net/misc/io_thps_scene.html
 
 ## Change list
 Here's the full list of changes and bug fixes since the previous public release of `io_thug_tools`:
@@ -32,6 +37,7 @@ Here's the full list of changes and bug fixes since the previous public release 
  - Greatly expanded/improved export options:
      - Revamped export file structure to match what the game engines expect - it is now possible to export models/skins/levels directly into the game
      - Added separate export option for models, which generates them in the correct file formats, uncompressed, in a Models directory
+     - Tons of new crash prevention fixes, handling the most common errors which were allowed in previous releases
      - New 'auto-split everything' option, applies the autosplit modifier to each object in the scene
      - New skybox option when exporting scenes
      - New mipmap offset export option, to quickly size down textures
