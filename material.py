@@ -978,7 +978,7 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
     ###############################################################
     # NEW MATERIAL SYSTEM PROPERTIES
     ###############################################################
-    use_new_mats = BoolProperty(name="Use New Material System", description="(UG+ only) Use the new modern material/shader system.")
+    use_new_mats = BoolProperty(name="Use New Material System", description="(Underground+ 1.5+ only) Use the new modern material/shader system.")
     ugplus_shader = EnumProperty(
         name="Shader",
         description="The shader to use for this material. Changes the available texture fields.",

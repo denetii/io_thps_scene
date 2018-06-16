@@ -277,7 +277,7 @@ class THUGEmptyProps(bpy.types.PropertyGroup):
         ("GenericNode", "Generic Node", "KOTH crown and other objects."),
         ("Pedestrian", "Pedestrian", ""),
         ("Vehicle", "Vehicle", ""),
-        ("CubemapProbe", "Cubemap Probe", "Point used to generate a cubemap. Used by nearby objects for specular reflections."),
+        ("CubemapProbe", "Cubemap Probe", "(Underground+ 1.5+ only) Point used to generate a cubemap. Used by nearby objects for specular reflections."),
         ("ProximNode", "Proximity Node", "Node that can fire events when objects are inside its radius."),
         ("EmitterObject", "Emitter Object", "Node used to play audio streams (typically, ambient sounds in a level)."),
         ("GameObject", "Game Object", "CTF Flags, COMBO letters, etc."),
@@ -891,11 +891,11 @@ def register_props():
     bpy.types.Object.thug_export_scene = BoolProperty(name="Export to Scene", default=True)
     bpy.types.Object.thug_always_export_to_nodearray = BoolProperty(name="Always Export to Nodearray", default=False)
     bpy.types.Object.thug_cast_shadow = BoolProperty(name="Cast Shadow", default=False, 
-        description="(UG+ only) If selected, this object will render dynamic shadows. Expensive effect - use carefully!")
+        description="(Underground+ 1.5+ only) If selected, this object will render dynamic shadows. Expensive effect - use carefully!")
         
     bpy.types.Object.thug_is_billboard = BoolProperty(name="Billboard", description="Testing!", default=False)
     bpy.types.Object.thug_no_skater_shadow = BoolProperty(name="No Skater Shadow", description="Dynamic shadows will not render on this object.", default=False)
-    bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Detail Mesh", default=False, description="(UG+ only) This mesh is treated as extra detail, and will be culled based on distance from camera (or not rendered at all on lower graphics settings)")
+    bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Detail Mesh", default=False, description="(Underground+ 1.5+ only) This mesh is treated as extra detail, and will be culled based on distance from camera (or not rendered at all on lower graphics settings)")
     bpy.types.Object.thug_occluder = BoolProperty(name="Occluder", description="Occludes (hides) geometry behind this mesh. Used for performance improvements.", default=False)
     bpy.types.Object.thug_is_trickobject = BoolProperty(
         name="Is a TrickObject",
@@ -1036,7 +1036,7 @@ def register_props():
             ("NIGHT", "Night", "Bakes lighting into the Night TOD slot."),
             ("MORNING", "Morning", "Bakes lighting into the Morning TOD slot.")],
         default="DAY", 
-        description="(Underground+ only) TOD slot to bake lighting into. Multiple TOD bakes are only supported by the new material system.", update=change_bake_slot)
+        description="(Underground+ 1.5+ only) TOD slot to bake lighting into. Multiple TOD bakes are only supported by the new material system.", update=change_bake_slot)
         
     bpy.types.Scene.thug_bake_automargin = BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings.")                       
     
