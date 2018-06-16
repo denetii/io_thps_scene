@@ -243,7 +243,7 @@ def export_tex(filename, directory, target_game, operator=None):
         if ob.type != 'MESH': continue
         if not hasattr(ob, 'thug_export_scene') or ob.thug_export_scene == False: continue
         for mat in ob.data.materials:
-            if hasattr(mat, 'name') and mat.name in out_materials: continue
+            if not hasattr(mat, 'name') or mat.name in out_materials: continue
             out_materials.append(mat.name)
             
     out_images = []
