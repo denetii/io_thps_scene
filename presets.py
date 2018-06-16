@@ -234,7 +234,7 @@ def preset_place_node(node_type, position):
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
     
     
-def append_from_dictionary(dict_name, piece_name, scn, use_existing = False):
+def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, include_rails = True):
     # Get the path to the dictionary .blend file - it should always be within the
     # base files as defined in the plugin configuration
     addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
@@ -253,15 +253,37 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False):
             source_piece = piece_search[0]
             new_piece = source_piece.copy()
             new_piece.data = source_piece.data.copy()
-            scn.objects.link(new_piece)
-            return new_piece
+            parent_piece = new_piece
+            # If this piece is a child of a SCN mesh, copy that as well
+            if new_piece.parent:
+                parent_piece = new_piece.parent.copy()
+                parent_piece.data = new_piece.parent.data.copy()
+                new_piece.parent = parent_piece
+                scn.objects.link(parent_piece)
+                scn.objects.link(new_piece)
+            else:
+                scn.objects.link(new_piece)
+            
+            # Also search for a rail path, if desired
+            if include_rails and bpy.data.objects.get(piece_name + '_RAIL'):
+                rail_piece = bpy.data.objects.get(piece_name + '_RAIL').copy()
+                rail_piece.data = bpy.data.objects.get(piece_name + '_RAIL').data.copy()
+                rail_piece.parent = parent_piece
+                scn.objects.link(rail_piece)
+                
+            return parent_piece
+            
             
     # This is where we append the object and determine the name when it is added to the scene
     filepath = base_files_dir + "scenes\\" + dict_name + ".blend"
     linked_obs = []
     with bpy.data.libraries.load(filepath, link=False) as (data_from, data_to):
-        data_to.objects = [name for name in data_from.objects if ( fnmatch.fnmatch(name, piece_name) or \
+        if include_rails:
+            data_to.objects = [name for name in data_from.objects if ( fnmatch.fnmatch(name, piece_name) or \
             fnmatch.fnmatch(name, piece_name + '_SCN*') or fnmatch.fnmatch(name, piece_name + '_RAIL*') )]
+        else:
+            data_to.objects = [name for name in data_from.objects if ( fnmatch.fnmatch(name, piece_name) or \
+            fnmatch.fnmatch(name, piece_name + '_SCN*') )]
 
     # Link object(s) to the scene, then figure out which one should be parent (if there are multiple)
     for obj in data_to.objects:
@@ -279,7 +301,7 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False):
             if ob_name != parent_ob.name:
                 child_ob = bpy.data.objects.get(ob_name)
                 # Use the relative position to the parent object
-                child_ob.location =  child_ob.location - parent_ob.location
+                child_ob.location = child_ob.location - parent_ob.location
                 child_ob.parent = parent_ob
                 
     return parent_ob

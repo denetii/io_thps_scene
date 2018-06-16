@@ -613,7 +613,7 @@ def export_col(filename, directory, target_game, operator=None):
             # Face flags are output here!
             for face in bm.faces:
                 if cfl and (face[cfl] & FACE_FLAGS["mFD_TRIGGER"]):
-                    if o.thug_triggerscript_props.template_name_txt == "None" or \
+                    if o.thug_triggerscript_props.template_name_txt == "" or o.thug_triggerscript_props.template_name_txt == "None" or \
                     (o.thug_triggerscript_props.template_name_txt == "Custom" and o.thug_triggerscript_props.custom_name == ""):
                         # This object has a Trigger face, but no TriggerScript assigned
                         # Normally this would crash the game, so let's create and assign a blank script!

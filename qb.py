@@ -83,6 +83,26 @@ def export_qb(filename, directory, target_game, operator=None):
     f = blub_float
     _string = blub_str
 
+    # Step 0: go through all objects and ensure that any TriggerScripts referenced actually exist
+    # (this can happen with imported scenes)
+    for ob in bpy.data.objects:
+        # If a custom script is referenced on the whole object, create it if it doesn't actually exist
+        if hasattr(ob, 'thug_triggerscript_props') and ob.thug_triggerscript_props.template_name_txt == "Custom" and ob.thug_triggerscript_props.custom_name != "": 
+            get_triggerscript(ob.thug_triggerscript_props.custom_name)
+            
+        # Handle individual point script references on paths
+        if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint"): 
+            for spline in ob.data.splines:
+                points = spline.points
+                p_num = -1
+                for point in points:
+                    p_num += 1
+                    if len(ob.data.thug_pathnode_triggers) > p_num:
+                        if ob.data.thug_pathnode_triggers[p_num].script_name != "":
+                            get_triggerscript(ob.data.thug_pathnode_triggers[p_num].script_name)
+                        if ob.data.thug_pathnode_triggers[p_num].spawnobjscript != "":
+                            get_triggerscript(ob.data.thug_pathnode_triggers[p_num].spawnobjscript)
+                    
     generated_scripts = {}
     custom_triggerscript_names = []
     custom_node_props = get_custom_node_props()

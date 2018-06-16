@@ -51,6 +51,7 @@ def to_group(blender_object, group_name):
 def get_triggerscript(script_name):
     script_text = bpy.data.texts.get("script_" + script_name, None)
     if not script_text:
+        print("TriggerScript {} does not exist, creating it!".format(script_name))
         script_text = bpy.data.texts.new(name="script_" + script_name)
     return script_text
     

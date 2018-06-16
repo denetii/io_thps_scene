@@ -22,16 +22,16 @@ ROTATE_270 = 3
 
 # METHODS
 #############################################
-def parked_place_piece(version, piece_name, loc_x, loc_y, loc_z, angle, link = True):
+def parked_place_piece(version, piece_name, loc_x, loc_y, loc_z, angle, add_rails = True):
     scene = bpy.context.scene
     append_scene = 'sk5ed'
     if version == 6:
         append_scene = 'sk6ed'
         
-    new_piece = append_from_dictionary(append_scene, piece_name, scene, True)
+    new_piece = append_from_dictionary(append_scene, piece_name, scene, True, add_rails)
     if new_piece == None:
         append_scene = 'sk5ed'
-        new_piece = append_from_dictionary(append_scene, piece_name, scene, True)
+        new_piece = append_from_dictionary(append_scene, piece_name, scene, True, add_rails)
     if new_piece == None:
         raise Exception("Unable to locate piece {} from dictionary scene {}.".format(piece_name, append_scene))
         
@@ -40,8 +40,8 @@ def parked_place_piece(version, piece_name, loc_x, loc_y, loc_z, angle, link = T
     new_piece.location[2] = loc_z * 48
     new_piece.hide = False
     new_piece.hide_render = False
-    new_piece.thug_export_scene = True
-    new_piece.thug_export_collision = True
+    #new_piece.thug_export_scene = True
+    #new_piece.thug_export_collision = True
     
     final_angle = (angle + 4) & 3
     dimensions = [ new_piece.dimensions.x, new_piece.dimensions.y ]
@@ -152,14 +152,14 @@ def build_floor_grid(version, grid_data):
                 elif i < 0: 
                     riser_name = 'Sk3Ed_Rd1m_10x10x4'
                     
-                riser_pieces.append(parked_place_piece(version, riser_name, loc_x, loc_y, i, 0))
+                riser_pieces.append(parked_place_piece(version, riser_name, loc_x, loc_y, i, 0, False))
             #bpy.ops.object.select_all(action='DESELECT')
             #for ob in riser_pieces:
             #    bpy.context.scene.objects.active = ob
             #    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
             #    ob.select = True
             #bpy.ops.object.join()
-            parked_place_piece(version, 'Sk3Ed_Fd1_10x10', loc_x, loc_y, loc_z, 0)
+            parked_place_piece(version, 'Sk3Ed_Fd1_10x10', loc_x, loc_y, loc_z, 0, False)
             
 
     
@@ -299,7 +299,7 @@ def import_prk(filename, directory, context, operator):
             #print("Pos x/y/z: {} {} {}".format(translated_pos[0], translated_pos[1], translated_pos[2]))
             #print("Rotation: {}".format(piece_rotation))
             #print("--------------------------")
-            parked_place_piece(version, pc["name"], translated_pos[0], translated_pos[1], translated_pos[2], (piece_rotation + extra_rotation))
+            parked_place_piece(version, pc["name"], translated_pos[0], translated_pos[1], translated_pos[2], (piece_rotation + extra_rotation), False)
         
     empty_slots = (1443 - num_pieces)
     print("Empty piece slots: {}".format(empty_slots))
