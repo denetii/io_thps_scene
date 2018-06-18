@@ -18,7 +18,7 @@ from bpy.props import *
 #- Writes the level manifest JSON file
 #----------------------------------------------------------------------------------
 def export_level_manifest_json(filename, directory, operator, level_info):
-    with open(os.path.join(directory, filename + ".json"), "w") as outp:
+    with open(os.path.join(directory, "../" + filename + ".level.json"), "w") as outp:
         outp.write("{\n")
         outp.write("\t\"level_name\": \"{}\",\n".format(level_info.level_name))
         outp.write("\t\"scene_name\": \"{}\",\n".format(level_info.scene_name))

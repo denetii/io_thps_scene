@@ -259,7 +259,7 @@ def do_export(operator, context, target_game):
         # -------------------------------------------------
         # Final step: generate level manifest .json file!
         # -------------------------------------------------
-        export_level_manifest_json(filename, path, self, context.scene.thug_level_props)
+        export_level_manifest_json(filename, directory, self, context.scene.thug_level_props)
         
     except ExportError as e:
         self.report({'ERROR'}, "Export failed.\nExport error: {}".format(str(e)))
