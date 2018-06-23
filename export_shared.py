@@ -56,6 +56,7 @@ def pack_pre(root_dir, files, output_file):
 
 #----------------------------------------------------------------------------------
 def do_export(operator, context, target_game):
+    is_model = False
     self = operator
     import subprocess, shutil, datetime
 
@@ -122,7 +123,7 @@ def do_export(operator, context, target_game):
             
         if self.generate_scn_file:
             self.report({'OPERATOR'}, "Generating scene file... ")
-            export_scn(filename + ext_scn, path, target_game, self)
+            export_scn(filename + ext_scn, path, target_game, self, is_model)
 
         if self.generate_tex_file:
             md(path)
@@ -275,6 +276,7 @@ def do_export(operator, context, target_game):
 
 #----------------------------------------------------------------------------------
 def do_export_model(operator, context, target_game):
+    is_model = True
     self = operator
     import subprocess, shutil, datetime
 
@@ -334,7 +336,7 @@ def do_export_model(operator, context, target_game):
         
         # Generate SCN/MDL file
         self.report({'OPERATOR'}, "Generating scene file... ")
-        export_scn(filename + ext_scn, path, target_game, self)
+        export_scn(filename + ext_scn, path, target_game, self, is_model)
 
         # Generate TEX file
         self.report({'OPERATOR'}, "Generating tex file... ")
@@ -446,7 +448,7 @@ def cleanup_shadowcasters():
             bpy.data.materials.remove(mat)
             
 #----------------------------------------------------------------------------------
-def export_scn(filename, directory, target_game, operator=None):
+def export_scn(filename, directory, target_game, operator=None, is_model=False):
     def w(fmt, *args):
         outp.write(struct.pack(fmt, *args))
 
@@ -454,11 +456,11 @@ def export_scn(filename, directory, target_game, operator=None):
     with open(output_file, "wb") as outp:
         w("3I", 1, 1, 1)
 
-        export_materials(outp, target_game, operator)
+        export_materials(outp, target_game, operator, is_model)
         if target_game == "THUG2":
-            export_scn_sectors_ug2(outp, operator)
+            export_scn_sectors_ug2(outp, operator, is_model)
         elif target_game == "THUG1":
-            export_scn_sectors(outp, operator)
+            export_scn_sectors(outp, operator, is_model)
         else:
             raise Exception("Unknown target game: {}".format(target_game))
 

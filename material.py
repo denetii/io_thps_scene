@@ -399,7 +399,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         w("f", -8.0)  # L
         
         
-def export_materials(output_file, target_game, operator=None):
+def export_materials(output_file, target_game, operator=None, is_model=False):
     def w(fmt, *args):
         output_file.write(struct.pack(fmt, *args))
 

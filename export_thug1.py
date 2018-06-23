@@ -16,7 +16,7 @@ from . autosplit import *
 
 # METHODS
 #############################################
-def export_scn_sectors(output_file, operator=None):
+def export_scn_sectors(output_file, operator=None, is_model=False):
     def w(fmt, *args):
         output_file.write(struct.pack(fmt, *args))
 
@@ -113,7 +113,7 @@ def export_scn_sectors(output_file, operator=None):
                     flags |= SECFLAGS_HAS_TEXCOORDS
                 if True or len(bm.loops.layers.color):
                     flags |= SECFLAGS_HAS_VERTEX_COLORS
-                if len(original_object.vertex_groups):
+                if len(original_object.vertex_groups) and is_model == True:
                     flags |= SECFLAGS_HAS_VERTEX_WEIGHTS
                 if len(original_object.vertex_groups) or need_vertex_normals:
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
