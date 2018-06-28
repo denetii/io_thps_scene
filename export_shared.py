@@ -116,7 +116,7 @@ def do_export(operator, context, target_game):
         if self.generate_col_file or self.generate_scn_file or self.generate_scripts_files:
             orig_objects, temporary_objects = autosplit._prepare_autosplit_objects(operator, context,target_game)
 
-        path = j(directory, "Levels\\" + filename)
+        path = j(directory, "Levels", filename)
         md(path)
         if self.generate_col_file:
             export_col(filename + ext_col, path, target_game, self)
@@ -143,7 +143,7 @@ def do_export(operator, context, target_game):
             # ********************************************************
                 
         if self.generate_scn_file and self.generate_sky:
-            skypath = j(directory, "Levels\\" + filename + "_sky")
+            skypath = j(directory, "Levels", filename + "_sky")
             md(skypath)
             shutil.copy(
                 j(base_files_dir, 'default_sky', DEFAULT_SKY_SCN),
@@ -189,7 +189,7 @@ def do_export(operator, context, target_game):
             
             # #########################
             # Build _SCRIPTS qb file
-            if os.path.exists(path + "/" + filename + "_scripts.txt"):
+            if os.path.exists(j(path, filename + "_scripts.txt")):
                 print("Compiling {}_scripts.txt to QB...".format(filename))
                 os.chdir(path)
                 try:
