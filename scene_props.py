@@ -1039,6 +1039,8 @@ def register_props():
         description="(Underground+ 1.5+ only) TOD slot to bake lighting into. Multiple TOD bakes are only supported by the new material system.", update=change_bake_slot)
         
     bpy.types.Scene.thug_bake_automargin = BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings.")                       
+    bpy.types.Scene.thug_bake_force_remake = BoolProperty(name="Force new UVs", default=False, description="Always discards and recreates the lightmap UVs. Slower, use only as a shortcut if you are making changes to meshes or need to fix UV issues.")                       
+    bpy.types.Scene.thug_bake_pad_uvs = BoolProperty(name="Pad UVs", default=True, description="Adds a 'safe zone' to the edges of the UV map. Use if you are experiencing problems with seams/gaps in bake results.")                       
     
     global draw_handle
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')

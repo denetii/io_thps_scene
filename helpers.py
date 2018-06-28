@@ -65,6 +65,17 @@ def format_triggerscript_name(script_name):
     return script_name
     
 #----------------------------------------------------------------------------------
+#- Scales a 2D vector v by scale s, with a pivot point
+#----------------------------------------------------------------------------------
+def scale_2d( v, s, p ):
+    return ( p[0] + s[0]*(v[0] - p[0]), p[1] + s[1]*(v[1] - p[1]) )
+    
+def scale_uvs( uv_map, scale, pivot=mathutils.Vector((0.5, 0.5)) ):
+    #print("Scaling UVs by factor: {}".format(scale))
+    for i in range( len(uv_map.data) ):
+        uv_map.data[i].uv = scale_2d( uv_map.data[i].uv, scale, pivot )
+        
+#----------------------------------------------------------------------------------
 #- Returns an array of vertices for the given object
 #----------------------------------------------------------------------------------
 def get_vertices_thug(obj):

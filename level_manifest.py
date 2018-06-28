@@ -22,6 +22,7 @@ def export_level_manifest_json(filename, directory, operator, level_info):
         outp.write("{\n")
         outp.write("\t\"level_name\": \"{}\",\n".format(level_info.level_name))
         outp.write("\t\"scene_name\": \"{}\",\n".format(level_info.scene_name))
+        outp.write("\t\"sky_scene_name\": \"{}\",\n".format(level_info.scene_name + "_Sky"))
         outp.write("\t\"creator_name\": \"{}\",\n".format((level_info.creator_name if level_info.creator_name else "Unknown")))
 
         outp.write("\t\"level_qb\": \"levels\\\\{}\\\\{}.qb\",\n".format(level_info.scene_name, level_info.scene_name))
@@ -79,7 +80,7 @@ class THUGSceneSettings(bpy.types.Panel):
         self.layout.row().prop(scene.thug_level_props, "level_name")
         self.layout.row().prop(scene.thug_level_props, "scene_name")
         self.layout.row().prop(scene.thug_level_props, "creator_name")
-        self.layout.row().prop(scene.thug_level_props, "level_skybox")
+        #self.layout.row().prop(scene.thug_level_props, "level_skybox")
         
         self.layout.row().prop(scene.thug_level_props.export_props, "use_quick_export")
         # QUICK EXPORT SETTINGS

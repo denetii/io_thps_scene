@@ -620,7 +620,7 @@ def export_col(filename, directory, target_game, operator=None):
                         # This object has a Trigger face, but no TriggerScript assigned
                         # Normally this would crash the game, so let's create and assign a blank script!
                         get_triggerscript("io_thps_scene_NullScript")
-                        o.thug_triggerscript_props.template_name = "Custom"
+                        #o.thug_triggerscript_props.template_name = "Custom"
                         o.thug_triggerscript_props.template_name_txt = "Custom"
                         o.thug_triggerscript_props.custom_name = "io_thps_scene_NullScript"
                         LOG.debug("WARNING: Object {} has trigger faces but no TriggerScript. A blank script was assigned.".format(o.name))

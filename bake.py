@@ -100,31 +100,22 @@ def get_filler_image(color):
     return img
     
 #----------------------------------------------------------------------------------
-#- Collects the materials assigned to an object and returns them
+#- Collects the materials assigned to an object and stores in original_mats
 #----------------------------------------------------------------------------------
 def store_materials(obj):
-    stored_mats = []
     # We also want to store the names of the materials on the object itself
     # This way we can 'un-bake' and restore the original mats later on
     if not "is_baked" in obj or obj["is_baked"] == False:
         original_mats = []
     
-    for mat_slot in obj.material_slots:
-        if not mat_slot.material.name.startswith('Lightmap_'):
-            stored_mats.append(mat_slot.material)
-            if not "is_baked" in obj or obj["is_baked"] == False:
-                # Make sure it won't be deleted upon close!
-                mat_slot.material.use_fake_user = True 
-                original_mats.append(mat_slot.material.name)
+        for mat_slot in obj.material_slots:
+            if not mat_slot.material.name.startswith('Lightmap_'):
+                if not "is_baked" in obj or obj["is_baked"] == False:
+                    # Make sure it won't be deleted upon close!
+                    mat_slot.material.use_fake_user = True 
+                    original_mats.append(mat_slot.material.name)
             
-    for i in range(len(obj.material_slots)):
-        obj.active_material_index = i
-        bpy.ops.object.material_slot_remove({'object': obj})
-        
-    if not "is_baked" in obj or obj["is_baked"] == False:
         obj["original_mats"] = original_mats
-    
-    return stored_mats
     
 #----------------------------------------------------------------------------------
 #- Restores materials previously assigned to an object
@@ -345,7 +336,7 @@ def bake_thug_vcs(meshes, context):
                 orig_polys[f.index] = f.material_index
                 
         # Store the materials assigned to the object so we can use a flat color on the mesh (better bake results)
-        orig_mats = store_materials(ob)
+        store_materials(ob)
         orig_index = ob.active_material_index
         try:
             bpy.ops.object.bake_image()
@@ -353,7 +344,7 @@ def bake_thug_vcs(meshes, context):
             print("Bake failed on this object! :(")
         
         # Now, for the cleanup! Let's restore the missing mats
-        restore_mats(ob, orig_mats)
+        #restore_mats(ob, orig_mats)
         if orig_index != None and orig_index >= 0:
             ob.active_material_index = orig_index
             
@@ -460,13 +451,19 @@ def bake_thug_lightmaps(meshes, context):
             print("Resolution after scene scale is: {}x{}".format(img_res, img_res))
             
         # Blender's UV margins seem to scale with resolution, so we need to make them smaller
-        # as the UV resolution increases above 512
+        # as the UV resolution increases 
+        uv_padding = 0.05
         if img_res > 2048:
             bake_margin = 0.025
+            uv_padding = 0.002
         elif img_res > 1024:
             bake_margin = 0.1
+            uv_padding = 0.005
         elif img_res > 512:
             bake_margin = 0.25
+            uv_padding = 0.01
+        elif img_res > 64:
+            uv_padding = 0.01
             
         # Grab original UV map, so any diffuse/normal textures are mapped correctly
         orig_uv = ob.data.uv_layers[0].name
@@ -478,12 +475,14 @@ def bake_thug_lightmaps(meshes, context):
             for f in ob.data.polygons:
                 orig_polys[f.index] = f.material_index
         
+        uvs_are_new = False
         bpy.ops.object.mode_set(mode='OBJECT')
         # Recreate the UV map if it's a different resolution than we want now
         if ("thug_last_bake_res" in ob and ob["thug_last_bake_res"] != img_res) \
         or ("thug_last_bake_type" in ob and ob["thug_last_bake_type"] != ob.thug_lightmap_type) \
-        or ("thug_last_bake_res" not in ob or "thug_last_bake_type" not in ob):
-            print("Resolution and/or UV type has changed, removing existing images/UV maps.")
+        or ("thug_last_bake_res" not in ob or "thug_last_bake_type" not in ob)\
+        or scene.thug_bake_force_remake == True:
+            print("Removing existing images/UV maps.")
             if ob.data.uv_layers.get('Lightmap'):
                 ob.data.uv_textures.remove(ob.data.uv_textures['Lightmap'])
             if bpy.data.images.get(lightmap_name):
@@ -492,6 +491,7 @@ def bake_thug_lightmaps(meshes, context):
                 bpy.data.images.remove(_img)
                 
         if not ob.data.uv_layers.get('Lightmap'):
+            uvs_are_new = True
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_all(action='SELECT')
             # Create a new UV layer for the ambient occlusion map
@@ -513,17 +513,25 @@ def bake_thug_lightmaps(meshes, context):
                 bpy.ops.uv.smart_project()
             else:
                 raise Exception("Unknown lightmap type specified on object {}".format(ob.name))
+                
+            
         else:
             ob.data.uv_textures['Lightmap'].active = True
             #ob.data.uv_textures['Lightmap'].active_render = True
             
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         
+        if uvs_are_new and scene.thug_bake_pad_uvs == True:
+            # Argh, Blender's UV projection sometimes creates seams on the edges of the image!
+            # Add some padding by scaling the whole thing down a little bit
+            scale_uvs(ob.data.uv_layers['Lightmap'], mathutils.Vector((1.0-uv_padding, 1.0-uv_padding)))
+        
         #-----------------------------------------------------------------------------------------
         # For FULL bakes, we just need to loop through all the Cycles mats and add the image slot
         # to store the bake result, pretty easy!
-        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI':
+        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT':
             orig_index = ob.active_material_index
+            store_materials(ob)
             
             # Create a new image to bake the lighting in to, if it doesn't exist
             if not bpy.data.images.get(lightmap_name):
@@ -542,6 +550,8 @@ def bake_thug_lightmaps(meshes, context):
                 blender_tex = bpy.data.textures.get("Baked_{}".format(ob.name))
             blender_tex.image = image
             blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_BLEND'
+            if scene.thug_bake_type == 'LIGHT':
+                blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_MODULATE'
             
             if is_cycles:
                 for mat in ob.data.materials:
@@ -671,7 +681,7 @@ def bake_thug_lightmaps(meshes, context):
         baked_obs.append(ob.name)
         bpy.ops.object.mode_set(mode='OBJECT')
         
-        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI':
+        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT':
             ob.active_material_index = orig_index
         
         else:
@@ -1186,6 +1196,11 @@ class THUGSceneLightingTools(bpy.types.Panel):
         self.layout.row().prop(scene, "thug_bake_type")
         self.layout.row().prop(scene, "thug_bake_slot")
         self.layout.row().prop(scene, "thug_bake_automargin")
+        tmp_row = self.layout.split()
+        col = tmp_row.column()
+        col.prop(scene, "thug_bake_force_remake")
+        col = tmp_row.column()
+        col.prop(scene, "thug_bake_pad_uvs")
         #if scene.thug_bake_type == 'LIGHT':
         #    self.layout.row().prop(scene, "thug_lightmap_uglymode")
         #    self.layout.row().prop(scene, "thug_lightmap_color")

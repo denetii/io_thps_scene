@@ -190,7 +190,7 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
                     w("14x")
 
                     passes = [tex_slot for tex_slot in the_material.texture_slots
-                              if tex_slot and tex_slot.use][:4]
+                              if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
 
                     vert_normal_offset = 0
                     vert_color_offset = 0
