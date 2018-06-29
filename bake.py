@@ -529,7 +529,7 @@ def bake_thug_lightmaps(meshes, context):
         #-----------------------------------------------------------------------------------------
         # For FULL bakes, we just need to loop through all the Cycles mats and add the image slot
         # to store the bake result, pretty easy!
-        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT':
+        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT' or scene.thug_bake_type == 'LIGHT_BI':
             orig_index = ob.active_material_index
             store_materials(ob)
             
