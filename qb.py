@@ -83,12 +83,34 @@ def export_qb(filename, directory, target_game, operator=None):
     f = blub_float
     _string = blub_str
 
+    # List of scripts which are generated during export
+    premade_scripts = [
+        "TRG_CTF_BlueScript"
+        ,"TRG_CTF_RedScript"
+        ,"TRG_CTF_YellowScript"
+        ,"TRG_CTF_GreenScript"
+        ,"TRG_CTF_Blue_BaseScript"
+        ,"TRG_CTF_Red_BaseScript"
+        ,"TRG_CTF_Yellow_BaseScript"
+        ,"TRG_CTF_Green_BaseScript"
+        ,"TRG_Flag_BlueScript"
+        ,"TRG_Flag_RedScript"
+        ,"TRG_Flag_YellowScript"
+        ,"TRG_Flag_GreenScript"
+        ,"TRG_Flag_Blue_BaseScript"
+        ,"TRG_Flag_Red_BaseScript"
+        ,"TRG_Flag_Yellow_BaseScript"
+        ,"TRG_Flag_Green_BaseScript"
+    ]
+    
     # Step 0: go through all objects and ensure that any TriggerScripts referenced actually exist
     # (this can happen with imported scenes)
     for ob in bpy.data.objects:
         # If a custom script is referenced on the whole object, create it if it doesn't actually exist
         if hasattr(ob, 'thug_triggerscript_props') and ob.thug_triggerscript_props.template_name_txt == "Custom" and ob.thug_triggerscript_props.custom_name != "": 
-            get_triggerscript(ob.thug_triggerscript_props.custom_name)
+            # Don't bother creating an empty script if it's going to be generated during export
+            if ob.thug_triggerscript_props.custom_name not in premade_scripts:
+                get_triggerscript(ob.thug_triggerscript_props.custom_name)
             
         # Handle individual point script references on paths
         if ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint"): 
