@@ -113,6 +113,7 @@ def store_materials(obj, remove_mats = False):
         if not mat_slot.material.name.startswith('Lightmap_'):
             stored_mats.append(mat_slot.material)
             if not "is_baked" in obj or obj["is_baked"] == False:
+                # Make sure it won't be deleted upon close!
                 mat_slot.material.use_fake_user = True 
                 original_mats.append(mat_slot.material.name)
             
