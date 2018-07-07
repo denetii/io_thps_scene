@@ -86,41 +86,36 @@ def import_psx_th2(filename, directory, context, operator, texlib_data):
         
         # Skip to the tagged chunks, find the textures
         r.seek(ptr_meta)
-        print("we are at: {}".format(hex(r.tell())))
-        magic = r.read(4)
-        if magic == b"RGBs":
-            print("HAS PALETTE")
-            palette_length = struct.unpack("<I", r.read(4))[0]
-            palette_entries = int(palette_length/4)
-            print(palette_length)
-            palette_data = []
-            assert palette_length % 4 == 0
-            for i in range( palette_entries ):
-                palette_data.append(struct.unpack("<BBBB", r.read(4)))
-            
-            PSX_DATA["palette"] = palette_data
-            
-            #r.read(palette_length) # Color data (256*4), skipped for now
-        else:
-            r.seek(ptr_meta)
-        
-        print("we are at: {}".format(hex(r.tell())))
-        magic = r.read(4)
-        if magic == b"\x0A\x00\x00\x00":
-            print("HAS BLOCKMAP")
-            blockmap_length = struct.unpack("<I", r.read(4))[0]
-            r.read(blockmap_length) # Skipped for now
-        else:
-            r.seek(ptr_meta)
-        
+        chunk_count = -1
         # Other unknown tagged chunks
         while True:
             print("we are at: {}".format(hex(r.tell())))
             magic = r.read(4)
+            chunk_count += 1
             if magic != b"\xFF\xFF\xFF\xFF":
-                p("UNKNOWN CHUNK: {}", magic)
-                unk_length = struct.unpack("<I", r.read(4))[0]
-                r.read(unk_length) # Skipped for now
+                if magic == b"RGBs":
+                    print("HAS PALETTE")
+                    palette_length = struct.unpack("<I", r.read(4))[0]
+                    palette_entries = int(palette_length/4)
+                    print(palette_length)
+                    palette_data = []
+                    assert palette_length % 4 == 0
+                    for i in range( palette_entries ):
+                        palette_data.append(struct.unpack("<BBBB", r.read(4)))
+                    PSX_DATA["palette"] = palette_data
+                    
+                elif magic == b"\x0A\x00\x00\x00":
+                    print("HAS BLOCKMAP")
+                    blockmap_length = struct.unpack("<I", r.read(4))[0]
+                    r.read(blockmap_length) # Skipped for now
+                    
+                else:
+                    p("UNKNOWN CHUNK: {}", magic)
+                    unk_length = struct.unpack("<I", r.read(4))[0]
+                    r.read(unk_length) # Skipped for now
+                    if chunk_count > 16:
+                        # There should not be this many tagged chunks, must be a file error
+                        raise Exception("Unable to parse PSX texture library, cannot find texture data")
             else:
                 print("END OF TAGGED CHUNKS")
                 break
@@ -693,18 +688,18 @@ class THPS2PsxToScene(bpy.types.Operator):
             if filename[:-4].endswith('_2'):
                 tex_filename = filename[:-6] + '_l2.psx'
                 tex_filename_alt = filename[:-6] + '_l.psx'
-                tex_filename_alt2 = filename[:-4] + '_L2.psx'
-                tex_filename_alt3 = filename[:-4] + '_L.psx'
+                tex_filename_alt2 = filename[:-6] + '_L2.psx'
+                tex_filename_alt3 = filename[:-6] + '_L.psx'
             elif filename[:-4].endswith('_o') or filename[:-4].endswith('_O'):
                 tex_filename = filename[:-6] + '_l.psx'
                 tex_filename_alt = filename[:-6] + '_l2.psx'
-                tex_filename_alt2 = filename[:-4] + '_L.psx'
-                tex_filename_alt3 = filename[:-4] + '_L2.psx'
+                tex_filename_alt2 = filename[:-6] + '_L.psx'
+                tex_filename_alt3 = filename[:-6] + '_L2.psx'
             elif filename[:-4].endswith('_g') or filename[:-4].endswith('_G'):
                 tex_filename = filename[:-6] + '_l.psx'
                 tex_filename_alt = filename[:-6] + '_l2.psx'
-                tex_filename_alt2 = filename[:-4] + '_L.psx'
-                tex_filename_alt3 = filename[:-4] + '_L2.psx'
+                tex_filename_alt2 = filename[:-6] + '_L.psx'
+                tex_filename_alt3 = filename[:-6] + '_L2.psx'
             else:
                 tex_filename = filename[:-4] + '_l.psx'
                 tex_filename_alt = filename[:-4] + '_l2.psx'
