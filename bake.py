@@ -102,20 +102,29 @@ def get_filler_image(color):
 #----------------------------------------------------------------------------------
 #- Collects the materials assigned to an object and stores in original_mats
 #----------------------------------------------------------------------------------
-def store_materials(obj):
+def store_materials(obj, remove_mats = False):
+    stored_mats = []
     # We also want to store the names of the materials on the object itself
     # This way we can 'un-bake' and restore the original mats later on
     if not "is_baked" in obj or obj["is_baked"] == False:
         original_mats = []
     
-        for mat_slot in obj.material_slots:
-            if not mat_slot.material.name.startswith('Lightmap_'):
-                if not "is_baked" in obj or obj["is_baked"] == False:
-                    # Make sure it won't be deleted upon close!
-                    mat_slot.material.use_fake_user = True 
-                    original_mats.append(mat_slot.material.name)
+    for mat_slot in obj.material_slots:
+        if not mat_slot.material.name.startswith('Lightmap_'):
+            stored_mats.append(mat_slot.material)
+            if not "is_baked" in obj or obj["is_baked"] == False:
+                mat_slot.material.use_fake_user = True 
+                original_mats.append(mat_slot.material.name)
             
+    if remove_mats == True:
+        for i in range(len(obj.material_slots)):
+            obj.active_material_index = i
+            bpy.ops.object.material_slot_remove({'object': obj})
+
+    if not "is_baked" in obj or obj["is_baked"] == False:
         obj["original_mats"] = original_mats
+    
+    return stored_mats
     
 #----------------------------------------------------------------------------------
 #- Restores materials previously assigned to an object
@@ -336,7 +345,7 @@ def bake_thug_vcs(meshes, context):
                 orig_polys[f.index] = f.material_index
                 
         # Store the materials assigned to the object so we can use a flat color on the mesh (better bake results)
-        store_materials(ob)
+        orig_mats = store_materials(ob, True)
         orig_index = ob.active_material_index
         try:
             bpy.ops.object.bake_image()
@@ -344,7 +353,7 @@ def bake_thug_vcs(meshes, context):
             print("Bake failed on this object! :(")
         
         # Now, for the cleanup! Let's restore the missing mats
-        #restore_mats(ob, orig_mats)
+        restore_mats(ob, orig_mats)
         if orig_index != None and orig_index >= 0:
             ob.active_material_index = orig_index
             
@@ -529,7 +538,7 @@ def bake_thug_lightmaps(meshes, context):
         #-----------------------------------------------------------------------------------------
         # For FULL bakes, we just need to loop through all the Cycles mats and add the image slot
         # to store the bake result, pretty easy!
-        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT' or scene.thug_bake_type == 'LIGHT_BI':
+        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT':
             orig_index = ob.active_material_index
             store_materials(ob)
             
@@ -569,12 +578,12 @@ def bake_thug_lightmaps(meshes, context):
                     d.image = image
                     
         #-----------------------------------------------------------------------------------------
-        # For lighting only bakes, it's more complicated! We clear out the materials, add a temp material
+        # For BI lighting/AO bakes, it's more complicated! We clear out the materials, add a temp material
         # to bake the result onto, then restore the original materials and apply the bake texture
         else:
             # First, we need to store the materials assigned to the object
             # As baking will fail if there are any materials without textures
-            orig_mats = store_materials(ob)
+            orig_mats = store_materials(ob, True)
             orig_index = ob.active_material_index
             if orig_index == None or orig_index < 0:
                 orig_index = 0
