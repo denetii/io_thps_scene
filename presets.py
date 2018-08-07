@@ -74,7 +74,7 @@ def preset_place_node(node_type, position):
         
     elif node_type == 'CUBEMAP_PROBE':
         ob.name = get_unique_name('Cubemap')
-        ob.rotation_euler[0] = math.radians(90)
+        ob.rotation_euler = [math.radians(90), 0, math.radians(-90)]
         scene.objects.link( ob )
         ob.thug_empty_props.empty_type = 'CubemapProbe'
         ob.empty_draw_type = 'SPHERE'

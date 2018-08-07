@@ -44,7 +44,7 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
         bm = bmesh.new()
 
         p("sector {}", i)
-        sec_checksum = p("  sector checksum: {}", hex(r.u32()))
+        sec_checksum = p("  sector checksum: {}", to_hex_string(r.u32()))
 
         blender_mesh = bpy.data.meshes.new("scn_mesh_" + str(sec_checksum))
         blender_object = bpy.data.objects.new("scn_" + str(sec_checksum), blender_mesh)
@@ -194,7 +194,7 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
             mesh_flags = r.u32()
             p("    flags: {} ({})".format(mesh_flags, bin(mesh_flags)), None)
 
-            mat_checksum = p("    material checksum: {}", hex(r.u32()))
+            mat_checksum = p("    material checksum: {}", to_hex_string(r.u32()))
             mat_index = None
             for existing_mat_index, mat_slot in enumerate(blender_object.material_slots):
                 if mat_slot.material.name == mat_checksum:

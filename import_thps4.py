@@ -40,7 +40,7 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
 
     for i in range(num_materials):
         p("material {}", i)
-        mat_checksum = p("  material checksum: {}", hex(r.u32()))
+        mat_checksum = p("  material checksum: {}", to_hex_string(r.u32()))
         blender_mat = bpy.data.materials.new(str(mat_checksum))
         ps = blender_mat.thug_material_props
         #p("  material name checksum: {}", r.u32())
@@ -80,7 +80,7 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
             pps = blender_tex.thug_material_pass_props
             p("  pass #{}", j)
             tex_checksum = p("    pass texture checksum: {}", r.u32())
-            actual_tex_checksum = hex(tex_checksum)
+            actual_tex_checksum = to_hex_string(tex_checksum)
             image_name = str(actual_tex_checksum) #+ ".png"
             blender_tex.image = bpy.data.images.get(image_name)
             full_path = os.path.join(directory, image_name)
@@ -209,7 +209,7 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
         bm = bmesh.new()
 
         p("sector {}", i)
-        sec_checksum = p("  sector checksum: {}", hex(r.u32()))
+        sec_checksum = p("  sector checksum: {}", to_hex_string(r.u32()))
 
         blender_mesh = bpy.data.meshes.new("scn_mesh_" + str(sec_checksum))
         blender_object = bpy.data.objects.new("scn_" + str(sec_checksum), blender_mesh)
@@ -351,7 +351,7 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
             mesh_flags = r.u32()
             p("    flags: {} ({})".format(mesh_flags, bin(mesh_flags)), None)
 
-            mat_checksum = p("    material checksum: {}", hex(r.u32()))
+            mat_checksum = p("    material checksum: {}", to_hex_string(r.u32()))
             mat_index = None
             for existing_mat_index, mat_slot in enumerate(blender_object.material_slots):
                 if mat_slot.material.name == mat_checksum:

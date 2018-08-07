@@ -931,7 +931,7 @@ def import_triggerscripts(should_replace = False):
     for line in old_scripts.lines:
         line_number += 1
         if line.body.startswith(":i function "):
-            script_name = line.body.replace(":i function ", "").replace("$", "")
+            script_name = line.body.replace(":i function ", "").replace("$", "").strip()
             #print("Found script: " + script_name)
             script_text = read_until(old_scripts, line_number, ":i endfunction")
             if bpy.data.texts.get("script_" + script_name, None):
@@ -1043,15 +1043,19 @@ class THUGRenameObjects(bpy.types.Operator):
                 if is_hex_string(clean_name[:-4]):
                     ob.name = str(int(clean_name[:-4], 0)) + "_COL"
                     continue
-            if clean_name.endswith("_SCN"): 
+            elif clean_name.endswith("_SCN"): 
                 if is_hex_string(clean_name[:-4]):
                     ob.name = str(int(clean_name[:-4], 0)) + "_SCN"
                     continue
-            if clean_name.startswith("scn_"):
+            elif clean_name.startswith("scn_"):
                 if is_hex_string(clean_name[4:]):
                     ob.name = "scn_" + str(int(clean_name[4:], 0))
                     continue
-            if is_hex_string(clean_name):
+            elif clean_name.startswith("col_"):
+                if is_hex_string(clean_name[4:]):
+                    ob.name = "col_" + str(int(clean_name[4:], 0))
+                    continue
+            elif is_hex_string(clean_name):
                 ob.name = str(int(clean_name, 0))
             else:
                 ob.name = clean_name

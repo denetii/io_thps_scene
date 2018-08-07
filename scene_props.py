@@ -1026,7 +1026,7 @@ def register_props():
             ("LIGHT_BI", "Lighting Only (BR)", "Bake lighting to texture and mix with original textures."),
             ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture."),
             ("AO", "Ambient Occlusion (BR)", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting.")],
-        default="LIGHT", 
+        default="LIGHT_BI", 
         description="Type of bakes to use for this scene.")
     bpy.types.Scene.thug_bake_slot = EnumProperty(
         name="Bake Slot",

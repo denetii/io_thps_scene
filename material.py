@@ -51,8 +51,8 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
 
     for i in range(num_materials):
         p("material {}", i)
-        mat_checksum = p("  material checksum: {}", hex(r.u32()))
-        mat_name_checksum = p("  material name checksum: {}", hex(r.u32()))
+        mat_checksum = p("  material checksum: {}", to_hex_string(r.u32()))
+        mat_name_checksum = p("  material name checksum: {}", to_hex_string(r.u32()))
         blender_mat = bpy.data.materials.new(str(mat_checksum))
         ps = blender_mat.thug_material_props
         blender_mat["thug_mat_name_checksum"] = mat_name_checksum
@@ -88,7 +88,7 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
             pps = blender_tex.thug_material_pass_props
             p("  pass #{}", j)
             tex_checksum = p("    pass texture checksum: {}", r.u32())
-            actual_tex_checksum = hex(tex_checksum)
+            actual_tex_checksum = to_hex_string(tex_checksum)
             image_name = str(actual_tex_checksum) #+ ".png"
             blender_tex.image = bpy.data.images.get(image_name)
             full_path = os.path.join(directory, image_name)
@@ -129,6 +129,7 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 "vBLEND_MODE_SUB_FIXED": "SUBTRACT",
                 "vBLEND_MODE_BRIGHTEN": "LIGHTEN",
                 "vBLEND_MODE_BRIGHTEN_FIXED": "LIGHTEN",
+                "vBLEND_MODE_MODULATE": "MULTIPLY"
             }.get(pps.blend_mode, "MIX")
 
             pps.u_addressing = "Repeat" if p("    pass u addressing: {}", r.u32()) == 0 else "Clamp"
@@ -187,7 +188,7 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 for k in range(num_keyframes):
                     atkf = at.keyframes.add()
                     atkf.time = r.u32()
-                    atkf.image = hex(r.u32())
+                    atkf.image = to_hex_string(r.u32())
 
             if tex_checksum:  # mipmap info
                 p("    mmag: {}", r.u32())
@@ -218,21 +219,29 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     elif mprops.ugplus_shader == 'Cloud':
         shader_id = -16.0
 
+    mat_flags = 0
+    
     export_textures = []
     # Now we export the textures in a specific order, depending on the shader
     if mprops.ugplus_shader == 'PBR':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_weathermask, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
+        
+        # Mark the material as having a displacement map (Parallax normal mapping) if the tex slot is used
+        if mprops.ugplus_matslot_reflection.tex_image != None:
+            print("Marking material as displacement mapped!")
+            mat_flags = 1
+            
     elif mprops.ugplus_shader == 'PBR_Lightmapped':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 })
@@ -241,6 +250,11 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_weathermask, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
+        
+        # Mark the material as having a displacement map (Parallax normal mapping) if the tex slot is used
+        if mprops.ugplus_matslot_reflection.tex_image != None:
+            print("Marking material as displacement mapped!")
+            mat_flags = 1
         
     elif mprops.ugplus_shader == 'Skybox':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
@@ -295,7 +309,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     w("I", checksum)  # material checksum
     w("I", checksum)  # material name checksum
     w("I", num_passes)  # material passes
-    w("I", mprops.alpha_cutoff)  # alpha cutoff (actually an unsigned byte)
+    w("I", mat_flags)  # alpha cutoff (actually an unsigned byte)
     w("?", mprops.sorted)  # sorted?
     w("f", mprops.draw_order)  # draw order
     w("?", mprops.single_sided)  # single sided
@@ -651,7 +665,7 @@ def _material_settings_draw(self, context):
             ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
             ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
             ugplus_matslot_draw(mps.ugplus_matslot_specular, box, title='Specular', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Displacement', allow_uv_wibbles=False)
             ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Lightmap', allow_uv_wibbles=False)
             #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box, title='Smoothness')
             ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
@@ -661,7 +675,7 @@ def _material_settings_draw(self, context):
             ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
             ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
             ugplus_matslot_draw(mps.ugplus_matslot_specular, box, title='Specular', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Displacement', allow_uv_wibbles=False)
             #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box, title='Smoothness')
             ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
             ugplus_matslot_draw(mps.ugplus_matslot_snow, box, title='Snow', allow_uv_wibbles=False)

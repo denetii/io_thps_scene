@@ -127,7 +127,7 @@ def read_tex(reader, printer):
 
     for i in range(num_textures):
         p("texture #{}", i)
-        checksum = p("  checksum: {}", hex(r.u32()))
+        checksum = p("  checksum: {}", to_hex_string(r.u32()))
 
         if checksum in already_seen:
             p("Duplicate checksum!", None)
@@ -257,6 +257,7 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
+                set_image_compression(m.thug_material_props.ugplus_matslot_reflection, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
                 set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
@@ -269,6 +270,7 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
+                set_image_compression(m.thug_material_props.ugplus_matslot_reflection, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
                 set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
@@ -291,6 +293,7 @@ def export_tex(filename, directory, target_game, operator=None):
                 
             elif m.thug_material_props.ugplus_shader == 'Water':
                 export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
+                set_image_compression(m.thug_material_props.ugplus_matslot_fallback, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
@@ -304,6 +307,7 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal2)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal2, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
+                set_image_compression(m.thug_material_props.ugplus_matslot_fallback, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
@@ -321,6 +325,7 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_displacement2)
                 set_image_compression(m.thug_material_props.ugplus_matslot_displacement2, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
+                set_image_compression(m.thug_material_props.ugplus_matslot_fallback, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)

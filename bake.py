@@ -856,32 +856,40 @@ def render_cubemap(probe):
     
     # Rotate camera and render each face!
     print("Rendering FRONT face...")
-    probe.rotation_euler = [math.radians(90), 0, 0] # FRONT
+    probe.rotation_euler = [math.radians(90), 0, math.radians(-90)] # FRONT
+    probe.rotation_euler = [math.radians(90), 0, math.radians(90)] # FRONT
+    #probe.rotation_euler = [math.radians(90), 0, 0] # FRONT
     scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'front')
     bpy.ops.render.render( write_still=True )
     
     print("Rendering BACK face...")
-    probe.rotation_euler = [math.radians(90), 0, math.radians(180)] # BACK
+    probe.rotation_euler = [math.radians(90), 0, math.radians(90)] # BACK
+    probe.rotation_euler = [math.radians(90), 0, math.radians(-90)] # BACK
+    #probe.rotation_euler = [math.radians(90), 0, math.radians(180)] # BACK
     scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'back')
     bpy.ops.render.render( write_still=True )
     
     print("Rendering LEFT face...")
-    probe.rotation_euler = [math.radians(90), 0, math.radians(90)] # LEFT
+    probe.rotation_euler = [math.radians(90), 0, 0] # LEFT
+    probe.rotation_euler = [math.radians(90), 0, math.radians(180)] # LEFT
+    #probe.rotation_euler = [math.radians(90), 0, math.radians(90)] # LEFT
     scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'left')
     bpy.ops.render.render( write_still=True )
     
     print("Rendering RIGHT face...")
-    probe.rotation_euler = [math.radians(90), 0, math.radians(-90)] # RIGHT
+    probe.rotation_euler = [math.radians(90), 0, math.radians(180)] # RIGHT
+    probe.rotation_euler = [math.radians(90), 0, 0] # RIGHT
+    #probe.rotation_euler = [math.radians(90), 0, math.radians(-90)] # RIGHT
     scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'right')
     bpy.ops.render.render( write_still=True )
     
     print("Rendering UP face...")
-    probe.rotation_euler = [math.radians(180), 0, math.radians(-270)] # UP
+    probe.rotation_euler = [math.radians(180), 0, math.radians(180)] # UP
     scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'up')
     bpy.ops.render.render( write_still=True )
     
     print("Rendering DOWN face...")
-    probe.rotation_euler = [0, 0, math.radians(-270)] # DOWN
+    probe.rotation_euler = [0, 0, math.radians(180)] # DOWN
     scene.render.filepath = "{}/{}_{}.png".format(_folder, probe.name, 'down')
     bpy.ops.render.render( write_still=True )
     

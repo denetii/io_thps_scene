@@ -36,6 +36,8 @@ def is_hex_string(name):
         return True
     #print("{} is NOT a hex string!".format(name))
     return False
+def to_hex_string(checksum):
+    return '0x' + hex(checksum)[2:].zfill(8)
     
 #----------------------------------------------------------------------------------
 #- Auto-creates (if needed) and assigns the given object to a group
