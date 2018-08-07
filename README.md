@@ -9,8 +9,9 @@ Your .blend scenes that were built for the previous plugin, `io_thug_tools`, wil
 3. `THUG_SCRIPTS` is no longer used - your custom TriggerScripts should be auto-converted to the new format, but don't keep writing scripts in here, as they will not be exported!
 4. `THUG_FUNCS` is also no longer used, but your startup scripts will not be converted automatically. See the full documentation below to find out where you'll need to move them to.
 
-## Documentation
-The full documentation can be found at http://tharchive.net/misc/io_thps_scene.html
+## Installation/Documentation
+The full installation and documentation can be found at http://tharchive.net/misc/io_thps_scene.html
+Don't install the plugin by pulling the source off GitHub (at least until I add Releases on here) - the plugin won't work correctly that way. You'll need the full installation from THArchive which has the assets for presets, script templates, and more.
 
 ## Change list
 Here's the full list of changes and bug fixes since the previous public release of `io_thug_tools`:
@@ -26,6 +27,7 @@ Here's the full list of changes and bug fixes since the previous public release 
      - Park editor pieces from THPS3, THPS4, THUG1, and THUG2/PRO are also part of the presets menu
  - Fully automated lightmap baking! Easily bake lighting or ambient occlusion to your level/model/skin 
  - Even more import options:
+     - Added THPS1/2/3/4 first-gen (.psx) scene importing!
      - Added THUG1 and THPS4 scene/model importing!
      - QB importing has been added, allowing you to set original object names on imported scenes
      - Added import support for node arrays from existing levels!
