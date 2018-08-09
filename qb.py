@@ -583,14 +583,14 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {} = {}".format(c("SuspendDistance"), i(ob.thug_particle_props.particle_suspend)))
                     p("\t\t:i {} = {}".format(c("lod_dist1"), i(1024)))
                     p("\t\t:i {} = {}".format(c("lod_dist2"), i(2048)))
-                    p("\t\t:i {} = {}".format(c("BoxDimsStart"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsstart))))
-                    p("\t\t:i {} = {}".format(c("BoxDimsMid"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsmid))))
-                    p("\t\t:i {} = {}".format(c("BoxDimsEnd"), v3(to_thug_coords(ob.thug_particle_props.particle_boxdimsend))))
+                    p("\t\t:i {} = {}".format(c("BoxDimsStart"), v3((ob.thug_particle_props.particle_boxdimsstart))))
+                    p("\t\t:i {} = {}".format(c("BoxDimsMid"), v3((ob.thug_particle_props.particle_boxdimsmid))))
+                    p("\t\t:i {} = {}".format(c("BoxDimsEnd"), v3((ob.thug_particle_props.particle_boxdimsend))))
                     if ob.thug_particle_props.particle_usestartpos == True:
                         p("\t\t:i {}".format(c("UseStartPosition")))
-                        p("\t\t:i {} = {}".format(c("StartPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_startposition))))
-                    p("\t\t:i {} = {}".format(c("MidPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_midposition))))
-                    p("\t\t:i {} = {}".format(c("EndPosition"), v3(to_thug_coords(ob.thug_particle_props.particle_endposition))))
+                        p("\t\t:i {} = {}".format(c("StartPosition"), v3((ob.thug_particle_props.particle_startposition))))
+                    p("\t\t:i {} = {}".format(c("MidPosition"), v3((ob.thug_particle_props.particle_midposition))))
+                    p("\t\t:i {} = {}".format(c("EndPosition"), v3((ob.thug_particle_props.particle_endposition))))
                     p("\t\t:i {} = {}".format(c("Texture"), c(ob.thug_particle_props.particle_texture)))
                     if ob.thug_particle_props.particle_usemidpoint == True:
                         p("\t\t:i {}".format(c("UseMidPoint")))
@@ -1119,6 +1119,9 @@ def export_qb(filename, directory, target_game, operator=None):
         # Export generic LoadAllParticleTextures script, if there isn't a script defined for it already
         if not script_exists("LoadAllParticleTextures"):
             p(":i function $LoadAllParticleTextures$")
+            for ob in bpy.data.objects:
+                if ob.type == 'EMPTY' and hasattr(ob, 'thug_empty_props') and ob.thug_empty_props.empty_type == 'ParticleObject' and ob.thug_particle_props.particle_texture != '':
+                    p("\t:i $LoadParticleTexture$ %s(1,\"particles\\{}\")".format( ob.thug_particle_props.particle_texture ))
             p(":i endfunction")
 
         # Export script for adding cubemap probes into the level

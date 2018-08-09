@@ -9,6 +9,7 @@ import mathutils
 import math
 from . helpers import *
 from . scene_props import thug_empty_update
+from . autorail import get_path_bevel_size
 
 # PROPERTIES
 #############################################
@@ -232,7 +233,8 @@ def import_nodearray(gamemode):
             curveData = bpy.data.curves.new(rail_path_name, type='CURVE')
             curveData.dimensions = '3D'
             curveData.resolution_u = 12
-            curveData.bevel_depth = 1.0
+            curveData.bevel_depth = get_path_bevel_size()
+            curveData.bevel_resolution = 2
             
             # map coords to spline
             polyline = curveData.splines.new('POLY')
@@ -359,7 +361,7 @@ def import_nodearray(gamemode):
             # Fill some default rail/path settings, also used by presets and extracted rails!
             curveOB.data.dimensions = '3D'
             curveOB.data.resolution_u = 12
-            curveOB.data.bevel_depth = 1
+            curveOB.data.bevel_depth = get_path_bevel_size()
             curveOB.data.bevel_resolution = 2
             curveOB.data.fill_mode = 'FULL'
             rail_mat = get_material(tmp_mat_name)

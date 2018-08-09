@@ -24,6 +24,9 @@ ROTATE_270 = 3
 
 # METHODS
 #############################################
+def get_actual_preset_size():
+    return 1.0 / bpy.context.scene.thug_level_props.export_props.export_scale
+    
 def preset_place_node(node_type, position):
     scene = bpy.context.scene
     bpy.ops.object.select_all(action='DESELECT')
@@ -31,6 +34,8 @@ def preset_place_node(node_type, position):
     # Create a new Empty, which we will fill in with TH specific data
     ob = bpy.data.objects.new( "empty", None ) 
     ob.location = position
+    actual_scale = get_actual_preset_size()
+    
     if node_type == 'RESTART':
         ob.name = get_unique_name('TRG_Restart')
         scene.objects.link( ob )
@@ -118,7 +123,7 @@ def preset_place_node(node_type, position):
         curveData = bpy.data.curves.new(rail_path_name, type='CURVE')
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
-        curveData.bevel_depth = 2
+        curveData.bevel_depth = get_path_bevel_size()
         curveData.bevel_resolution = 2
         curveData.fill_mode = 'FULL'
         # map coords to spline
@@ -126,7 +131,7 @@ def preset_place_node(node_type, position):
         polyline.points.add(1)
         rail_pos = mathutils.Vector([position[0], position[1], position[2], 0])
         polyline.points[0].co = rail_pos + mathutils.Vector([ 0, 0, 0, 0])
-        polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 500, 0, 0])
+        polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 250 * get_path_bevel_size(), 0, 0])
         
         curveOB = bpy.data.objects.new(rail_path_name, curveData)
         curveOB.thug_path_type = "Rail"
@@ -153,7 +158,7 @@ def preset_place_node(node_type, position):
         curveData = bpy.data.curves.new(rail_path_name, type='CURVE')
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
-        curveData.bevel_depth = 4
+        curveData.bevel_depth = get_path_bevel_size()
         # map coords to spline
         polyline = curveData.splines.new('POLY')
         rail_pos = mathutils.Vector([position[0], position[1], position[2], 0])
@@ -179,6 +184,7 @@ def preset_place_node(node_type, position):
         if node_type == 'RAIL_POINT_PREMADE':
             meshOB = append_from_dictionary('presets', 'Rail_Post', scene)
             meshOB.location = position
+            meshOB.scale = [actual_scale, actual_scale, actual_scale]
         
         # attach to scene and validate context
         scene.objects.link(curveOB)
@@ -197,7 +203,7 @@ def preset_place_node(node_type, position):
         curveData = bpy.data.curves.new(path_name, type='CURVE')
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
-        curveData.bevel_depth = 2
+        curveData.bevel_depth = get_path_bevel_size()
         curveData.bevel_resolution = 2
         curveData.fill_mode = 'FULL'
         # map coords to spline
@@ -206,9 +212,9 @@ def preset_place_node(node_type, position):
         rail_pos = mathutils.Vector([position[0], position[1], position[2], 0])
         polyline.points[0].co = rail_pos + mathutils.Vector([ 0, 0, 0, 0])
         if node_type == 'LADDER':
-            polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 0, 500, 0])
+            polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 0, 250 * get_path_bevel_size(), 0])
         else:
-            polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 500, 0, 0])
+            polyline.points[1].co = rail_pos + mathutils.Vector([ 0, 250 * get_path_bevel_size(), 0, 0])
         
         curveOB = bpy.data.objects.new(path_name, curveData)
         curveOB.thug_path_type = 'Waypoint' if node_type == 'WAYPOINT' else 'Ladder'
@@ -243,6 +249,7 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, inc
         self.report({"WARNING"}, "Base files directory error: {} - Unable to find path to template .blend files.".format(base_files_dir_error))
         raise Exception("Unable to find template .blend file.")
     base_files_dir = addon_prefs.base_files_dir
+    actual_scale = get_actual_preset_size()
     
     # This flag tells us to try using an object of the same name from the scene first, then
     # read from the external blend file. Used by the PRK importer to stop us from pulling the
@@ -303,7 +310,10 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, inc
                 # Use the relative position to the parent object
                 child_ob.location = child_ob.location - parent_ob.location
                 child_ob.parent = parent_ob
+    elif len(linked_obs) == 1 and bpy.data.objects.get(linked_obs[0]):
+        parent_ob = bpy.data.objects.get(linked_obs[0])
                 
+    parent_ob.scale = [actual_scale, actual_scale, actual_scale]
     return parent_ob
         
 def preset_place_mesh(dictionary_name, piece_name, position):

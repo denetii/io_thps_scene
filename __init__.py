@@ -2,7 +2,7 @@ bl_info = {
     "name": "THPS Scene Export/Import",
     "description": "Enables the importing and exporting of scene files for the Tony Hawk Xbox engine (THPS4, THUG1, THUG2, THAW)",
     "author": "denetii",
-    "version": (1, 0, 0),
+    "version": (1, 2, 0),
     "blender": (2, 79, 0),
     "location": "View3D",
     #"warning": "This addon is still in development.",

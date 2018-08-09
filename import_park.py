@@ -366,7 +366,7 @@ def import_prk(filename, directory, context, operator):
         curveData = bpy.data.curves.new(rail_path_name, type='CURVE')
         curveData.dimensions = '3D'
         curveData.resolution_u = 12
-        curveData.bevel_depth = 4
+        curveData.bevel_depth = get_path_bevel_size()
         # map coords to spline
         polyline = curveData.splines.new('POLY')
         polyline.points.add(num_points - 1)

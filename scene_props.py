@@ -25,6 +25,7 @@ def thug_empty_update(self, context):
             context.scene.objects.unlink(mdl_ob)
             bpy.data.objects.remove(mdl_ob)
     mdl_mesh = ''
+    preset_scale = get_actual_preset_size() / 2.0
     
     if ob.thug_empty_props.empty_type == 'Restart':
         mdl_mesh = 'Sk3Ed_RS_1p'
@@ -37,7 +38,7 @@ def thug_empty_update(self, context):
         elif ob.thug_restart_props.restart_type == 'CTF':
             mdl_mesh = 'Sk3Ed_RS_Ho'
         ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 36
+        ob.empty_draw_size = 36 * preset_scale
         
     if ob.thug_empty_props.empty_type == 'GameObject':
         mdl_mesh = ''
@@ -62,36 +63,38 @@ def thug_empty_update(self, context):
         elif ob.thug_go_props.go_type.startswith('Combo_'):
             mdl_mesh = ob.thug_go_props.go_type
         ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 36
+        ob.empty_draw_size = 36 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'CubemapProbe':
         mdl_mesh = ''
         ob.empty_draw_type = 'SPHERE'
-        ob.empty_draw_size = 64
+        ob.empty_draw_size = 64 * preset_scale
         ob.show_name = True
         ob.show_x_ray = True
         
     elif ob.thug_empty_props.empty_type == 'GenericNode' and ob.thug_generic_props.generic_type == 'Crown':
         mdl_mesh = 'Sk3Ed_RS_KOTH'
         ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 42
+        ob.empty_draw_size = 42 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'Pedestrian':
         mdl_mesh = 'Ped01'
         ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 42
+        ob.empty_draw_size = 42 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'Vehicle':
         mdl_mesh = 'Veh_Taxi'
         ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 42
+        ob.empty_draw_size = 42 * preset_scale
         
     # Add the helper mesh if it applies to this object
     if mdl_mesh != '':
+        
         mdl_ob = append_from_dictionary('presets', mdl_mesh, context.scene)
         mdl_ob.name = ob.name + '_MDL'
         mdl_ob.location = [ 0, 0, 0 ]
         mdl_ob.rotation_euler = [ 0, 0, 0 ]
+        mdl_ob.scale = [preset_scale, preset_scale, preset_scale]
         mdl_ob.parent = ob
         mdl_ob.hide_select = True
         mdl_ob.hide_render = True

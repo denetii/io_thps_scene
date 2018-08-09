@@ -18,6 +18,10 @@ AUTORAIL_AUTO = -1
 # METHODS
 #############################################
 
+def get_path_bevel_size():
+    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    return (2 * addon_prefs.path_bevel_size) / bpy.context.scene.thug_level_props.export_props.export_scale
+    
 def get_autorail_image():
     if bpy.data.images.get("Autorail_Metal"):
         return bpy.data.images.get("Autorail_Metal")
@@ -69,6 +73,8 @@ def build_rail_mesh(ob_rail, thickness = 2):
     if not ob_rail.data.splines:
         raise Exception("Object is not a rail path.")
         
+    thickness = get_path_bevel_size()
+    
     rail_path = ob_rail.data.splines[0]
     
     mesh_name = "OBJ_Rail0"
@@ -102,7 +108,7 @@ def build_rail_mesh(ob_rail, thickness = 2):
         post_line = curveData.splines.new('POLY')
         post_line.points.add()
         post_line.points[0].co = ( pnt.co[0], pnt.co[1], 0, 0)
-        post_line.points[1].co = pnt.co - mathutils.Vector( [0, 0, curveData.bevel_depth, 0] )
+        post_line.points[1].co = pnt.co - mathutils.Vector( [0, 0, curveData.bevel_depth * 16, 0] )
         
     is_cyclic = False
     if rail_path.use_cyclic_u:
@@ -874,9 +880,10 @@ class ExtractRail(bpy.types.Operator):
         new_object.thug_path_type = "Rail"
         
         # Configure bevels and materials to match imported rails and placed presets!
+
         new_object.data.dimensions = '3D'
         new_object.data.resolution_u = 12
-        new_object.data.bevel_depth = 1
+        new_object.data.bevel_depth = get_path_bevel_size()
         new_object.data.bevel_resolution = 2
         new_object.data.fill_mode = 'FULL'
         rail_mat = helpers.get_material('io_thps_scene_RailMaterial')
