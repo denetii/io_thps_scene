@@ -103,8 +103,9 @@ def do_export(operator, context, target_game):
     logging_fh.setFormatter(logging.Formatter("{asctime} [{levelname}]  {message}", style='{', datefmt="%H:%M:%S"))
     logging_ch = logging.StreamHandler(sys.stdout)
     logging_ch.setFormatter(logging.Formatter("{asctime} [{levelname}]  {message}", style='{', datefmt="%H:%M:%S"))
-    global global_export_scale
-    global_export_scale = operator.export_scale
+    
+    set_export_scale(operator.export_scale)
+    
     try:
         LOG.addHandler(logging_fh)
         LOG.addHandler(logging_ch)
@@ -268,7 +269,6 @@ def do_export(operator, context, target_game):
         LOG.debug(e)
         raise
     finally:
-        global_export_scale = 1
         LOG.removeHandler(logging_fh)
         LOG.removeHandler(logging_ch)
         autosplit._cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)
@@ -318,8 +318,7 @@ def do_export_model(operator, context, target_game):
     logging_fh.setFormatter(logging.Formatter("{asctime} [{levelname}]  {message}", style='{', datefmt="%H:%M:%S"))
     logging_ch = logging.StreamHandler(sys.stdout)
     logging_ch.setFormatter(logging.Formatter("{asctime} [{levelname}]  {message}", style='{', datefmt="%H:%M:%S"))
-    global global_export_scale
-    global_export_scale = operator.export_scale
+    set_export_scale(operator.export_scale)
     try:
         LOG.addHandler(logging_fh)
         LOG.addHandler(logging_ch)
@@ -385,7 +384,6 @@ def do_export_model(operator, context, target_game):
         LOG.debug(e)
         raise
     finally:
-        global_export_scale = 1
         LOG.removeHandler(logging_fh)
         LOG.removeHandler(logging_ch)
         autosplit._cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)

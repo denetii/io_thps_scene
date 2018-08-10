@@ -9,7 +9,7 @@ __reload_order_index__ = -42
 
 # PROPERTIES
 #############################################
-global_export_scale = 1
+th_export_scale = 1
 LOG = logging.getLogger(ADDON_NAME)
 
 
@@ -243,8 +243,14 @@ def get_bbox2(vertices, matrix=mathutils.Matrix.Identity(4), is_park_editor=Fals
         #print("NEW bounding box is: " + str(min_x) + "x" + str(min_z) + ", " + str(max_x) + "x" + str(max_z))
     return ((min_x, min_y, min_z, 1.0), (max_x, max_y, max_z, 1.0))
 
+def set_export_scale(scale):
+    global th_export_scale
+    th_export_scale = scale
+    print("EXPORT SCALE IS: {}".format(th_export_scale))
+    
 def to_thug_coords(v):
-    return (v[0] * global_export_scale, v[2] * global_export_scale, -v[1] * global_export_scale)
+    #global th_export_scale
+    return (v[0] * th_export_scale, v[2] * th_export_scale, -v[1] * th_export_scale)
 #----------------------------------------------------------------------------------
 def to_thug_coords_ns(v):
     return (v[0], v[2], -v[1])
