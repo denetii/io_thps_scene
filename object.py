@@ -137,16 +137,18 @@ def _thug_object_settings_draw(self, context):
         # ********************************************************
         elif ob.thug_empty_props.empty_type == "ParticleObject":
             box = self.layout.box().column()
-            box.row().prop(ob.thug_particle_props, "particle_boxdimsstart")
-            box.row().prop(ob.thug_particle_props, "particle_boxdimsmid")
-            box.row().prop(ob.thug_particle_props, "particle_boxdimsend")
+            box.row().label(text='Emitter dimensions')
+            box.row().prop(ob.thug_particle_props, "particle_boxdimsstart", text='Start')
+            box.row().prop(ob.thug_particle_props, "particle_boxdimsmid", text='Mid')
+            box.row().prop(ob.thug_particle_props, "particle_boxdimsend", text='End')
             
             box = self.layout.box().column()
-            box.row().prop(ob.thug_particle_props, "particle_usestartpos")
-            if ob.thug_particle_props.particle_usestartpos == True:
-                box.row().prop(ob.thug_particle_props, "particle_startposition")
-            box.row().prop(ob.thug_particle_props, "particle_midposition")
-            box.row().prop(ob.thug_particle_props, "particle_endposition")
+            box.row().label(text='Emitter locations')
+            #box.row().prop(ob.thug_particle_props, "particle_usestartpos")
+            #if ob.thug_particle_props.particle_usestartpos == True:
+            box.row().prop(ob.thug_particle_props, "particle_startposition", text='Start')
+            box.row().prop(ob.thug_particle_props, "particle_midposition", text='Mid')
+            box.row().prop(ob.thug_particle_props, "particle_endposition", text='End')
             box.row().prop(ob.thug_particle_props, "particle_suspend")
             
             box = self.layout.box().column()

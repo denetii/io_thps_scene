@@ -170,6 +170,7 @@ def draw_particle_preview(ob, context):
             for game_path in game_paths:
                 if os.path.exists(os.path.join(game_path, img_path)):
                     particle_img = import_img( os.path.join(game_path, img_path), ob.thug_particle_props.particle_texture + ".img" )
+                    particle_img.pack(as_png=True)
         else:
             particle_img = bpy.data.images.get(ob.thug_particle_props.particle_texture + ".img")
                 
@@ -192,9 +193,9 @@ def draw_particle_preview(ob, context):
     ob_start.location = ob.thug_particle_props.particle_startposition
     ob_mid.location = ob.thug_particle_props.particle_midposition
     ob_end.location = ob.thug_particle_props.particle_endposition
-    ob_start.empty_draw_size = 64.0
-    ob_mid.empty_draw_size = 64.0
-    ob_end.empty_draw_size = 64.0
+    ob_start.empty_draw_size = ob.thug_particle_props.particle_boxdimsstart[2]
+    ob_mid.empty_draw_size = ob.thug_particle_props.particle_boxdimsmid[2]
+    ob_end.empty_draw_size = ob.thug_particle_props.particle_boxdimsend[2]
                 
             
                     
@@ -817,15 +818,15 @@ class THUGLightProps(bpy.types.PropertyGroup):
 #- Particle system properties! There's a lot of them!
 #----------------------------------------------------------------------------------
 class THUGParticleProps(bpy.types.PropertyGroup):
-    particle_boxdimsstart = FloatVectorProperty(name="Box Dims Start")
-    particle_boxdimsmid = FloatVectorProperty(name="Box Dims Mid")
-    particle_boxdimsend = FloatVectorProperty(name="Box Dims End")
+    particle_boxdimsstart = FloatVectorProperty(name="Box Dims Start", update=thug_empty_update)
+    particle_boxdimsmid = FloatVectorProperty(name="Box Dims Mid", update=thug_empty_update)
+    particle_boxdimsend = FloatVectorProperty(name="Box Dims End", update=thug_empty_update)
     particle_usestartpos = BoolProperty(name="Use Start Pos", default=False)
-    particle_startposition = FloatVectorProperty(name="Start Position")
-    particle_midposition = FloatVectorProperty(name="Mid Position")
-    particle_endposition = FloatVectorProperty(name="End Position")
+    particle_startposition = FloatVectorProperty(name="Start Position", update=thug_empty_update)
+    particle_midposition = FloatVectorProperty(name="Mid Position", update=thug_empty_update)
+    particle_endposition = FloatVectorProperty(name="End Position", update=thug_empty_update)
     
-    particle_texture = StringProperty(name="Texture", description="Texture assigned to the particles.")
+    particle_texture = StringProperty(name="Texture", description="Texture assigned to the particles.", update=thug_empty_update)
     particle_usemidpoint = BoolProperty(name="Use Midpoint", default=False)
     particle_profile = StringProperty(name="Profile", default="Default")
     particle_type = EnumProperty(name="Type", items=(

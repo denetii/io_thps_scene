@@ -120,6 +120,34 @@ def preset_place_node(node_type, position):
             ob.thug_go_props.go_type = 'Ghost'
         to_group(ob, "GameObjects")
         
+    elif node_type == 'PARTICLEOBJECT':
+        ob.name = get_unique_name('Particle')
+        scene.objects.link( ob )
+        scene.objects.active = ob 
+        ob.select = True
+        ob.thug_empty_props.empty_type = 'ParticleObject'
+        ob.thug_particle_props.particle_boxdimsstart = [0, 0, 24]
+        ob.thug_particle_props.particle_boxdimsmid = [30, 30, 30]
+        ob.thug_particle_props.particle_boxdimsend = [60, 60, 60]
+        ob.thug_particle_props.particle_startposition = [0, 0, 0]
+        ob.thug_particle_props.particle_midposition = [0, 0, 400]
+        ob.thug_particle_props.particle_endposition = [0, 0, 1000]
+        ob.thug_particle_props.particle_texture = 'dt_generic_particle01'
+        ob.thug_particle_props.particle_type = 'NewFlat'
+        ob.thug_particle_props.particle_blendmode = 'Blend'
+        ob.thug_particle_props.particle_startcolor = [0.25, 0.25, 0.25, 0.4]
+        ob.thug_particle_props.particle_midcolor = [0.35, 0.35, 0.35, 0.4]
+        ob.thug_particle_props.particle_endcolor = [0.45, 0.45, 0.45, 0.0]
+        ob.thug_particle_props.particle_maxstreams = 2
+        ob.thug_particle_props.particle_emitrate = 60.0
+        ob.thug_particle_props.particle_lifetime = 2.0
+        ob.thug_particle_props.particle_usemidpoint = True
+        ob.thug_particle_props.particle_midpointpct = 50
+        
+        ob.thug_particle_props.particle_radius = [25, 40, 100]
+        ob.thug_particle_props.particle_radiusspread = [5, 10, 0]
+        to_group(ob, "ParticleObjects")
+        
         
     elif node_type == 'RAIL_NODE' or node_type == 'RAIL_PREMADE':
         rail_path_name = get_unique_name('TRG_RailPath')
@@ -457,6 +485,7 @@ preset_node_list = [
     { 'name': 'CTF_FLAG', 'title': 'CTF Flag', 'desc': 'Add a CTF Flag.' },
     { 'name': 'CTF_BASE', 'title': 'CTF Base', 'desc': 'Add a CTF Base.' },
     
+    { 'name': 'PARTICLEOBJECT', 'title': 'Particle Emitter', 'desc': 'Add a Particle object.' },
     { 'name': 'CUBEMAP_PROBE', 'title': 'Cubemap Probe', 'desc': 'Add a Cubemap probe.' },
 ]
 

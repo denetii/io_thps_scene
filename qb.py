@@ -579,17 +579,18 @@ def export_qb(filename, directory, target_game, operator=None):
                 # PARTICLE OBJECT NODE
                 elif ob.thug_empty_props.empty_type == "ParticleObject":
                     p("\t\t:i {} = {}".format(c("Class"), c("ParticleObject")))
-                    p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_particle_props.particle_profile)))
+                    #p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_particle_props.particle_profile)))
                     p("\t\t:i {} = {}".format(c("SuspendDistance"), i(ob.thug_particle_props.particle_suspend)))
                     p("\t\t:i {} = {}".format(c("lod_dist1"), i(1024)))
                     p("\t\t:i {} = {}".format(c("lod_dist2"), i(2048)))
                     p("\t\t:i {} = {}".format(c("BoxDimsStart"), v3(to_thug_coords_scalar(ob.thug_particle_props.particle_boxdimsstart))))
                     p("\t\t:i {} = {}".format(c("BoxDimsMid"), v3(to_thug_coords_scalar(ob.thug_particle_props.particle_boxdimsmid))))
                     p("\t\t:i {} = {}".format(c("BoxDimsEnd"), v3(to_thug_coords_scalar(ob.thug_particle_props.particle_boxdimsend))))
-                    
-                    if ob.thug_particle_props.particle_usestartpos == True:
-                        p("\t\t:i {}".format(c("UseStartPosition")))
-                        p("\t\t:i {} = {}".format(c("StartPosition"), v3(to_thug_coords_scalar(ob.thug_particle_props.particle_startposition))))
+                    # Always use local space!
+                    p("\t\t:i {}".format(c("LocalSpace")))
+                    #if ob.thug_particle_props.particle_usestartpos == True:
+                    p("\t\t:i {}".format(c("UseStartPosition")))
+                    p("\t\t:i {} = {}".format(c("StartPosition"), v3(to_thug_coords_scalar(ob.thug_particle_props.particle_startposition))))
                     p("\t\t:i {} = {}".format(c("MidPosition"), v3(to_thug_coords_scalar(ob.thug_particle_props.particle_midposition))))
                     p("\t\t:i {} = {}".format(c("EndPosition"), v3(to_thug_coords_scalar(ob.thug_particle_props.particle_endposition))))
                     p("\t\t:i {} = {}".format(c("Texture"), c(ob.thug_particle_props.particle_texture)))
