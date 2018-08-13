@@ -25,15 +25,16 @@ def _thug_object_settings_draw(self, context):
     # * LEVEL LIGHT
     # ********************************************************
     if ob.type == "LAMP" and ob.data.type == "POINT":
-        box = self.layout.box().column(True)
-        box.row().prop(ob, "thug_created_at_start")
-        box.row().prop(ob, "thug_network_option")
-        box = self.layout.box().column(True)
+        row = self.layout.row()
+        row.column().prop(ob, "thug_created_at_start", toggle=True, icon='MOD_BUILD')
+        row.column().prop(ob, "thug_network_option", text='')
+        box = self.layout.box().column()
         box.row().prop(ob.data, "color")
         box.row().prop(ob.data, "energy")
         box.row().prop(ob.data.thug_light_props, "light_radius")
-        box.row().prop(ob.data.thug_light_props, "light_excludeskater")
-        box.row().prop(ob.data.thug_light_props, "light_excludelevel")
+        row = box.row()
+        row.column().prop(ob.data.thug_light_props, "light_excludeskater")
+        row.column().prop(ob.data.thug_light_props, "light_excludelevel")
         
     elif ob.type == "EMPTY":
         self.layout.row().prop(ob.thug_empty_props, "empty_type")
@@ -41,17 +42,20 @@ def _thug_object_settings_draw(self, context):
         # * RESTART
         # ********************************************************
         if ob.thug_empty_props.empty_type == "Restart":
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_restart_props, "restart_type")
             box.row().prop(ob.thug_restart_props, "restart_name")
-            box = self.layout.box().column(True)
-            box.row().prop(ob.thug_restart_props, "restart_p1")
-            box.row().prop(ob.thug_restart_props, "restart_p2")
-            box.row().prop(ob.thug_restart_props, "restart_team")
-            box.row().prop(ob.thug_restart_props, "restart_gen")
-            box.row().prop(ob.thug_restart_props, "restart_multi")
-            box.row().prop(ob.thug_restart_props, "restart_horse")
-            box.row().prop(ob.thug_restart_props, "restart_ctf")
+            row = box.row()
+            row.column().prop(ob.thug_restart_props, "restart_p1")
+            row.column().prop(ob.thug_restart_props, "restart_p2")
+            row = box.row()
+            row.column().prop(ob.thug_restart_props, "restart_team")
+            row.column().prop(ob.thug_restart_props, "restart_gen")
+            row = box.row()
+            row.column().prop(ob.thug_restart_props, "restart_multi")
+            row.column().prop(ob.thug_restart_props, "restart_horse")
+            row = box.row()
+            row.column().prop(ob.thug_restart_props, "restart_ctf")
         # ********************************************************
         # * CUBEMAP PROBE 
         # ********************************************************
@@ -63,7 +67,7 @@ def _thug_object_settings_draw(self, context):
         # * PROXIMNODE 
         # ********************************************************
         elif ob.thug_empty_props.empty_type == "ProximNode":
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_proxim_props, "proxim_type")
             box.row().prop(ob.thug_proxim_props, "proxim_shape")
             box.row().prop(ob.thug_proxim_props, "proxim_radius")
@@ -71,7 +75,7 @@ def _thug_object_settings_draw(self, context):
         # * EMITTER OBJECT
         # ********************************************************
         elif ob.thug_empty_props.empty_type == "EmitterObject":
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_emitter_props, "emit_type")
             box.row().prop(ob.thug_emitter_props, "emit_radius")
         # ********************************************************
@@ -83,23 +87,28 @@ def _thug_object_settings_draw(self, context):
         # * GAME OBJECT
         # ********************************************************
         elif ob.thug_empty_props.empty_type == "GameObject":
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_go_props, "go_type")
             if ob.thug_go_props.go_type == "Custom":
                 box.row().prop(ob.thug_go_props, "go_type_other")
-                box.row().prop(ob.thug_go_props, "go_model")
+                box.row().prop_search(ob.thug_go_props, "go_model",
+                context.window_manager.thug_game_assets, "models")
+                #box.row().prop(ob.thug_go_props, "go_model")
             box.row().prop(ob.thug_go_props, "go_suspend")
         # ********************************************************
         # * PEDESTRIAN
         # ********************************************************
         elif ob.thug_empty_props.empty_type == "Pedestrian":
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_ped_props, "ped_type")
             box.row().prop(ob.thug_ped_props, "ped_source", expand=True)
             if ob.thug_ped_props.ped_source == "Profile":
                 box.row().prop(ob.thug_ped_props, "ped_profile")
             else:
-                box.row().prop(ob.thug_ped_props, "ped_model")
+                box.row().prop_search(
+                ob.thug_ped_props, "ped_model",
+                context.window_manager.thug_game_assets, "skins")#, icon='SCRIPT')
+                #box.row().prop(ob.thug_ped_props, "ped_model")
             box.row().prop(ob.thug_ped_props, "ped_skeleton")
             box.row().prop(ob.thug_ped_props, "ped_animset")
             box.row().prop(ob.thug_ped_props, "ped_extra_anims")
@@ -108,39 +117,57 @@ def _thug_object_settings_draw(self, context):
         # * VEHICLE
         # ********************************************************
         elif ob.thug_empty_props.empty_type == "Vehicle":
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_veh_props, "veh_type")
-            box.row().prop(ob.thug_veh_props, "veh_model")
+            box.row().prop_search(
+            ob.thug_veh_props, "veh_model",
+            context.window_manager.thug_game_assets, "models")
+            #box.row().prop(ob.thug_veh_props, "veh_model")
             if ob.thug_veh_props.veh_model != "" and ob.thug_veh_props.veh_model != "none":
                 box.row().prop(ob.thug_veh_props, "veh_usemodellights")
                 box.row().prop(ob.thug_veh_props, "veh_allowreplacetex")
                 box.row().prop(ob.thug_veh_props, "veh_skeleton")
             box.row().prop(ob.thug_veh_props, "veh_suspend")
-            box.row().prop(ob.thug_veh_props, "veh_norail")
-            box.row().prop(ob.thug_veh_props, "veh_noskitch")
+            row = box.row()
+            row.column().prop(ob.thug_veh_props, "veh_norail")
+            row.column().prop(ob.thug_veh_props, "veh_noskitch")
             
         # ********************************************************
         # * PARTICLE OBJECT
         # ********************************************************
         elif ob.thug_empty_props.empty_type == "ParticleObject":
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_particle_props, "particle_boxdimsstart")
             box.row().prop(ob.thug_particle_props, "particle_boxdimsmid")
             box.row().prop(ob.thug_particle_props, "particle_boxdimsend")
-            box = self.layout.box().column(True)
+            
+            box = self.layout.box().column()
             box.row().prop(ob.thug_particle_props, "particle_usestartpos")
             if ob.thug_particle_props.particle_usestartpos == True:
                 box.row().prop(ob.thug_particle_props, "particle_startposition")
             box.row().prop(ob.thug_particle_props, "particle_midposition")
             box.row().prop(ob.thug_particle_props, "particle_endposition")
             box.row().prop(ob.thug_particle_props, "particle_suspend")
-            box = self.layout.box().column(True)
-            box.row().prop(ob.thug_particle_props, "particle_texture")
+            
+            box = self.layout.box().column()
+            box.row().prop_search(ob.thug_particle_props, "particle_texture",
+            context.window_manager.thug_game_assets, "particle_textures")
+            #box.row().prop(ob.thug_particle_props, "particle_texture")
             box.row().prop(ob.thug_particle_props, "particle_type")
             box.row().prop(ob.thug_particle_props, "particle_blendmode")
-            box.row().prop(ob.thug_particle_props, "particle_fixedalpha")
-            box.row().prop(ob.thug_particle_props, "particle_alphacutoff")
-            box = self.layout.box().column(True)
+            row = box.row()
+            row.column().prop(ob.thug_particle_props, "particle_fixedalpha")
+            row.column().prop(ob.thug_particle_props, "particle_alphacutoff")
+            
+            box = self.layout.box().column()
+            box.row().prop(ob.thug_particle_props, "particle_startcolor")
+            box.row().prop(ob.thug_particle_props, "particle_usecolormidtime")
+            if ob.thug_particle_props.particle_usecolormidtime == True:
+                box.row().prop(ob.thug_particle_props, "particle_colormidtime")
+            box.row().prop(ob.thug_particle_props, "particle_midcolor")
+            box.row().prop(ob.thug_particle_props, "particle_endcolor")
+            
+            box = self.layout.box().column()
             box.row().prop(ob.thug_particle_props, "particle_maxstreams")
             box.row().prop(ob.thug_particle_props, "particle_emitrate")
             box.row().prop(ob.thug_particle_props, "particle_lifetime")
@@ -158,7 +185,7 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_particle_props, "EmitRate2")
             box.row().prop(ob.thug_particle_props, "EmitRate2Delay")
             
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_particle_props, "particle_radius")
             box.row().prop(ob.thug_particle_props, "particle_radiusspread")
             box.row().prop(ob.thug_particle_props, "Size")
@@ -167,13 +194,6 @@ def _thug_object_settings_draw(self, context):
             box.row().prop(ob.thug_particle_props, "UseMidTime")
             if ob.thug_particle_props.UseMidTime:
                 box.row().prop(ob.thug_particle_props, "MidTime")
-            box = self.layout.box().column(True)
-            box.row().prop(ob.thug_particle_props, "particle_startcolor")
-            box.row().prop(ob.thug_particle_props, "particle_usecolormidtime")
-            if ob.thug_particle_props.particle_usecolormidtime == True:
-                box.row().prop(ob.thug_particle_props, "particle_colormidtime")
-            box.row().prop(ob.thug_particle_props, "particle_midcolor")
-            box.row().prop(ob.thug_particle_props, "particle_endcolor")
         
     if ob.type == "EMPTY" and ob.thug_empty_props.empty_type in ( "Pedestrian", "Vehicle" ):
         self.layout.row().prop_search(
@@ -185,9 +205,14 @@ def _thug_object_settings_draw(self, context):
             self.layout.label(text=ob.thug_rail_connects_to + " is not a curve!", icon="ERROR")
 
     if ob.type == "MESH":
-        self.layout.row().prop(ob, "thug_object_class")
+        box = self.layout.column()
+        box.row().prop(ob, "thug_object_class")
+        row = box.row()
+        row.column().prop(ob, "thug_export_collision", toggle=True, icon='OBJECT_DATA', text='Collision')
+        row.column().prop(ob, "thug_export_scene", toggle=True, icon='SCENE_DATA', text='Scene')
+        
         if ob.thug_object_class == "LevelObject":
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob.thug_levelobj_props, "obj_type")
             box.row().prop(ob.thug_levelobj_props, "obj_bouncy")
             if ob.thug_levelobj_props.obj_bouncy:
@@ -204,41 +229,51 @@ def _thug_object_settings_draw(self, context):
                 
                 box.row().prop_search(ob.thug_levelobj_props, "stuckscript", 
                         context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT' )        
-        elif ob.thug_object_class == "LevelGeometry":  
-            box = self.layout.box().column(True)          
-            box.row().prop(ob, "thug_cast_shadow")
-            box.row().prop(ob, "thug_is_shadow_volume")
+        elif ob.thug_object_class == "LevelGeometry" and ob.thug_export_scene:  
+            box = self.layout.box().column()          
+            box.row().prop(ob, "thug_lightgroup")
+            row = box.row()
+            row.column().prop(ob, "thug_cast_shadow")
+            row.column().prop(ob, "thug_is_shadow_volume")
             box.row().prop(ob, "thug_no_skater_shadow")
             #box.row().prop(ob, "thug_is_billboard")
-        box = self.layout.column(True)
-        box.row().prop(ob, "thug_export_collision")
-        box.row().prop(ob, "thug_export_scene")
-        box.row().prop(ob, "thug_always_export_to_nodearray")
-        if ob.thug_export_scene:
-            box.row().prop(ob, "thug_lightgroup")
-        box.row().prop(ob, "thug_occluder")
-        box.row().prop(ob, "thug_do_autosplit")
+            
+        box = self.layout.column()    
+        row = box.row()
+        row.column().prop(ob, "thug_occluder", toggle=True, icon='MOD_BEVEL')
+        row.column().prop(ob, "thug_do_autosplit", toggle=True, text='AutoSplit', icon='MOD_EDGESPLIT')
         if ob.thug_do_autosplit:
-            box = self.layout.column(True)
-            box.prop(ob, "thug_do_autosplit_faces_per_subobject")
-            box.prop(ob, "thug_do_autosplit_max_radius")
+            row = box.row()
+            row.column().prop(ob, "thug_do_autosplit_faces_per_subobject", text='Faces')
+            row.column().prop(ob, "thug_do_autosplit_max_radius", text='Radius')
         
     if ob.type == "CURVE":
         self.layout.row().prop(ob, "thug_path_type")
         if ob.thug_path_type == 'Waypoint':
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().label(text="Waypoint type")
             box.row().prop(ob.thug_waypoint_props, "waypt_type", expand=True)
             if ob.thug_waypoint_props.waypt_type == 'PedAI':
                 box.row().prop(ob.thug_waypoint_props, "PedType", expand=True)
         
     if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type != "") or ob.type == "EMPTY":
-        box = self.layout.box().column(True)
-        box.row().prop(ob, "thug_created_at_start")
-        box.row().prop(ob, "thug_network_option")
+        box = self.layout.column()
+        row = box.row()
+        row.column().prop(ob, "thug_created_at_start", toggle=True, icon='MOD_BUILD')
+        row.column().prop(ob, "thug_network_option", text='')
                 
+        if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type == "Rail"):
+            self.layout.row().prop(ob, "thug_is_trickobject", toggle=True, text='Trick Object', icon='MOD_DYNAMICPAINT')
+            if ob.thug_is_trickobject:
+                self.layout.row().prop(ob, "thug_cluster_name")
+                if not is_string_clean(ob.thug_cluster_name):
+                    box = self.layout.box().column(True)
+                    box.label("Bad cluster name!", icon="ERROR")
+                    box.label("Only valid characters are small and large letters")
+                    box.label("digits, and underscores.")
+                    
         # New template system below!
-        box = self.layout.box().column(True)
+        box = self.layout.box().column()
         box.row().prop(ob.thug_triggerscript_props, "template_name")
         if ob.thug_triggerscript_props.template_name not in [ "None", "Custom" ]:
             #print("attempting to show template params")
@@ -281,15 +316,6 @@ def _thug_object_settings_draw(self, context):
             #    box.label("Name must start with '_script' to be exported.")
         # End new template system
         
-        if ob.type == "MESH" or (ob.type == "CURVE" and ob.thug_path_type == "Rail"):
-            box = self.layout.box().column(True)
-            box.row().prop(ob, "thug_is_trickobject")
-            box.row().prop(ob, "thug_cluster_name")
-            if not is_string_clean(ob.thug_cluster_name):
-                box = self.layout.box().column(True)
-                box.label("Bad cluster name!", icon="ERROR")
-                box.label("Only valid characters are small and large letters")
-                box.label("digits, and underscores.")
     if (ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom")):
         # context.window_manager.thug_rail_objects = [obj for obj in context.scene.objects if obj.type == "CURVE"]
         if ob.thug_path_type == "Rail":

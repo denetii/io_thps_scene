@@ -37,6 +37,7 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
 
     vert_position_index_offset = 1
     vert_texcoord_index_offset = 1
+    new_objects = []
 
     for i in range(num_sectors):
         write_sector_to_obj = False # True
@@ -125,13 +126,13 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
                 for l in range(amount_of_verts):
                     new_vert = this_mesh_verts[l]
                     vertex_normal = r.read("3f")
-                    if operator.import_custom_normals:
+                    if  (not operator) or operator.import_custom_normals:
                         vertex_normals[new_vert] = from_thug_coords(vertex_normal)
             else:
                 for l in range(amount_of_verts):
                     new_vert = this_mesh_verts[l]
                     vertex_normal = r.read("3f")
-                    if operator.import_custom_normals:
+                    if (not operator) or operator.import_custom_normals:
                         vertex_normals[new_vert] = from_thug_coords(vertex_normal)
                 
         
@@ -272,9 +273,9 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
             for vert, (weights, bone_indices) in vertex_weights.items():
                 for weight, bone_index in zip(weights, bone_indices):
                     vert_group = vgs.get(str(bone_index)) or vgs.new(str(bone_index))
-                    print("{:2s} {:3f}".format(vert_group.name, weight), end='; ')
+                    #print("{:2s} {:3f}".format(vert_group.name, weight), end='; ')
                     vert_group.add([vert.index], weight, "ADD")
-                print()
+                #print()
 
         if vertex_normals:
             vertex_normals = { vert.index: normal for vert, normal in vertex_normals.items() }
@@ -284,11 +285,11 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
             blender_mesh.normals_split_custom_set(new_normals)
             blender_mesh.use_auto_smooth = True
 
-
+        new_objects.append(blender_object)
 
     #p("number of hierarchy objects: {}", r.i32())
-    print("COMPLETE!")
-
+    #print("COMPLETE!")
+    return new_objects
 
                 
 

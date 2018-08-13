@@ -438,7 +438,102 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
     print("COMPLETE!")
 
 
+def import_col_thps4(filename, directory):
+    p = Printer()
+    p.on = True
+    input_file = os.path.join(directory, filename)
+    with open(input_file, "rb") as inp:
+        r = Reader(inp.read())
+
+    p("version: {}", r.i32())
+    num_objects = p("num objects: {}", r.i32())
+    total_verts = p("total verts: {}", r.i32())
+    p("total large faces: {}", r.i32())
+    p("total small faces: {}", r.i32())
+    total_large_verts = p("total large verts: {}", r.i32())
+    total_small_verts = p("total small verts: {}", r.i32())
+    r.i32()  # padding
+
+    # Read objects
+    col_objs = []
+    for i in range(num_objects):
+        this_obj = {}
+        this_obj['checksum'] = p("  checksum: {}", to_hex_string(r.u32()))
+        this_obj['flags'] = p("  flags: {}", r.u16())
+        this_obj['num_verts'] = p("  num verts: {}", r.u16())
+        this_obj['num_faces'] = p("  num faces: {}", r.u16())
+        this_obj['use_small_faces'] = p("  use face small: {}", r.bool())
+        this_obj['use_fixed'] = p("  use fixed verts: {}", r.bool())
+        this_obj['first_face_offset'] = p("  first face offset: {}", r.u32())  # pointer to array of faces
+        this_obj['bbox_min'] = p("  bbox min: {}", r.read("4f") )
+        this_obj['bbox_max'] = p("  bbox min: {}", r.read("4f") )
+        this_obj['first_vert_offset'] = p("  first vert offset: {}", r.u32())  # pointer to array of vertices
+        r.i32()  # pointer to head of bsp tree
+        r.i32()  # pointer to intensity list
+        r.i32()  # padding
+        this_obj['bm'] = bmesh.new()
+        this_obj['mesh'] = bpy.data.meshes.new("col_mesh_" + this_obj['checksum'])
+        this_obj['object'] = bpy.data.objects.new("col_" + this_obj['checksum'], this_obj['mesh'])
+        
+        col_objs.append(this_obj)
+        
+    # Read verts
+    for object in col_objs:
+        bm = object['bm']
+        for j in range(object['num_verts']):
+            if object['use_fixed']:
+                v = r.read("HHH")
+                v = (obj_bbox_min[0] + v[0] * 0.0625,
+                     obj_bbox_min[1] + v[1] * 0.0625,
+                     obj_bbox_min[2] + v[2] * 0.0625)
+            else:
+                v = r.read("3f")
+                r.read("4B") # color data (debugging?)
                 
+            bm.verts.new((v[0], -v[2], v[1]))
+
+    # Read faces
+    for object in col_objs:
+        bm = object['bm']
+        cfl = bm.faces.layers.int.new("collision_flags")
+        ttl = bm.faces.layers.int.new("terrain_type")
+        
+        for j in range(object['num_faces']):
+            face_flags = r.u16()
+            # Camera collision flags have opposite meanings on THPS4
+            if face_flags & FACE_FLAGS['mFD_CAMERA_COLLIDABLE']:
+                face_flags &= ~FACE_FLAGS['mFD_CAMERA_COLLIDABLE']
+            else:
+                face_flags |= FACE_FLAGS['mFD_CAMERA_COLLIDABLE']
+                
+            face_terrain_type = r.u16()
+            if object['use_small_faces']:
+                face_idx = r.read("3B")
+                r.read("B") # padding
+            else:
+                face_idx = r.read("3H")
+                r.read("H") # padding
+
+            if hasattr(bm.verts, "ensure_lookup_table"):
+                bm.verts.ensure_lookup_table()
+
+            try:
+                bm_face = bm.faces.new((
+                    bm.verts[face_idx[0]],
+                    bm.verts[face_idx[1]],
+                    bm.verts[face_idx[2]]))
+                bm_face[cfl] = face_flags
+                bm_face[ttl] = face_terrain_type
+            except IndexError as err:
+                print(err)
+            except ValueError:
+                pass
+
+        bm.to_mesh(object['mesh'])
+        object['object'].thug_export_scene = False
+        to_group(object['object'], "CollisionMesh")
+        bpy.context.scene.objects.link(object['object'])
+
 
 # OPERATORS
 #############################################
@@ -475,4 +570,29 @@ class THPS4ScnToScene(bpy.types.Operator):
 
         return {'RUNNING_MODAL'}
         
+        
+#----------------------------------------------------------------------------------
+class THPS4ColToScene(bpy.types.Operator):
+    bl_idname = "io.thps4_col_to_scene"
+    bl_label = "THPS4 Collision (.col, col.dat)"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    filter_glob = StringProperty(default="*.col;*col.dat", options={"HIDDEN"})
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+
+    def execute(self, context):
+        filename = self.filename
+        directory = self.directory
+
+        import_col_thps4(filename, directory)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}
+
         

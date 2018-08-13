@@ -113,7 +113,64 @@ def get_all_mipmaps(image, mm_offset = 0):
         level += 1
     return images
 
-
+#----------------------------------------------------------------------------------
+def import_img(path, img_name):
+    import bgl
+    p = Printer()
+    p.on = True
+    p("Opening IMG file {}...", path)
+    with open(os.path.join(path), "rb") as inp:
+        r = Reader(inp.read())
+        img_version = p("  version: {}", r.u32())
+        p("  file size?: {}", r.u32())
+        pal_depth = 32
+        img_width = p("  width: {}", r.u32())
+        img_height = p("  height: {}", r.u32())
+        # Not sure anything in the second half of the header is useful
+        r.u32()
+        r.u32()
+        img_width = p("  width: {}", r.u16())
+        img_height = p("  height: {}", r.u16())
+        pal_size = p("  pal size: {}", r.u32())
+        dxt_version = 5
+        is_compressed = True if pal_size > 0 else False
+        p("Compressed: {}", is_compressed)
+        p("Offset: {}", r.offset)
+        
+        #if pal_depth == 32:
+        if is_compressed:
+            pal_colors = []
+            for j in range(pal_size // 4):
+                cb, cg, cr, ca = r.read("4B")
+                pal_colors.append((cr/255.0, cg/255.0, cb/255.0, ca/255.0))
+        
+                    
+        data_size = r.length - r.offset  # The current position is the length
+        p("data size: {}", data_size)
+        
+        data_bytes = r.buf[r.offset:r.offset+data_size]
+        
+        if is_compressed:
+            data_bytes = swizzle(data_bytes, img_width, img_height, 8, 0, True)
+            blend_img = bpy.data.images.new(img_name, img_width, img_height, alpha=True)
+            blend_img.pixels = [pal_col for pal_idx in data_bytes for pal_col in pal_colors[pal_idx]]
+        else:
+            colors = []
+            for i in range(len(data_bytes) // 4):
+                idx = i*4
+                cb = data_bytes[idx + 0] / 255.0
+                cg = data_bytes[idx + 1] / 255.0
+                cr = data_bytes[idx + 2] / 255.0
+                ca = data_bytes[idx + 3] / 255.0
+                colors.append(cr)
+                colors.append(cg)
+                colors.append(cb)
+                colors.append(ca)
+            blend_img = bpy.data.images.new(img_name, img_width, img_height, alpha=True)
+            blend_img.pixels = colors
+        
+    return blend_img
+        
 def read_tex(reader, printer):
     import bgl
     global name_format
@@ -134,6 +191,10 @@ def read_tex(reader, printer):
         else:
             already_seen.add(checksum)
 
+        create_image = (checksum not in bpy.data.images)
+        if not create_image:
+            p("Image {} already exists, will not be created!", checksum)
+            
         # tex_map[checksum] = i
 
         img_width = p("  width: {}", r.u32())
@@ -158,6 +219,11 @@ def read_tex(reader, printer):
 
         for j in range(levels):
             data_size = r.u32()
+            
+            if not create_image: 
+                r.offset += data_size
+                continue
+                
             if j == 0 and dxt_version == 0:
                 data_bytes = r.buf[r.offset:r.offset+data_size]
                 if pal_size > 0 and pal_depth == 32 and texel_depth == 8:
@@ -166,7 +232,6 @@ def read_tex(reader, printer):
                     blend_img.pixels = [pal_col for pal_idx in data_bytes for pal_col in pal_colors[pal_idx]]
             elif j == 0 and dxt_version in (1, 5):
                 data_bytes = r.buf[r.offset:r.offset+data_size]
-
                 blend_img = bpy.data.images.new(str(checksum), img_width, img_height, alpha=True)
                 blend_img.gl_load()
                 blend_img.thug_image_props.compression_type = "DXT5" if dxt_version == 5 else "DXT1"
@@ -479,6 +544,29 @@ class THUG2TexToImages(bpy.types.Operator):
         with open(os.path.join(directory, filename), "rb") as inp:
             r = Reader(inp.read())
             read_tex(r, p)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}
+        
+        
+class THUGImgToImages(bpy.types.Operator):
+    bl_idname = "io.thug_img"
+    bl_label = "THPS/THUG .img"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    filter_glob = StringProperty(default="*.img;*.img.xbx;*img.dat", options={"HIDDEN"})
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+
+    def execute(self, context):
+        filename = self.filename
+        directory = self.directory
+        import_img(os.path.join(directory, filename), filename)
 
         return {'FINISHED'}
 

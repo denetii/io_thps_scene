@@ -14,6 +14,9 @@ from . helpers import *
 from . material import *
 from . pieces import *
 from . autorail import *
+from . tex import *
+from . import_thug1 import *
+from . import_thug2 import *
 import fnmatch
 
 # Park piece rotation constants
@@ -239,7 +242,72 @@ def preset_place_node(node_type, position):
             to_group(curveOB, 'ClimbingNodes')
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
     
+def append_from_assets(asset_path, target_game, context):
+    addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
+    ext_suffix = ""
     
+    game_paths = []
+    if target_game == 'THUG1':
+        game_paths.append(addon_prefs.game_data_dir_thug1)
+    elif target_game == 'THUG2':
+        game_paths.append(addon_prefs.game_data_dir_thug2)
+        game_paths.append(addon_prefs.game_data_dir_thugpro)
+        ext_suffix = ".xbx"
+    else:
+        print("Unable to read game files - target game is {}".format(target_game))
+        return []
+
+    tex_path = os.path.splitext(asset_path)[0] + '.tex'
+    
+    if ext_suffix != '':
+        asset_path += ext_suffix
+        tex_path += ext_suffix
+        
+    
+    # Check for the tex file first (if applicable)
+    if tex_path:
+        for game_path in game_paths:
+            #print("Asset path: {}".format(os.path.join(game_path, asset_path)))
+            #print("TEX path: {}".format(os.path.join(game_path, tex_path)))
+            if os.path.exists(os.path.join(game_path, tex_path)):
+                #print("Found TEX asset: {}".format(os.path.join(game_path, tex_path)))
+                p = Printer()
+                p.on = False
+                with open(os.path.join(game_path, tex_path), "rb") as inp:
+                    r = Reader(inp.read())
+                    read_tex(r, p)
+                break
+            
+    # Then load the MDL/SKIN/IMG file
+    objects = []
+    for game_path in game_paths:
+        #print("Asset path: {}".format(os.path.join(game_path, asset_path)))
+        #print("TEX path: {}".format(os.path.join(game_path, tex_path)))
+        if os.path.exists(os.path.join(game_path, asset_path)):
+            #print("Found asset: {}".format(os.path.join(game_path, asset_path)))
+            p = Printer()
+            p.on = False
+            with open(os.path.join(game_path, asset_path), "rb") as inp:
+                r = Reader(inp.read())
+                
+            _mat_version = r.u32()
+            _mesh_version = r.u32()
+            _vert_version = r.u32()
+            num_materials = p("num materials: {}", r.u32())
+            read_materials(r, p, num_materials, game_path, None)
+            num_sectors = p("num sectors: {}", r.i32())
+            if target_game == 'THUG1':
+                #print("Reading {} as a THUG1 mesh".format(os.path.join(game_path, asset_path)))
+                objects = read_sectors_ug1(r, p, num_sectors, context, None)
+            elif target_game == 'THUG2':
+                #print("Reading {} as a THUG2 mesh".format(os.path.join(game_path, asset_path)))
+                objects = read_sectors_ug2(r, p, num_sectors, context, None)
+            rename_imported_materials()
+            break
+                
+    return objects
+            
+            
 def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, include_rails = True):
     # Get the path to the dictionary .blend file - it should always be within the
     # base files as defined in the plugin configuration

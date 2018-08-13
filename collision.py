@@ -66,6 +66,7 @@ def make_bsp_tree(ob, faces, matrix):
 
             duplis = 0
             for face in faces:
+                assert len(face.verts) == 3
                 left = False
                 right = False
                 for vert in face.verts:

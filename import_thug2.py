@@ -93,22 +93,6 @@ def import_col(filename, directory):
             else:
                 face_idx = r.read("3H")
 
-            """
-            if face_flags & mFD_VERT:
-                outp.write("  usemtl vert\n")
-            elif face_flags & mFD_WALL_RIDABLE:
-                outp.write("  usemtl wallridable\n")
-            elif face_flags & mFD_TRIGGER:
-                continue
-            else:
-                outp.write("  usemtl default\n")
-
-            outp.write("  f {} {} {}\n".format(
-                output_vert_offset + face_idx[0],
-                output_vert_offset + face_idx[1],
-                output_vert_offset + face_idx[2]))
-            """
-
             if False and face_flags & FACE_FLAGS["mFD_INVISIBLE"]:
                 blender_object.hide = True
 
@@ -148,8 +132,10 @@ def import_scn_ug2(filename, directory, context, operator):
     num_materials = p("num materials: ", r.u32())
     read_materials(r, p, num_materials, directory, operator)
     num_sectors = p("num sectors: {}", r.i32())
-    read_sectors_ug2(r, p, num_sectors, context, operator)
+    objects = read_sectors_ug2(r, p, num_sectors, context, operator)
     rename_imported_materials()
+    
+    return objects
 
 #----------------------------------------------------------------------------------
 def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, output_file=None):
@@ -159,7 +145,8 @@ def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, outpu
 
     vert_position_index_offset = 1
     vert_texcoord_index_offset = 1
-
+    new_objects = []
+    
     for i in range(num_sectors):
         write_sector_to_obj = False # True
 
@@ -429,8 +416,9 @@ def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, outpu
             if sec_flags & SECFLAGS_HAS_TEXCOORDS:
                 vert_texcoord_index_offset += num_vertices
 
+        new_objects.append(blender_object)
     p("number of hierarchy objects: {}", r.i32())
-
+    return new_objects
 
 # OPERATORS
 #############################################

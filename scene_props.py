@@ -1,6 +1,7 @@
 import bpy
 import bgl
 from bpy.props import *
+import glob
 from . constants import *
 from . helpers import *
 from . autorail import *
@@ -9,6 +10,7 @@ from . material import *
 from . ui_draw import *
 from . presets import *
 from .  import script_template
+from . tex import import_img
 
 # METHODS
 #############################################
@@ -21,10 +23,11 @@ def thug_empty_update(self, context):
         return
     ob = context.object
     for mdl_ob in ob.children:
-        if mdl_ob.name.endswith('_MDL'):
+        if mdl_ob.type == 'MESH':
             context.scene.objects.unlink(mdl_ob)
             bpy.data.objects.remove(mdl_ob)
     mdl_mesh = ''
+    mdl_preview = ''
     preset_scale = get_actual_preset_size() / 2.0
     
     if ob.thug_empty_props.empty_type == 'Restart':
@@ -62,6 +65,9 @@ def thug_empty_update(self, context):
             mdl_mesh = 'SecretTape'
         elif ob.thug_go_props.go_type.startswith('Combo_'):
             mdl_mesh = ob.thug_go_props.go_type
+        elif ob.thug_go_props.go_model != '':
+            mdl_preview = ob.thug_go_props.go_model 
+            
         ob.empty_draw_type = 'CUBE'
         ob.empty_draw_size = 36 * preset_scale
         
@@ -78,18 +84,59 @@ def thug_empty_update(self, context):
         ob.empty_draw_size = 42 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'Pedestrian':
+        if ob.thug_ped_props.ped_source == 'Model' and ob.thug_ped_props.ped_model != '':
+            mdl_preview = ob.thug_ped_props.ped_model
         mdl_mesh = 'Ped01'
         ob.empty_draw_type = 'CUBE'
         ob.empty_draw_size = 42 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'Vehicle':
+        if ob.thug_veh_props.veh_model != '':
+            mdl_preview = ob.thug_veh_props.veh_model 
         mdl_mesh = 'Veh_Taxi'
         ob.empty_draw_type = 'CUBE'
         ob.empty_draw_size = 42 * preset_scale
         
-    # Add the helper mesh if it applies to this object
-    if mdl_mesh != '':
+    elif ob.thug_empty_props.empty_type == 'ParticleObject':
+        ob.empty_draw_type = 'PLAIN_AXES'
+        ob.empty_draw_size = 64 * preset_scale
+        draw_particle_preview(ob, context)
+        return
         
+    # Add the helper/preview mesh if it applies to this object
+    use_fallback = False
+    if mdl_preview != '':
+        print("Attempting to generate preview mesh from asset {}".format(mdl_preview))
+        scn = context.scene
+        if not hasattr(scn, 'thug_level_props') or not hasattr(scn.thug_level_props, 'export_props'):
+            print("Export props not found")
+            use_fallback = True
+        
+        elif scn.thug_level_props.export_props.target_game == '':
+            print("Target game not found")
+            use_fallback = True
+            
+        if not use_fallback:
+            target_game = scn.thug_level_props.export_props.target_game
+            mdl_obs = append_from_assets( os.path.join('Models', mdl_preview), target_game, context )
+            if len(mdl_obs) == 0:
+                print("No meshes were found in {}".format(os.path.join('Models', mdl_preview)))
+                use_fallback = True
+                
+            for mdl_ob in mdl_obs:
+                mdl_ob.name = ob.name + '_MDL'
+                #mdl_ob.location = [ 0, 0, 0 ]
+                #mdl_ob.rotation_euler = [ 0, 0, 0 ]
+                mdl_ob.scale = [preset_scale, preset_scale, preset_scale]
+                mdl_ob.parent = ob
+                mdl_ob.hide_select = True
+                mdl_ob.hide_render = True
+                mdl_ob.thug_export_scene = False
+                mdl_ob.thug_export_collision = False
+                to_group(mdl_ob, "Visual Helpers")
+            
+        
+    if mdl_mesh != '' and (mdl_preview == '' or use_fallback):
         mdl_ob = append_from_dictionary('presets', mdl_mesh, context.scene)
         mdl_ob.name = ob.name + '_MDL'
         mdl_ob.location = [ 0, 0, 0 ]
@@ -102,6 +149,56 @@ def thug_empty_update(self, context):
         mdl_ob.thug_export_collision = False
         to_group(mdl_ob, "Visual Helpers")
     
+def draw_particle_preview(ob, context):
+    scene = context.scene
+    expected_obs = [ ob.name + "_START", ob.name + "_MID", ob.name + "_END" ]
+    found_obs = []
+    for mdl_ob in ob.children:
+        if mdl_ob.type != 'EMPTY': continue
+        for name in expected_obs:
+            if mdl_ob.name == name:
+                found_obs.append(name)
+                    
+    # Look for the particle properties
+    if not hasattr(ob, 'thug_particle_props'): return
+    particle_img = None
+    if ob.thug_particle_props.particle_texture != '':
+        # Search for the .img file referenced and load it, if we don't have it already
+        if not bpy.data.images.get(ob.thug_particle_props.particle_texture + ".img"):
+            game_paths, ext_suffix = get_game_asset_paths(context)
+            img_path = os.path.join('images', 'particles', ob.thug_particle_props.particle_texture + ".img" + ext_suffix)
+            for game_path in game_paths:
+                if os.path.exists(os.path.join(game_path, img_path)):
+                    particle_img = import_img( os.path.join(game_path, img_path), ob.thug_particle_props.particle_texture + ".img" )
+        else:
+            particle_img = bpy.data.images.get(ob.thug_particle_props.particle_texture + ".img")
+                
+    for name in expected_obs:
+        if name not in found_obs:
+            new_ob = bpy.data.objects.new(name, None)
+            new_ob.rotation_euler = [ 1.570796, 0, 0 ]
+            new_ob.empty_draw_type = 'IMAGE'
+            new_ob.parent = ob
+            scene.objects.link(new_ob)
+        
+    ob_start = bpy.data.objects.get(expected_obs[0])
+    ob_mid = bpy.data.objects.get(expected_obs[1])
+    ob_end = bpy.data.objects.get(expected_obs[2])
+    
+    if particle_img:
+        ob_start.data = particle_img
+        ob_mid.data = particle_img
+        ob_end.data = particle_img
+    ob_start.location = ob.thug_particle_props.particle_startposition
+    ob_mid.location = ob.thug_particle_props.particle_midposition
+    ob_end.location = ob.thug_particle_props.particle_endposition
+    ob_start.empty_draw_size = 64.0
+    ob_mid.empty_draw_size = 64.0
+    ob_end.empty_draw_size = 64.0
+                
+            
+                    
+            
 #----------------------------------------------------------------------------------
 #- Updates the list(s) of TH nodes in the current scene
 #- Used by the WindowManager to fill autocomplete lists on other props
@@ -131,6 +228,97 @@ def update_node_collection(*args):
             entry = context.window_manager.thug_all_nodes.scripts.add()
             entry.name = format_triggerscript_name(tx.name)
             
+            
+#----------------------------------------------------------------------------------
+#- Updates the list of available models/images and other assets from the base game
+#- Requires the plugin settings pointing to a valid game path
+#----------------------------------------------------------------------------------
+@bpy.app.handlers.persistent
+def update_game_files_collections(*args):
+    print("Generating asset lists from the base game...")
+    
+    context = bpy.context
+    context.window_manager.thug_game_assets.models.clear()
+    context.window_manager.thug_game_assets.skins.clear()
+    context.window_manager.thug_game_assets.images.clear()
+    context.window_manager.thug_game_assets.particle_textures.clear()
+    
+    # Make sure we actually have a target game first
+    scn = context.scene
+    if not hasattr(scn, 'thug_level_props') or not hasattr(scn.thug_level_props, 'export_props'):
+        print("Unable to read game files - Cannot find level/export properties")
+        return
+    if scn.thug_level_props.export_props.target_game == '':
+        print("Unable to read game files - target game not set")
+        return
+        
+    target_game = scn.thug_level_props.export_props.target_game
+    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    ext_suffix = ""
+    
+    game_paths = []
+    if target_game == 'THUG1':
+        game_paths.append(addon_prefs.game_data_dir_thug1)
+    elif target_game == 'THUG2':
+        game_paths.append(addon_prefs.game_data_dir_thug2)
+        game_paths.append(addon_prefs.game_data_dir_thugpro)
+        ext_suffix = ".xbx"
+    else:
+        print("Unable to read game files - target game is {}".format(target_game))
+        return
+        
+    for game_path in game_paths:
+        # Then, make sure the path to that game is correctly configured in the plugin settings
+        if not is_valid_game_path(game_path):
+            print("Unable to read game files - game path {} is not valid.".format(game_path))
+            continue
+        
+        #print("Searching for files in: {}".format(game_path))
+        
+        model_files = glob.glob(game_path + "Models/**/*.mdl" + ext_suffix, recursive=True)
+        print("Searching for MODELS...")
+        for temp_path in model_files:
+            short_path = os.path.relpath(temp_path, game_path + "Models")
+            if target_game == 'THUG2':
+                short_path = short_path[:-4]
+                
+            #print(short_path)
+            entry = context.window_manager.thug_game_assets.models.add()
+            entry.name = short_path
+            
+        skin_files = glob.glob(game_path + "Models/**/*.skin" + ext_suffix, recursive=True)
+        print("Searching for SKINS...")
+        for temp_path in skin_files:
+            short_path = os.path.relpath(temp_path, game_path + "Models")
+            if target_game == 'THUG2':
+                short_path = short_path[:-4]
+            entry = context.window_manager.thug_game_assets.skins.add()
+            entry.name = short_path
+            #print(short_path)
+            
+        img_files = glob.glob(game_path + "images/**/*.img" + ext_suffix, recursive=True)
+        print("Searching for IMAGES...")
+        for temp_path in img_files:
+            short_path = os.path.relpath(temp_path, game_path + "images")
+            if target_game == 'THUG2':
+                short_path = short_path[:-4]
+            entry = context.window_manager.thug_game_assets.images.add()
+            entry.name = short_path
+            #print(short_path)
+            
+        tex_files = glob.glob(game_path + "images/particles/*.img" + ext_suffix, recursive=False)
+        print("Searching for PARTICLE TEXTURES...")
+        for temp_path in tex_files:
+            short_path = os.path.relpath(temp_path, game_path + "images/particles")
+            if target_game == 'THUG2':
+                short_path = short_path[:-4]
+            short_path = short_path[:-4]
+            entry = context.window_manager.thug_game_assets.particle_textures.add()
+            entry.name = short_path
+            #print(short_path)
+        
+    
+
 #----------------------------------------------------------------------------------
 #- Determines the version of the Blender plugin that the scene was created with
 #- and if it's out of date, attempts to automatically convert old nodes to any
@@ -422,7 +610,7 @@ class THUGGameObjectProps(bpy.types.PropertyGroup):
         ("Custom", "Custom", "Specify a custom type and model.")), 
     name="Type", default="Ghost", update=thug_empty_update)
     go_type_other = StringProperty(name="Type", description="Custom type.")
-    go_model = StringProperty(name="Model path", default="none", description="Path to the model, relative to Data/Models/.")
+    go_model = StringProperty(name="Model path", default="none", description="Path to the model, relative to Data/Models/.", update=thug_empty_update)
     go_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion of the object pauses.", min=0, max=1000000, default=0)
     
     
@@ -438,6 +626,16 @@ class THUGNodeListProps(bpy.types.PropertyGroup):
     restarts = CollectionProperty(type=bpy.types.PropertyGroup)
     meshes = CollectionProperty(type=bpy.types.PropertyGroup)
     scripts = CollectionProperty(type=bpy.types.PropertyGroup)
+    
+#----------------------------------------------------------------------------------
+#- A list of base game assets, used to fill autocomplete lists in scenes,
+#- when the base game path and target game are set
+#----------------------------------------------------------------------------------
+class THUGAssetListProps(bpy.types.PropertyGroup):
+    models = CollectionProperty(type=bpy.types.PropertyGroup)
+    skins = CollectionProperty(type=bpy.types.PropertyGroup)
+    images = CollectionProperty(type=bpy.types.PropertyGroup)
+    particle_textures = CollectionProperty(type=bpy.types.PropertyGroup)
     
 #----------------------------------------------------------------------------------
 #- Level obj properties! There's a lot of them!
@@ -581,13 +779,13 @@ class THUGPedestrianProps(bpy.types.PropertyGroup):
     ped_source = EnumProperty(name="Source", items=(
         ( 'Profile', 'Profile', 'Pedestrian model is defined in a profile.'),
         ( 'Model', 'Model', 'Use an explicit path to the mdl file.')
-    ), default="Profile")
+    ), default="Profile", update=thug_empty_update)
     ped_profile = StringProperty(name="Profile", default="random_male_profile", description="Pedestrian profile name.")
     ped_skeleton = StringProperty(name="Skeleton", default="THPS5_human")
     ped_animset = StringProperty(name="Anim Set", default="animload_THPS5_human", description="Anim set to load for this pedestrian.")
     ped_extra_anims = StringProperty(name="Extra Anims", description="Additional anim sets to load.")
     ped_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
-    ped_model = StringProperty(name="Model", default="", description="Relative path to mdl file.")
+    ped_model = StringProperty(name="Model", default="", description="Relative path to mdl file.", update=thug_empty_update)
     ped_nologic = BoolProperty(name="No Logic", default=False, description="Pedestrian will not have any logic, only animations.")
     
 #----------------------------------------------------------------------------------
@@ -595,7 +793,7 @@ class THUGPedestrianProps(bpy.types.PropertyGroup):
 #----------------------------------------------------------------------------------
 class THUGVehicleProps(bpy.types.PropertyGroup):
     veh_type = StringProperty(name="Type", default="Generic", description="Type of vehicle.")
-    veh_model = StringProperty(name="Model", default="", description="Relative path to mdl file.")
+    veh_model = StringProperty(name="Model", default="", description="Relative path to mdl file.", update=thug_empty_update)
     veh_skeleton = StringProperty(name="Skeleton", default="car", description="Name of skeleton.")
     veh_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
     veh_norail = BoolProperty(name="No Rails", default=False, description="Vehicle will not have any rails (even if the model does).")
@@ -630,8 +828,34 @@ class THUGParticleProps(bpy.types.PropertyGroup):
     particle_texture = StringProperty(name="Texture", description="Texture assigned to the particles.")
     particle_usemidpoint = BoolProperty(name="Use Midpoint", default=False)
     particle_profile = StringProperty(name="Profile", default="Default")
-    particle_type = StringProperty(name="Type", default="NEWFLAT")
-    particle_blendmode = StringProperty(name="Blend Mode", default="BLEND")
+    particle_type = EnumProperty(name="Type", items=(
+        ( 'NewFlat', 'NewFlat', ''),
+        ( 'Line', 'Line', ''),
+        ( 'Flat', 'Flat', ''),
+        ( 'Shaded', 'Shaded', ''),
+        ( 'Smooth', 'Smooth', ''),
+        ( 'Glow', 'Glow', ''),
+        ( 'Star', 'Star', ''),
+        ( 'SmoothStar', 'SmoothStar', ''),
+        ( 'Ribbon', 'Ribbon', ''),
+        ( 'SmoothRibbon', 'SmoothRibbon', ''),
+        ( 'RibbonTrail', 'RibbonTrail', ''),
+        ( 'GlowRibbonTrail', 'GlowRibbonTrail', ''),
+    ), default="NewFlat")
+    
+    particle_blendmode = EnumProperty(items=(
+     ('Diffuse', 'Diffuse', ''),
+     ('Blend', 'Blend', ''),
+     ('Add', 'Add', ''),
+     ('Subtract', 'Subtract', ''),
+     ('Modulate', 'Modulate', ''),
+     ('Brighten', 'Brighten', ''),
+     ('FixBlend', 'Blend (Fixed Alpha)', ''),
+     ('FixAdd', 'Add (Fixed Alpha)', ''),
+     ('FixSubtract', 'Subtract (Fixed Alpha)', ''),
+     ('FixModulate', 'Modulate (Fixed Alpha)', ''),
+     ('FixBrighten', 'Brighten (Fixed Alpha)', ''),
+    ), name="Blend Mode", default="Blend")
     particle_fixedalpha = IntProperty(name="Fixed Alpha", min=0, max=256, default=128)
     particle_alphacutoff = IntProperty(name="Alpha Cutoff", soft_min=0, max=256, default=-1)
     particle_maxstreams = IntProperty(name="Max Streams", soft_min=0, max=256, default=-1)
@@ -890,8 +1114,8 @@ def register_props():
             ("AbsentInNetGames", "Offline Only", "Only appears in single-player."),
             ("NetEnabled", "Online (Broadcast)", "Appears in network games, events/scripts appear on all clients.")],
         default="Default")
-    bpy.types.Object.thug_export_collision = BoolProperty(name="Export to Collisions", default=True)
-    bpy.types.Object.thug_export_scene = BoolProperty(name="Export to Scene", default=True)
+    bpy.types.Object.thug_export_collision = BoolProperty(name="Export to Collisions", default=True, description='This object will be exported to the collision (.col) file.')
+    bpy.types.Object.thug_export_scene = BoolProperty(name="Export to Scene", default=True, description='This object will be exported to the scene (.scn) file.')
     bpy.types.Object.thug_always_export_to_nodearray = BoolProperty(name="Always Export to Nodearray", default=False)
     bpy.types.Object.thug_cast_shadow = BoolProperty(name="Cast Shadow", default=False, 
         description="(Underground+ 1.5+ only) If selected, this object will render dynamic shadows. Expensive effect - use carefully!")
@@ -990,6 +1214,7 @@ def register_props():
     bpy.types.Texture.thug_material_pass_props = PointerProperty(type=THUGMaterialPassProps)
 
     bpy.types.WindowManager.thug_all_nodes = PointerProperty(type=THUGNodeListProps)
+    bpy.types.WindowManager.thug_game_assets = PointerProperty(type=THUGAssetListProps)
     bpy.types.WindowManager.thug_all_rails = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_all_restarts = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_pathnode_props = PointerProperty(type=THUGPathNodeUIProps)
@@ -1055,6 +1280,7 @@ def register_props():
     bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
     bpy.app.handlers.load_post.append(update_node_collection)
     bpy.app.handlers.load_post.append(maybe_upgrade_scene)
+    bpy.app.handlers.load_post.append(update_game_files_collections)
     
     
 #----------------------------------------------------------------------------------
@@ -1084,3 +1310,5 @@ def unregister_props():
         bpy.app.handlers.load_post.remove(update_node_collection)
     if maybe_upgrade_scene in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(maybe_upgrade_scene)
+    if update_game_files_collections in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(update_game_files_collections)

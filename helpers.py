@@ -249,8 +249,10 @@ def set_export_scale(scale):
     print("EXPORT SCALE IS: {}".format(th_export_scale))
     
 def to_thug_coords(v):
-    #global th_export_scale
     return (v[0] * th_export_scale, v[2] * th_export_scale, -v[1] * th_export_scale)
+#----------------------------------------------------------------------------------
+def to_thug_coords_scalar(v):
+    return (v[0] * th_export_scale, v[2] * th_export_scale, v[1] * th_export_scale)
 #----------------------------------------------------------------------------------
 def to_thug_coords_ns(v):
     return (v[0], v[2], -v[1])
@@ -456,6 +458,7 @@ class Reader(object):
     def __init__(self, buf):
         self.offset = 0
         self.buf = buf
+        self.length = len(buf)
 
     def read(self, fmt):
         result = struct.unpack_from(fmt, self.buf, self.offset)

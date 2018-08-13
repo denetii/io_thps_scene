@@ -20,6 +20,56 @@ def _get_base_files_dir_error(prefs):
         base_files_dir_error = "The folder doesn't contain the default sky files."
     return base_files_dir_error
 
+def is_valid_game_path(path):
+    # We need at least these folders to be available to consider it a valid game path
+    if not os.path.exists(os.path.join(path, "images")):
+        return False
+    if not os.path.exists(os.path.join(path, "Levels")):
+        return False
+    if not os.path.exists(os.path.join(path, "models")):
+        return False
+    if not os.path.exists(os.path.join(path, "textures")):
+        return False
+        
+    return True
+    
+def get_game_asset_paths(context):
+    scn = context.scene
+    addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
+    if not hasattr(scn, 'thug_level_props') or not hasattr(scn.thug_level_props, 'export_props'):
+        print("Unable to read game files - Cannot find level/export properties")
+        return [], ""
+    if scn.thug_level_props.export_props.target_game == '':
+        print("Unable to read game files - target game not set")
+        return [], ""
+        
+    target_game = scn.thug_level_props.export_props.target_game
+    game_paths = []
+    ext_suffix = ""
+    if target_game == 'THUG1':
+        if not is_valid_game_path(addon_prefs.game_data_dir_thug1):
+            print("Unable to read game files - game path {} is not valid.".format(addon_prefs.game_data_dir_thug1))
+        else:
+            game_paths.append(addon_prefs.game_data_dir_thug1)
+            
+    elif target_game == 'THUG2':
+        ext_suffix = ".xbx"
+        if not is_valid_game_path(addon_prefs.game_data_dir_thug2):
+            print("Unable to read game files - game path {} is not valid.".format(addon_prefs.game_data_dir_thug2))
+        else:
+            game_paths.append(addon_prefs.game_data_dir_thug2)
+            
+        if not is_valid_game_path(addon_prefs.game_data_dir_thugpro):
+            print("Unable to read game files - game path {} is not valid.".format(addon_prefs.game_data_dir_thugpro))
+        else:
+            game_paths.append(addon_prefs.game_data_dir_thugpro)
+    else:
+        print("Unable to read game files - target game is {}".format(target_game))
+        return [], ""
+        
+    return game_paths, ext_suffix
+    
+    
 # PROPERTIES
 #############################################
 class THUGAddonPreferences(bpy.types.AddonPreferences):
