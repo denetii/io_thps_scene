@@ -18,6 +18,7 @@ from . qb import *
 from . level_manifest import *
 from . export_thug1 import export_scn_sectors
 from . export_thug2 import export_scn_sectors_ug2
+from . export_thps4 import *
 
 class ExportError(Exception):
     pass
@@ -67,7 +68,10 @@ def do_export(operator, context, target_game):
         return {"CANCELLED"}
     base_files_dir = addon_prefs.base_files_dir
 
-    if target_game == "THUG1":
+    if target_game == "THPS4":
+        DEFAULT_SKY_SCN = self.skybox_name + "scn.dat"
+        DEFAULT_SKY_TEX = self.skybox_name + "tex.dat"
+    elif target_game == "THUG1":
         DEFAULT_SKY_SCN = self.skybox_name + ".scn.xbx"
         DEFAULT_SKY_TEX = self.skybox_name + ".tex.xbx"
     elif target_game == "THUG2":
@@ -92,6 +96,10 @@ def do_export(operator, context, target_game):
     ext_scn = (".scn" if (target_game == "THUG1" and not self.pack_pre) else ".scn.xbx" )
     ext_tex = (".tex" if (target_game == "THUG1" and not self.pack_pre) else ".tex.xbx" )
     ext_qb = ".qb"
+    if target_game == "THPS4":
+        ext_col = "col.dat"
+        ext_scn = "scn.dat"
+        ext_tex = "tex.dat"
 
     self.report({'OPERATOR'}, "")
     self.report({'INFO'}, "-" * 20)
@@ -216,7 +224,7 @@ def do_export(operator, context, target_game):
 
         # #########################
         # Build PRE files
-        if self.pack_pre:
+        if self.pack_pre and target_game != 'THPS4':
             md(j(directory, "pre"))
             if self.generate_scripts_files:
                 pack_files = []
@@ -287,7 +295,7 @@ def do_export_model(operator, context, target_game):
         return {"CANCELLED"}
     base_files_dir = addon_prefs.base_files_dir
 
-    if not target_game == "THUG1" and not target_game == "THUG2":
+    if not target_game == "THUG1" and not target_game == "THUG2" and not target_game == "THPS4":
         raise Exception("Unknown target game: {}".format(target_game))
 
     start_time = datetime.datetime.now()
@@ -307,6 +315,10 @@ def do_export_model(operator, context, target_game):
     ext_qb = ".qb"
     if self.model_type == "skin":
         ext_scn = (".skin" if target_game == "THUG1" else ".skin.xbx" )
+    if target_game == "THPS4":
+        ext_col = "col.dat"
+        ext_scn = "skin.dat" if self.model_type == "skin" else "mdl.dat"
+        ext_tex = "tex.dat"
     
     self.report({'OPERATOR'}, "")
     self.report({'INFO'}, "-" * 20)
@@ -454,11 +466,16 @@ def export_scn(filename, directory, target_game, operator=None, is_model=False):
     with open(output_file, "wb") as outp:
         w("3I", 1, 1, 1)
 
-        export_materials(outp, target_game, operator, is_model)
+        if target_game == "THPS4":
+            export_materials_th4(outp, target_game, operator, is_model)
+        else:
+            export_materials(outp, target_game, operator, is_model)
         if target_game == "THUG2":
             export_scn_sectors_ug2(outp, operator, is_model)
         elif target_game == "THUG1":
             export_scn_sectors(outp, operator, is_model)
+        elif target_game == "THPS4":
+            export_scn_sectors_th4(outp, operator, is_model)
         else:
             raise Exception("Unknown target game: {}".format(target_game))
 
@@ -516,11 +533,17 @@ def export_col(filename, directory, target_game, operator=None):
         thug2_thing_out = BytesIO()
         nodes_out = BytesIO()
 
-        w("i", 10 if target_game == "THUG2" else 9) # version
+        col_version = 10
+        if target_game == 'THUG1':
+            col_version = 9
+        elif target_game == 'THPS4':
+            col_version = 8
+        
+        w("i", col_version) # version
         w("i", len(out_objects)) # num objects
         total_verts_offset = outp.tell()
         w("i", total_verts)
-        w("i", total_faces) # large faces
+        w("i", total_faces if target_game != 'THPS4' else 0) # large faces
         w("i", 0) # small faces
         w("i", total_verts) # large verts
         w("i", 0) # small verts
@@ -549,7 +572,6 @@ def export_col(filename, directory, target_game, operator=None):
             if "thug_checksum" in o:
                 w("i", o["thug_checksum"])
             else:
-                
                 clean_name = get_clean_name(o)
                 if is_hex_string(clean_name):
                     w("I", int(clean_name, 0))  # checksum
@@ -572,7 +594,10 @@ def export_col(filename, directory, target_game, operator=None):
             w("?", False) # use face small
             w("?", False) # use fixed verts
             w("I", obj_face_offset)
-            obj_face_offset += SIZEOF_LARGE_FACE * len(bm.faces)
+            if target_game == 'THPS4':
+                obj_face_offset += SIZEOF_LARGE_FACE_THPS4 * len(bm.faces)
+            else:
+                obj_face_offset += SIZEOF_LARGE_FACE * len(bm.faces)
             obj_matrix = get_scale_matrix(o) if o.thug_object_class == "LevelObject" else o.matrix_world
             #obj_matrix = o.matrix_world
             if operator.is_park_editor: 
@@ -584,11 +609,18 @@ def export_col(filename, directory, target_game, operator=None):
             w("4f", *bbox[0])
             w("4f", *bbox[1])
             w("I", obj_vert_offset)
-            obj_vert_offset += SIZEOF_FLOAT_VERT * len(bm.verts)
+            if target_game == 'THPS4':
+                obj_vert_offset += len(bm.verts)
+            else:
+                obj_vert_offset += SIZEOF_FLOAT_VERT * len(bm.verts)
             w("I", obj_bsp_offset)
             obj_bsp_tree = make_bsp_tree(o, bm.faces[:], obj_matrix)
             obj_bsp_offset += len(list(iter_tree(obj_bsp_tree))) * SIZEOF_BSP_NODE
-            w("I", obj_intensity_offset)
+            # THPS4: Intensity list does not exist, intensity is appended to each vert
+            if target_game == 'THPS4':
+                w("I", 0)
+            else:
+                w("I", obj_intensity_offset)
             obj_intensity_offset += len(bm.verts)
             w("I", 0) # padding
 
@@ -597,11 +629,17 @@ def export_col(filename, directory, target_game, operator=None):
 
             for v in bm.verts:
                 w("3f", *to_thug_coords(obj_matrix * v.co))
+                if target_game == 'THPS4':
+                    w("B", 0xFF) # Intensity data(?)
+                    w("B", 0xFF) # Intensity data(?)
+                    w("B", 0xFF) # Intensity data(?)
+                    w("B", 0xFF) # Intensity data(?)
 
-            def w(fmt, *args):
-                intensities_out.write(struct.pack(fmt, *args))
+            if target_game != 'THPS4':
+                def w(fmt, *args):
+                    intensities_out.write(struct.pack(fmt, *args))
 
-            intensities_out.write(b'\xff' * len(bm.verts))
+                intensities_out.write(b'\xff' * len(bm.verts))
 
             def w(fmt, *args):
                 faces_out.write(struct.pack(fmt, *args))
@@ -629,12 +667,16 @@ def export_col(filename, directory, target_game, operator=None):
                 w("H", tt)
                 for vert in face.verts:
                     w("H", vert.index)
+                if target_game == 'THPS4':
+                    w("H", 0) # Padding?
 
             if target_game == "THUG2":
                 def w(fmt, *args):
                     thug2_thing_out.write(struct.pack(fmt, *args))
 
                 thug2_thing_out.write(b'\x00' * len(bm.faces))
+
+            #p("I am at: {}", outp.tell())
 
             def w(fmt, *args):
                 nodes_out.write(struct.pack(fmt, *args))
@@ -646,7 +688,7 @@ def export_col(filename, directory, target_game, operator=None):
                 # DBG(node_indices[id(node)])
                 bsp_nodes_size += SIZEOF_BSP_NODE
                 if isinstance(node, BSPLeaf):
-                    w("B", 3)  # the axis it is split on (0 = X, 1 = Y, 2 = Z, 3 = Leaf)
+                    w("B", 0xFF if target_game == 'THPS4' else 3)  # the axis it is split on (0 = X, 1 = Y, 2 = Z, 3 = Leaf)
                     w("B", 0)  # padding
                     w("H", len(node.faces) * (3 if False and target_game == "THUG2" else 1))
                     w("I", node_face_index_offset)
@@ -655,6 +697,11 @@ def export_col(filename, directory, target_game, operator=None):
                         # assert bm.faces[face.index] == face
                         node_faces.append(face.index)
                     node_face_index_offset += len(node.faces) * (3 if False and target_game == "THUG2" else 1)
+                    #if target_game == 'THPS4':
+                    #    # Padding?
+                    #    w("I", 0xFFFFFFFF)
+                    #    w("I", 0xFFFFFFFF)
+                        
                 else:
                     split_axis_and_point = (
                         (node.split_axis & 0x3) |
@@ -681,9 +728,10 @@ def export_col(filename, directory, target_game, operator=None):
         LOG.debug("offset verts: {}".format(outp.tell()))
         outp.write(verts_out.getbuffer())
 
-        LOG.debug("offset intensities: {}".format(outp.tell()))
-        # intensity
-        outp.write(intensities_out.getbuffer())
+        if target_game != 'THPS4':
+            LOG.debug("offset intensities: {}".format(outp.tell()))
+            # intensity
+            outp.write(intensities_out.getbuffer())
 
         alignment_diff = calc_alignment_diff(outp.tell(), 4)
         if alignment_diff != 0:
@@ -764,6 +812,157 @@ def maybe_export_scene(operator, scene):
 
 # OPERATORS
 #############################################
+class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
+    bl_idname = "export.scene_to_th4_xbx"
+    bl_label = "Scene to THPS4 level files"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def report(self, category, message):
+        LOG.debug("OP: {}: {}".format(category, message))
+        super().report(category, message)
+
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+
+    always_export_normals = BoolProperty(name="Export normals", default=False)
+    use_vc_hack = BoolProperty(name="Vertex color hack",
+        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+        , default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
+    # AUTOSPLIT SETTINGS
+    autosplit_everything = BoolProperty(name="Autosplit All",
+        description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
+    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+        description="The max amount of faces for every created subobject.",
+        default=800, min=50, max=6000)
+    autosplit_max_radius = FloatProperty(name="Max Radius",
+        description="The max radius of for every created subobject.",
+        default=2000, min=100, max=5000)
+    # /AUTOSPLIT SETTINGS
+    pack_pre = BoolProperty(name="Pack files into .prx", default=True)
+    is_park_editor = BoolProperty(name="Is Park Editor",
+        description="Use this option when exporting a park editor dictionary.", default=False)
+    generate_tex_file = BoolProperty(name="Generate a .tex file", default=True)
+    generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
+    generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_col_file = BoolProperty(name="Generate a .col file", default=True)
+    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
+
+#    filepath = StringProperty()
+    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
+    export_scale = FloatProperty(name="Export scale", default=1)
+    mipmap_offset = IntProperty(
+        name="Mipmap offset",
+        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
+        min=0, max=4, default=0)
+    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+
+    def execute(self, context):
+        return do_export(self, context, "THPS4")
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}
+        
+    def draw(self, context):
+        self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
+        if self.generate_sky:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "skybox_name")
+        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
+        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
+        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
+        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
+        if self.autosplit_everything:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "autosplit_faces_per_subobject")
+            box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
+        self.layout.row().prop(self, "is_park_editor", toggle=True, icon='PACKAGE')
+        self.layout.row().prop(self, "generate_tex_file", toggle=True, icon='TEXTURE_DATA')
+        self.layout.row().prop(self, "generate_scn_file", toggle=True, icon='SCENE_DATA')
+        self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')
+        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
+        self.layout.row().prop(self, "export_scale")
+        box = self.layout.box().column(True)
+        box.row().prop(self, "mipmap_offset")
+        box.row().prop(self, "only_offset_lightmap")
+        
+#----------------------------------------------------------------------------------
+class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
+    bl_idname = "export.scene_to_th4_model"
+    bl_label = "Scene to THPS4 model"
+    # bl_options = {'REGISTER', 'UNDO'}
+
+    def report(self, category, message):
+        LOG.debug("OP: {}: {}".format(category, message))
+        super().report(category, message)
+
+    filename = StringProperty(name="File Name")
+    directory = StringProperty(name="Directory")
+
+    always_export_normals = BoolProperty(name="Export normals", default=False)
+    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
+    use_vc_hack = BoolProperty(name="Vertex color hack",
+        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
+        , default=False)
+    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
+    
+    # AUTOSPLIT SETTINGS
+    autosplit_everything = BoolProperty(name="Autosplit All"
+        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
+        , default=False)
+    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+        description="The max amount of faces for every created subobject.",
+        default=800, min=50, max=6000)
+    autosplit_max_radius = FloatProperty(name="Max Radius",
+        description="The max radius of for every created subobject.",
+        default=2000, min=100, max=5000)
+    # /AUTOSPLIT SETTINGS
+    model_type = EnumProperty(items = (
+        ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
+        ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
+    ), name="Model Type", default="skin")
+    generate_scripts_files = BoolProperty(
+        name="Generate scripts",
+        default=True)
+    export_scale = FloatProperty(name="Export scale", default=1)
+    mipmap_offset = IntProperty(
+        name="Mipmap offset",
+        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
+        min=0, max=4, default=0)
+    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+        
+    def execute(self, context):
+        return do_export_model(self, context, "THPS4")
+
+    def invoke(self, context, event):
+        wm = bpy.context.window_manager
+        wm.fileselect_add(self)
+
+        return {'RUNNING_MODAL'}
+        
+    def draw(self, context):
+        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
+        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
+        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
+        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
+        if self.autosplit_everything:
+            box = self.layout.box().column(True)
+            box.row().prop(self, "autosplit_faces_per_subobject")
+            box.row().prop(self, "autosplit_max_radius")
+        self.layout.row().prop(self, "model_type", expand=True)
+        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
+        self.layout.row().prop(self, "export_scale")
+        box = self.layout.box().column(True)
+        box.row().prop(self, "mipmap_offset")
+        box.row().prop(self, "only_offset_lightmap")
+
+#----------------------------------------------------------------------------------
 class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
     bl_idname = "export.scene_to_thug_xbx"
     bl_label = "Scene to THUG1 level files"

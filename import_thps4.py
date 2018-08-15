@@ -303,7 +303,8 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
         if sec_flags & SECFLAGS_HAS_VERTEX_WEIGHTS:
             for l in range(amount_of_verts):
                 new_vert = this_mesh_verts[l]
-                vert_weights = ( r.u32(), r.u32(), r.u32(), r.u32() )
+                vert_weights = r.read("4f")
+                #vert_weights = ( r.u32(), r.u32(), r.u32(), r.u32() )
                 vertex_weight0[new_vert] = vert_weights
 
             for l in range(amount_of_verts):
@@ -437,8 +438,126 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
     #p("number of hierarchy objects: {}", r.i32())
     print("COMPLETE!")
 
-
+    
+    
 def import_col_thps4(filename, directory):
+    p = Printer()
+    input_file = os.path.join(directory, filename)
+    with open(input_file, "rb") as inp:
+        r = Reader(inp.read())
+
+    p("version: {}", r.i32())
+    num_objects = p("num objects: {}", r.i32())
+    total_verts = p("total verts: {}", r.i32())
+    total_large_faces = p("total large faces: {}", r.i32())
+    total_small_faces = p("total small faces: {}", r.i32())
+    total_large_verts = p("total large verts: {}", r.i32())
+    total_small_verts = p("total small verts: {}", r.i32())
+    r.i32()  # padding
+
+    base_vert_offset = ((SIZEOF_SECTOR_HEADER + SIZEOF_SECTOR_OBJ * num_objects)
+        + 15) & 0xFFFFFFF0
+    base_intensity_offset = (base_vert_offset +
+        total_large_verts * SIZEOF_FLOAT_VERT_THPS4 +
+        total_small_verts * SIZEOF_FIXED_VERT)
+    base_face_offset = base_intensity_offset
+    
+    # THPS4 doesn't seem to distinguish large and small verts
+    # Rather, it uses float verts for everything (maybe this wasn't fully implemented)
+    if total_large_verts == 0 and total_small_verts == 0:
+        base_face_offset = base_vert_offset + (total_verts * SIZEOF_FLOAT_VERT_THPS4)
+        
+    base_bsp_offset = base_face_offset + ( (total_large_faces * SIZEOF_LARGE_FACE_THPS4) + (total_small_faces * SIZEOF_SMALL_FACE_THPS4)  ) + 4;
+    p("bsp offset: {}", base_bsp_offset)
+    p("Vert offset: {}", base_vert_offset)
+    p("Face offset: {}", base_face_offset)
+    p.on = False
+    
+    output_vert_offset = 1
+
+    for i in range(num_objects):
+        bm = bmesh.new()
+        cfl = bm.faces.layers.int.new("collision_flags")
+        ttl = bm.faces.layers.int.new("terrain_type")
+
+        p("obj ", i)
+        obj_checksum = p("  checksum: {}", to_hex_string(r.u32()))
+
+        blender_mesh = bpy.data.meshes.new("col_mesh_" + str(obj_checksum))
+        blender_object = bpy.data.objects.new("col_" + str(obj_checksum), blender_mesh)
+
+        obj_flags = p("  flags:", r.u16())
+
+        blender_object.thug_col_obj_flags = obj_flags
+
+        obj_num_verts = p("  num verts: {}", r.u16())
+        obj_num_faces = p("  num faces: {}", r.u16())
+        obj_use_small_faces = p("  use face small: {}", r.bool())
+        obj_use_fixed = p("  use fixed verts: {}", r.bool())
+        obj_first_face_offset = p("  first face offset: {}", r.u32())  # pointer to array of faces
+        obj_bbox_min, obj_bbox_max = p("  bbox: {}", (r.read("4f"), r.read("4f")))
+        obj_first_vert_offset = p("  first vert offset: {}", r.u32())  # pointer to array of vertices
+        p("bsp tree: {}", r.i32())  # pointer to head of bsp tree
+        p("intensity list? {}", r.i32())  # pointer to intensity list
+        p("padding: {}", r.i32())  # padding
+
+        old_offset = r.offset
+
+        # THPS4: since all verts are floats, the 'offset' is the number of verts rather than an actual offset
+        r.offset = base_vert_offset + (obj_first_vert_offset * SIZEOF_FLOAT_VERT_THPS4)
+        #p("I am at: {}", r.offset)
+        #if i > 2:
+        #    raise Exception("Test")
+        for j in range(obj_num_verts):
+            if obj_use_fixed:
+                v = r.read("HHH")
+                v = (obj_bbox_min[0] + v[0] * 0.0625,
+                     obj_bbox_min[1] + v[1] * 0.0625,
+                     obj_bbox_min[2] + v[2] * 0.0625)
+            else:
+                v = r.read("3f")
+                r.read("4B") # intensity data
+            bm.verts.new((v[0], -v[2], v[1]))
+
+        r.offset = base_face_offset + obj_first_face_offset
+        for j in range(obj_num_faces):
+            face_flags = r.u16()
+            face_terrain_type = r.u16()
+            if obj_use_small_faces:
+                face_idx = r.read("3B")
+                r.read("B") # padding
+            else:
+                face_idx = r.read("3H")
+                r.read("H") # padding?
+
+            if False and face_flags & FACE_FLAGS["mFD_INVISIBLE"]:
+                blender_object.hide = True
+
+            if hasattr(bm.verts, "ensure_lookup_table"):
+                bm.verts.ensure_lookup_table()
+
+            try:
+                bm_face = bm.faces.new((
+                    bm.verts[face_idx[0]],
+                    bm.verts[face_idx[1]],
+                    bm.verts[face_idx[2]]))
+                bm_face[cfl] = face_flags
+                bm_face[ttl] = face_terrain_type
+            except IndexError as err:
+                print(err)
+            except ValueError:
+                pass
+            
+        bm.to_mesh(blender_mesh)
+        blender_object.thug_export_scene = False
+        to_group(blender_object, "CollisionMesh")
+        bpy.context.scene.objects.link(blender_object)
+
+        output_vert_offset += obj_num_verts
+        r.offset = old_offset
+
+# Also works but is way less restrictive - wanted the more rigid import to test out th4 col exports
+def import_col_thps4_old(filename, directory):
     p = Printer()
     p.on = True
     input_file = os.path.join(directory, filename)
@@ -478,6 +597,7 @@ def import_col_thps4(filename, directory):
         col_objs.append(this_obj)
         
     # Read verts
+    p("VERT POS: {}", r.offset)
     for object in col_objs:
         bm = object['bm']
         for j in range(object['num_verts']):
@@ -488,10 +608,11 @@ def import_col_thps4(filename, directory):
                      obj_bbox_min[2] + v[2] * 0.0625)
             else:
                 v = r.read("3f")
-                r.read("4B") # color data (debugging?)
+                r.read("4B") # intensity data
                 
             bm.verts.new((v[0], -v[2], v[1]))
 
+    p("FACE POS: {}", r.offset)
     # Read faces
     for object in col_objs:
         bm = object['bm']
@@ -542,7 +663,7 @@ class THPS4ScnToScene(bpy.types.Operator):
     bl_label = "THPS4 Scene (.scn/.skin/.mdl)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.skin.xbx;*.scn.xbx;*.mdl.xbx;*.skin;*.scn;*.mdl", options={"HIDDEN"})
+    filter_glob = StringProperty(default="*.skin;*.scn;*.mdl;*skin.dat;*mdl.dat;*scn.dat", options={"HIDDEN"})
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
     load_tex = BoolProperty(name="Load the tex file", default=True)
@@ -555,7 +676,10 @@ class THPS4ScnToScene(bpy.types.Operator):
 
         if self.load_tex:
             import os, re
-            tex_filename = re.sub(r'\.(scn|skin|mdl)', '.tex', filename, flags=re.IGNORECASE)
+            if filename.endswith('dat'):
+                tex_filename = re.sub(r'(scn|skin|mdl)\.dat', 'tex.dat', filename, flags=re.IGNORECASE)
+            else:
+                tex_filename = re.sub(r'\.(scn|skin|mdl)', '.tex', filename, flags=re.IGNORECASE)
             tex_path = os.path.join(directory, tex_filename)
             if tex_filename != filename and os.path.exists(tex_path):
                 bpy.ops.io.thug2_tex("EXEC_DEFAULT", filename=tex_filename, directory=directory)

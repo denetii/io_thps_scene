@@ -140,7 +140,7 @@ def export_qb(filename, directory, target_game, operator=None):
         all_triggerscripts = [s for s in bpy.data.texts if s.name.startswith("script_")]
         for ts in all_triggerscripts:
             p(":i function $" + ts.name[7:] + "$")
-            if target_game == "THUG1":
+            if target_game != "THUG2":
                 # Make sure we don't export the THUG2 if/else conditions!
                 p(ts.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
             else:
@@ -958,7 +958,7 @@ def export_qb(filename, directory, target_game, operator=None):
             scr_goals.write("        :i call $add_multiplayer_mode_goals$" + "\n")
             scr_goals.write("    :i endif" + "\n")
         p(":i function $" + filename + "_Goals" + "$")
-        if target_game == "THUG1" and scr_goals:
+        if target_game != "THUG2" and scr_goals:
             # Make sure we don't export the THUG2 if/else conditions!
             print("Writing _Goals script...")
             p(scr_goals.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
@@ -972,7 +972,7 @@ def export_qb(filename, directory, target_game, operator=None):
         # Export STARTUP script (if it exists)
         scr_start = bpy.data.texts.get("_Startup", None)
         p(":i function $" + filename + "_Startup" + "$")
-        if target_game == "THUG1" and scr_start:
+        if target_game != "THUG2" and scr_start:
             # Make sure we don't export the THUG2 if/else conditions!
             print("Writing _Startup script...")
             p(scr_start.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
@@ -986,7 +986,7 @@ def export_qb(filename, directory, target_game, operator=None):
         # Export SETUP script (if it exists)
         scr_setup = bpy.data.texts.get("_Setup", None)
         p(":i function $" + filename + "_Setup" + "$")
-        if target_game == "THUG1" and scr_setup:
+        if target_game != "THUG2" and scr_setup:
             # Make sure we don't export the THUG2 if/else conditions!
             print("Writing _Setup script...")
             p(scr_setup.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
@@ -1205,9 +1205,8 @@ def export_qb(filename, directory, target_game, operator=None):
         print("Writing [level]_scripts data...")
         scripts_text = bpy.data.texts.get("_SCRIPTS", None)
         if scripts_text:
-            if target_game == "THUG1":
+            if target_game != "THUG2":
                 # Make sure we don't export the THUG2 if/else conditions!
-                print("omg")
                 outp.write(scripts_text.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
             else:
                 outp.write(scripts_text.as_string())
@@ -1253,7 +1252,7 @@ def export_model_qb(filename, directory, target_game, operator=None):
         all_triggerscripts = [s for s in bpy.data.texts if s.name.startswith("script_")]
         for ts in all_triggerscripts:
             p(":i function $" + ts.name[7:] + "$")
-            if target_game == "THUG1":
+            if target_game != "THUG2":
                 # Make sure we don't export the THUG2 if/else conditions!
                 p(ts.as_string().replace(":i if", ":i doIf").replace(":i else", ":i doElse"))
             else:
