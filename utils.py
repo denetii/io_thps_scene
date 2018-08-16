@@ -142,6 +142,7 @@ class THUGUtilAutoWall(bpy.types.Operator):
         ("ClearInvalid", "Clear Invalid", "Unsets the wallride flag on faces that are not considered walls."),
         ("MarkValid", "Mark Valid", "Sets the wallride flag on faces considered walls."),
         ), name="Options", default={"MarkValid"}, options={'ENUM_FLAG'})
+    tolerance = FloatProperty(name="Tolerance", min=0.001, max=0.99, default=0.15, description="How much slope is allowed when detecting walls")
 
     def execute(self, context):
         objects = [o for o in bpy.data.objects if o.type == 'MESH' and o.thug_export_collision == True ]
@@ -155,7 +156,7 @@ class THUGUtilAutoWall(bpy.types.Operator):
             
             for f in bm.faces:
                 flags = f[cfl]
-                if f.normal[2] > -0.15 and f.normal[2] < 0.15:
+                if f.normal[2] > -self.tolerance and f.normal[2] < self.tolerance:
                     if "MarkValid" in self.pass_options \
                     and not (flags & FACE_FLAGS['mFD_VERT']) and not (flags & FACE_FLAGS['mFD_NON_COLLIDABLE']):
                         flags |= FACE_FLAGS['mFD_WALL_RIDABLE']
@@ -182,6 +183,7 @@ class THUGUtilAutoWall(bpy.types.Operator):
         col.label(text="Auto-Wall Utility")
         row = col.row()
         row.prop_menu_enum(self, "pass_options", icon='SETTINGS')
+        row.prop(self, "tolerance", icon='SETTINGS')
 
 
 #----------------------------------------------------------------------------------

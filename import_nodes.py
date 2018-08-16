@@ -890,6 +890,7 @@ def import_nodearray(gamemode):
                 custom_context = lambda: None
                 custom_context.object = ob
                 custom_context.scene = bpy.context.scene
+                custom_context.user_preferences = bpy.context.user_preferences
                 thug_empty_update(None, custom_context)
     # STEP 4 - SECOND PASS OF NODEARRAY TO RESOLVE LINKS
     for node in NodeArray:           
