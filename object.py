@@ -237,7 +237,9 @@ def _thug_object_settings_draw(self, context):
             row = box.row()
             row.column().prop(ob, "thug_cast_shadow")
             row.column().prop(ob, "thug_is_shadow_volume")
-            box.row().prop(ob, "thug_no_skater_shadow")
+            row = box.row()
+            row.column().prop(ob, "thug_no_skater_shadow")
+            row.column().prop(ob, "thug_material_blend")
             #box.row().prop(ob, "thug_is_billboard")
             
         box = self.layout.column()    

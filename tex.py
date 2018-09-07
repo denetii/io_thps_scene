@@ -314,7 +314,8 @@ def export_tex(filename, directory, target_game, operator=None):
     out_images = []
     for m_name in out_materials:
         m = bpy.data.materials[m_name]
-        if hasattr(m.thug_material_props, 'ugplus_shader') and m.thug_material_props.ugplus_shader != '':
+        if hasattr(m.thug_material_props, 'use_new_mats') and m.thug_material_props.use_new_mats == True \
+            and hasattr(m.thug_material_props, 'ugplus_shader') and m.thug_material_props.ugplus_shader != '':
             # Make sure we always export textures which are plugged into the new material/shader system
             # Also need to generate a texture based on a specified color, if no texture was used
             export_textures = []
@@ -324,10 +325,14 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
                 set_image_compression(m.thug_material_props.ugplus_matslot_reflection, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
-                set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
+                if m.thug_material_props.ugplus_trans:
+                    set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
+                else:
+                    set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT1')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
                 export_textures.append(m.thug_material_props.ugplus_matslot_weathermask)
+                set_image_compression(m.thug_material_props.ugplus_matslot_weathermask, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
                 export_textures.append(m.thug_material_props.ugplus_matslot_specular)
                 
@@ -337,13 +342,17 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
                 set_image_compression(m.thug_material_props.ugplus_matslot_reflection, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
-                set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
+                if m.thug_material_props.ugplus_trans:
+                    set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
+                else:
+                    set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT1')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
                 export_textures.append(m.thug_material_props.ugplus_matslot_weathermask)
+                set_image_compression(m.thug_material_props.ugplus_matslot_weathermask, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
                 export_textures.append(m.thug_material_props.ugplus_matslot_specular)
                 
@@ -403,23 +412,23 @@ def export_tex(filename, directory, target_game, operator=None):
                     out_images.append(get_colortex(tex.tex_color))
                 else:
                     out_images.append(tex.tex_image.name)
-                
-        # denetii - only include texture slots that affect the diffuse color in the Blender material
-        passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
-        if len(passes) > 4:
-            if operator:
-                passes = passes[:4]
-        if not passes and m.name != "_THUG_DEFAULT_MATERIAL_":
-            if operator:
-                passes = []
-        for texture in passes:
-            if texture and hasattr(texture, 'image') and texture.image and texture.image.users and texture.image.type in ('IMAGE', 'UV_TEST') and texture.image.source in ('FILE', 'GENERATED') and not texture.image.name in out_images:
-                out_images.append(texture.image.name)
-        
+                    
+        else:
+            # denetii - only include texture slots that affect the diffuse color in the Blender material
+            passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
+            if len(passes) > 4:
+                if operator:
+                    passes = passes[:4]
+            if not passes and m.name != "_THUG_DEFAULT_MATERIAL_":
+                if operator:
+                    passes = []
+            for texture in passes:
+                if texture and hasattr(texture, 'image') and texture.image and texture.image.users and texture.image.type in ('IMAGE', 'UV_TEST') and texture.image.source in ('FILE', 'GENERATED') and not texture.image.name in out_images:
+                    out_images.append(texture.image.name)
+            
     output_file = os.path.join(directory, filename)
     with open(output_file, "wb") as outp:
-        exported_images = [img for img in bpy.data.images
-                           if img.name in out_images]
+        exported_images = [img for img in bpy.data.images if img.name in out_images]
         w("2I", 777, 0)
 
         exported_images_count = 0

@@ -968,18 +968,67 @@ class THUGLevelExportProps(bpy.types.PropertyGroup):
         ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
     ), name="Model Type", default="skin")
         
+        
+#----------------------------------------------------------------------------------
+#- Properties for a TOD slot
+#----------------------------------------------------------------------------------
+class THUGTODProps(bpy.types.PropertyGroup):
+    ambient_down_rgb = FloatVectorProperty(name="Ambient: Down Color",
+                           subtype='COLOR',
+                           default=(0.25, 0.25, 0.3),
+                           size=3, min=0.0, max=1.0,
+                           description="Light color used for faces which point down")
+    ambient_up_rgb = FloatVectorProperty(name="Ambient: Up Color",
+                           subtype='COLOR',
+                           default=(0.6, 0.55, 0.5),
+                           size=3, min=0.0, max=1.0,
+                           description="Light color used for faces which point up")
+    sun_headpitch = IntVectorProperty(name="Sun: Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
+    light1_headpitch = IntVectorProperty(name="Light 2: Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
+    sun_rgb = FloatVectorProperty(name="Sun: Diffuse Color",
+                           subtype='COLOR',
+                           default=(0.7, 0.65, 0.6),
+                           size=3, min=0.0, max=1.0)
+    light1_rgb = FloatVectorProperty(name="Light 2: Diffuse Color",
+                           subtype='COLOR',
+                           default=(0.7, 0.65, 0.6),
+                           size=3, min=0.0, max=1.0)
+    fog_startend = IntVectorProperty(name="Fog: Start/End", size=2, default=(0, 2500))
+    fog_bottomtop = IntVectorProperty(name="Fog: Bottom/Top", size=2, default=(-1000, 3000), description="Start/end height for fog")
+    fog_rgba = FloatVectorProperty(name="Fog: Color/Alpha",
+                           subtype='COLOR',
+                           default=(0.5, 0.5, 0.5, 0.25),
+                           size=4,
+                           min=0.0, max=1.0,
+                           description="Fog color/alpha")
+    
 #----------------------------------------------------------------------------------
 #- Properties for the entire level
 #----------------------------------------------------------------------------------
 class THUGLevelProps(bpy.types.PropertyGroup):
     level_name = StringProperty(name="Level Name", description="Name of your level, used for in-game menus.")
     scene_name = StringProperty(name="Scene Name", description="Short name referenced by scripts.")
-    
-    export_props = PointerProperty(type=THUGLevelExportProps)
-    
     creator_name = StringProperty(name="Creator Name", description="Name of the person(s) who created this level.")
     level_skybox = StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level.")
     
+    export_props = PointerProperty(type=THUGLevelExportProps)
+    
+    # These properties are used in Underground+ 1.5
+    tod_scale = FloatProperty(name="Default TOD", description="Default TOD range (0.0 = full day, 1.0 = full evening, 2.0 = full night, 3.0 = full morning)", default=0.0, min=0.0, max=4.0)
+    tod_slot = EnumProperty(name="TOD Slot", items=(
+        ( 'DAY', 'Day', ''),
+        ( 'EVENING', 'Evening', ''),
+        ( 'NIGHT', 'Night', ''),
+        ( 'MORNING', 'Morning', ''),
+    ), default="DAY", description="TOD slot to edit")
+    
+    
+    tod_day = PointerProperty(type=THUGTODProps)
+    tod_evening = PointerProperty(type=THUGTODProps)
+    tod_night = PointerProperty(type=THUGTODProps)
+    tod_morning = PointerProperty(type=THUGTODProps)
+    
+    # Legacy properties - used in the base games
     level_ambient_rgba = FloatVectorProperty(name="Ambient: Color/Mod",
                            subtype='COLOR',
                            default=(0.5, 0.5, 0.5, 0.25),
@@ -1124,6 +1173,7 @@ def register_props():
     bpy.types.Object.thug_is_billboard = BoolProperty(name="Billboard", description="Testing!", default=False)
     bpy.types.Object.thug_no_skater_shadow = BoolProperty(name="No Skater Shadow", description="Dynamic shadows will not render on this object.", default=False)
     bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Detail Mesh", default=False, description="(Underground+ 1.5+ only) This mesh is treated as extra detail, and will be culled based on distance from camera (or not rendered at all on lower graphics settings)")
+    bpy.types.Object.thug_material_blend = BoolProperty(name="Mat Blend", default=False, description="The first two material slots attached to this mesh will be blended together using the vertex alpha channel")
     bpy.types.Object.thug_occluder = BoolProperty(name="Occluder", description="Occludes (hides) geometry behind this mesh. Used for performance improvements.", default=False)
     bpy.types.Object.thug_is_trickobject = BoolProperty(
         name="Is a TrickObject",

@@ -13,6 +13,11 @@ from . tex import *
 
 # METHODS
 #############################################
+
+# Convert an Underground+ material to BI texture passes, so that it can be visualized in the viewport
+def ugplus_material_update(mat, context):
+    return
+
 def _ensure_default_material_exists():
     if "_THUG_DEFAULT_MATERIAL_" in bpy.data.materials:
         return
@@ -233,9 +238,8 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
         
-        # Mark the material as having a displacement map (Parallax normal mapping) if the tex slot is used
+        # Mark the material as having a displacement map (POM) if the tex slot is used
         if mprops.ugplus_matslot_reflection.tex_image != None:
-            print("Marking material as displacement mapped!")
             mat_flags = 1
             
     elif mprops.ugplus_shader == 'PBR_Lightmapped':
@@ -251,9 +255,8 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
         
-        # Mark the material as having a displacement map (Parallax normal mapping) if the tex slot is used
+        # Mark the material as having a displacement map (POM) if the tex slot is used
         if mprops.ugplus_matslot_reflection.tex_image != None:
-            print("Marking material as displacement mapped!")
             mat_flags = 1
         
     elif mprops.ugplus_shader == 'Skybox':
@@ -299,7 +302,6 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
         
     num_passes = 4 if len(export_textures) > 4 else len(export_textures)
-    print("Material {} has {} passes".format(m.name, num_passes))
     
     if is_hex_string(m.name):
         checksum = int(m.name, 0)

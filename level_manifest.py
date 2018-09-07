@@ -82,9 +82,9 @@ class THUGSceneSettings(bpy.types.Panel):
         self.layout.row().prop(scene.thug_level_props, "creator_name")
         #self.layout.row().prop(scene.thug_level_props, "level_skybox")
         
-        self.layout.row().prop(scene.thug_level_props.export_props, "use_quick_export")
+        #self.layout.row().prop(scene.thug_level_props.export_props, "use_quick_export")
         # QUICK EXPORT SETTINGS
-        if scene.thug_level_props.export_props.use_quick_export:
+        if True: #scene.thug_level_props.export_props.use_quick_export:
             box = self.layout.box().column()
             box.row().prop(scene.thug_level_props.export_props, "target_game")
             box.row().prop(scene.thug_level_props.export_props, "directory")
@@ -119,21 +119,63 @@ class THUGSceneSettings(bpy.types.Panel):
         #self.layout.row().prop(scene.thug_level_props, "default_terrain")
         #self.layout.row().prop(scene.thug_level_props, "default_terrain_rail")
         
-        self.layout.row().label(text="Level Lights", icon='LAMP_DATA')
-        box = self.layout.box().column(True)
-        box.row().prop(scene.thug_level_props, "level_ambient_rgba")
-        
-        tmp_row = box.row().split()
-        col = tmp_row.column()
-        col.prop(scene.thug_level_props, "level_light0_rgba")
-        col = tmp_row.column()
-        col.prop(scene.thug_level_props, "level_light0_headpitch")
-        
-        tmp_row = box.row().split()
-        col = tmp_row.column()
-        col.prop(scene.thug_level_props, "level_light1_rgba")
-        col = tmp_row.column()
-        col.prop(scene.thug_level_props, "level_light1_headpitch")
+        self.layout.row().label(text="Level Lighting", icon='LAMP_DATA')
+        if scene.thug_level_props.export_props.target_game == 'THUG1':
+            # Underground+ TOD/lighting settings here
+            self.layout.prop(scene.thug_level_props, "tod_scale")
+            self.layout.prop(scene.thug_level_props, "tod_slot")
+            
+            if scene.thug_level_props.tod_slot != '':
+                tod_props = scene.thug_level_props.tod_day
+                if scene.thug_level_props.tod_slot == 'EVENING':
+                    tod_props = scene.thug_level_props.tod_evening
+                elif scene.thug_level_props.tod_slot == 'NIGHT':
+                    tod_props = scene.thug_level_props.tod_night
+                elif scene.thug_level_props.tod_slot == 'MORNING':
+                    tod_props = scene.thug_level_props.tod_morning
+                    
+            #self.layout.label(text="TOD - " + scene.thug_level_props.tod_slot)
+            box = self.layout.box().column()
+            box.row().label(text="Ambient Down/Up Color")
+            tmp_row = box.row().split()
+            col = tmp_row.column()
+            col.prop(tod_props, "ambient_down_rgb", text='')
+            col = tmp_row.column()
+            col.prop(tod_props, "ambient_up_rgb", text='')
+            tmp_row = box.row().split()
+            col = tmp_row.column()
+            col.prop(tod_props, "sun_rgb")
+            col = tmp_row.column()
+            col.prop(tod_props, "sun_headpitch")
+            tmp_row = box.row().split()
+            col = tmp_row.column()
+            col.prop(tod_props, "light1_rgb")
+            col = tmp_row.column()
+            col.prop(tod_props, "light1_headpitch")
+            box.row().label(text="Fog Distance/Color")
+            tmp_row = box.row().split()
+            col = tmp_row.column()
+            col.prop(tod_props, "fog_startend", text='')
+            col = tmp_row.column()
+            col.prop(tod_props, "fog_bottomtop", text='')
+            box.row().prop(tod_props, "fog_rgba", text='')
+            
+        else:
+            # Legacy lighting settings!
+            box = self.layout.box().column(True)
+            box.row().prop(scene.thug_level_props, "level_ambient_rgba")
+            
+            tmp_row = box.row().split()
+            col = tmp_row.column()
+            col.prop(scene.thug_level_props, "level_light0_rgba")
+            col = tmp_row.column()
+            col.prop(scene.thug_level_props, "level_light0_headpitch")
+            
+            tmp_row = box.row().split()
+            col = tmp_row.column()
+            col.prop(scene.thug_level_props, "level_light1_rgba")
+            col = tmp_row.column()
+            col.prop(scene.thug_level_props, "level_light1_headpitch")
         
         self.layout.row().label(text="Level Flags", icon='INFO')
         box = self.layout.box().column(True)

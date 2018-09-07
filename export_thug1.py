@@ -118,18 +118,28 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                 if len(original_object.vertex_groups) or need_vertex_normals:
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
                 if original_object.thug_is_shadow_volume:
-                    print("EXPORTING SHADOW VOLUME!")
                     flags |= SECFLAGS_SHADOW_VOLUME
                 if original_object.thug_is_billboard:
                     flags |= SECFLAGS_BILLBOARD_PRESENT
 
+                    
                 mats_to_faces = {}
-                for face in bm.faces:
-                    face_list = mats_to_faces.get(face.material_index)
-                    if face_list:
-                        face_list.append(face)
-                    else:
-                        mats_to_faces[face.material_index] = [face]
+                if ob.thug_material_blend and len(ob.data.materials) >= 2:
+                    for i in range(len(ob.data.materials)):
+                        for face in bm.faces:
+                            face_list = mats_to_faces.get(i)
+                            if face_list:
+                                face_list.append(face)
+                            else:
+                                mats_to_faces[i] = [face]
+                            
+                else:
+                    for face in bm.faces:
+                        face_list = mats_to_faces.get(face.material_index)
+                        if face_list:
+                            face_list.append(face)
+                        else:
+                            mats_to_faces[face.material_index] = [face]
                     
                 split_verts = make_split_verts(final_mesh, bm, flags)
                        
@@ -157,7 +167,6 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
 
                 # Export billboard data - testing
                 if flags & SECFLAGS_BILLBOARD_PRESENT:
-                    print("EXPORTING BILLBOARD DATA!")
                     w("i", 1) # billboard type
                     w("3f", *to_thug_coords(mathutils.Vector([0, 0, 0]))) # billboard origin
                     w("3f", *to_thug_coords(mathutils.Vector([0, 0, 20]))) # billboard pivot pos
@@ -218,18 +227,16 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                         for i in range(0, uv_total):
                             w("2f", *v.uvs[i])
 
-                VC_MULT = 256 if operator.use_vc_hack else 128
-                FULL_WHITE = (1.0, 1.0, 1.0, 1.0)
-                HALF_WHITE = (0.5, 0.5, 0.5, 0.5)
+                FULL_WHITE = (0.5, 0.5, 0.5, 1.0)
                 if flags & SECFLAGS_HAS_VERTEX_COLORS:
                     for v in split_verts.keys():
                         r, g, b, a = v.vc or FULL_WHITE
                         if is_levelobject:
-                            r, g, b, a = HALF_WHITE
-                        a = (int(a * VC_MULT) & 0xff) << 24
-                        r = (int(r * VC_MULT) & 0xff) << 16
-                        g = (int(g * VC_MULT) & 0xff) << 8
-                        b = (int(b * VC_MULT) & 0xff) << 0
+                            r, g, b, a = FULL_WHITE
+                        a = (int(a * 255) & 0xff) << 24
+                        r = (int(r * 255) & 0xff) << 16
+                        g = (int(g * 255) & 0xff) << 8
+                        b = (int(b * 255) & 0xff) << 0
                         w("I", a | r | g | b)
 
                 for mat_index, mat_faces in mats_to_faces.items():
@@ -250,8 +257,9 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                     
                     # Determine if we need to set any mesh flags
                     mesh_flags = 0
-                    if the_material.thug_material_props.no_skater_shadow or original_object.thug_no_skater_shadow:
+                    if the_material.thug_material_props.no_skater_shadow or original_object.thug_no_skater_shadow or (ob.thug_material_blend and mat_index == 1):
                         mesh_flags |= 0x400
+                        
                     w("I", mesh_flags)  # mesh flags
                     w("L", mat_checksum)  # material checksum
                     w("I", 1)  # num of index lod levels

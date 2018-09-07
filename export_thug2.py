@@ -122,12 +122,23 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
 
                 mats_to_faces = {}
-                for face in bm.faces:
-                    face_list = mats_to_faces.get(face.material_index)
-                    if face_list:
-                        face_list.append(face)
-                    else:
-                        mats_to_faces[face.material_index] = [face]
+                if ob.thug_material_blend and len(ob.data.materials) >= 2:
+                    for i in range(len(ob.data.materials)):
+                        for face in bm.faces:
+                            face_list = mats_to_faces.get(i)
+                            if face_list:
+                                face_list.append(face)
+                            else:
+                                mats_to_faces[i] = [face]
+                            
+                else:
+                    for face in bm.faces:
+                        face_list = mats_to_faces.get(face.material_index)
+                        if face_list:
+                            face_list.append(face)
+                        else:
+                            mats_to_faces[face.material_index] = [face]
+                    
                         
                 
                 clean_name = get_clean_name(ob)
@@ -167,7 +178,7 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
                         
                     # Determine if we need to set any mesh flags
                     mesh_flags = 0
-                    if the_material.thug_material_props.no_skater_shadow or original_object.thug_no_skater_shadow:
+                    if the_material.thug_material_props.no_skater_shadow or original_object.thug_no_skater_shadow or (ob.thug_material_blend and mat_index == 1):
                         mesh_flags |= 0x400
                     w("I", mesh_flags)  # mesh flags
                     w("I", mat_checksum)  # material checksum

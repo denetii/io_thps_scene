@@ -117,6 +117,12 @@ def get_material(name):
     return blender_mat
     
 #----------------------------------------------------------------------------------
+#- Converts a color range (0.0-1.0) into an 8-bit int (0-255)
+#----------------------------------------------------------------------------------
+def to_color_int(val):
+    return int(val * 255.0)
+    
+#----------------------------------------------------------------------------------
 def get_index(seq, value, key=lambda x: x, default=-1):
     i = 0
     for item in seq:

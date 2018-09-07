@@ -1126,17 +1126,71 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t:i $LoadParticleTexture$ %s(1,\"particles\\{}\")".format( ob.thug_particle_props.particle_texture ))
             p(":i endfunction")
 
-        # Export script for adding cubemap probes into the level
-        p(":i function $LoadCubemaps$")
-        for ob in bpy.data.objects:
-            if ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type == 'CubemapProbe' \
-                and ob.thug_cubemap_props and ob.thug_cubemap_props.exported == True:
-                cm_pos = to_thug_coords(ob.location)
-                cm_file = "{}\{}.dds".format(filename, ob.name)
-                p("\t:i $UGPlus_AddCubemapProbe$ $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $tex_file$ = {}".format( f(cm_pos[0]), f(cm_pos[1]), f(cm_pos[2]), blub_str(cm_file)) )
+        if target_game == "THUG1":
+            def col(color):
+                return blub_int(to_color_int(color))
                 
-        p(":i endfunction")
+            print("Writing script DoTODSetup...")
+            # Underground+ TOD setup script for all 4 TOD states
+            p(":i function $DoTODSetup$")
+            scene = bpy.context.scene
+            if hasattr(scene, 'thug_level_props'):
+                tod_slots = [ scene.thug_level_props.tod_day
+                        , scene.thug_level_props.tod_evening
+                        , scene.thug_level_props.tod_night
+                        , scene.thug_level_props.tod_morning ]
+                tod_index = -1
+                for slot in tod_slots:
+                    tod_index += 1
+                    str_tod_index = "$tod_index$ = {}".format(i(tod_index))
+                    str_ambient_down = "$ambient_down_r$ = {} $ambient_down_g$ = {} $ambient_down_b$ = {}".format(
+                        col(slot.ambient_down_rgb[0])
+                        , col(slot.ambient_down_rgb[1])
+                        , col(slot.ambient_down_rgb[2]) )
+                    str_ambient_up = "$ambient_range_r$ = {} $ambient_range_g$ = {} $ambient_range_b$ = {}".format(
+                        col(slot.ambient_up_rgb[0])
+                        , col(slot.ambient_up_rgb[1])
+                        , col(slot.ambient_up_rgb[2]) )
+                    str_sun = "$sun_pitch$ = {} $sun_angle$ = {} $sun_r$ = {} $sun_g$ = {} $sun_b$ = {}".format(
+                        i(slot.sun_headpitch[0])
+                        , i(slot.sun_headpitch[1])
+                        , col(slot.sun_rgb[0])
+                        , col(slot.sun_rgb[1])
+                        , col(slot.sun_rgb[2]) )
+                    str_light1 = "$light1_pitch$ = {} $light1_angle$ = {} $light1_r$ = {} $light1_g$ = {} $light1_b$ = {}".format(
+                        i(slot.light1_headpitch[0])
+                        , i(slot.light1_headpitch[1])
+                        , col(slot.light1_rgb[0])
+                        , col(slot.light1_rgb[1])
+                        , col(slot.light1_rgb[2]) )
+                    str_fogdist = "$fog_dist_start$ = {} $fog_dist_end$ = {} $fog_bottom$ = {} $fog_top$ = {}".format(
+                        i(slot.fog_startend[0])
+                        , i(slot.fog_startend[1])
+                        , i(slot.fog_bottomtop[0])
+                        , i(slot.fog_bottomtop[1]) )
+                    str_fogcolor = "$fog_r$ = {} $fog_g$ = {} $fog_b$ = {} $fog_a$ = {}".format(
+                        col(slot.fog_rgba[0])
+                        , col(slot.fog_rgba[1])
+                        , col(slot.fog_rgba[2])
+                        , col(slot.fog_rgba[3]) )
+                    
+                    str_todprops = " ".join([str_tod_index, str_ambient_down, str_ambient_up, str_sun, str_light1, str_fogdist, str_fogcolor])
+                    
+                    p("\t:i $UGPlus_SetTODProperties$ " + str_todprops)
+                p("\t:i $UGPlus_SetTODScale$ $value$ = {}".format(f(scene.thug_level_props.tod_scale)) )
+            p(":i endfunction")
         
+            # Export script for adding cubemap probes into the level
+            print("Writing script LoadCubemaps...")
+            p(":i function $LoadCubemaps$")
+            for ob in bpy.data.objects:
+                if ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type == 'CubemapProbe' \
+                    and ob.thug_cubemap_props and ob.thug_cubemap_props.exported == True:
+                    cm_pos = to_thug_coords(ob.location)
+                    cm_file = "{}\{}.dds".format(filename, ob.name)
+                    p("\t:i $UGPlus_AddCubemapProbe$ $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $tex_file$ = {}".format( f(cm_pos[0]), f(cm_pos[1]), f(cm_pos[2]), blub_str(cm_file)) )
+            p(":i endfunction")
+            
         print("Writing generated scripts...")
         for script_name, script_code in generated_scripts.items():
             p("")
