@@ -232,13 +232,15 @@ def export_qb(filename, directory, target_game, operator=None):
                     raise Exception("Object {} does not have a proper name. Please assign one before exporting to a level QB.".format(clean_name))
                     
                 p("\t:i :s{")
-                p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
+                if ob.parent:
+                    p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.parent.location + ob.location)))) # v3(get_sphere(ob))))
+                else:
+                    p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
                 if is_levelobject:
-                    #p("\t\t:i {} = {}".format(c("Pos"), v3((0, 0, 0))))
                     p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 else:
                     p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
-                    #p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
+                    
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 p("\t\t:i {} = {}".format(c("Class"), c("LevelGeometry") if not is_levelobject else c("LevelObject")))
                 # Exporting LevelObject specific properties below
@@ -1188,7 +1190,8 @@ def export_qb(filename, directory, target_game, operator=None):
                     and ob.thug_cubemap_props and ob.thug_cubemap_props.exported == True:
                     cm_pos = to_thug_coords(ob.location)
                     cm_file = "{}\{}.dds".format(filename, ob.name)
-                    p("\t:i $UGPlus_AddCubemapProbe$ $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $tex_file$ = {}".format( f(cm_pos[0]), f(cm_pos[1]), f(cm_pos[2]), blub_str(cm_file)) )
+                    irr_file = "{}\{}_Irradiance.dds".format(filename, ob.name)
+                    p("\t:i $UGPlus_AddCubemapProbe$ $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $size$ = {} $tex_file$ = {} $irr_file$ = {}".format( f(cm_pos[0]), f(cm_pos[1]), f(cm_pos[2]), f(ob.thug_cubemap_props.size), blub_str(cm_file), blub_str(irr_file)) )
             p(":i endfunction")
             
         print("Writing generated scripts...")

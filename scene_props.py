@@ -569,6 +569,7 @@ class THUGCubemapProps(bpy.types.PropertyGroup):
             ("8192", "8192", "")],
         default="512", 
         description="Maximum resolution for each side of the baked cubemap.")
+    size = FloatProperty(name="Size", default=0.0, min=128.0, max=128000.0, description="Approximate size of the rendered area in Blender units (for parallax correction). Use 0.0 to render cubemap at infinite distance")
     exported = BoolProperty(name="Exported", default=False)
     
 #----------------------------------------------------------------------------------
@@ -993,8 +994,8 @@ class THUGTODProps(bpy.types.PropertyGroup):
                            subtype='COLOR',
                            default=(0.7, 0.65, 0.6),
                            size=3, min=0.0, max=1.0)
-    fog_startend = IntVectorProperty(name="Fog: Start/End", size=2, default=(0, 2500))
-    fog_bottomtop = IntVectorProperty(name="Fog: Bottom/Top", size=2, default=(-1000, 3000), description="Start/end height for fog")
+    fog_startend = IntVectorProperty(name="Fog: Start/End", size=2, default=(0, 25000))
+    fog_bottomtop = IntVectorProperty(name="Fog: Bottom/Top", size=2, default=(-5000, 5000), description="Start/end height for fog")
     fog_rgba = FloatVectorProperty(name="Fog: Color/Alpha",
                            subtype='COLOR',
                            default=(0.5, 0.5, 0.5, 0.25),

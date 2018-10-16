@@ -1184,10 +1184,10 @@ class THUGLightingTools(bpy.types.Panel):
         if not context.object: return
         ob = context.object
         if ob.type == "MESH" and ob.thug_export_scene:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column()
             box.row().prop(ob, "thug_lightmap_resolution")
             box.row().prop(ob, "thug_lightmap_quality")
-            box.row().prop(ob, "thug_lightmap_type")
+            box.row().prop(ob, "thug_lightmap_type", expand=True)
             
             tmp_row = box.row().split()
             tmp_row.column().operator(BakeLightmaps.bl_idname, text=BakeLightmaps.bl_label, icon='LIGHTPAINT')

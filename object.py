@@ -62,6 +62,7 @@ def _thug_object_settings_draw(self, context):
         if ob.thug_empty_props.empty_type == 'CubemapProbe':
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_cubemap_props, "resolution")
+            box.row().prop(ob.thug_cubemap_props, "size")
             
         # ********************************************************
         # * PROXIMNODE 

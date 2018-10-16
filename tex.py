@@ -10,6 +10,22 @@ from . helpers import *
 
 # METHODS
 #############################################
+import math
+import numpy as np
+
+import bpy
+
+def np_from_image(img):
+    return np.array(img.pixels[:])
+
+def clear_img_channel(img, chn):
+    img_pixels = np_from_image(img)
+    channels = [ 'r', 'g', 'b', 'a' ]
+    channel_num = channels.index(chn)
+    img_pixels[channel_num::4] = 0.0
+    img.pixels = img_pixels.tolist()
+    del img_pixels
+
 def get_all_compressed_mipmaps(image, compression_type, mm_offset):
     import bgl, math
     from contextlib import ExitStack
@@ -336,7 +352,7 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
                 export_textures.append(m.thug_material_props.ugplus_matslot_specular)
                 
-            if m.thug_material_props.ugplus_shader == 'PBR_Lightmapped':
+            if m.thug_material_props.ugplus_shader == 'PBR_Lightmapped' or m.thug_material_props.ugplus_shader == 'Glass':
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)

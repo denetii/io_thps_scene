@@ -18,6 +18,18 @@ from . tex import *
 def ugplus_material_update(mat, context):
     return
 
+# Checks if our PBR material is fully diffuse (full roughness, non-metallic), 
+# so we can use Diffuse BRDF rather than the full PBR shader
+def is_full_diffuse(mat):
+    if not mat.thug_material_props.ugplus_matslot_snow.tex_image:
+        if not mat.thug_material_props.ugplus_matslot_normal.tex_image:
+            if mat.thug_material_props.ugplus_matslot_normal.tex_color[3] == 1.0:
+                if not mat.thug_material_props.ugplus_matslot_specular.tex_image:
+                    if mat.thug_material_props.ugplus_matslot_specular.tex_color[0] == 0.0:
+                        return True
+                
+    return False
+        
 def _ensure_default_material_exists():
     if "_THUG_DEFAULT_MATERIAL_" in bpy.data.materials:
         return
@@ -210,19 +222,21 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     
     mprops = m.thug_material_props
     
-    shader_id = -5.40 # PBR
+    shader_id = 5.40 # PBR
     if mprops.ugplus_shader == 'PBR_Lightmapped':
-        shader_id = -8.0
+        shader_id = 8.0
     elif mprops.ugplus_shader == 'Water':
-        shader_id = -1.08
+        shader_id = 1.08
     elif mprops.ugplus_shader == 'Water_Custom':
-        shader_id = -3.16
+        shader_id = 3.16
     elif mprops.ugplus_shader == 'Water_Displacement':
-        shader_id = -23.42
+        shader_id = 23.42
     elif mprops.ugplus_shader == 'Skybox':
-        shader_id = -8.15
+        shader_id = 8.15
     elif mprops.ugplus_shader == 'Cloud':
-        shader_id = -16.0
+        shader_id = 16.0
+    elif mprops.ugplus_shader == 'Glass':
+        shader_id = 32.0
 
     mat_flags = 0
     
@@ -242,7 +256,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         if mprops.ugplus_matslot_reflection.tex_image != None:
             mat_flags = 1
             
-    elif mprops.ugplus_shader == 'PBR_Lightmapped':
+    elif mprops.ugplus_shader == 'PBR_Lightmapped' or mprops.ugplus_shader == 'Glass':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
@@ -325,8 +339,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         w("f", mprops.grass_height)  # grass height
         w("i", mprops.grass_layers)  # grass layers
         
-    w("f", shader_id)  # specular power (used to mark the shader ID for the new shaders)
-
+    w("f", shader_id)  # Shader ID (previously Specular power)
+    if shader_id > 0.0: # Additional material props (replaces specular color field)
+        w("f", mprops.ugplus_extra1)
+        w("f", mprops.ugplus_extra1) # Reserved for future use
+        w("f", mprops.ugplus_extra1) # Reserved for future use
+        
     # Export all the textures we need for the shader, as gathered above
     tex_count = -1
     for node in export_textures:
@@ -340,8 +358,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
             tex_checksum = crc_from_string(bytes(colortex_name, 'ascii'))
             
         elif is_hex_string(tex.tex_image.name):
+            if not bpy.data.images.get(tex.tex_image.name):
+                raise Exception("Image {} not found.".format(tex.tex_image.name))
             tex_checksum = int(tex.tex_image.name, 0)
         else:
+            if not bpy.data.images.get(tex.tex_image.name):
+                raise Exception("Image {} not found.".format(tex.tex_image.name))
             tex_checksum = crc_from_string(bytes(tex.tex_image.name, 'ascii'))
         
         # If the texture count is beyond the 4 texture limit, we are simply exporting frames for an animated texture
@@ -659,8 +681,17 @@ def _material_settings_draw(self, context):
         row.prop(mps, "ugplus_shader")
         if mps.ugplus_shader != 'None':
             row.separator()
-            row.prop(mps, "ugplus_trans")
+            split = row.split()
+            c = split.column()
+            extra1_label = 'Reflectivity (F0)'
+            if mps.ugplus_shader.startswith('Water'):
+                extra1_label = 'Bump Strength'
+            c.prop(mps, "ugplus_extra1", text=extra1_label)
+            split = split.split()
+            c = split.column()
+            c.prop(mps, "ugplus_trans", toggle=False)
             row.separator()
+            
         
         if mps.ugplus_shader == 'PBR':
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse')
@@ -672,7 +703,7 @@ def _material_settings_draw(self, context):
             #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box, title='Smoothness')
             ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
             ugplus_matslot_draw(mps.ugplus_matslot_snow, box, title='Snow', allow_uv_wibbles=False)
-        if mps.ugplus_shader == 'PBR_Lightmapped':
+        if mps.ugplus_shader == 'PBR_Lightmapped' or mps.ugplus_shader == 'Glass':
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse')
             ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
             ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
@@ -994,44 +1025,46 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
     ###############################################################
     # NEW MATERIAL SYSTEM PROPERTIES
     ###############################################################
-    use_new_mats = BoolProperty(name="Use New Material System", description="(Underground+ 1.5+ only) Use the new modern material/shader system.")
+    use_new_mats = BoolProperty(name="Use New Material System", description="(Underground+ 1.5+ only) Use the new material/shader system")
     ugplus_shader = EnumProperty(
         name="Shader",
-        description="The shader to use for this material. Changes the available texture fields.",
+        description="The shader to use for this material",
         items=[
         ("None", "None", ""),
-        ("PBR", "Fake PBR", "General material shader. Supports diffuse/point lights, normal mapping, specular highlights/reflections, and weather masks."),
-        ("PBR_Lightmapped", "Lightmapped PBR", "Lightmapped material shader with up to 4 TOD-specific lightmaps. Primarily used for static scene mesh."),
-        ("Skybox", "Skybox", "Material shader supporting 4 separate textures based on TOD."),
-        ("Cloud", "Cloud", "Material with an appearance that fades/changes based on in-game weather settings (cloudiness)."),
-        ("Water", "Water", "Built-in water effect, creates a water surface using an animated texture."),
-        ("Water_Custom", "Water (Custom)", "Custom water effect using two normal maps and UV wibbles."),
-        ("Water_Displacement", "Water (Displacement)", "More expensive custom water effect using two normal maps, two displacement maps, and UV wibbles."),
+        ("PBR", "PBR", "General material shader. Supports diffuse/point lights, normal mapping, specular highlights/reflections, and weather masks"),
+        ("PBR_Lightmapped", "PBR (Lightmapped)", "Lightmapped material shader with up to 4 TOD-specific lightmaps. Primarily used for static scene mesh"),
+        ("Skybox", "Sky/TOD", "Material shader blending 4 diffuse textures based on in-game TOD"),
+        ("Cloud", "Cloud", "Material with an appearance that fades/changes based on in-game weather settings (cloudiness)"),
+        ("Water", "Water", "Built-in water effect, creates a water surface using an animated texture"),
+        ("Water_Custom", "Water (Custom)", "Custom water effect using two normal maps and UV wibbles"),
+        ("Water_Displacement", "Water (Displacement)", "More expensive custom water effect using two normal maps, two displacement maps, and UV wibbles"),
+        ("Glass", "Glass BRDF", "Glass effect, with refraction intensity controlled by vertex alpha"),
         ])
-    ugplus_trans = BoolProperty(name="Transparency", description="Enable transparency on this material.")
+    ugplus_trans = BoolProperty(name="Transparency", description="Enable transparency on this material")
+    ugplus_extra1 = FloatProperty(name="Extra 1", description="Shader-specific setting", min=0.001, max=16.0, default=0.05)
     
-    ugplus_matslot_diffuse = PointerProperty(type=UGPlusMaterialSlotProps, name="Diffuse", description="Base texture.")
-    ugplus_matslot_detail = PointerProperty(type=UGPlusMaterialSlotProps, name="Detail", description="Detail texture which is multiplied onto the diffuse pass.")
-    ugplus_matslot_normal = PointerProperty(type=UGPlusMaterialSlotProps, name="Normal", description="Normal map.")
-    ugplus_matslot_normal2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Normal #2", description="Normal map.")
-    ugplus_matslot_displacement = PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement", description="Displacement map.")
-    ugplus_matslot_displacement2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement 2", description="Displacement map #2.")
-    ugplus_matslot_specular = PointerProperty(type=UGPlusMaterialSlotProps, name="Specular", description="Intensity of specular reflections.")
+    ugplus_matslot_diffuse = PointerProperty(type=UGPlusMaterialSlotProps, name="Diffuse", description="Albedo/diffuse texture")
+    ugplus_matslot_detail = PointerProperty(type=UGPlusMaterialSlotProps, name="Detail", description="Detail texture which is multiplied onto the albedo")
+    ugplus_matslot_normal = PointerProperty(type=UGPlusMaterialSlotProps, name="Normal", description="Normal map (roughness in alpha channel)")
+    ugplus_matslot_normal2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Normal #2", description="Normal map")
+    ugplus_matslot_displacement = PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement", description="Displacement map")
+    ugplus_matslot_displacement2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement 2", description="Displacement map #2")
+    ugplus_matslot_specular = PointerProperty(type=UGPlusMaterialSlotProps, name="Metal", description="How metallic the surface is")
     # Eventually, roughness will be a separate texture that is mixed into the alpha channel for the normal texture
-    #ugplus_matslot_smoothness = PointerProperty(type=UGPlusMaterialSlotProps, name="Smoothness", description="Sharpness of specular reflections.")
-    ugplus_matslot_reflection = PointerProperty(type=UGPlusMaterialSlotProps, name="Reflection", description="Texture used for specular reflections.")
-    ugplus_matslot_lightmap = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture.")
-    ugplus_matslot_lightmap2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture.")
-    ugplus_matslot_lightmap3 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture.")
-    ugplus_matslot_lightmap4 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture.")
-    ugplus_matslot_weathermask = PointerProperty(type=UGPlusMaterialSlotProps, name="Rain Mask", description="Mask used for rain/snow effects.")
-    ugplus_matslot_snow = PointerProperty(type=UGPlusMaterialSlotProps, name="Snow", description="Snow texture.")
+    #ugplus_matslot_smoothness = PointerProperty(type=UGPlusMaterialSlotProps, name="Roughness", description="")
+    ugplus_matslot_reflection = PointerProperty(type=UGPlusMaterialSlotProps, name="Reflection", description="Texture used for specular reflections")
+    ugplus_matslot_lightmap = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
+    ugplus_matslot_lightmap2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
+    ugplus_matslot_lightmap3 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
+    ugplus_matslot_lightmap4 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
+    ugplus_matslot_weathermask = PointerProperty(type=UGPlusMaterialSlotProps, name="Rain Mask", description="Mask used for rain/snow effects")
+    ugplus_matslot_snow = PointerProperty(type=UGPlusMaterialSlotProps, name="Snow", description="Snow texture")
         
-    ugplus_matslot_fallback = PointerProperty(type=UGPlusMaterialSlotProps, name="Fallback", description="Texture used on lower graphics settings/lower shader detail settings.")
-    ugplus_matslot_diffuse_night = PointerProperty(type=UGPlusMaterialSlotProps, name="Night", description="Texture used when the TOD is night.")
-    ugplus_matslot_diffuse_evening = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is evening.")
-    ugplus_matslot_diffuse_morning = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is morning.")
-    ugplus_matslot_cloud = PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active.")
+    ugplus_matslot_fallback = PointerProperty(type=UGPlusMaterialSlotProps, name="Fallback", description="Texture used on lower graphics settings/lower shader detail settings")
+    ugplus_matslot_diffuse_night = PointerProperty(type=UGPlusMaterialSlotProps, name="Night", description="Texture used when the TOD is night")
+    ugplus_matslot_diffuse_evening = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is evening")
+    ugplus_matslot_diffuse_morning = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is morning")
+    ugplus_matslot_cloud = PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active")
     ###############################################################
     
 #----------------------------------------------------------------------------------

@@ -90,9 +90,6 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                 need_vertex_normals = False
                 for env_test in ob.data.materials:
                     if hasattr(env_test, 'thug_material_props') and env_test.thug_material_props.specular_power > 0.0:
-                        #print("-----------------------------------------------")
-                        #print("Exporting vertex normals for specular material")
-                        #print("-----------------------------------------------")
                         need_vertex_normals = True
                         
                     # Always export normals when using Underground+ materials/shaders
@@ -210,9 +207,6 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                         w("H", int(original_object.vertex_groups[v.weights[1][0]].name))
                         w("H", int(original_object.vertex_groups[v.weights[2][0]].name))
                         w("H", int(original_object.vertex_groups[v.weights[3][0]].name))
-                        #for group, weight in v.weights:
-                        #    #print("Bone index: " + str(int(original_object.vertex_groups[group].name) * 3))
-                            #w("H", int(original_object.vertex_groups[group].name) * 3)
                         
                     print("Done...")
                     
