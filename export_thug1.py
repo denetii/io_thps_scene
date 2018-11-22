@@ -88,6 +88,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                 # - Environment mapped textures (normals need to be exported)
                 # - Valid UV map assignments (must be in the correct order!)
                 need_vertex_normals = False
+                has_new_shaders = False
                 for env_test in ob.data.materials:
                     if hasattr(env_test, 'thug_material_props') and env_test.thug_material_props.specular_power > 0.0:
                         need_vertex_normals = True
@@ -95,6 +96,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                     # Always export normals when using Underground+ materials/shaders
                     if hasattr(env_test, 'thug_material_props') and env_test.thug_material_props.use_new_mats:
                         need_vertex_normals = True
+                        has_new_shaders = True
                     
                     if not hasattr(env_test, 'texture_slots'): continue
                     _tmp_passes = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
@@ -221,16 +223,17 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                         for i in range(0, uv_total):
                             w("2f", *v.uvs[i])
 
-                FULL_WHITE = (0.5, 0.5, 0.5, 1.0)
+                FULL_WHITE = (1.0, 1.0, 1.0, 1.0)
+                VC_MULT = 255 if (is_levelobject or has_new_shaders) else 128
                 if flags & SECFLAGS_HAS_VERTEX_COLORS:
                     for v in split_verts.keys():
                         r, g, b, a = v.vc or FULL_WHITE
                         if is_levelobject:
                             r, g, b, a = FULL_WHITE
                         a = (int(a * 255) & 0xff) << 24
-                        r = (int(r * 255) & 0xff) << 16
-                        g = (int(g * 255) & 0xff) << 8
-                        b = (int(b * 255) & 0xff) << 0
+                        r = (int(r * VC_MULT) & 0xff) << 16
+                        g = (int(g * VC_MULT) & 0xff) << 8
+                        b = (int(b * VC_MULT) & 0xff) << 0
                         w("I", a | r | g | b)
 
                 for mat_index, mat_faces in mats_to_faces.items():

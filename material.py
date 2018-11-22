@@ -18,18 +18,17 @@ from . tex import *
 def ugplus_material_update(mat, context):
     return
 
-# Checks if our PBR material is fully diffuse (full roughness, non-metallic), 
-# so we can use Diffuse BRDF rather than the full PBR shader
+# Checks if our PBR material is completely diffuse (non-metallic, 0 reflectance), 
+# so we can use the less expensive Diffuse BRDF rather than the full PBR shader
 def is_full_diffuse(mat):
-    if not mat.thug_material_props.ugplus_matslot_snow.tex_image:
-        if not mat.thug_material_props.ugplus_matslot_normal.tex_image:
-            if mat.thug_material_props.ugplus_matslot_normal.tex_color[3] == 1.0:
-                if not mat.thug_material_props.ugplus_matslot_specular.tex_image:
-                    if mat.thug_material_props.ugplus_matslot_specular.tex_color[0] == 0.0:
-                        return True
-                
+    if not mat.thug_material_props.ugplus_matslot_specular.tex_image:
+        for i in range(4):
+            if mat.thug_material_props.ugplus_matslot_specular.tex_color[i] != 0.0:
+                return False
+        if not mat.thug_material_props.ugplus_matslot_weathermask.tex_image:
+            return True
     return False
-        
+
 def _ensure_default_material_exists():
     if "_THUG_DEFAULT_MATERIAL_" in bpy.data.materials:
         return
@@ -222,9 +221,17 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     
     mprops = m.thug_material_props
     
-    shader_id = 5.40 # PBR
+    shader_id = 0.0
+    if mprops.ugplus_shader == 'PBR':
+        shader_id = 5.40
+        if is_full_diffuse(m):
+            print("Converting to Diffuse BRDF!")
+            shader_id = 48.0
     if mprops.ugplus_shader == 'PBR_Lightmapped':
         shader_id = 8.0
+        if is_full_diffuse(m):
+            print("Converting to Diffuse BRDF (Lightmapped)!")
+            shader_id = 49.0
     elif mprops.ugplus_shader == 'Water':
         shader_id = 1.08
     elif mprops.ugplus_shader == 'Water_Custom':
@@ -237,12 +244,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         shader_id = 16.0
     elif mprops.ugplus_shader == 'Glass':
         shader_id = 32.0
-
+        
     mat_flags = 0
     
     export_textures = []
     # Now we export the textures in a specific order, depending on the shader
-    if mprops.ugplus_shader == 'PBR':
+    if mprops.ugplus_shader == 'PBR' or mprops.ugplus_shader == 'Diffuse':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
@@ -253,10 +260,10 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
         
         # Mark the material as having a displacement map (POM) if the tex slot is used
-        if mprops.ugplus_matslot_reflection.tex_image != None:
+        if mprops.ugplus_extra1 != 0.0 and mprops.ugplus_matslot_reflection.tex_image != None:
             mat_flags = 1
             
-    elif mprops.ugplus_shader == 'PBR_Lightmapped' or mprops.ugplus_shader == 'Glass':
+    elif mprops.ugplus_shader == 'PBR_Lightmapped' or mprops.ugplus_shader == 'Glass' or mprops.ugplus_shader == 'Diffuse_Lightmapped':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
@@ -270,7 +277,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
         
         # Mark the material as having a displacement map (POM) if the tex slot is used
-        if mprops.ugplus_matslot_reflection.tex_image != None:
+        if mprops.ugplus_extra1 != 0.0 and mprops.ugplus_matslot_reflection.tex_image != None:
             mat_flags = 1
         
     elif mprops.ugplus_shader == 'Skybox':
@@ -283,19 +290,13 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_cloud, 'flags': 0 })
         
     elif mprops.ugplus_shader == 'Water':
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 }) 
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 }) 
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 }) 
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
         
     elif mprops.ugplus_shader == 'Water_Custom':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal2, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
-        #export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 }) 
@@ -312,7 +313,6 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
-        #export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': MATFLAG_BUMP_LOAD_MATRIX })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
         
     num_passes = 4 if len(export_textures) > 4 else len(export_textures)
@@ -342,8 +342,8 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     w("f", shader_id)  # Shader ID (previously Specular power)
     if shader_id > 0.0: # Additional material props (replaces specular color field)
         w("f", mprops.ugplus_extra1)
-        w("f", mprops.ugplus_extra1) # Reserved for future use
-        w("f", mprops.ugplus_extra1) # Reserved for future use
+        w("f", mprops.ugplus_extra2)
+        w("f", mprops.ugplus_extra3)
         
     # Export all the textures we need for the shader, as gathered above
     tex_count = -1
@@ -384,6 +384,8 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
             pass_flags |= MATFLAG_UV_WIBBLE
         if tex_count == 0 and mprops.ugplus_trans:
             pass_flags |= MATFLAG_TRANSPARENT
+        if tex_count == 0 and mprops.ugplus_shader == 'Water':
+            pass_flags |= MATFLAG_WATER_EFFECT
         
         w("I", pass_flags)  # flags # 4132
         w("?", True)  # has color flag; seems to be ignored
@@ -602,11 +604,12 @@ def _material_pass_settings_draw(self, context):
             pass_props,
             attr)
             
-    box = self.layout.box().column(True)
+    box = self.layout.box().column()
     box.row().prop(pass_props, "pf_textured")
     img = getattr(ob.active_material.active_texture, 'image', None)
     if img and pass_props.pf_textured:
         box.row().prop(img.thug_image_props, 'compression_type')
+        box.row().prop(img.thug_image_props, 'img_flags')
     box.row().prop(pass_props, "pf_bump")
     box.row().prop(pass_props, "pf_water")
     box.row().prop(pass_props, "pf_environment")
@@ -683,10 +686,11 @@ def _material_settings_draw(self, context):
             row.separator()
             split = row.split()
             c = split.column()
-            extra1_label = 'Reflectivity (F0)'
             if mps.ugplus_shader.startswith('Water'):
-                extra1_label = 'Bump Strength'
-            c.prop(mps, "ugplus_extra1", text=extra1_label)
+                c.prop(mps, "ugplus_extra1", text='Bump Strength')
+            elif mps.ugplus_matslot_reflection.tex_image != None:
+                c.prop(mps, "ugplus_extra1", text='Disp Strength')
+            
             split = split.split()
             c = split.column()
             c.prop(mps, "ugplus_trans", toggle=False)
@@ -767,10 +771,19 @@ def _material_settings_draw(self, context):
 #############################################
 class THUGImageProps(bpy.types.PropertyGroup):
     compression_type = EnumProperty(items=(
-        ("DXT1", "DXT1", "DXT1. 1-bit alpha. 1:8 compression for RGBA, 1:6 for RGB."),
-        ("DXT5", "DXT5", "DXT5. Full alpha. 1:4 compression.")),
+        ("DXT1", "DXT1", "DXT1. 1-bit alpha. 1:8 compression for RGBA, 1:6 for RGB"),
+        ("DXT5", "DXT5", "DXT5. Full alpha. 1:4 compression")),
     name="Compression Type",
     default="DXT1")
+    
+    img_flags = EnumProperty(items=(
+        ("1", "Invert Alpha", "Invert alpha channel on this image"),
+        ("2", "Grayscale", "Export as grayscale")
+        ),
+        name="Options", 
+        description="Flags/options used when exporting to the tex file", 
+        options={'ENUM_FLAG'} )
+        
 #----------------------------------------------------------------------------------
 class AddTextureKeyframe(bpy.types.Operator):
     bl_idname = "object.thug_add_texture_keyframe"
@@ -1031,17 +1044,21 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         description="The shader to use for this material",
         items=[
         ("None", "None", ""),
-        ("PBR", "PBR", "General material shader. Supports diffuse/point lights, normal mapping, specular highlights/reflections, and weather masks"),
-        ("PBR_Lightmapped", "PBR (Lightmapped)", "Lightmapped material shader with up to 4 TOD-specific lightmaps. Primarily used for static scene mesh"),
+        ("PBR", "Specular BDRF", "PBR shader with reflectivity and IBL"),
+        ("PBR_Lightmapped", "Specular BRDF (Lightmapped)", "Lightmapped PBR shader"),
         ("Skybox", "Sky/TOD", "Material shader blending 4 diffuse textures based on in-game TOD"),
         ("Cloud", "Cloud", "Material with an appearance that fades/changes based on in-game weather settings (cloudiness)"),
         ("Water", "Water", "Built-in water effect, creates a water surface using an animated texture"),
         ("Water_Custom", "Water (Custom)", "Custom water effect using two normal maps and UV wibbles"),
         ("Water_Displacement", "Water (Displacement)", "More expensive custom water effect using two normal maps, two displacement maps, and UV wibbles"),
         ("Glass", "Glass BRDF", "Glass effect, with refraction intensity controlled by vertex alpha"),
+        ("Diffuse", "Diffuse BRDF", "PBR shader, without reflectivity"),
+        ("Diffuse_Lightmapped", "Diffuse BRDF (Lightmapped)", "PBR shader, without reflectivity"),
         ])
     ugplus_trans = BoolProperty(name="Transparency", description="Enable transparency on this material")
-    ugplus_extra1 = FloatProperty(name="Extra 1", description="Shader-specific setting", min=0.001, max=16.0, default=0.05)
+    ugplus_extra1 = FloatProperty(name="Extra 1", description="Shader-specific setting", default=0.0)
+    ugplus_extra2 = FloatProperty(name="Extra 2", description="Shader-specific setting", default=0.0)
+    ugplus_extra3 = FloatProperty(name="Extra 3", description="Shader-specific setting", default=0.0)
     
     ugplus_matslot_diffuse = PointerProperty(type=UGPlusMaterialSlotProps, name="Diffuse", description="Albedo/diffuse texture")
     ugplus_matslot_detail = PointerProperty(type=UGPlusMaterialSlotProps, name="Detail", description="Detail texture which is multiplied onto the albedo")

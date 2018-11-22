@@ -18,6 +18,13 @@ import bpy
 def np_from_image(img):
     return np.array(img.pixels[:])
 
+# Flattens RGB data from pixels into a single grayscale channel
+def rgb_to_grayscale(pixels):
+    channel_r = pixels[0::4]
+    channel_g = pixels[1::4]
+    channel_b = pixels[2::4]
+    return (channel_r + channel_g + channel_b) / 3.0
+    
 def clear_img_channel(img, chn):
     img_pixels = np_from_image(img)
     channels = [ 'r', 'g', 'b', 'a' ]
@@ -25,6 +32,12 @@ def clear_img_channel(img, chn):
     img_pixels[channel_num::4] = 0.0
     img.pixels = img_pixels.tolist()
     del img_pixels
+    
+def invert_img_channel(img_pixels, chn):
+    channels = [ 'r', 'g', 'b', 'a' ]
+    channel_num = channels.index(chn)
+    img_pixels[channel_num::4] = [ (255 - x) for x in img_pixels[channel_num::4] ]
+    return img_pixels
 
 def get_all_compressed_mipmaps(image, compression_type, mm_offset):
     import bgl, math
@@ -122,6 +135,13 @@ def get_all_mipmaps(image, mm_offset = 0):
         # LOG.debug(buf_size)
         buf = bgl.Buffer(bgl.GL_BYTE, buf_size)
         bgl.glGetTexImage(bgl.GL_TEXTURE_2D, level, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buf)
+        
+        if '1' in image.thug_image_props.img_flags:
+            print('Inverting alpha!')
+            pixels = invert_img_channel(buf.to_list(), 'a')
+            del buf
+            buf = bgl.Buffer(bgl.GL_BYTE, buf_size, pixels)
+            
         images.append((width, height, buf))
         if level == 0:
             pass # LOG.debug(images[0][:16])
@@ -335,7 +355,7 @@ def export_tex(filename, directory, target_game, operator=None):
             # Make sure we always export textures which are plugged into the new material/shader system
             # Also need to generate a texture based on a specified color, if no texture was used
             export_textures = []
-            if m.thug_material_props.ugplus_shader == 'PBR':
+            if m.thug_material_props.ugplus_shader == 'PBR' or m.thug_material_props.ugplus_shader == 'Diffuse':
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
@@ -350,9 +370,11 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_weathermask)
                 set_image_compression(m.thug_material_props.ugplus_matslot_weathermask, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
+                set_image_compression(m.thug_material_props.ugplus_matslot_snow, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_specular)
+                set_image_compression(m.thug_material_props.ugplus_matslot_specular, 'DXT5')
                 
-            if m.thug_material_props.ugplus_shader == 'PBR_Lightmapped' or m.thug_material_props.ugplus_shader == 'Glass':
+            if m.thug_material_props.ugplus_shader == 'PBR_Lightmapped' or m.thug_material_props.ugplus_shader == 'Glass' or m.thug_material_props.ugplus_shader == 'Diffuse_Lightmapped':
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
@@ -370,7 +392,9 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_weathermask)
                 set_image_compression(m.thug_material_props.ugplus_matslot_weathermask, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
+                set_image_compression(m.thug_material_props.ugplus_matslot_snow, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_specular)
+                set_image_compression(m.thug_material_props.ugplus_matslot_specular, 'DXT5')
                 
             elif m.thug_material_props.ugplus_shader == 'Skybox':
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
@@ -385,11 +409,6 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
                 set_image_compression(m.thug_material_props.ugplus_matslot_fallback, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
-                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
-                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
-                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
-                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
-                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 
             elif m.thug_material_props.ugplus_shader == 'Water_Custom':
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)

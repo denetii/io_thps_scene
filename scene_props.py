@@ -1305,7 +1305,10 @@ def register_props():
             ("VERTEX_COLORS", "Vertex Colors (BR)", "Bake lighting to vertex colors. Fast and cheap, accuracy depends on mesh density."),
             ("LIGHT_BI", "Lighting Only (BR)", "Bake lighting to texture and mix with original textures."),
             ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture."),
-            ("AO", "Ambient Occlusion (BR)", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting.")],
+            ("AO", "Ambient Occlusion (BR)", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting."),
+            ("SHADOW", "Shadow (Cycles)", "Bakes only shadow contributions. Faster, not photorealistic."),
+            ("INDIRECT", "Indirect (Cycles)", "Bakes only indirect lighting contribution.")
+            ],
         default="LIGHT_BI", 
         description="Type of bakes to use for this scene.")
     bpy.types.Scene.thug_bake_slot = EnumProperty(

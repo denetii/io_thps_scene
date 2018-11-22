@@ -375,7 +375,7 @@ def bake_thug_lightmaps(meshes, context):
         for ob in context.selected_objects:
             ob.select = False
             
-    is_cycles = ( scene.thug_bake_type in [ 'LIGHT', 'FULL' ] )
+    is_cycles = ( scene.thug_bake_type in [ 'LIGHT', 'FULL', 'SHADOW', 'INDIRECT' ] )
     if is_cycles:
         print("USING CYCLES RENDER ENGINE FOR BAKING!")
     else:
@@ -539,7 +539,7 @@ def bake_thug_lightmaps(meshes, context):
         #-----------------------------------------------------------------------------------------
         # For FULL bakes, we just need to loop through all the Cycles mats and add the image slot
         # to store the bake result, pretty easy!
-        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT':
+        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT' or scene.thug_bake_type == 'INDIRECT' or scene.thug_bake_type == 'SHADOW':
             orig_index = ob.active_material_index
             store_materials(ob)
             
@@ -560,7 +560,7 @@ def bake_thug_lightmaps(meshes, context):
                 blender_tex = bpy.data.textures.get("Baked_{}".format(ob.name))
             blender_tex.image = image
             blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_BLEND'
-            if scene.thug_bake_type == 'LIGHT':
+            if scene.thug_bake_type == 'LIGHT' or scene.thug_bake_type == 'INDIRECT' or scene.thug_bake_type == 'SHADOW':
                 blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_MODULATE'
             
             if is_cycles:
@@ -653,11 +653,19 @@ def bake_thug_lightmaps(meshes, context):
         
         # Bake the lightmap for Cycles!
         if is_cycles:
-            scene.cycles.bake_type = 'DIFFUSE'
-            if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI':
-                bpy.context.scene.render.bake.use_pass_color = True
+            if scene.thug_bake_type == 'SHADOW':
+                scene.cycles.bake_type = 'SHADOW'
             else:
-                bpy.context.scene.render.bake.use_pass_color = False
+                scene.cycles.bake_type = 'DIFFUSE'
+                if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI':
+                    bpy.context.scene.render.bake.use_pass_color = True
+                else:
+                    bpy.context.scene.render.bake.use_pass_color = False
+                    if scene.thug_bake_type == 'INDIRECT':
+                        bpy.context.scene.render.bake.use_pass_direct = False
+                    else:
+                        bpy.context.scene.render.bake.use_pass_direct = True
+                        
             if scene.thug_bake_automargin:
                 scene.render.bake_margin = 1 # Used to be bake_margin
             if ob.thug_lightmap_quality != 'Custom':
@@ -677,7 +685,10 @@ def bake_thug_lightmaps(meshes, context):
                     scene.cycles.samples = 450
                     scene.cycles.max_bounces = 8
             print("Using {} bake quality. Samples: {}, bounces: {}".format(ob.thug_lightmap_quality, scene.cycles.samples, scene.cycles.max_bounces))
-            bpy.ops.object.bake(type='DIFFUSE')
+            if scene.thug_bake_type == 'SHADOW':
+                bpy.ops.object.bake(type='SHADOW')
+            else:
+                bpy.ops.object.bake(type='DIFFUSE')
             
         # Bake the lightmap for BI!
         else:
@@ -691,7 +702,7 @@ def bake_thug_lightmaps(meshes, context):
         baked_obs.append(ob.name)
         bpy.ops.object.mode_set(mode='OBJECT')
         
-        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT':
+        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT' or scene.thug_bake_type == 'INDIRECT' or scene.thug_bake_type == 'SHADOW':
             ob.active_material_index = orig_index
         
         else:
