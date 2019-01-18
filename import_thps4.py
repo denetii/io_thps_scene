@@ -479,6 +479,7 @@ def import_col_thps4(filename, directory):
         bm = bmesh.new()
         cfl = bm.faces.layers.int.new("collision_flags")
         ttl = bm.faces.layers.int.new("terrain_type")
+        intensity_layer = bm.loops.layers.color.new("intensity")
 
         p("obj ", i)
         obj_checksum = p("  checksum: {}", to_hex_string(r.u32()))
@@ -508,6 +509,8 @@ def import_col_thps4(filename, directory):
         #p("I am at: {}", r.offset)
         #if i > 2:
         #    raise Exception("Test")
+        per_vert_data = {}
+        
         for j in range(obj_num_verts):
             if obj_use_fixed:
                 v = r.read("HHH")
@@ -516,9 +519,13 @@ def import_col_thps4(filename, directory):
                      obj_bbox_min[2] + v[2] * 0.0625)
             else:
                 v = r.read("3f")
-                r.read("4B") # intensity data
-            bm.verts.new((v[0], -v[2], v[1]))
-
+                tmp_intensity = r.read("4B") # intensity data
+                
+            new_vert = bm.verts.new((v[0], -v[2], v[1]))
+            if not obj_use_fixed:
+                per_vert_data[new_vert] = {}
+                per_vert_data[new_vert]["intensity"] = tmp_intensity
+                
         r.offset = base_face_offset + obj_first_face_offset
         for j in range(obj_num_faces):
             face_flags = r.u16()
@@ -548,6 +555,13 @@ def import_col_thps4(filename, directory):
             except ValueError:
                 pass
             
+            
+        for face in bm.faces:
+            for loop in face.loops:
+                pvd = per_vert_data.get(loop.vert)
+                if not pvd: continue
+                loop[intensity_layer] = (pvd["intensity"][0] / 255.0, pvd["intensity"][1] / 255.0, pvd["intensity"][2] / 255.0)
+                    
         bm.to_mesh(blender_mesh)
         blender_object.thug_export_scene = False
         to_group(blender_object, "CollisionMesh")

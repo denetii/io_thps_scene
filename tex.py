@@ -15,6 +15,30 @@ import numpy as np
 
 import bpy
 
+
+# Get or generate a new image, given the image name/dimensions
+def get_image(img_name, img_width, img_height):
+    if not bpy.data.images.get(img_name):
+        bpy.ops.image.new(name=img_name, width=img_width, height=img_height)
+        image = bpy.data.images[img_name]
+    else:
+        image = bpy.data.images.get(img_name)
+    return image
+    
+# Returns an image object or None if there is no image found
+def maybe_get_image(img_name):
+    if not bpy.data.images.get(img_name):
+        return None
+    return bpy.data.images.get(img_name)
+
+# Get or generate a new texture, given the texture name
+def get_texture(tex_name):
+    if not bpy.data.textures.get(tex_name):
+        blender_tex = bpy.data.textures.new(tex_name, "IMAGE")
+    else:
+        blender_tex = bpy.data.textures.get(tex_name)
+    return blender_tex
+    
 def np_from_image(img):
     return np.array(img.pixels[:])
 
@@ -38,6 +62,16 @@ def invert_img_channel(img_pixels, chn):
     channel_num = channels.index(chn)
     img_pixels[channel_num::4] = [ (255 - x) for x in img_pixels[channel_num::4] ]
     return img_pixels
+
+# Replaces a color channel of one texture with those of another
+def replace_img_channel(source_img, mix_img, chn):
+    channels = [ 'r', 'g', 'b', 'a' ]
+    channel_num = channels.index(chn)
+    pixels = np_from_image(source_img)
+    pixels2 = np_from_image(mix_img)
+    pixels[channel_num::4] = rgb_to_grayscale(pixels2)
+    source_img.pixels = pixels.tolist()
+    source_img.update()
 
 def get_all_compressed_mipmaps(image, compression_type, mm_offset):
     import bgl, math
@@ -386,9 +420,13 @@ def export_tex(filename, directory, target_game, operator=None):
                     set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT1')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap2, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap3, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap4, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_weathermask)
                 set_image_compression(m.thug_material_props.ugplus_matslot_weathermask, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
@@ -419,9 +457,13 @@ def export_tex(filename, directory, target_game, operator=None):
                 set_image_compression(m.thug_material_props.ugplus_matslot_fallback, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap2, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap3, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap4, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 
             elif m.thug_material_props.ugplus_shader == 'Water_Displacement':
@@ -437,9 +479,13 @@ def export_tex(filename, directory, target_game, operator=None):
                 set_image_compression(m.thug_material_props.ugplus_matslot_fallback, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap2, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap3, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
+                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap4, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
             
             for tex in export_textures:

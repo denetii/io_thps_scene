@@ -19,6 +19,7 @@ from . export_shared import *
 from . import_nodes import *
 from . presets import *
 from . import script_template
+from mathutils import Vector
 
 # PROPERTIES
 #############################################
@@ -136,7 +137,54 @@ def draw_stuff():
                         glVertex3f(v[0], v[1], v[2])
                         glEnd()
 
+                # Draw previews for area lights - tube/sphere lights and area lights
+                if (ob and ob.type == 'LAMP'):
+                    if ob.data.thug_light_props.light_type == 'TUBE':
+                        if ob.data.thug_light_props.light_end_pos != (0, 0, 0):
+                            glBegin(GL_LINES)
+                            bgl.glColor4f(1.0, 0.75, 0.25, 1.0)
+                            glVertex3f(ob.location[0], ob.location[1], ob.location[2])
+                            glVertex3f(ob.location[0] + ob.data.thug_light_props.light_end_pos[0], ob.location[1] + ob.data.thug_light_props.light_end_pos[1], ob.location[2] + ob.data.thug_light_props.light_end_pos[2])
+                            glEnd()
+                        continue
+                    elif ob.data.thug_light_props.light_type == 'SPHERE':
+                        continue
+                    elif ob.data.thug_light_props.light_type == 'AREA':
+                        continue
+                    else:
+                        continue
+                elif (ob and ob.type == 'EMPTY'):
+                    if ob.thug_empty_props.empty_type == 'LightVolume':
+                        # Draw light volume bbox!
+                        bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_lightvolume(ob)
+                        
+                        # 50% alpha, 2 pixel width line
+                        bgl.glEnable(bgl.GL_BLEND)
+                        bgl.glColor4f(1.0, 0.0, 0.0, 0.5)
+                        bgl.glLineWidth(4)
+                        
+                        glBegin(bgl.GL_LINE_STRIP)
+                        bgl.glVertex3f(*bbox[0])
+                        bgl.glVertex3f(*bbox[1])
+                        bgl.glVertex3f(*bbox[2])
+                        bgl.glVertex3f(*bbox[3])
+                        bgl.glVertex3f(*bbox[0])
+                        bgl.glVertex3f(*bbox[4])
+                        bgl.glVertex3f(*bbox[5])
+                        bgl.glVertex3f(*bbox[6])
+                        bgl.glVertex3f(*bbox[7])
+                        bgl.glVertex3f(*bbox[4])
+                        bgl.glEnd()
 
+                        bgl.glBegin(bgl.GL_LINES)
+                        bgl.glVertex3f(*bbox[1])
+                        bgl.glVertex3f(*bbox[5])
+                        bgl.glVertex3f(*bbox[2])
+                        bgl.glVertex3f(*bbox[6])
+                        bgl.glVertex3f(*bbox[3])
+                        bgl.glVertex3f(*bbox[7])
+                        glEnd()
+                        
                 if not ob or ob.type != "MESH":
                     continue
 

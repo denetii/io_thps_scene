@@ -55,7 +55,10 @@ def get_split_vert_for_loop(mesh, bm, l, flags):
     if len(bm.loops.layers.color) and flags & SECFLAGS_HAS_VERTEX_COLORS:
         #vcs = l[bm.loops.layers.color.active]
         vc_layer = bm.loops.layers.color.get("color")
-        if vc_layer:
+        bake_layer = bm.loops.layers.color.get("bake")
+        if bake_layer:
+            vcs = [ l[bake_layer].r, l[bake_layer].g, l[bake_layer].b ]
+        elif vc_layer:
             vcs = [ l[vc_layer].r, l[vc_layer].g, l[vc_layer].b ]
         else:
             #print("No vertex color layer, using white!")

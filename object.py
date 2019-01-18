@@ -24,14 +24,22 @@ def _thug_object_settings_draw(self, context):
     # ********************************************************
     # * LEVEL LIGHT
     # ********************************************************
-    if ob.type == "LAMP" and ob.data.type == "POINT":
+    if ob.type == "LAMP" and ob.data.type in ["POINT", "AREA"]:
         row = self.layout.row()
         row.column().prop(ob, "thug_created_at_start", toggle=True, icon='MOD_BUILD')
         row.column().prop(ob, "thug_network_option", text='')
         box = self.layout.box().column()
+        box.row().prop(ob.data.thug_light_props, "light_type")
+        if ob.data.thug_light_props.light_type == 'TUBE':
+            box.row().prop(ob.data.thug_light_props, "light_end_pos")
+        if ob.data.thug_light_props.light_type == 'TUBE' or  ob.data.thug_light_props.light_type == 'SPHERE':
+            box.row().prop(ob.data.thug_light_props, "light_radius")
+        elif ob.data.thug_light_props.light_type == 'AREA':
+            box.row().prop(ob.data.thug_light_props, "light_area")
+        else:
+            box.row().prop(ob.data.thug_light_props, "light_radius")
         box.row().prop(ob.data, "color")
         box.row().prop(ob.data, "energy")
-        box.row().prop(ob.data.thug_light_props, "light_radius")
         row = box.row()
         row.column().prop(ob.data.thug_light_props, "light_excludeskater")
         row.column().prop(ob.data.thug_light_props, "light_excludelevel")
@@ -57,12 +65,27 @@ def _thug_object_settings_draw(self, context):
             row = box.row()
             row.column().prop(ob.thug_restart_props, "restart_ctf")
         # ********************************************************
-        # * CUBEMAP PROBE 
+        # * REFLECTION PROBE 
         # ********************************************************
         if ob.thug_empty_props.empty_type == 'CubemapProbe':
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_cubemap_props, "resolution")
             box.row().prop(ob.thug_cubemap_props, "size")
+            
+        # ********************************************************
+        # * LIGHT PROBE 
+        # ********************************************************
+        if ob.thug_empty_props.empty_type == 'LightProbe':
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_cubemap_props, "resolution")
+            box.row().prop(ob.thug_cubemap_props, "size")
+            
+        # ********************************************************
+        # * LIGHT VOLUME 
+        # ********************************************************
+        if ob.thug_empty_props.empty_type == 'LightVolume':
+            box = self.layout.box().column(True)
+            box.row().prop(ob.thug_lightvolume_props, "box_size")
             
         # ********************************************************
         # * PROXIMNODE 

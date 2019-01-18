@@ -328,7 +328,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     w("I", mat_flags)  # alpha cutoff (actually an unsigned byte)
     w("?", mprops.sorted)  # sorted?
     w("f", mprops.draw_order)  # draw order
-    w("?", mprops.single_sided)  # single sided
+    w("?", (mprops.no_backface_culling == False))  # single sided
     w("?", mprops.no_backface_culling)  # no backface culling
     w("i", mprops.z_bias)  # z-bias
 
@@ -1044,16 +1044,16 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         description="The shader to use for this material",
         items=[
         ("None", "None", ""),
-        ("PBR", "Specular BDRF", "PBR shader with reflectivity and IBL"),
-        ("PBR_Lightmapped", "Specular BRDF (Lightmapped)", "Lightmapped PBR shader"),
+        ("PBR", "PBR - Dynamic", "PBR material shader with fully dynamic lighting (most expensive)"),
+        ("PBR_Lightmapped", "PBR - Solid", "PBR shader with baked shadows/indirect light"),
         ("Skybox", "Sky/TOD", "Material shader blending 4 diffuse textures based on in-game TOD"),
         ("Cloud", "Cloud", "Material with an appearance that fades/changes based on in-game weather settings (cloudiness)"),
         ("Water", "Water", "Built-in water effect, creates a water surface using an animated texture"),
-        ("Water_Custom", "Water (Custom)", "Custom water effect using two normal maps and UV wibbles"),
-        ("Water_Displacement", "Water (Displacement)", "More expensive custom water effect using two normal maps, two displacement maps, and UV wibbles"),
-        ("Glass", "Glass BRDF", "Glass effect, with refraction intensity controlled by vertex alpha"),
-        ("Diffuse", "Diffuse BRDF", "PBR shader, without reflectivity"),
-        ("Diffuse_Lightmapped", "Diffuse BRDF (Lightmapped)", "PBR shader, without reflectivity"),
+        ("Water_Custom", "Water - Custom", "Custom water effect using two normal maps and UV wibbles"),
+        ("Water_Displacement", "Water - Displacement", "More expensive custom water effect using two normal maps, two displacement maps, and UV wibbles"),
+        ("Glass", "PBR - Glass", "Glass effect"),
+        ("Diffuse", "PBR - Static", "PBR shader with fully baked diffuse lighting"),
+        ("Diffuse_Lightmapped", "PBR - Diffuse Static", "PBR shader with fully baked diffuse lighting and no reflectivity"),
         ])
     ugplus_trans = BoolProperty(name="Transparency", description="Enable transparency on this material")
     ugplus_extra1 = FloatProperty(name="Extra 1", description="Shader-specific setting", default=0.0)

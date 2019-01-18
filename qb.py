@@ -9,6 +9,7 @@ from . constants import *
 from . autorail import *
 from . helpers import *
 from . import script_template
+from mathutils import Vector
 
 # PROPERTIES
 #############################################
@@ -300,7 +301,7 @@ def export_qb(filename, directory, target_game, operator=None):
     
                 if col_ob.thug_occluder:
                     p("\t\t:i {}".format(c("Occluder")))
-                elif col_ob.thug_created_at_start:
+                if col_ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
                 if col_ob.thug_network_option != "Default":
                     p("\t\t:i {}".format(c(col_ob.thug_network_option)))
@@ -1193,6 +1194,61 @@ def export_qb(filename, directory, target_game, operator=None):
                     irr_file = "{}\{}_Irradiance.dds".format(filename, ob.name)
                     p("\t:i $UGPlus_AddCubemapProbe$ $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $size$ = {} $tex_file$ = {} $irr_file$ = {}".format( f(cm_pos[0]), f(cm_pos[1]), f(cm_pos[2]), f(ob.thug_cubemap_props.size), blub_str(cm_file), blub_str(irr_file)) )
             p(":i endfunction")
+            
+            # Export script for adding PBR area lights into the level
+            if not script_exists("AddPBRLights"):
+                print("Writing script AddPBRLights...")
+                p(":i function $AddPBRLights$")
+                # We need to add the light bounding volumes first, as the lights immediately check for these when added
+                for ob in bpy.data.objects:
+                    if ob.type == 'EMPTY' and hasattr(ob, 'thug_empty_props') and ob.thug_empty_props.empty_type == 'LightVolume':
+                        # Get light volume min/max coords and export
+                        bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_lightvolume(ob)
+                        p("\t:i $UGPlus_AddLightVolume$ $box_min$ = {} $box_max$ = {} $box_mid$ = {}".format( 
+                            v3(bbox_min), v3(bbox_max), v3(bbox_mid)))
+                        
+                for ob in bpy.data.objects:
+                    if ob.type == 'LAMP' and hasattr(ob.data, 'thug_light_props'):
+                        lightprops = ob.data.thug_light_props
+                        # Collect light properties for QB export
+                        tmpl_type = lightprops.light_type
+                        tmpl_radius = lightprops.light_area[0] if lightprops.light_type == 'AREA' else lightprops.light_radius[0]
+                        if lightprops.light_type == 'POINT':
+                            tmpl_radius = 0.0
+                        tmpl_height = lightprops.light_area[1] if lightprops.light_type == 'AREA' else 0.0
+                        cm_pos = to_thug_coords(ob.location)
+                        cm_end_pos = to_thug_coords(lightprops.light_end_pos)
+                        tmpl_x = cm_pos[0]
+                        tmpl_y = cm_pos[1]
+                        tmpl_z = cm_pos[2]
+                        tmpl_r = ob.data.color[0]
+                        tmpl_g = ob.data.color[1]
+                        tmpl_b = ob.data.color[2]
+                        tmpl_end_x = tmpl_x + cm_end_pos[0] if lightprops.light_type == 'TUBE' else tmpl_x
+                        tmpl_end_y = tmpl_y + cm_end_pos[1] if lightprops.light_type == 'TUBE' else tmpl_y
+                        tmpl_end_z = tmpl_z + cm_end_pos[2] if lightprops.light_type == 'TUBE' else tmpl_z
+                        tmpl_intensity = ob.data.energy
+                        # Add the script line (AddAreaLight)
+                        p("\t:i $UGPlus_AddAreaLight$ $light_type$ = {} $light_id$ = {} $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $r$ = {} $g$ = {} $b$ = {} $radius$ = {} $height$ = {} $intensity$ = {} $end_pos_x$ = {} $end_pos_y$ = {} $end_pos_z$ = {} $light_dir$ = {} $light_up$ = {} $light_left$ = {}".format( 
+                            c(tmpl_type)
+                            , c(get_clean_name(ob))
+                            , f(tmpl_x)
+                            , f(tmpl_y)
+                            , f(tmpl_z)
+                            , f(tmpl_r)
+                            , f(tmpl_g)
+                            , f(tmpl_b)
+                            , f(tmpl_radius)
+                            , f(tmpl_height)
+                            , f(tmpl_intensity)
+                            , f(tmpl_end_x)
+                            , f(tmpl_end_y)
+                            , f(tmpl_end_z)
+                            , v3(ob.matrix_world.to_quaternion() * Vector((0.0, -1.0, 0.0)))
+                            , v3(ob.matrix_world.to_quaternion() * Vector((0.0, 0.0, 1.0)))
+                            , v3(ob.matrix_world.to_quaternion() * Vector((1.0, 0.0, 0.0)))
+                            ))
+                p(":i endfunction")
             
         print("Writing generated scripts...")
         for script_name, script_code in generated_scripts.items():

@@ -103,6 +103,14 @@ def preset_place_node(node_type, position):
         scene.objects.active = ob 
         ob.select = True
         
+    elif node_type == 'LIGHT_VOLUME':
+        ob.name = get_unique_name('LightVolume')
+        scene.objects.link( ob )
+        scene.objects.active = ob 
+        ob.select = True
+        ob.thug_empty_props.empty_type = 'LightVolume'
+        
+        
     elif node_type == 'GAMEOBJECT' or node_type == 'CTF_FLAG' or node_type == 'CTF_BASE':
         if node_type.startswith('CTF_'):
             ob.name = get_unique_name('TRG_CTF')
@@ -486,7 +494,9 @@ preset_node_list = [
     { 'name': 'CTF_BASE', 'title': 'CTF Base', 'desc': 'Add a CTF Base.' },
     
     { 'name': 'PARTICLEOBJECT', 'title': 'Particle Emitter', 'desc': 'Add a Particle object.' },
-    { 'name': 'CUBEMAP_PROBE', 'title': 'Cubemap Probe', 'desc': 'Add a Cubemap probe.' },
+    { 'name': 'CUBEMAP_PROBE', 'title': 'Reflection Probe', 'desc': 'Add a reflection probe' },
+    { 'name': 'LIGHT_PROBE', 'title': 'Light Probe', 'desc': 'Add a light probe' },
+    { 'name': 'LIGHT_VOLUME', 'title': 'Light Volume', 'desc': 'Add a light volume' },
 ]
 
 preset_template_list = [

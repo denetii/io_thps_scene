@@ -43,6 +43,7 @@ def import_col(filename, directory):
         bm = bmesh.new()
         cfl = bm.faces.layers.int.new("collision_flags")
         ttl = bm.faces.layers.int.new("terrain_type")
+        intensity_layer = bm.loops.layers.color.new("intensity")
 
         p("obj ", i)
         obj_checksum = p("  checksum: {}", to_hex_string(r.u32()))
@@ -63,13 +64,14 @@ def import_col(filename, directory):
         obj_bbox_min, obj_bbox_max = p("  bbox: {}", (r.read("4f"), r.read("4f")))
         obj_first_vert_offset = p("  first vert offset: {}", r.u32())  # pointer to array of vertices
         r.i32()  # pointer to head of bsp tree
-        r.i32()  # pointer to intensity list
+        obj_intensity_offset = p("  intensities offset: {}", r.i32())  # pointer to intensity list
         r.i32()  # padding
 
         old_offset = r.offset
 
         r.offset = base_vert_offset + obj_first_vert_offset
 
+        per_vert_data = {}
         for j in range(obj_num_verts):
             if obj_use_fixed:
                 v = r.read("HHH")
@@ -79,9 +81,15 @@ def import_col(filename, directory):
             else:
                 v = r.read("3f")
             # outp.write("v {} {} {}\n".format(v[0], v[1], v[2]))
-            bm.verts.new((v[0], -v[2], v[1]))
+            orig_offset = r.offset
+            new_vert = bm.verts.new((v[0], -v[2], v[1]))
+            # Grab the intensity data for this vert
+            per_vert_data[new_vert] = {}
+            r.offset = base_intensity_offset + obj_intensity_offset + j
+            per_vert_data[new_vert]["intensity"] = r.read("B")
+            r.offset = orig_offset
             # bm.verts.new(v)
-
+            
         #outp.write("o {}\n".format(i))
         r.offset = base_face_offset + obj_first_face_offset
         for j in range(obj_num_faces):
@@ -111,6 +119,13 @@ def import_col(filename, directory):
             except ValueError:
                 pass
 
+                
+        for face in bm.faces:
+            for loop in face.loops:
+                pvd = per_vert_data.get(loop.vert)
+                if not pvd: continue
+                loop[intensity_layer] = (pvd["intensity"][0] / 255.0, pvd["intensity"][0] / 255.0, pvd["intensity"][0] / 255.0)
+                    
         bm.to_mesh(blender_mesh)
         blender_object.thug_export_scene = False
         to_group(blender_object, "CollisionMesh")

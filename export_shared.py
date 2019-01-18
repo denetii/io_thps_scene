@@ -639,14 +639,28 @@ def export_col(filename, directory, target_game, operator=None):
                 def w(fmt, *args):
                     intensities_out.write(struct.pack(fmt, *args))
 
-                intensities_out.write(b'\xff' * len(bm.verts))
+                intensity_layer = bm.loops.layers.color.get("intensity")
+                if intensity_layer:
+                    intensities_list = {}
+                    for face in bm.faces:
+                        for loop in face.loops:
+                            tmp_intensity = int((( loop[intensity_layer].r + loop[intensity_layer].g + loop[intensity_layer].b ) / 3.0) * 255)
+                            intensities_list[loop.vert] = tmp_intensity
+                    
+                    for vert in bm.verts:
+                        if vert in intensities_list:
+                            w('B', intensities_list[vert])
+                        else:
+                            w('B', 128)
+                else:
+                    intensities_out.write(b'\xff' * len(bm.verts))
 
             def w(fmt, *args):
                 faces_out.write(struct.pack(fmt, *args))
 
             cfl = bm.faces.layers.int.get("collision_flags")
             ttl = bm.faces.layers.int.get("terrain_type")
-
+        
             # bm.verts.ensure_lookup_table()
             # Face flags are output here!
             for face in bm.faces:

@@ -71,12 +71,17 @@ def thug_empty_update(self, context):
         ob.empty_draw_type = 'CUBE'
         ob.empty_draw_size = 36 * preset_scale
         
-    elif ob.thug_empty_props.empty_type == 'CubemapProbe':
+    elif ob.thug_empty_props.empty_type == 'CubemapProbe' or ob.thug_empty_props.empty_type == 'LightProbe':
         mdl_mesh = ''
         ob.empty_draw_type = 'SPHERE'
         ob.empty_draw_size = 64 * preset_scale
         ob.show_name = True
         ob.show_x_ray = True
+        
+    elif ob.thug_empty_props.empty_type == 'LightVolume':
+        mdl_mesh = ''
+        ob.empty_draw_type = 'ARROWS'
+        ob.empty_draw_size = 64 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'GenericNode' and ob.thug_generic_props.generic_type == 'Crown':
         mdl_mesh = 'Sk3Ed_RS_KOTH'
@@ -455,7 +460,26 @@ def change_bake_slot(self, context):
                 print("Searching for...{}{}".format(search_for, ob_name))
                 if bpy.data.images.get('{}{}'.format(search_for, ob_name)):
                     slot.texture.image = bpy.data.images.get('{}{}'.format(search_for, ob_name))
-                    
+
+def change_lightmap_view(self, context):
+    meshes = [o for o in bpy.data.objects if o.type == 'MESH' ]
+    scene = context.scene
+
+    if scene.lightmap_view == 'LIGHTMAP':
+        for obj in meshes:
+            obdata = obj.data
+            if not obdata.uv_layers.get('Lightmap'):
+                #print('Object {} is not baked, skipping...'.format(obj.name))
+                continue
+            obdata.uv_textures['Lightmap'].active = True
+            
+    elif scene.lightmap_view == 'DEFAULT':
+        for obj in meshes:
+            obdata = obj.data
+            if not obdata.uv_layers.get('Lightmap'):
+                #print('Object {} is not baked, skipping...'.format(obj.name))
+                continue
+            obdata.uv_textures[0].active = True
     
 # PROPERTIES
 #############################################
@@ -469,13 +493,15 @@ class THUGEmptyProps(bpy.types.PropertyGroup):
         ("GenericNode", "Generic Node", "KOTH crown and other objects."),
         ("Pedestrian", "Pedestrian", ""),
         ("Vehicle", "Vehicle", ""),
-        ("CubemapProbe", "Cubemap Probe", "(Underground+ 1.5+ only) Point used to generate a cubemap. Used by nearby objects for specular reflections."),
+        ("CubemapProbe", "Reflection Probe", "(Underground+ 1.5+ only) Point used to generate a reflection cubemap. Used by nearby objects"),
         ("ProximNode", "Proximity Node", "Node that can fire events when objects are inside its radius."),
         ("EmitterObject", "Emitter Object", "Node used to play audio streams (typically, ambient sounds in a level)."),
         ("GameObject", "Game Object", "CTF Flags, COMBO letters, etc."),
         ("BouncyObject", "Bouncy Object", "Legacy node type, not used, only for identification in imported levels."),
         ("ParticleObject", "Particle Object", "Used to preserve particle systems in imported levels."),
         ("Custom", "Custom", ""),
+        ("LightProbe", "Light Probe", "Approximates nearby ambient lighting for moving objects"),
+        ("LightVolume", "Light Volume", "Bounding box used to mark the boundaries of area lights"),
         ), name="Node Type", default="None", update=thug_empty_update)
 
 
@@ -571,6 +597,13 @@ class THUGCubemapProps(bpy.types.PropertyGroup):
         description="Maximum resolution for each side of the baked cubemap.")
     size = FloatProperty(name="Size", default=0.0, min=128.0, max=128000.0, description="Approximate size of the rendered area in Blender units (for parallax correction). Use 0.0 to render cubemap at infinite distance")
     exported = BoolProperty(name="Exported", default=False)
+    
+    
+#----------------------------------------------------------------------------------
+#- Emitter properties
+#----------------------------------------------------------------------------------
+class THUGLightVolumeProps(bpy.types.PropertyGroup):
+    box_size = FloatVectorProperty(name="Size", size=3, default=[128.0,128.0,128.0], description="Size of the light volume")
     
 #----------------------------------------------------------------------------------
 #- If you know of another thing GenericNode is used for, let me know!
@@ -804,16 +837,43 @@ class THUGVehicleProps(bpy.types.PropertyGroup):
     veh_allowreplacetex = BoolProperty(name="Texture Replacement", default=False, description="Allow model textures to be changed by scripts.")
     
 def thug_light_update(self, context):
-    if context.object.type == "LAMP" and context.object.data.type == "POINT":
-        context.object.data.distance = self.light_radius[0]
+    if context.object.type == "LAMP":
+        if self.light_type == 'POINT':
+            context.object.data.type = "POINT"
+            context.object.data.distance = self.light_radius[0]
+        elif self.light_type == 'SPHERE':
+            context.object.data.type = "POINT"
+            context.object.data.distance = self.light_radius[0]
+        elif self.light_type == 'TUBE':
+            context.object.data.type = "POINT"
+            context.object.data.distance = self.light_radius[0]
+        elif self.light_type == 'AREA':
+            context.object.data.type = "AREA"
+            context.object.data.shape = "RECTANGLE"
+            context.object.data.size = self.light_area[0]
+            context.object.data.size_y = self.light_area[1]
+        elif self.light_type == 'DISK':
+            context.object.data.type = "AREA"
+            context.object.data.shape = "SQUARE"
+            context.object.data.size = self.light_radius[0]
+        
     
 #----------------------------------------------------------------------------------
 #- Light properties
 #----------------------------------------------------------------------------------
 class THUGLightProps(bpy.types.PropertyGroup):
-    light_radius = FloatVectorProperty(name="Radius", size=2, min=0, max=128000, default=[300,300], description="Inner/outer radius.", update=thug_light_update)
-    light_excludeskater = BoolProperty(name="Exclude Skater", default=False, description="Light will not influence the skater.")
-    light_excludelevel = BoolProperty(name="Exclude Level", default=False, description="Light will not influence the scene.")
+    light_type = EnumProperty(name="Source", items=(
+        ( 'POINT', 'Point', 'Punctual light source'),
+        ( 'SPHERE', 'Sphere', 'Spherical light source with a custom radius'),
+        ( 'TUBE', 'Tube', 'Light which emits from a tube shape, with a custom size/radius'),
+        ( 'AREA', 'Rectangle', 'Rectangular area light'),
+        ( 'DISK', 'Disk', 'Disk area light')
+    ), default="POINT", update=thug_light_update)
+    light_end_pos = FloatVectorProperty(name="End", size=3, default=[0,256,0], description="End position for lamp")
+    light_radius = FloatVectorProperty(name="Radius", size=2, min=0, max=128000, default=[300,300], description="Inner/outer radius", update=thug_light_update)
+    light_area = FloatVectorProperty(name="Area", size=2, min=0, max=128000, default=[256,256], description="Width/height of area light", update=thug_light_update)
+    light_excludeskater = BoolProperty(name="Exclude Skater", default=False, description="Light will not influence the skater")
+    light_excludelevel = BoolProperty(name="Exclude Level", default=False, description="Light will not influence the scene")
     
 #----------------------------------------------------------------------------------
 #- Particle system properties! There's a lot of them!
@@ -1246,6 +1306,7 @@ def register_props():
     bpy.types.Object.thug_triggerscript_props = PointerProperty(type=THUGObjectTriggerScriptProps)
     bpy.types.Object.thug_empty_props = PointerProperty(type=THUGEmptyProps)
     bpy.types.Object.thug_cubemap_props = PointerProperty(type=THUGCubemapProps)
+    bpy.types.Object.thug_lightvolume_props = PointerProperty(type=THUGLightVolumeProps)
     bpy.types.Object.thug_proxim_props = PointerProperty(type=THUGProximNodeProps)
     bpy.types.Object.thug_emitter_props = PointerProperty(type=THUGEmitterProps)
     bpy.types.Object.thug_generic_props = PointerProperty(type=THUGGenericNodeProps)
@@ -1271,6 +1332,11 @@ def register_props():
     bpy.types.WindowManager.thug_all_restarts = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_pathnode_props = PointerProperty(type=THUGPathNodeUIProps)
 
+    
+    bpy.types.Scene.lightmap_view = EnumProperty(items=(
+        ("DEFAULT", "Default", "Default view"),
+        ("LIGHTMAP", "Lightmap Only", "Shows only the lightmap textures/vertex colors"),
+        ), name="View Mode", default="DEFAULT", update=change_lightmap_view)
     bpy.types.Scene.thug_level_props = PointerProperty(type=THUGLevelProps)
     bpy.types.Scene.thug_lightmap_scale = EnumProperty(
         name="Lightmap Scale",
@@ -1307,7 +1373,7 @@ def register_props():
             ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture."),
             ("AO", "Ambient Occlusion (BR)", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting."),
             ("SHADOW", "Shadow (Cycles)", "Bakes only shadow contributions. Faster, not photorealistic."),
-            ("INDIRECT", "Indirect (Cycles)", "Bakes only indirect lighting contribution.")
+            ("INDIRECT", "PBR Lightmap (Cycles)", "Bakes indirect lighting and shadows for PBR shaders (UG+/Classic).")
             ],
         default="LIGHT_BI", 
         description="Type of bakes to use for this scene.")

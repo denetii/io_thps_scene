@@ -118,6 +118,8 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
                     flags |= SECFLAGS_HAS_VERTEX_COLORS
                 if len(original_object.vertex_groups) and is_model == True:
                     flags |= SECFLAGS_HAS_VERTEX_WEIGHTS
+                if original_object.thug_is_shadow_volume:
+                    flags |= SECFLAGS_SHADOW_VOLUME
                 if len(original_object.vertex_groups) or need_vertex_normals:
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
 

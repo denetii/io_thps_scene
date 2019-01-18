@@ -117,6 +117,17 @@ def get_material(name):
     return blender_mat
     
 #----------------------------------------------------------------------------------
+#- Returns an existing object vertex color channel, or creates a new one
+#----------------------------------------------------------------------------------
+def get_vcs(obj, channel_name):
+    if not obj.data.vertex_colors.get(channel_name):
+        vcs = obj.data.vertex_colors.new(name=channel_name)
+    else:
+        vcs = obj.data.vertex_colors.get(channel_name)
+        
+    return vcs
+    
+#----------------------------------------------------------------------------------
 #- Converts a color range (0.0-1.0) into an 8-bit int (0-255)
 #----------------------------------------------------------------------------------
 def to_color_int(val):
@@ -189,6 +200,42 @@ def _make_temp_obj(data):
         return bpy.data.objects.new("~THUG TEMPORARY OBJECT~", data)
 
 #----------------------------------------------------------------------------------
+def get_bbox_from_lightvolume(ob):
+    from mathutils import Vector
+    
+    bbox_size = ob.thug_lightvolume_props.box_size
+    tmp_bbox_size = Vector( ( bbox_size[0], bbox_size[1], bbox_size[2] ) ) 
+    tmp_bbox = [ Vector((-tmp_bbox_size[0], -tmp_bbox_size[1], -tmp_bbox_size[2])),
+            Vector((-tmp_bbox_size[0], -tmp_bbox_size[1], tmp_bbox_size[2])),
+            Vector((-tmp_bbox_size[0], tmp_bbox_size[1], tmp_bbox_size[2])),
+            Vector((-tmp_bbox_size[0], tmp_bbox_size[1], -tmp_bbox_size[2])),
+            
+            Vector((tmp_bbox_size[0], -tmp_bbox_size[1], -tmp_bbox_size[2])),
+            Vector((tmp_bbox_size[0], -tmp_bbox_size[1], tmp_bbox_size[2])),
+            Vector((tmp_bbox_size[0], tmp_bbox_size[1], tmp_bbox_size[2])),
+            Vector((tmp_bbox_size[0], tmp_bbox_size[1], -tmp_bbox_size[2])),
+            ]
+            
+    bbox = [ob.matrix_world * b for b in tmp_bbox]
+    
+    min_x = float("inf")
+    min_y = float("inf")
+    min_z = float("inf")
+    max_x = -float("inf")
+    max_y = -float("inf")
+    max_z = -float("inf")
+    for v in bbox:
+        v = to_thug_coords(v)
+        min_x = min(v[0], min_x)
+        min_y = min(v[1], min_y)
+        min_z = min(v[2], min_z)
+        max_x = max(v[0], max_x)
+        max_y = max(v[1], max_y)
+        max_z = max(v[2], max_z)
+        
+    return bbox, (min_x, min_y, min_z), (max_x, max_y, max_z), to_thug_coords(ob.location)
+    
+#----------------------------------------------------------------------------------
 def get_sphere_from_bbox(bbox):
     bbox_min, bbox_max = bbox
 
@@ -201,7 +248,6 @@ def get_sphere_from_bbox(bbox):
         (sphere_z - bbox_min[2]) ** 2) ** 0.5
 
     return (sphere_x, sphere_y, sphere_z, sphere_radius)
-
 
 #----------------------------------------------------------------------------------
 def get_bbox2(vertices, matrix=mathutils.Matrix.Identity(4), is_park_editor=False):
