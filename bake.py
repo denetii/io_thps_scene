@@ -1562,6 +1562,12 @@ def render_cubemap(probe):
     wine = [] if platform.system() == "Windows" else ["wine"]
     j = os.path.join
     
+    probe_type = probe.thug_empty_props.empty_type
+    src_resolution = probe.thug_cubemap_props.resolution
+    dst_resolution = probe.thug_cubemap_props.resolution
+    if probe_type == 'LightProbe': # Use fixed resolution for light probes
+        dst_resolution = 32
+        
     scene = bpy.context.scene
     orig_res_x = scene.render.resolution_x
     orig_res_y = scene.render.resolution_y
@@ -1570,8 +1576,8 @@ def render_cubemap(probe):
     print("Attempting to render cubemap from probe {}...".format(probe.name))
         
     # Set render resolution to match the probe setting
-    scene.render.resolution_x = int(probe.thug_cubemap_props.resolution)
-    scene.render.resolution_y = int(probe.thug_cubemap_props.resolution)
+    scene.render.resolution_x = int(src_resolution)
+    scene.render.resolution_y = int(src_resolution)
     scene.render.resolution_percentage = 100
     
     # Look for camera
@@ -1597,7 +1603,7 @@ def render_cubemap(probe):
     
     # Create destination folder for the textures
     _lightmap_folder = bpy.path.basename(bpy.context.blend_data.filepath)[:-6] # = Name of blend file
-    _folder = bpy.path.abspath("//Tx_Cubemap/{}".format(_lightmap_folder))
+    _folder = bpy.path.abspath("//Tx_Cubemap\\{}".format(_lightmap_folder))
     os.makedirs(_folder, 0o777, True)
     
     # Rotate camera and render each face!
@@ -1661,9 +1667,9 @@ def render_cubemap(probe):
         j(base_files_dir, "texassemble.exe"),
         "cube",
         "-w",
-        "{}".format(probe.thug_cubemap_props.resolution),
+        "{}".format(src_resolution),
         "-h",
-        "{}".format(probe.thug_cubemap_props.resolution),
+        "{}".format(src_resolution),
         "-o",
         "{}/{}.dds".format(_folder, probe.name),
         "-y",
@@ -1675,9 +1681,54 @@ def render_cubemap(probe):
         "{}/{}_{}.png".format(_folder, probe.name, 'right')
     ]
     
-    dds_output = subprocess.run(wine + texassemble_args, stdout=subprocess.PIPE)
+    cmft_args_irradiance = [
+        j(base_files_dir, "cmft.exe"),
+        "--input \"{}\\{}.dds\"".format(_folder, probe.name),
+        
+        "--filter irradiance",
+        "--srcFaceSize {}".format(src_resolution),
+        "--dstFaceSize {}".format(dst_resolution),
+        "--outputNum 1",
+        "--output0 \"{}\\{}\"".format(_folder, probe.name),
+        "--output0params dds,bgra8,cubemap"
+    ]
+    cmft_args_radiance = [
+        j(base_files_dir, "cmft.exe"),
+        "--input \"{}\\{}.dds\"".format(_folder, probe.name),
+        
+        "--filter radiance",
+        "--srcFaceSize {}".format(src_resolution),
+        "--excludeBase true",
+        "--mipCount 7",
+        "--glossScale 10",
+        "--glossBias 3",
+        "--excludeBase true",
+        "--lightingModel blinnbrdf",
+        "--dstFaceSize {}".format(dst_resolution),
+        "--numCpuProcessingThreads 4",
+        "--useOpenCL true",
+        "--clVendor anyGpuVendor",
+        "--deviceType gpu",
+        "--deviceIndex 0",
+        "--inputGammaNumerator 1.0",
+        "--inputGammaDenominator 1.0",
+        "--outputGammaNumerator 1.0",
+        "--outputGammaDenominator 1.0",
+        "--generateMipChain false",
+        "--outputNum 1",
+        "--output0 \"{}\\{}\"".format(_folder, probe.name),
+        "--output0params dds,bgra8,cubemap",
+        "--edgeFixup warp"
+    ]
+    cmft_args = cmft_args_irradiance if probe_type == 'LightProbe' else cmft_args_radiance
     
+    dds_output = subprocess.run(wine + texassemble_args, stdout=subprocess.PIPE)
     print(dds_output)
+    
+    print("Cubemap assembled. Running radiance/irradiance filter on {}.dds...".format(probe.name))
+    
+    cmft_output = subprocess.run(" ".join(wine + cmft_args), stdout=subprocess.PIPE)
+    print(cmft_output)
     
     probe.thug_cubemap_props.exported = True
     print("Finished!")
@@ -1944,12 +1995,12 @@ class RenderCubemaps(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         probes = [o for o in context.selected_objects if o.type == 'EMPTY' \
-            and o.thug_empty_props and o.thug_empty_props.empty_type == 'CubemapProbe']
+            and o.thug_empty_props and o.thug_empty_props.empty_type in ['CubemapProbe','LightProbe']]
         return len(probes) > 0
 
     def execute(self, context):
         probes = [o for o in context.selected_objects if o.type == 'EMPTY' \
-            and o.thug_empty_props and o.thug_empty_props.empty_type == 'CubemapProbe']
+            and o.thug_empty_props and o.thug_empty_props.empty_type in ['CubemapProbe','LightProbe']]
         
         for probe in probes:
             render_cubemap(probe)
@@ -1983,7 +2034,7 @@ class THUGLightingTools(bpy.types.Panel):
             tmp_row.column().operator(UnBakeLightmaps.bl_idname, text=UnBakeLightmaps.bl_label, icon='SMOOTH')
             #tmp_row.column().operator(ConvertLightmapsToVCs.bl_idname, text=ConvertLightmapsToVCs.bl_label, icon='SMOOTH')
             
-        elif ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type == 'CubemapProbe':
+        elif ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type in ['CubemapProbe','LightProbe']:
             box = self.layout.box().column(True)
             tmp_row = box.row().split()
             tmp_row.column().operator(RenderCubemaps.bl_idname, text=RenderCubemaps.bl_label, icon='MAT_SPHERE_SKY')

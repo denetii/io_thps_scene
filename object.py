@@ -70,7 +70,7 @@ def _thug_object_settings_draw(self, context):
         if ob.thug_empty_props.empty_type == 'CubemapProbe':
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_cubemap_props, "resolution")
-            box.row().prop(ob.thug_cubemap_props, "size")
+            box.row().prop(ob.thug_cubemap_props, "box_size")
             
         # ********************************************************
         # * LIGHT PROBE 
@@ -78,7 +78,6 @@ def _thug_object_settings_draw(self, context):
         if ob.thug_empty_props.empty_type == 'LightProbe':
             box = self.layout.box().column(True)
             box.row().prop(ob.thug_cubemap_props, "resolution")
-            box.row().prop(ob.thug_cubemap_props, "size")
             
         # ********************************************************
         # * LIGHT VOLUME 
@@ -264,8 +263,15 @@ def _thug_object_settings_draw(self, context):
             row = box.row()
             row.column().prop(ob, "thug_no_skater_shadow")
             row.column().prop(ob, "thug_material_blend")
-            #box.row().prop(ob, "thug_is_billboard")
-            
+            box.row().prop(ob.data.thug_billboard_props, "is_billboard")
+            if ob.data.thug_billboard_props.is_billboard:
+                box.row().prop(ob.data.thug_billboard_props, "type", expand=True)
+                if ob.data.thug_billboard_props.type == 'AXIS':
+                    #box.row().prop(ob.data.thug_billboard_props, "pivot_origin")
+                    #box.row().prop(ob.data.thug_billboard_props, "pivot_pos")
+                    box.row().prop(ob.data.thug_billboard_props, "pivot_axis")
+                
+                
         box = self.layout.column()    
         row = box.row()
         row.column().prop(ob, "thug_occluder", toggle=True, icon='MOD_BEVEL')

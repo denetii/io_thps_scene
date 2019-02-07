@@ -232,10 +232,19 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
             write_sector_to_obj = False
 
         if sec_flags & SECFLAGS_BILLBOARD_PRESENT:
-            p("  billboard type: {}", r.u32())
-            p("  billboard origin: {}", r.read("3f"))
-            p("  billboard pivot pos: {}", r.read("3f"))
-            p("  billboard pivot axis: {}", r.read("3f"))
+            blender_object.data.thug_billboard_props.is_billboard = True
+            to_group(blender_object, "Billboards")
+            billboard_type = p("  billboard type: {}", r.u32())
+            if billboard_type == 1:
+                blender_object.data.thug_billboard_props.type = 'SCREEN'
+            elif billboard_type == 2:
+                blender_object.data.thug_billboard_props.type = 'AXIS'
+            else:
+                raise Exception("Unknown billboard type: {}".format(billboard_type))
+            blender_object.data.thug_billboard_props.pivot_origin = from_thug_coords( p("  billboard origin: {}", r.read("3f")) )
+            blender_object.data.thug_billboard_props.pivot_pos = from_thug_coords( p("  billboard pivot pos: {}", r.read("3f")) )
+            blender_object.data.thug_billboard_props.pivot_axis = from_thug_coords( p("  billboard pivot axis: {}", r.read("3f")) )
+            blender_object.data.thug_billboard_props.custom_pos = True
 
         if is_desa:
             r.u64() # No idea what this is used for!

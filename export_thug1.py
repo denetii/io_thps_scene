@@ -13,6 +13,7 @@ from . helpers import *
 from . material import *
 from . prefs import *
 from . autosplit import *
+from . constants import *
 
 # METHODS
 #############################################
@@ -118,8 +119,9 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
                 if original_object.thug_is_shadow_volume:
                     flags |= SECFLAGS_SHADOW_VOLUME
-                if original_object.thug_is_billboard:
+                if original_object.data.thug_billboard_props.is_billboard:
                     flags |= SECFLAGS_BILLBOARD_PRESENT
+                    flags &= ~SECFLAGS_HAS_VERTEX_NORMALS
 
                     
                 mats_to_faces = {}
@@ -166,10 +168,16 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
 
                 # Export billboard data - testing
                 if flags & SECFLAGS_BILLBOARD_PRESENT:
-                    w("i", 1) # billboard type
-                    w("3f", *to_thug_coords(mathutils.Vector([0, 0, 0]))) # billboard origin
-                    w("3f", *to_thug_coords(mathutils.Vector([0, 0, 20]))) # billboard pivot pos
-                    w("3f", *to_thug_coords(mathutils.Vector([0, 1, 0]))) # billboard pivot axis
+                    w("I", int(BILLBOARD_TYPES[original_object.data.thug_billboard_props.type])) # billboard type
+                    
+                    # billboard pivot pos
+                    if original_object.data.thug_billboard_props.custom_pos == True:
+                        w("3f", *to_thug_coords_ns(mathutils.Vector(original_object.data.thug_billboard_props.pivot_origin))) 
+                        w("3f", *to_thug_coords_ns(mathutils.Vector(original_object.data.thug_billboard_props.pivot_pos))) 
+                    else:
+                        w("3f", *mathutils.Vector( [ bsphere[0], bsphere[1], bsphere[2] ] ))
+                        w("3f", *mathutils.Vector( [ bsphere[0], bsphere[1], -bsphere[2] ] ))
+                    w("3f", *to_thug_coords_ns(mathutils.Vector(original_object.data.thug_billboard_props.pivot_axis))) # billboard pivot axis
                     
                 w("i", len(split_verts))
                 w("i", 0) # vertex data stride, this seems to be ignored

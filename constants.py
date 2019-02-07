@@ -286,6 +286,11 @@ BLEND_MODES = {
     17: "vBLEND_MODE_ONE_INV_SRC_ALPHA",
 }
 
+BILLBOARD_TYPES = {
+    'SCREEN': 1,
+    'AXIS': 2
+}
+
 THUG_DefaultGameObjects = {
     "Combo_C": "gameobjects\\combo\\goal_combo_c\\goal_combo_c.mdl"
     ,"Combo_O": "gameobjects\\combo\\goal_combo_o\\goal_combo_o.mdl"

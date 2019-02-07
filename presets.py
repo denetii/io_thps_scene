@@ -81,7 +81,7 @@ def preset_place_node(node_type, position):
         to_group(ob, "Vehicles")
         
     elif node_type == 'CUBEMAP_PROBE':
-        ob.name = get_unique_name('Cubemap')
+        ob.name = get_unique_name('ReflectionProbe')
         ob.rotation_euler = [math.radians(90), 0, math.radians(-90)]
         scene.objects.link( ob )
         ob.thug_empty_props.empty_type = 'CubemapProbe'
@@ -89,14 +89,37 @@ def preset_place_node(node_type, position):
         ob.empty_draw_size = 64
         ob.show_name = True
         ob.show_x_ray = True
-        to_group(ob, "Cubemaps")
+        to_group(ob, "Reflection Probes")
         
         # Also add a camera used in cubemap rendering, with the correct settings filled in
         bpy.ops.object.camera_add(view_align=False,
                           location=[0, 0, 0],
                           rotation=[0, 0, 0])
         camera_ob = bpy.context.object
-        camera_ob.name = get_unique_name('CAM_Cubemap')
+        camera_ob.name = get_unique_name('CAM_ReflectionProbe')
+        camera_ob.parent = ob
+        camera_ob.data.draw_size = 48.0
+        
+        scene.objects.active = ob 
+        ob.select = True
+        
+    elif node_type == 'LIGHT_PROBE':
+        ob.name = get_unique_name('LightProbe')
+        ob.rotation_euler = [math.radians(90), 0, math.radians(-90)]
+        scene.objects.link( ob )
+        ob.thug_empty_props.empty_type = 'LightProbe'
+        ob.empty_draw_type = 'SPHERE'
+        ob.empty_draw_size = 64
+        ob.show_name = True
+        ob.show_x_ray = True
+        to_group(ob, "Light Probes")
+        
+        # Also add a camera used in cubemap rendering, with the correct settings filled in
+        bpy.ops.object.camera_add(view_align=False,
+                          location=[0, 0, 0],
+                          rotation=[0, 0, 0])
+        camera_ob = bpy.context.object
+        camera_ob.name = get_unique_name('CAM_LightProbe')
         camera_ob.parent = ob
         camera_ob.data.draw_size = 48.0
         

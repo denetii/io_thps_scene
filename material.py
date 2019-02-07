@@ -82,10 +82,10 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
         ps.no_backface_culling = p("  no backface culling: {}", r.bool())
         ps.z_bias = p("  z bias: {}", r.i32())
 
-        ps.grassify = p("  grassify: {}", r.bool())
-        if ps.grassify:
-            ps.grass_height = p("  grass height: {}", r.f32())
-            ps.grass_layers = p("  grass layers: {}", r.i32())
+        ps.grass_props.grassify = p("  grassify: {}", r.bool())
+        if ps.grass_props.grassify:
+            ps.grass_props.grass_height = p("  grass height: {}", r.f32())
+            ps.grass_props.grass_layers = p("  grass layers: {}", r.i32())
 
         ps.specular_power = p("  specular power: {}", r.f32())
         if ps.specular_power > 0.0:
@@ -333,11 +333,11 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     w("i", mprops.z_bias)  # z-bias
 
     #grassify = False
-    w("?", mprops.grassify)  # grassify
-    if mprops.grassify:  # if grassify
+    w("?", mprops.grass_props.grassify)  # grassify
+    if mprops.grass_props.grassify:  # if grassify
         print("EXPORTING GRASS MATERIAL!")
-        w("f", mprops.grass_height)  # grass height
-        w("i", mprops.grass_layers)  # grass layers
+        w("f", mprops.grass_props.grass_height)  # grass height
+        w("i", mprops.grass_props.grass_layers)  # grass layers
         
     w("f", shader_id)  # Shader ID (previously Specular power)
     if shader_id > 0.0: # Additional material props (replaces specular color field)
@@ -439,6 +439,24 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         w("f", -8.0)  # L
         
         
+# After exporting materials, this ensures any temporary materials/textures created during
+# the grass effect export are removed before running another export    
+def cleanup_grass_materials():
+    print("Removing temporary grass materials/textures...")
+    for tex in bpy.data.textures:
+        if tex.name.startswith('Grass-Tx_Grass_Layer'):
+            print("Cleaning up grass texture: {}".format(tex.name))
+            tex.name = 'TEMP_GrassTx'
+            tex.user_clear()
+            #bpy.data.textures.remove(tex)
+    for mat in bpy.data.materials:
+        if mat.name.startswith('Grass-Grass_Layer'):
+            print("Cleaning up grass material: {}".format(mat.name))
+            mat.name = 'TEMP_GrassMat'
+            mat.user_clear()
+            #bpy.data.materials.remove(mat)
+    print("Done!")
+    
 def export_materials(output_file, target_game, operator=None, is_model=False):
     def w(fmt, *args):
         output_file.write(struct.pack(fmt, *args))
@@ -451,6 +469,59 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
     out_materials = bpy.data.materials[:]
 
     num_materials = len(out_materials)
+    
+    grass_counter = -1 # Index of the grass material, required to support multiple unique grass effects per level
+    grass_materials = []
+    for m in out_materials:
+        mprops = m.thug_material_props
+        if mprops.grass_props.grassify:
+            grass_counter += 1
+            num_grass_layers = len(m.thug_material_props.grass_props.grass_textures)
+            num_materials += num_grass_layers
+            
+            for layer in range(num_grass_layers):
+                # Clone the base material as many times as we have grass layers, and append to out_materials
+                # Also make sure to increment num_materials
+                new_mat = m.copy()
+                new_mat.thug_material_props.grass_props.grassify = False
+                if not new_mat.texture_slots[0] or not new_mat.texture_slots[0].texture:
+                    raise Exception('Source material for grass effect must have at least one texture pass!')
+                texture = new_mat.texture_slots[0].texture
+                new_texture = texture.copy()
+                if not hasattr(texture, 'image') or not texture.image:
+                    raise Exception('Source material for grass effect must have at least one image texture!')
+                new_texture.image = m.thug_material_props.grass_props.grass_textures[layer].tex_image
+                new_texture.image.thug_image_props.compression = 'DXT5'
+                new_texture.name = "Grass-Tx_Grass_Layer{}_{}".format(layer, grass_counter)
+                pprops = new_texture.thug_material_pass_props
+                pprops.pf_textured = True
+                pprops.pf_smooth = True
+                pprops.pf_transparent = True
+                pprops.blend_mode = 'vBLEND_MODE_BLEND'
+                if layer > 0: # Add 'wind' UV wibbles
+                    pprops.has_uv_wibbles = True
+                    wibble_multi = layer / num_grass_layers
+                    wibble_multi2 = wibble_multi * wibble_multi
+                    pprops.uv_wibbles.uv_velocity[0] = 0.0
+                    pprops.uv_wibbles.uv_velocity[1] = 0.0
+                    pprops.uv_wibbles.uv_frequency = mprops.grass_props.uv_frequency
+                    pprops.uv_wibbles.uv_amplitude = mprops.grass_props.uv_amplitude
+                    pprops.uv_wibbles.uv_amplitude[0] *= wibble_multi2
+                    pprops.uv_wibbles.uv_amplitude[1] *= wibble_multi2
+                    pprops.uv_wibbles.uv_phase[0] = 0.0
+                    pprops.uv_wibbles.uv_phase[1] = 0.0
+                    
+                new_mat.texture_slots[0].texture = new_texture
+                new_mat.name = "Grass-Grass_Layer{}_{}".format(layer, grass_counter)
+                grass_materials.append(new_mat)
+            #mprops.specular_color[2] = grass_counter
+            mprops.grass_props.grass_index = grass_counter
+            #mprops.specular_power = 0.01
+            
+    # Append grass materials
+    for g in grass_materials:
+        out_materials.append(g)
+    
     w("I", num_materials)
     for m in out_materials:
         LOG.debug("writing material: {}".format(m.name))
@@ -487,20 +558,25 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
         w("I", mprops.alpha_cutoff)  # alpha cutoff (actually an unsigned byte)
         w("?", mprops.sorted)  # sorted?
         w("f", mprops.draw_order)  # draw order
-        w("?", mprops.single_sided)  # single sided
+        w("?", (mprops.no_backface_culling == False))  # single sided
         w("?", mprops.no_backface_culling)  # no backface culling
         w("i", mprops.z_bias)  # z-bias
 
         #grassify = False
-        w("?", mprops.grassify)  # grassify
-        if mprops.grassify:  # if grassify
+        w("?", mprops.grass_props.grassify)  # grassify
+        if mprops.grass_props.grassify:  # if grassify
             print("EXPORTING GRASS MATERIAL!")
-            w("f", mprops.grass_height)  # grass height
-            w("i", mprops.grass_layers)  # grass layers
-
-        w("f", mprops.specular_power)  # specular power
-        if mprops.specular_power > 0.0:
-            w("3f", *mprops.specular_color)  # specular color
+            w("f", mprops.grass_props.grass_height)  # grass height
+            num_grass_layers = len(mprops.grass_props.grass_textures)
+            w("i", num_grass_layers)  # grass layers
+            w("f", 0.01) # specular power
+            w("f", 0.0) # specular color
+            w("f", 0.0) # specular color
+            w("f", mprops.grass_props.grass_index) # grass index (actually specular color B channel)
+        else:
+            w("f", mprops.specular_power)  # specular power
+            if mprops.specular_power > 0.0:
+                w("3f", *mprops.specular_color)  # specular color
 
         # using_default_texture = not passes
         
@@ -580,7 +656,7 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
             w("I", 4)  # MMIN
             w("f", -8.0)  # K
             w("f", -8.0)  # L
-
+            
 
 
 #----------------------------------------------------------------------------------
@@ -666,14 +742,30 @@ def _material_settings_draw(self, context):
     row.prop(mps, "no_skater_shadow")
     row = self.layout.row()
     row.prop(mps, "specular_color")
-    self.layout.row().prop(mps, "grassify", toggle=True, icon="HAIR")
-    if mps.grassify:
-        row = self.layout.row()
+    gps = mps.grass_props
+    self.layout.row().prop(gps, "grassify", toggle=True, icon="HAIR")
+    if gps.grassify:
+        box = self.layout.box()
+        row = box.row()
         col = row.column(True)
-        col.prop(mps, "grass_height")
-        col.prop(mps, "grass_layers")
-
-    
+        col.prop(gps, "grass_height")
+        #col.prop(gps, "grass_layers")
+        col.label(text="Grass Layers: {}/{}".format(len(gps.grass_textures), 32))
+        row = box.row()
+        row.operator("object.thug_add_grass_texture", text="Add")
+        row.operator("object.thug_remove_grass_texture", text="Remove")
+        row = box.row()
+        col = row.column(True)
+        col.template_list("THUGGrassTextureUIList", "", gps, "grass_textures", gps, "texture_index", rows=1)
+        
+        row = box.row(True)
+        col = row.column(align=True)
+        col.scale_x = 0.5
+        row = col.row()
+        row.prop(gps, "uv_frequency")
+        row = col.row()
+        row.prop(gps, "uv_amplitude")
+        
     if scn.thug_level_props.export_props.target_game != 'THUG1':
         return
         
@@ -863,6 +955,104 @@ class THUGAnimatedTexture(bpy.types.PropertyGroup):
     keyframes = CollectionProperty(type=THUGAnimatedTextureKeyframe)
     keyframes_index = IntProperty()
 #----------------------------------------------------------------------------------
+def set_thug_grass_texture(self, context):
+    if self.tex_image:
+        self.tex_image_name = self.tex_image.name
+    else:
+        self.tex_image_name = ''
+#----------------------------------------------------------------------------------
+class THUGGrassTexture(bpy.types.PropertyGroup):
+    tex_image = PointerProperty(type=bpy.types.Image, update=set_thug_grass_texture)
+    tex_image_name = StringProperty(name="ImageName")
+#----------------------------------------------------------------------------------
+class THUGGrassEffect(bpy.types.PropertyGroup):
+    grassify = BoolProperty(name="Grass Effect", description="Use generated grass particles on this material")
+    grass_height = FloatProperty(name="Grass Height", min=0.0, max=1000.0, description="Height of the grass particles")
+    grass_layers = IntProperty(name="Grass Layers", min=0, max=32, description="Number of layers")
+    grass_textures = CollectionProperty(type=THUGGrassTexture)
+    texture_index = IntProperty()
+    grass_index = FloatProperty() # Not user-editable, only generated during export
+    
+    #uv_velocity = FloatVectorProperty(name="Wind Velocity", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_frequency = FloatVectorProperty(name="Wind Factor", size=2, default=(2.0, 0.0), soft_min=-100, soft_max=100)
+    uv_amplitude = FloatVectorProperty(name="Wind Strength", size=2, default=(0.03, 0.0), soft_min=-100, soft_max=100)
+    #uv_phase = FloatVectorProperty(name="Wind Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    
+#----------------------------------------------------------------------------------
+class THUGGrassTextureUIList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        box = layout.row().column(True)
+        box.template_ID(item, "tex_image", open="image.open")
+        
+#----------------------------------------------------------------------------------
+class AddGrassTexture(bpy.types.Operator):
+    bl_idname = "object.thug_add_grass_texture"
+    bl_label = "Add Grass Texture"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    @classmethod
+    def poll(cls, context):
+        if not context:
+            return False
+        ob = context.object
+        if not ob:
+            return False
+        mat = ob.active_material
+        if not mat:
+            return False
+        mp = mat.thug_material_props
+        if not mp:
+            return False
+        gp = mp.grass_props
+        if not gp or gp.grassify == False:
+            return False
+        return True
+
+    def execute(self, context):
+        gp = context.object.active_material.thug_material_props.grass_props
+        
+        # Don't allow the user to add more than the maximum supported grass textures
+        if len(gp.grass_textures) >= 32:
+            return {"FINISHED"}
+            
+        gp.grass_textures.add()
+        gp.texture_index = len(gp.grass_textures) - 1
+        return {"FINISHED"}
+
+#----------------------------------------------------------------------------------
+class RemoveGrassTexture(bpy.types.Operator):
+    bl_idname = "object.thug_remove_grass_texture"
+    bl_label = "Remove Grass Texture"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    @classmethod
+    def poll(cls, context):
+        if not context:
+            return False
+        ob = context.object
+        if not ob:
+            return False
+        mat = ob.active_material
+        if not mat:
+            return False
+        mp = mat.thug_material_props
+        if not mp:
+            return False
+        gp = mp.grass_props
+        if not gp or gp.grassify == False:
+            return False
+        return True
+
+    def execute(self, context):
+        gp = context.object.active_material.thug_material_props.grass_props
+        gp.grass_textures.remove(gp.texture_index)
+        gp.texture_index = max(0, min(gp.texture_index, len(gp.grass_textures) - 1))
+        return {"FINISHED"}
+
+#----------------------------------------------------------------------------------
+
+    
+#----------------------------------------------------------------------------------
 class THUGUVWibbles(bpy.types.PropertyGroup):
     uv_velocity = FloatVectorProperty(name="Velocity", size=2, default=(1.0, 1.0), soft_min=-100, soft_max=100)
     uv_frequency = FloatVectorProperty(name="Frequency", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
@@ -1027,9 +1217,9 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         description="Adjust this value to prevent Z-fighting on overlapping meshes.")
     specular_power = FloatProperty(name="Specular Power", default=0.0)
     specular_color = FloatVectorProperty(name="Specular Color", subtype="COLOR", min=0, max=1)
-    grassify = BoolProperty(name="Grass Effect", description="Use generated grass particles on this material.")
-    grass_height = FloatProperty(name="Grass Height", min=0.0, max=1000.0, description="Height of the grass particles.")
-    grass_layers = IntProperty(name="Grass Layers", min=0, max=5, description="Number of layers.")
+    
+    grass_props = PointerProperty(type=THUGGrassEffect)
+    
     terrain_type = EnumProperty(
         name="Terrain Type",
         description="The terrain type that will be used for faces using this material when their terrain type is set to \"Auto\".",

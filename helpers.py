@@ -200,10 +200,19 @@ def _make_temp_obj(data):
         return bpy.data.objects.new("~THUG TEMPORARY OBJECT~", data)
 
 #----------------------------------------------------------------------------------
-def get_bbox_from_lightvolume(ob):
+def get_bbox_from_node(ob):
     from mathutils import Vector
     
-    bbox_size = ob.thug_lightvolume_props.box_size
+    if not hasattr(ob, 'thug_empty_props'):
+        raise Exception('Cannot find object properties.')
+        
+    if ob.thug_empty_props.empty_type == 'CubemapProbe':
+        bbox_size = ob.thug_cubemap_props.box_size
+    elif ob.thug_empty_props.empty_type == 'LightVolume':
+        bbox_size = ob.thug_lightvolume_props.box_size
+    else:
+        raise Exception('Invalid node type.')
+        
     tmp_bbox_size = Vector( ( bbox_size[0], bbox_size[1], bbox_size[2] ) ) 
     tmp_bbox = [ Vector((-tmp_bbox_size[0], -tmp_bbox_size[1], -tmp_bbox_size[2])),
             Vector((-tmp_bbox_size[0], -tmp_bbox_size[1], tmp_bbox_size[2])),

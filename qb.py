@@ -1191,8 +1191,20 @@ def export_qb(filename, directory, target_game, operator=None):
                     and ob.thug_cubemap_props and ob.thug_cubemap_props.exported == True:
                     cm_pos = to_thug_coords(ob.location)
                     cm_file = "{}\{}.dds".format(filename, ob.name)
-                    irr_file = "{}\{}_Irradiance.dds".format(filename, ob.name)
-                    p("\t:i $UGPlus_AddCubemapProbe$ $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $size$ = {} $tex_file$ = {} $irr_file$ = {}".format( f(cm_pos[0]), f(cm_pos[1]), f(cm_pos[2]), f(ob.thug_cubemap_props.size), blub_str(cm_file), blub_str(irr_file)) )
+                    bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_node(ob)
+                    p("\t:i $UGPlus_AddReflectionProbe$ $pos$ = {} $box_min$ = {} $box_max$ = {} $tex_file$ = {}".format(
+                        v3(cm_pos)
+                        , v3(bbox_min)
+                        , v3(bbox_max)
+                        , blub_str(cm_file) ) )
+                        
+                elif ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type == 'LightProbe' \
+                    and ob.thug_cubemap_props and ob.thug_cubemap_props.exported == True:
+                    cm_pos = to_thug_coords(ob.location)
+                    cm_file = "{}\{}.dds".format(filename, ob.name)
+                    p("\t:i $UGPlus_AddLightProbe$ $pos$ = {} $tex_file$ = {}".format(
+                        v3(cm_pos)
+                        , blub_str(cm_file) ) )
             p(":i endfunction")
             
             # Export script for adding PBR area lights into the level
@@ -1203,7 +1215,7 @@ def export_qb(filename, directory, target_game, operator=None):
                 for ob in bpy.data.objects:
                     if ob.type == 'EMPTY' and hasattr(ob, 'thug_empty_props') and ob.thug_empty_props.empty_type == 'LightVolume':
                         # Get light volume min/max coords and export
-                        bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_lightvolume(ob)
+                        bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_node(ob)
                         p("\t:i $UGPlus_AddLightVolume$ $box_min$ = {} $box_max$ = {} $box_mid$ = {}".format( 
                             v3(bbox_min), v3(bbox_max), v3(bbox_mid)))
                         

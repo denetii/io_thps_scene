@@ -361,6 +361,16 @@ def maybe_upgrade_scene(*args):
     ]
     # Hack for the new material system's image fields - read from the txt reference and set the image
     for mat in bpy.data.materials:
+        if hasattr(mat, 'thug_material_props') and hasattr(mat.thug_material_props, 'grass_props'):
+            gps = mat.thug_material_props.grass_props
+            for i in range(len(gps.grass_textures)):
+                if gps.grass_textures[i].tex_image_name != '':
+                    thisimage = bpy.data.images.get(gps.grass_textures[i].tex_image_name)
+                    if thisimage:
+                        #print("Updating grass texture {}...".format(i))
+                        gps.grass_textures[i].tex_image = thisimage
+                    
+                
         if hasattr(mat, 'thug_material_props') and hasattr(mat.thug_material_props, 'ugplus_shader') \
             and mat.thug_material_props.ugplus_shader != '':
             for passname in newmat_passes:
@@ -586,15 +596,16 @@ class THUGCubemapProps(bpy.types.PropertyGroup):
     resolution = EnumProperty(
         name="Resolution",
         items=[
+            ("64", "64", ""),
             ("128", "128", ""),
             ("256", "256", ""),
             ("512", "512", ""),
             ("1024", "1024", ""),
-            ("2048", "2048", ""),
-            ("4096", "4096", ""),
-            ("8192", "8192", "")],
-        default="512", 
-        description="Maximum resolution for each side of the baked cubemap.")
+            ("2048", "2048", "")],
+        default="256", 
+        description="Maximum resolution for each side of the baked reflection")
+        
+    box_size = FloatVectorProperty(name="Size", size=3, default=[256.0,256.0,256.0], description="Approximate size of the area captured by this probe. Use (0,0,0) to disable parallax correction")
     size = FloatProperty(name="Size", default=0.0, min=128.0, max=128000.0, description="Approximate size of the rendered area in Blender units (for parallax correction). Use 0.0 to render cubemap at infinite distance")
     exported = BoolProperty(name="Exported", default=False)
     
@@ -874,6 +885,20 @@ class THUGLightProps(bpy.types.PropertyGroup):
     light_area = FloatVectorProperty(name="Area", size=2, min=0, max=128000, default=[256,256], description="Width/height of area light", update=thug_light_update)
     light_excludeskater = BoolProperty(name="Exclude Skater", default=False, description="Light will not influence the skater")
     light_excludelevel = BoolProperty(name="Exclude Level", default=False, description="Light will not influence the scene")
+    
+#----------------------------------------------------------------------------------
+#- Light properties
+#----------------------------------------------------------------------------------
+class THUGBillboardProps(bpy.types.PropertyGroup):
+    is_billboard = BoolProperty(name="Billboard", default=False, description="This mesh is rendered as a billboard")
+    type = EnumProperty(name="Type", items=(
+        ( 'SCREEN', 'Screen', 'Billboard that always faces the screen'),
+        ( 'AXIS', 'Axis-aligned', 'Billboard fixed around an axis')
+    ), default="SCREEN")
+    custom_pos = BoolProperty(name="Custom Position", default=False, description="Use a custom pivot position")
+    pivot_origin = FloatVectorProperty(name="Pivot Origin", size=3, default=[0,0,0], description="Midpoint of the billboard")
+    pivot_pos = FloatVectorProperty(name="Pivot Position", size=3, default=[0,0,0], description="Position the billboard pivots around (for axis-aligned billboards)")
+    pivot_axis = FloatVectorProperty(name="Pivot Axis", size=3, default=[0,0,1], description="Axis the billboard pivots around (for axis-aligned billboards)")
     
 #----------------------------------------------------------------------------------
 #- Particle system properties! There's a lot of them!
@@ -1229,9 +1254,9 @@ def register_props():
     bpy.types.Object.thug_export_scene = BoolProperty(name="Export to Scene", default=True, description='This object will be exported to the scene (.scn) file.')
     bpy.types.Object.thug_always_export_to_nodearray = BoolProperty(name="Always Export to Nodearray", default=False)
     bpy.types.Object.thug_cast_shadow = BoolProperty(name="Cast Shadow", default=False, 
-        description="(Underground+ 1.5+ only) If selected, this object will render dynamic shadows. Expensive effect - use carefully!")
+        description="(Underground+ 1.5+ only) If selected, this object will render dynamic shadows. Expensive effect - use carefully")
         
-    bpy.types.Object.thug_is_billboard = BoolProperty(name="Billboard", description="Testing!", default=False)
+    #bpy.types.Object.thug_is_billboard = BoolProperty(name="Billboard", description="This mesh is rendered as a billboard", default=False)
     bpy.types.Object.thug_no_skater_shadow = BoolProperty(name="No Skater Shadow", description="Dynamic shadows will not render on this object.", default=False)
     bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Detail Mesh", default=False, description="(Underground+ 1.5+ only) This mesh is treated as extra detail, and will be culled based on distance from camera (or not rendered at all on lower graphics settings)")
     bpy.types.Object.thug_material_blend = BoolProperty(name="Mat Blend", default=False, description="The first two material slots attached to this mesh will be blended together using the vertex alpha channel")
@@ -1315,6 +1340,8 @@ def register_props():
     bpy.types.Object.thug_ped_props = PointerProperty(type=THUGPedestrianProps)
     bpy.types.Object.thug_veh_props = PointerProperty(type=THUGVehicleProps)
     bpy.types.Object.thug_particle_props = PointerProperty(type=THUGParticleProps)
+    
+    bpy.types.Mesh.thug_billboard_props = PointerProperty(type=THUGBillboardProps)
     
     bpy.types.Lamp.thug_light_props = PointerProperty(type=THUGLightProps)
     

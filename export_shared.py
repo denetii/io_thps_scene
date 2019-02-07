@@ -256,7 +256,9 @@ def do_export(operator, context, target_game):
         # #########################
         
         # Remove shadow caster objects (so hacky!)
-        cleanup_shadowcasters()      
+        cleanup_shadowcasters()    
+        # Make sure our generated grass materials/textures are removed after export
+        cleanup_grass_materials()  
         
         end_time = datetime.datetime.now()
         if (compilation_successful is None) or compilation_successful:

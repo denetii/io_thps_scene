@@ -38,6 +38,7 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
     vert_position_index_offset = 1
     vert_texcoord_index_offset = 1
     new_objects = []
+    #p.on = False
 
     for i in range(num_sectors):
         write_sector_to_obj = False # True
@@ -69,10 +70,19 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
             write_sector_to_obj = False
 
         if sec_flags & SECFLAGS_BILLBOARD_PRESENT:
-            p("  billboard type: {}", r.u32())
-            p("  billboard origin: {}", r.read("3f"))
-            p("  billboard pivot pos: {}", r.read("3f"))
-            p("  billboard pivot axis: {}", r.read("3f"))
+            blender_object.data.thug_billboard_props.is_billboard = True
+            to_group(blender_object, "Billboards")
+            billboard_type = p("  billboard type: {}", r.u32())
+            if billboard_type == 1:
+                blender_object.data.thug_billboard_props.type = 'SCREEN'
+            elif billboard_type == 2:
+                blender_object.data.thug_billboard_props.type = 'AXIS'
+            else:
+                raise Exception("Unknown billboard type: {}".format(billboard_type))
+            blender_object.data.thug_billboard_props.pivot_origin = from_thug_coords( p("  billboard origin: {}", r.read("3f")) )
+            blender_object.data.thug_billboard_props.pivot_pos = from_thug_coords( p("  billboard pivot pos: {}", r.read("3f")) )
+            blender_object.data.thug_billboard_props.pivot_axis = from_thug_coords( p("  billboard pivot axis: {}", r.read("3f")) )
+            blender_object.data.thug_billboard_props.custom_pos = True
 
         if sec_flags & SECFLAGS_HAS_VERTEX_NORMALS:
             p("  sector has vertex normals!", None)

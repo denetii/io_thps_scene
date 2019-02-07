@@ -154,9 +154,9 @@ def draw_stuff():
                     else:
                         continue
                 elif (ob and ob.type == 'EMPTY'):
-                    if ob.thug_empty_props.empty_type == 'LightVolume':
+                    if ob.thug_empty_props.empty_type == 'LightVolume' or ob.thug_empty_props.empty_type == 'CubemapProbe':
                         # Draw light volume bbox!
-                        bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_lightvolume(ob)
+                        bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_node(ob)
                         
                         # 50% alpha, 2 pixel width line
                         bgl.glEnable(bgl.GL_BLEND)

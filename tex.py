@@ -238,7 +238,8 @@ def import_img(path, img_name):
                 colors.append(ca)
             blend_img = bpy.data.images.new(img_name, img_width, img_height, alpha=True)
             blend_img.pixels = colors
-        
+    
+    blend_img.pack(as_png=True)
     return blend_img
         
 def read_tex(reader, printer):
@@ -506,7 +507,12 @@ def export_tex(filename, directory, target_game, operator=None):
             for texture in passes:
                 if texture and hasattr(texture, 'image') and texture.image and texture.image.users and texture.image.type in ('IMAGE', 'UV_TEST') and texture.image.source in ('FILE', 'GENERATED') and not texture.image.name in out_images:
                     out_images.append(texture.image.name)
-            
+                    
+            if m.thug_material_props.grass_props.grassify:
+                for i in range(len(m.thug_material_props.grass_props.grass_textures)):
+                    if m.thug_material_props.grass_props.grass_textures[i].tex_image_name not in out_images:
+                        out_images.append(m.thug_material_props.grass_props.grass_textures[i].tex_image_name)
+                    
     output_file = os.path.join(directory, filename)
     with open(output_file, "wb") as outp:
         exported_images = [img for img in bpy.data.images if img.name in out_images]
@@ -644,19 +650,30 @@ class THUG2TexToImages(bpy.types.Operator):
         return {'RUNNING_MODAL'}
         
         
-class THUGImgToImages(bpy.types.Operator):
+from bpy_extras.io_utils import ImportHelper
+
+class THUGImgToImages(bpy.types.Operator, ImportHelper):
     bl_idname = "io.thug_img"
     bl_label = "THPS/THUG .img"
-    # bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'PRESET', 'UNDO'}
 
     filter_glob = StringProperty(default="*.img;*.img.xbx;*img.dat", options={"HIDDEN"})
+    filename_ext = ".img"
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
 
+    # Selected files
+    files = CollectionProperty(type=bpy.types.PropertyGroup)
+    
     def execute(self, context):
         filename = self.filename
         directory = self.directory
-        import_img(os.path.join(directory, filename), filename)
+        
+        # iterate through the selected files
+        for i in self.files:
+            import_img(os.path.join(directory, i.name), i.name)
+        
+            #import_img(os.path.join(directory, filename), filename)
 
         return {'FINISHED'}
 
