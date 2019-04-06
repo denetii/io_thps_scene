@@ -43,7 +43,9 @@ def to_hex_string(checksum):
 #- Auto-creates (if needed) and assigns the given object to a group
 #----------------------------------------------------------------------------------
 def to_group(blender_object, group_name):
-    group = bpy.data.groups.get(group_name, bpy.data.groups.new(group_name))
+    group = bpy.data.groups.get(group_name)
+    if not group:
+        group = bpy.data.groups.new(group_name)
     if blender_object.name not in group.objects:
         group.objects.link(blender_object)
         
@@ -104,17 +106,31 @@ def get_uv_index(obj, uv_name):
 #----------------------------------------------------------------------------------
 #- Returns an existing material given a name, or creates one with that name
 #----------------------------------------------------------------------------------
-def get_material(name):
+def get_material(name, copy_from = None):
     if not bpy.data.materials.get(str(name)):
-        blender_mat = bpy.data.materials.new(str(name)) 
-        blender_mat.use_transparency = True
-        blender_mat.diffuse_color = (1, 1, 1)
-        blender_mat.diffuse_intensity = 1
-        blender_mat.specular_intensity = 0.25
-        blender_mat.alpha = 1
+        if copy_from:
+            blender_mat = copy_from.copy()
+            blender_mat.name = name
+        else:
+            blender_mat = bpy.data.materials.new(str(name)) 
+            blender_mat.use_transparency = True
+            blender_mat.diffuse_color = (1, 1, 1)
+            blender_mat.diffuse_intensity = 1
+            blender_mat.specular_intensity = 0.25
+            blender_mat.alpha = 1
     else:
         blender_mat = bpy.data.materials.get(str(name)) 
     return blender_mat
+    
+#----------------------------------------------------------------------------------
+#- Returns an existing texture pass given a name, or creates one with that name
+#----------------------------------------------------------------------------------
+def get_texture(name):
+    if not bpy.data.textures.get(name):
+        blender_tex = bpy.data.textures.new(name, "IMAGE")
+    else:
+        blender_tex = bpy.data.textures.get(name)
+    return blender_tex
     
 #----------------------------------------------------------------------------------
 #- Returns an existing object vertex color channel, or creates a new one

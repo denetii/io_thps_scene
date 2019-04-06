@@ -11,6 +11,7 @@ from . ui_draw import *
 from . presets import *
 from .  import script_template
 from . tex import import_img
+from . import bake
 
 # METHODS
 #############################################
@@ -449,48 +450,8 @@ def maybe_upgrade_scene(*args):
             
     if something_was_updated:
         bpy.context.window_manager.popup_menu(draw, title="Conversion Notice", icon='INFO')
-            
-def change_bake_slot(self, context):
-    scene = context.scene
-    if scene.thug_bake_slot == 'DAY':
-        search_for = 'LM_DAY_'
-    elif scene.thug_bake_slot == 'EVENING':
-        search_for = 'LM_EVENING_'
-    elif scene.thug_bake_slot == 'NIGHT':
-        search_for = 'LM_NIGHT_'
-    elif scene.thug_bake_slot == 'MORNING':
-        search_for = 'LM_MORNING_'
-        
-    for mat in bpy.data.materials:
-        if not hasattr(mat, 'texture_slots'): continue
-        passes = [tex_slot for tex_slot in mat.texture_slots]
-        for slot in passes:
-            if hasattr(slot, 'texture') and slot.texture.name.startswith("Baked_"):
-                ob_name = slot.texture.name[6:]
-                print("Searching for...{}{}".format(search_for, ob_name))
-                if bpy.data.images.get('{}{}'.format(search_for, ob_name)):
-                    slot.texture.image = bpy.data.images.get('{}{}'.format(search_for, ob_name))
-
-def change_lightmap_view(self, context):
-    meshes = [o for o in bpy.data.objects if o.type == 'MESH' ]
-    scene = context.scene
-
-    if scene.lightmap_view == 'LIGHTMAP':
-        for obj in meshes:
-            obdata = obj.data
-            if not obdata.uv_layers.get('Lightmap'):
-                #print('Object {} is not baked, skipping...'.format(obj.name))
-                continue
-            obdata.uv_textures['Lightmap'].active = True
-            
-    elif scene.lightmap_view == 'DEFAULT':
-        for obj in meshes:
-            obdata = obj.data
-            if not obdata.uv_layers.get('Lightmap'):
-                #print('Object {} is not baked, skipping...'.format(obj.name))
-                continue
-            obdata.uv_textures[0].active = True
-    
+          
+          
 # PROPERTIES
 #############################################
 #----------------------------------------------------------------------------------
@@ -1359,65 +1320,10 @@ def register_props():
     bpy.types.WindowManager.thug_all_restarts = CollectionProperty(type=bpy.types.PropertyGroup)
     bpy.types.WindowManager.thug_pathnode_props = PointerProperty(type=THUGPathNodeUIProps)
 
-    
-    bpy.types.Scene.lightmap_view = EnumProperty(items=(
-        ("DEFAULT", "Default", "Default view"),
-        ("LIGHTMAP", "Lightmap Only", "Shows only the lightmap textures/vertex colors"),
-        ), name="View Mode", default="DEFAULT", update=change_lightmap_view)
     bpy.types.Scene.thug_level_props = PointerProperty(type=THUGLevelProps)
-    bpy.types.Scene.thug_lightmap_scale = EnumProperty(
-        name="Lightmap Scale",
-        items=[
-            ("0.25", "0.25", ""),
-            ("0.5", "0.5", ""),
-            ("1", "1", ""),
-            ("2", "2", ""),
-            ("4", "4", ""),
-            ("8", "8", "")],
-        default="1", 
-        description="Scales the resolution of all lightmaps by the specified factor.")
-    bpy.types.Scene.thug_lightmap_uglymode = BoolProperty(
-        name="Performance Mode",
-        default=False, 
-        description="Disable all Cycles materials when baking. Bakes faster, but with much less accuracy.")
-    bpy.types.Scene.thug_lightmap_clamp = FloatProperty(
-        name="Shadow Intensity",
-        description="Controls the maximum intensity of shadowed areas. Reduce in low-light scenes if you need to improve visibility.",
-        min=0, max=1.0, default=1.0)
-    bpy.types.Scene.thug_lightmap_color = FloatVectorProperty(name="Ambient Color",
-                       subtype='COLOR',
-                       default=(1.0, 1.0, 1.0, 1.0),
-                       size=4,
-                       min=0.0, max=1.0,
-                       description="Lightmaps are baked onto a surface of this color.")
-    bpy.types.Scene.thug_bake_type = EnumProperty(
-        name="Bake Type",
-        items=[
-            ("LIGHT", "Lighting Only (Cycles)", "(Uses the Cycles render engine) Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting."),
-            ("FULL", "Full Diffuse (Cycles)", "(Uses the Cycles render engine) Bake everything onto a single texture. The most accurate results, but lowers base texture resolution."),
-            ("VERTEX_COLORS", "Vertex Colors (BR)", "Bake lighting to vertex colors. Fast and cheap, accuracy depends on mesh density."),
-            ("LIGHT_BI", "Lighting Only (BR)", "Bake lighting to texture and mix with original textures."),
-            ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture."),
-            ("AO", "Ambient Occlusion (BR)", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting."),
-            ("SHADOW", "Shadow (Cycles)", "Bakes only shadow contributions. Faster, not photorealistic."),
-            ("INDIRECT", "PBR Lightmap (Cycles)", "Bakes indirect lighting and shadows for PBR shaders (UG+/Classic).")
-            ],
-        default="LIGHT_BI", 
-        description="Type of bakes to use for this scene.")
-    bpy.types.Scene.thug_bake_slot = EnumProperty(
-        name="Bake Slot",
-        items=[
-            ("DAY", "Day (Default)", "Bakes lighting into the Day TOD slot."),
-            ("EVENING", "Evening", "Bakes lighting into the Evening TOD slot."),
-            ("NIGHT", "Night", "Bakes lighting into the Night TOD slot."),
-            ("MORNING", "Morning", "Bakes lighting into the Morning TOD slot.")],
-        default="DAY", 
-        description="(Underground+ 1.5+ only) TOD slot to bake lighting into. Multiple TOD bakes are only supported by the new material system.", update=change_bake_slot)
-        
-    bpy.types.Scene.thug_bake_automargin = BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings.")                       
-    bpy.types.Scene.thug_bake_force_remake = BoolProperty(name="Force new UVs", default=False, description="Always discards and recreates the lightmap UVs. Slower, use only as a shortcut if you are making changes to meshes or need to fix UV issues.")                       
-    bpy.types.Scene.thug_bake_pad_uvs = BoolProperty(name="Pad UVs", default=True, description="Adds a 'safe zone' to the edges of the UV map. Use if you are experiencing problems with seams/gaps in bake results.")                       
     
+    bake.register_props_bake()
+
     global draw_handle
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
     # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)

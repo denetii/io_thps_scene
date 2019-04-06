@@ -226,32 +226,49 @@ def do_export(operator, context, target_game):
         # Build PRE files
         if self.pack_pre and target_game != 'THPS4':
             md(j(directory, "pre"))
-            if self.generate_scripts_files:
-                pack_files = []
-                pack_files.append(j(path, filename + ext_qb))
-                pack_files.append(j(path, filename + "_scripts" + ext_qb))
-                if target_game == "THUG2":
-                    pack_files.append(j(path, filename + "_thugpro" + ext_qb))
-                    pack_pre( directory, pack_files, j(directory, "pre", filename + "_scripts" + ext_pre) )
-                else:
-                    pack_pre( directory, pack_files, j(directory, "pre", filename + ext_pre) )
-                self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + ext_pre))
-                
-            if self.generate_col_file:
-                pack_files = []
-                pack_files.append(j(path, filename + ext_col))
-                pack_pre( directory, pack_files, j(directory, "pre", filename + "col" + ext_pre) )
-                self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + "col" + ext_pre))
-            if self.generate_scn_file:
+            
+            # Export all level files to a single PRE container
+            if False:
                 pack_files = []
                 pack_files.append(j(path, filename + ext_scn))
                 pack_files.append(j(path, filename + ext_tex))
+                pack_files.append(j(path, filename + ext_col))
+                pack_files.append(j(path, filename + ext_qb))
+                pack_files.append(j(path, filename + "_scripts" + ext_qb))
                 if self.generate_sky:
                     pack_files.append(j(skypath, filename + "_sky" + ext_scn))
                     pack_files.append(j(skypath, filename + "_sky" + ext_tex))
-                pack_pre( directory, pack_files, j(directory, "pre", filename + "scn" + ext_pre) )
-                self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + "scn" + ext_pre))
+                pack_pre( directory, pack_files, j(directory, "pre", filename + ext_pre) )
+                self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + ext_pre))
                 
+            # Export all level files using the classic multi-PRE container setup
+            else:
+                if self.generate_scripts_files:
+                    pack_files = []
+                    pack_files.append(j(path, filename + ext_qb))
+                    pack_files.append(j(path, filename + "_scripts" + ext_qb))
+                    if target_game == "THUG2":
+                        pack_files.append(j(path, filename + "_thugpro" + ext_qb))
+                        pack_pre( directory, pack_files, j(directory, "pre", filename + "_scripts" + ext_pre) )
+                    else:
+                        pack_pre( directory, pack_files, j(directory, "pre", filename + ext_pre) )
+                    self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + ext_pre))
+                    
+                if self.generate_col_file:
+                    pack_files = []
+                    pack_files.append(j(path, filename + ext_col))
+                    pack_pre( directory, pack_files, j(directory, "pre", filename + "col" + ext_pre) )
+                    self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + "col" + ext_pre))
+                if self.generate_scn_file:
+                    pack_files = []
+                    pack_files.append(j(path, filename + ext_scn))
+                    pack_files.append(j(path, filename + ext_tex))
+                    if self.generate_sky:
+                        pack_files.append(j(skypath, filename + "_sky" + ext_scn))
+                        pack_files.append(j(skypath, filename + "_sky" + ext_tex))
+                    pack_pre( directory, pack_files, j(directory, "pre", filename + "scn" + ext_pre) )
+                    self.report({'OPERATOR'}, "Exported " + j(directory, "pre", filename + "scn" + ext_pre))
+                    
         # /Build PRE files
         # #########################
         
@@ -642,6 +659,11 @@ def export_col(filename, directory, target_game, operator=None):
                     intensities_out.write(struct.pack(fmt, *args))
 
                 intensity_layer = bm.loops.layers.color.get("intensity")
+                if not intensity_layer: 
+                    intensity_layer = bm.loops.layers.color.get("bake")
+                if not intensity_layer: 
+                    intensity_layer = bm.loops.layers.color.get("color")
+                    
                 if intensity_layer:
                     intensities_list = {}
                     for face in bm.faces:

@@ -43,29 +43,19 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
         mat_checksum = p("  material checksum: {}", to_hex_string(r.u32()))
         blender_mat = bpy.data.materials.new(str(mat_checksum))
         ps = blender_mat.thug_material_props
-        #p("  material name checksum: {}", r.u32())
-
-        if False and output_file:
-            output_file.write("newmtl {}\n".format(mat_checksum))
 
         num_passes = p("  material passes: {}", r.u32())
         ps.alpha_cutoff = p("  alpha cutoff: {}", r.u32() % 256)
         ps.sorted = p("  sorted: {}", r.bool())
         ps.draw_order = p("  draw order: {}", r.f32())
         ps.single_sided = p("  single_sided: {}", r.bool())
-        ps.no_backface_culling = False
-        #ps.no_backface_culling = p("  no backface culling: {}", r.bool())
+        ps.no_backface_culling = ( ps.single_sided == False )
         ps.z_bias = 0
-        #ps.z_bias = p("  z bias: {}", r.i32())
 
         grassify = p("  grassify: {}", r.bool())
         if grassify:
             p("  grass height: {}", r.f32())
             p("  grass layers: {}", r.i32())
-
-        #ps.specular_power = p("  specular power: {}", r.f32())
-        #if ps.specular_power > 0.0:
-        #    ps.specular_color = p("  specular color: {}", r.read("3f"))
 
         blender_mat.use_transparency = True
         blender_mat.diffuse_color = (1, 1, 1)
@@ -97,17 +87,9 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
                 #    blender_tex.image = bpy.data.images.new(image_name)
             tex_slot.uv_layer = str(j)
 
-            if False and output_file and (True or texture_map) and j == 0:
-                """
-                output_file.write("map_Kd {}.tex_{}.tga\n".format(
-                    texture_prefix,
-                    texture_map.get(tex_checksum, 0)))
-                """
-                output_file.write("map_Kd {}.tga\n".format(tex_checksum))
             pass_flags = p("    pass material flags: {}", r.u32())
             p("    pass has color: {}", r.bool())
             pps.color = p("    pass color: {}", r.read("3f"))
-            #p("    pass alpha register: {}", r.u64())
             pps.blend_mode = p("    blend mode: {}", BLEND_MODES[r.u32()])
             pps.blend_fixed_alpha = r.u32() & 0xFF
 
@@ -130,7 +112,6 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
                 blender_tex.image.use_clamp_x = pps.u_addressing == "Clamp"
                 blender_tex.image.use_clamp_y = pps.v_addressing == "Clamp"
 
-            #pps.envmap_multiples = p("    pass envmap uv tiling multiples: {}", r.read("2f"))
             pps.filtering_mode = r.u32()
             p("    pass filtering mode: {}", pps.filtering_mode)
             pps.test_passes = pass_flags
@@ -419,7 +400,7 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
                             loop[uv_layer].uv = pvd["uvs"][l]
                             if sec_flags & SECFLAGS_HAS_VERTEX_COLORS:
                                 cb, cg, cr, ca = pvd["color"]
-                                loop[color_layer] = (cr / 128.0, cg / 128.0, cb / 128.0)
+                                loop[color_layer] = (cr / 255.0, cg / 255.0, cb / 255.0)
                                 loop[alpha_layer] = (ca / 128.0, ca / 128.0, ca / 128.0)
                                 
         bm.verts.index_update()
@@ -515,9 +496,6 @@ def import_col_thps4(filename, directory):
 
         # THPS4: since all verts are floats, the 'offset' is the number of verts rather than an actual offset
         r.offset = base_vert_offset + (obj_first_vert_offset * SIZEOF_FLOAT_VERT_THPS4)
-        #p("I am at: {}", r.offset)
-        #if i > 2:
-        #    raise Exception("Test")
         per_vert_data = {}
         
         for j in range(obj_num_verts):
@@ -545,9 +523,6 @@ def import_col_thps4(filename, directory):
             else:
                 face_idx = r.read("3H")
                 r.read("H") # padding?
-
-            if False and face_flags & FACE_FLAGS["mFD_INVISIBLE"]:
-                blender_object.hide = True
 
             if hasattr(bm.verts, "ensure_lookup_table"):
                 bm.verts.ensure_lookup_table()

@@ -1309,6 +1309,7 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
      ("vBLEND_MODE_BLEND_INVERSE_PREVIOUS_MASK", "BLEND_INVERSE_PREVIOUS_MASK", ""),           # ( Dst - Src ) * Dst + Src
      ("vBLEND_MODE_MODULATE_COLOR", "MODULATE_COLOR", ""),
      ("vBLEND_MODE_ONE_INV_SRC_ALPHA", "ONE_INV_SRC_ALPHA", ""),
+     ("vBLEND_MODE_OVERLAY", "OVERLAY", ""),
     ), name="Blend Mode", default="vBLEND_MODE_DIFFUSE")
     blend_fixed_alpha = IntProperty(name="Fixed Alpha", min=0, max=255)
     u_addressing = EnumProperty(items=(

@@ -266,6 +266,7 @@ vBLEND_MODE_BLEND_PREVIOUS_MASK = 12                    # ( Src - Dst ) * Dst + 
 vBLEND_MODE_BLEND_INVERSE_PREVIOUS_MASK = 13            # ( Dst - Src ) * Dst + Src
 vBLEND_MODE_MODULATE_COLOR = 15  # ( Dst - 0 ) * Src(col) + 0   - special mode for the shadow.
 vBLEND_MODE_ONE_INV_SRC_ALPHA = 17  #                           - special mode for imposter rendering.
+vBLEND_MODE_OVERLAY = 18  #                           - special mode for imposter rendering.
 
 BLEND_MODES = {
     0: "vBLEND_MODE_DIFFUSE",
@@ -284,6 +285,7 @@ BLEND_MODES = {
     13: "vBLEND_MODE_BLEND_INVERSE_PREVIOUS_MASK",
     15: "vBLEND_MODE_MODULATE_COLOR",
     17: "vBLEND_MODE_ONE_INV_SRC_ALPHA",
+    18: "vBLEND_MODE_OVERLAY",
 }
 
 BILLBOARD_TYPES = {
