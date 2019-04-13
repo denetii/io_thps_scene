@@ -57,6 +57,7 @@ def export_level_manifest_json(filename, directory, operator, level_info):
         outp.write("\t\"FLAG_DISABLE_GOALEDITOR\": {},\n".format(("true" if level_info.level_flag_nogoaleditor else "false")))
         outp.write("\t\"FLAG_DISABLE_GOALATTACK\": {},\n".format(("true" if level_info.level_flag_nogoalattack else "false")))
         outp.write("\t\"FLAG_NO_PRX\": {},\n".format(("true" if level_info.level_flag_noprx else "false")))
+        outp.write("\t\"FLAG_IS_BIG_LEVEL\": {},\n".format(("true" if level_info.level_flag_biglevel else "false")))
 
         outp.write("}\n")
 
@@ -180,6 +181,7 @@ class THUGSceneSettings(bpy.types.Panel):
         self.layout.row().label(text="Level Flags", icon='INFO')
         box = self.layout.box().column(True)
         box.row().prop(scene.thug_level_props, "level_flag_offline")
+        box.row().prop(scene.thug_level_props, "level_flag_biglevel")
         box.row().prop(scene.thug_level_props, "level_flag_noprx")
         box.row().prop(scene.thug_level_props, "level_flag_indoor")
         box.row().prop(scene.thug_level_props, "level_flag_nosun")

@@ -1438,20 +1438,20 @@ def bake_thug_lightmaps(meshes, context):
                 scene.render.bake_margin = 2 # Used to be bake_margin
             if ob.thug_lightmap_quality != 'Custom':
                 if ob.thug_lightmap_quality == 'Draft':
-                    scene.cycles.samples = 16
+                    scene.cycles.samples = 32
                     scene.cycles.max_bounces = 2
                 if ob.thug_lightmap_quality == 'Preview':
-                    scene.cycles.samples = 32
-                    scene.cycles.max_bounces = 4
+                    scene.cycles.samples = 64
+                    scene.cycles.max_bounces = 2
                 if ob.thug_lightmap_quality == 'Good':
-                    scene.cycles.samples = 108
-                    scene.cycles.max_bounces = 5
+                    scene.cycles.samples = 128
+                    scene.cycles.max_bounces = 3
                 if ob.thug_lightmap_quality == 'High':
-                    scene.cycles.samples = 225
-                    scene.cycles.max_bounces = 6
+                    scene.cycles.samples = 256
+                    scene.cycles.max_bounces = 3
                 if ob.thug_lightmap_quality == 'Ultra':
-                    scene.cycles.samples = 450
-                    scene.cycles.max_bounces = 8
+                    scene.cycles.samples = 512
+                    scene.cycles.max_bounces = 3
             print("Using {} bake quality. Samples: {}, bounces: {}".format(ob.thug_lightmap_quality, scene.cycles.samples, scene.cycles.max_bounces))
             if scene.thug_bake_type == 'SHADOW':
                 bpy.ops.object.bake(type='SHADOW')
@@ -2827,6 +2827,8 @@ class THUGLightingTools(bpy.types.Panel):
                 box.row().prop(ob, "thug_lightmap_resolution")
                 box.row().prop(ob, "thug_lightmap_quality")
                 box.row().prop(ob, "thug_lightmap_type", expand=True)
+            else:
+                box.row().prop(ob, "thug_lightmap_quality")
                 
             tmp_row = box.row().split()
             tmp_row.column().operator(BakeLightmaps.bl_idname, text=BakeLightmaps.bl_label, icon='LIGHTPAINT')

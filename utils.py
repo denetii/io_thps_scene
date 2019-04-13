@@ -348,16 +348,6 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
         col.row().prop(self, "thug_lightgroup")
         col.row().prop(self, "thug_is_trickobject")
         col.row().prop(self, "thug_cluster_name")
-        col.row().prop(self, "triggerscript_type")
-        col.row().prop_search(
-                self,
-                "target_node",
-                context.window_manager,
-                "thug_all_restarts")
-        col.row().prop_search(
-                self, "custom_name",
-                bpy.data,
-                "texts")
 
 #----------------------------------------------------------------------------------
 class THUGUtilBatchImport(bpy.types.Operator):

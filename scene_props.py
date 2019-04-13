@@ -1053,10 +1053,10 @@ class THUGTODProps(bpy.types.PropertyGroup):
 #- Properties for the entire level
 #----------------------------------------------------------------------------------
 class THUGLevelProps(bpy.types.PropertyGroup):
-    level_name = StringProperty(name="Level Name", description="Name of your level, used for in-game menus.")
-    scene_name = StringProperty(name="Scene Name", description="Short name referenced by scripts.")
-    creator_name = StringProperty(name="Creator Name", description="Name of the person(s) who created this level.")
-    level_skybox = StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level.")
+    level_name = StringProperty(name="Level Name", description="Name of your level, used for in-game menus")
+    scene_name = StringProperty(name="Scene Name", description="Short name referenced by scripts")
+    creator_name = StringProperty(name="Creator Name", description="Name of the person(s) who created this level")
+    level_skybox = StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level")
     
     export_props = PointerProperty(type=THUGLevelExportProps)
     
@@ -1081,32 +1081,33 @@ class THUGLevelProps(bpy.types.PropertyGroup):
                            default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
-                           description="Light color, with alpha used as the mod value.")
+                           description="Light color, with alpha used as the mod value")
     level_light0_rgba = FloatVectorProperty(name="Light #1: Color/Mod",
                            subtype='COLOR',
                            default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
-                           description="Light color, with alpha used as the mod value.")
+                           description="Light color, with alpha used as the mod value")
     level_light0_headpitch = FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
     level_light1_rgba = FloatVectorProperty(name="Light #2: Color/Mod",
                            subtype='COLOR',
                            default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
-                           description="Light color, with alpha used as the mod value.")
+                           description="Light color, with alpha used as the mod value")
     level_light1_headpitch = FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
     
-    level_flag_offline = BoolProperty(name="Offline Only", description="This level is not enabled for online play.", default=False)
-    level_flag_indoor = BoolProperty(name="Indoor", description="(THUG PRO only) This level is indoor.", default=False)
-    level_flag_nosun = BoolProperty(name="No Sun", description="(THUG PRO only) Don't display the dynamic sun in this level.", default=False)
-    level_flag_defaultsky = BoolProperty(name="Default Sky", description="(THUG PRO only) Use the default skybox.", default=False)
-    level_flag_wallridehack = BoolProperty(name="Wallride Hack", description="(THUG PRO only) Automatically makes all walls wallridable.", default=False)
+    level_flag_offline = BoolProperty(name="Offline Only", description="This level is not enabled for online play", default=False)
+    level_flag_indoor = BoolProperty(name="Indoor", description="(THUG PRO only) This level is indoor", default=False)
+    level_flag_nosun = BoolProperty(name="No Sun", description="(THUG PRO only) Don't display the dynamic sun in this level", default=False)
+    level_flag_defaultsky = BoolProperty(name="Default Sky", description="(THUG PRO only) Use the default skybox", default=False)
+    level_flag_wallridehack = BoolProperty(name="Wallride Hack", description="(THUG PRO only) Automatically makes all walls wallridable", default=False)
     level_flag_nobackfacehack = BoolProperty(name="No Backface Hack", description="(THUG PRO only)", default=False)
     level_flag_modelsinprx = BoolProperty(name="Models in scripts .prx", description="(THUG PRO only)", default=False)
     level_flag_nogoaleditor = BoolProperty(name="Disable goal editor", description="(THUG PRO only)", default=False)
     level_flag_nogoalattack = BoolProperty(name="Disable goal attack", description="(THUG PRO only)", default=False)
     level_flag_noprx = BoolProperty(name="Don't use prx files", description="(THUG PRO only) This level uses uncompressed files, not packed in .prx files", default=False)
+    level_flag_biglevel = BoolProperty(name="Big Level", description="(THUG PRO only) Use extended online position broadcast limits", default=False)
     
 # METHODS
 #############################################
