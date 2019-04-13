@@ -133,6 +133,20 @@ def get_texture(name):
     return blender_tex
     
 #----------------------------------------------------------------------------------
+#- Returns an existing image given a name, or creates one with given parameters
+#----------------------------------------------------------------------------------
+def get_image(image_name, image_width = 0, image_height = 0):
+    image = bpy.data.images.get(image_name)
+    if image is None:
+        image = bpy.data.images.new(name=image_name)
+        if image_width > 0 and image_height > 0:
+            image.generated_type = 'COLOR_GRID'
+            image.generated_width = self.resolution
+            image.generated_height = self.resolution
+            
+    return image
+    
+#----------------------------------------------------------------------------------
 #- Returns an existing object vertex color channel, or creates a new one
 #----------------------------------------------------------------------------------
 def get_vcs(obj, channel_name):
