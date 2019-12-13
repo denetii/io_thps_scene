@@ -248,7 +248,12 @@ MATFLAG_PASS_IGNORE_VERTEX_ALPHA = (1 << 12)  # This pass should not have the te
 MATFLAG_EXPLICIT_UV_WIBBLE =       (1 << 14)  # Uses explicit uv wibble (set via script) rather than calculated.
 MATFLAG_WATER_EFFECT =             (1 << 27)  # This material should be processed to provide the water effect.
 MATFLAG_NO_MAT_COL_MOD =           (1 << 28)  # No material color modulation required (all passes have m.rgb = 0.5).
-MATFLAG_NORMAL_TEST =              (1 << 29)    # TEST
+
+MATFLAG_REPLACE =                   (1 << 15)   # (Underground+) Material replacement is allowed (group number defined in m_filtering_mode[0])
+
+MATFLAG_ALLOW_RECOLOR =             (1 << 25)   # (Underground+) This material can be recolored
+MATFLAG_FIXED_SCALE =               (1 << 26)   # (Underground+) This material uses a fixed scale
+
 
 vBLEND_MODE_DIFFUSE = 0                                # ( 0 - 0 ) * 0 + Src
 vBLEND_MODE_ADD = 1                                    # ( Src - 0 ) * Src + Dst
@@ -266,7 +271,11 @@ vBLEND_MODE_BLEND_PREVIOUS_MASK = 12                    # ( Src - Dst ) * Dst + 
 vBLEND_MODE_BLEND_INVERSE_PREVIOUS_MASK = 13            # ( Dst - Src ) * Dst + Src
 vBLEND_MODE_MODULATE_COLOR = 15  # ( Dst - 0 ) * Src(col) + 0   - special mode for the shadow.
 vBLEND_MODE_ONE_INV_SRC_ALPHA = 17  #                           - special mode for imposter rendering.
-vBLEND_MODE_OVERLAY = 18  #                           - special mode for imposter rendering.
+vBLEND_MODE_OVERLAY = 18 
+vBLEND_MODE_NORMAL_MAP = 19
+vBLEND_MODE_LIGHTMAP = 20
+vBLEND_MODE_NORMAL_ROUGH = 21
+vBLEND_MODE_MASK = 22
 
 BLEND_MODES = {
     0: "vBLEND_MODE_DIFFUSE",
@@ -286,6 +295,10 @@ BLEND_MODES = {
     15: "vBLEND_MODE_MODULATE_COLOR",
     17: "vBLEND_MODE_ONE_INV_SRC_ALPHA",
     18: "vBLEND_MODE_OVERLAY",
+    19: "vBLEND_MODE_NORMAL_MAP",
+    20: "vBLEND_MODE_LIGHTMAP",
+    21: "vBLEND_MODE_NORMAL_ROUGH",
+    22: "vBLEND_MODE_MASK",
 }
 
 BILLBOARD_TYPES = {

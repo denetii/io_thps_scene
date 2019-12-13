@@ -890,6 +890,11 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
 #    filepath = StringProperty()
     skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
     export_scale = FloatProperty(name="Export scale", default=1)
+    
+    max_texture_size = IntProperty(name="Max Texture Size"
+        , min=0,max=8192,default=0
+        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
+    )
     mipmap_offset = IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
@@ -926,8 +931,8 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
-        box.row().prop(self, "mipmap_offset")
-        box.row().prop(self, "only_offset_lightmap")
+        box.row().prop(self, "max_texture_size")
+        #box.row().prop(self, "only_offset_lightmap")
         
 #----------------------------------------------------------------------------------
 class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
@@ -969,6 +974,11 @@ class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
         name="Generate scripts",
         default=True)
     export_scale = FloatProperty(name="Export scale", default=1)
+    
+    max_texture_size = IntProperty(name="Max Texture Size"
+        , min=0,max=8192,default=0
+        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
+    )
     mipmap_offset = IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
@@ -997,8 +1007,8 @@ class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
-        box.row().prop(self, "mipmap_offset")
-        box.row().prop(self, "only_offset_lightmap")
+        box.row().prop(self, "max_texture_size")
+        #box.row().prop(self, "only_offset_lightmap")
 
 #----------------------------------------------------------------------------------
 class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
@@ -1041,6 +1051,11 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
 #    filepath = StringProperty()
     skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
     export_scale = FloatProperty(name="Export scale", default=1)
+    
+    max_texture_size = IntProperty(name="Max Texture Size"
+        , min=0,max=8192,default=0
+        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
+    )
     mipmap_offset = IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
@@ -1077,8 +1092,8 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
-        box.row().prop(self, "mipmap_offset")
-        box.row().prop(self, "only_offset_lightmap")
+        box.row().prop(self, "max_texture_size")
+        #box.row().prop(self, "only_offset_lightmap")
         
 #----------------------------------------------------------------------------------
 class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
@@ -1120,6 +1135,11 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         name="Generate scripts",
         default=True)
     export_scale = FloatProperty(name="Export scale", default=1)
+    
+    max_texture_size = IntProperty(name="Max Texture Size"
+        , min=0,max=8192,default=0
+        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
+    )
     mipmap_offset = IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
@@ -1148,8 +1168,8 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
-        box.row().prop(self, "mipmap_offset")
-        box.row().prop(self, "only_offset_lightmap")
+        box.row().prop(self, "max_texture_size")
+        #box.row().prop(self, "only_offset_lightmap")
 
 # OPERATORS
 #############################################
@@ -1194,6 +1214,11 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
 
     skybox_name = StringProperty(name="Skybox name", default="THUG2_Sky")
     export_scale = FloatProperty(name="Export scale", default=1)
+    
+    max_texture_size = IntProperty(name="Max Texture Size"
+        , min=0,max=8192,default=0
+        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
+    )
     mipmap_offset = IntProperty(name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
@@ -1228,8 +1253,8 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
-        box.row().prop(self, "mipmap_offset")
-        box.row().prop(self, "only_offset_lightmap")
+        box.row().prop(self, "max_texture_size")
+        #box.row().prop(self, "only_offset_lightmap")
 
 #----------------------------------------------------------------------------------
 class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
@@ -1267,6 +1292,11 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
     ), name="Model Type", default="skin")
     generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
     export_scale = FloatProperty(name="Export scale", default=1)
+    
+    max_texture_size = IntProperty(name="Max Texture Size"
+        , min=0,max=8192,default=0
+        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
+    )
     mipmap_offset = IntProperty(name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
@@ -1294,8 +1324,8 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
         box = self.layout.box().column(True)
-        box.row().prop(self, "mipmap_offset")
-        box.row().prop(self, "only_offset_lightmap")
+        box.row().prop(self, "max_texture_size")
+        #box.row().prop(self, "only_offset_lightmap")
         
         
 

@@ -443,7 +443,7 @@ def bake_thug_vcs(meshes, context):
         
         
 #----------------------------------------------------------------------------------
-#- Bakes 'Half Life 2' Radiosity light maps
+#- Bakes directional light maps to 3 textures using the 'Half Life 2' basis
 #----------------------------------------------------------------------------------
 def bake_hl2_lightmaps(meshes, context):
     scene = context.scene
@@ -466,7 +466,7 @@ def bake_hl2_lightmaps(meshes, context):
         
     # Create destination folder for the baked textures
     _lightmap_folder = bpy.path.basename(bpy.context.blend_data.filepath)[:-6] # = Name of blend file
-    _folder = bpy.path.abspath("//Tx_Lightmap_PBR/{}".format(_lightmap_folder))
+    _folder = bpy.path.abspath("//Tx_DirLightmap/{}".format(_lightmap_folder))
     os.makedirs(_folder, 0o777, True)
     
     setup_cycles_scene(scene.thug_lightmap_uglymode)
@@ -498,6 +498,13 @@ def bake_hl2_lightmaps(meshes, context):
             print("Object {} has no materials. Cannot bake lighting!".format(ob.name))
             continue
             
+        # Check this object for a lightmap group - if it is part of a group we need to tweak
+        # the bake process slightly to ensure the bake goes to the shared texture
+        # rather than an object-specific texture
+        group_name = ''
+        if ob.thug_lightmap_group_id > -1:
+            group_name = scene.thug_lightmap_groups[ob.thug_lightmap_group_id].name
+            
         # Set it to active and go into edit mode
         scene.objects.active = ob
         ob.select = True
@@ -505,14 +512,19 @@ def bake_hl2_lightmaps(meshes, context):
         # Set the desired resolution, both for the UV map and the lightmap texture
         img_res = 128
         bake_margin = 1.0
-        lightmap_name_x = 'LM_{}_{}_X'.format(scene.thug_bake_slot, ob.name)
-        lightmap_name_y = 'LM_{}_{}_Y'.format(scene.thug_bake_slot, ob.name)
-        lightmap_name_z = 'LM_{}_{}_Z'.format(scene.thug_bake_slot, ob.name)
-        
-        
-        if ob.thug_lightmap_resolution:
+        lightmap_name_x = 'LM_{}_{}_0'.format(scene.thug_bake_slot, ob.name)
+        lightmap_name_y = 'LM_{}_{}_1'.format(scene.thug_bake_slot, ob.name)
+        lightmap_name_z = 'LM_{}_{}_2'.format(scene.thug_bake_slot, ob.name)
+        if group_name != '':
+            lightmap_name_x = 'LM_{}_{}_0'.format(scene.thug_bake_slot, group_name)
+            lightmap_name_y = 'LM_{}_{}_1'.format(scene.thug_bake_slot, group_name)
+            lightmap_name_z = 'LM_{}_{}_2'.format(scene.thug_bake_slot, group_name)
+            img_res = int(scene.thug_lightmap_groups[ob.thug_lightmap_group_id].resolution)
+            print("Lightmap resolution is: {}x{}".format(img_res, img_res))
+        elif ob.thug_lightmap_resolution:
             img_res = int(ob.thug_lightmap_resolution)
             print("Object lightmap resolution is: {}x{}".format(img_res, img_res))
+            
         if scene.thug_lightmap_scale:
             img_res = int(img_res * float(scene.thug_lightmap_scale))
             if img_res < 16:
@@ -557,7 +569,7 @@ def bake_hl2_lightmaps(meshes, context):
         bpy.ops.object.mode_set(mode='OBJECT')
         
         # Recreate the UV map if it's a different resolution than we want now
-        if dont_change_resolution == False:
+        if group_name == '':
             if ("thug_last_bake_res" in ob and ob["thug_last_bake_res"] != img_res) \
             or ("thug_last_bake_type" in ob and ob["thug_last_bake_type"] != ob.thug_lightmap_type) \
             or ("thug_last_bake_res" not in ob or "thug_last_bake_type" not in ob)\
@@ -565,13 +577,12 @@ def bake_hl2_lightmaps(meshes, context):
                 print("Removing existing images/UV maps.")
                 if ob.data.uv_layers.get('Lightmap'):
                     ob.data.uv_textures.remove(ob.data.uv_textures['Lightmap'])
-                if lightmap_img:
-                    lightmap_img.source = 'GENERATED'
-                if shadowmap_img:
-                    shadowmap_img.source = 'GENERATED'
                 
         # Create the Lightmap UV layer 
         if not ob.data.uv_layers.get('Lightmap'):
+            if group_name != '':
+                print("ERROR: Object {} is part of group {}, but has no Lightmap UVs. Unable to bake.".format(ob.name, group_name))
+                continue
             uvs_are_new = True
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_all(action='SELECT')
@@ -606,53 +617,77 @@ def bake_hl2_lightmaps(meshes, context):
         #-----------------------------------------------------------------------------------------
         # Multi-pass bake: render multiple bake textures, then flatten then into a single image
         # First, bake each pass to a separate image...
-        bake_passes = [ 'X', 'Y', 'Z' ]
+        #bake_passes = [ 'X', 'Y', 'Z' ]
+        orig_index = ob.active_material_index
+        store_materials(ob)
         
-        for bakepass in bake_passes:
-            print("**********************")
-            print("Baking {} pass...".format(bakepass))
-            orig_index = ob.active_material_index
-            store_materials(ob)
+        # Create or retrieve the lightmap texture
+        tex_name = "Baked_{}".format(ob.name)
+        if group_name != '':
+            tex_name = "Baked_{}".format(group_name)
+        blender_tex = get_texture(tex_name)
+        blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_MODULATE'
+        blender_tex.image = lightmap_img_x
             
-            if bakepass == 'X':
+        for bakepass in range(4):
+            print("**********************")
+            print("Baking pass {}...".format(bakepass))
+            if bakepass == 0:
                 image = lightmap_img_x
                 pass_name = lightmap_name_x
-            elif bakepass == 'Y':
+            elif bakepass == 1:
                 image = lightmap_img_y
                 pass_name = lightmap_name_y
-            elif bakepass == 'Z':
+            elif bakepass == 2:
                 image = lightmap_img_z
                 pass_name = lightmap_name_z
-            
+            elif bakepass == 3:
+                # There is no 4th bake pass, this is just used to clean up the normal offsets 
+                # generated by the 3 previous passes
+                for mat in ob.data.materials:
+                    node_m = get_cycles_node(mat.node_tree.nodes, 'Normal Offset', 'ShaderNodeMapping')
+                    node_m.rotation[0] = 0.0
+                    node_m.rotation[1] = 0.0
+                    node_m.rotation[2] = 0.0
+                break
             image.use_fake_user = True # Ensure it won't be deleted when closing the scene
             
-            # Create or retrieve the lightmap texture
-            blender_tex = get_texture("Baked_{}".format(ob.name))
-            blender_tex.image = image
-            blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_MODULATE'
-            
             for mat in ob.data.materials:
-                node_n = get_cycles_node(mat.node_tree.nodes, 'Normal Map', 'ShaderNodeNormalMap')
-                if node_n == None:
-                    raise Exception("No Normal Map node :(")
+                # Ensure that we have an input Geometry node, and a Mapping node to rotate the normals
+                node_g = get_cycles_node(mat.node_tree.nodes, 'Geometry', 'ShaderNodeNewGeometry')
+                node_m = get_cycles_node(mat.node_tree.nodes, 'Normal Offset', 'ShaderNodeMapping')
+                node_m.vector_type = 'NORMAL'
+                # Rotate the normal
+                if bakepass == 0:
+                    node_m.rotation[0] = 0.955393
+                    node_m.rotation[1] = 0.0
+                    node_m.rotation[2] = 0.0
+                    #new_normal = [ -(1/math.sqrt(6)), -(1/math.sqrt(2)), 1/math.sqrt(3), 1.0 ]
+                if bakepass == 1:
+                    node_m.rotation[0] = -0.955393
+                    node_m.rotation[1] = 0.0
+                    node_m.rotation[2] = 0.0
+                    #new_normal = [ -(1/math.sqrt(6)), (1/math.sqrt(2)), 1/math.sqrt(3), 1.0 ]
+                elif bakepass == 2:
+                    node_m.rotation[0] = 0.0
+                    node_m.rotation[1] = 0.955393
+                    node_m.rotation[2] = 0.0
+                    #new_normal = [ math.sqrt(2/3), 0, 1/math.sqrt(3), 1.0 ]
+                # Link Geometry normal to mapping node
+                link = mat.node_tree.links.new(node_m.inputs[0], node_g.outputs['Normal'])
+                
+                # Get the shader node (Diffuse or Principled accepted)
+                node_shader = get_cycles_node(mat.node_tree.nodes, 'Diffuse BSDF', 'ShaderNodeBsdfDiffuse', create_if_none=False)
+                if node_shader == None:
+                    node_shader = get_cycles_node(mat.node_tree.nodes, 'Principled BSDF', 'ShaderNodeBsdfPrincipled', create_if_none=False)
+                if node_shader == None:
+                    raise Exception("Unable to find material output node for {} :(".format(mat.name))
                     
-                if len(node_n.inputs[1].links):
-                    mat.node_tree.links.remove(node_n.inputs[1].links[0])
-                if bakepass == 'X':
-                    new_normal = [ -(1/math.sqrt(6)), -(1/math.sqrt(2)), 1/math.sqrt(3), 1.0 ]
-                if bakepass == 'Y':
-                    new_normal = [ -(1/math.sqrt(6)), (1/math.sqrt(2)), 1/math.sqrt(3), 1.0 ]
-                elif bakepass == 'Z':
-                    new_normal = [ math.sqrt(2/3), 0, 1/math.sqrt(3), 1.0 ]
-                
-                new_normal[0] = (new_normal[0] + 1.0) * 0.5
-                new_normal[1] = (new_normal[1] + 1.0) * 0.5
-                new_normal[2] = (new_normal[2] + 1.0) * 0.5
-                
-                node_n.inputs[1].default_value = (new_normal[0], new_normal[1], new_normal[2], 1.0)
+                # Link Mapping node (with offset normal) to diffuse/principled shader input normal
+                link = mat.node_tree.links.new(node_shader.inputs['Normal'], node_m.outputs[0])
                 
                 node_d = get_cycles_node(mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
-                node_d.image = blender_tex.image
+                node_d.image = image
                 node_d.location = (-880,40)
                 mat.node_tree.nodes.active = node_d
                 
@@ -669,24 +704,25 @@ def bake_hl2_lightmaps(meshes, context):
             bpy.context.scene.render.bake.use_pass_direct = True
             
             if scene.thug_bake_automargin:
-                scene.render.bake_margin = 1 # Used to be bake_margin
+                scene.render.bake_margin = 2 # Used to be bake_margin
             if ob.thug_lightmap_quality != 'Custom':
                 if ob.thug_lightmap_quality == 'Draft':
-                    scene.cycles.samples = 64
+                    scene.cycles.samples = 32
                     scene.cycles.max_bounces = 2
                 if ob.thug_lightmap_quality == 'Preview':
-                    scene.cycles.samples = 100
+                    scene.cycles.samples = 64
                     scene.cycles.max_bounces = 2
                 if ob.thug_lightmap_quality == 'Good':
-                    scene.cycles.samples = 300
-                    scene.cycles.max_bounces = 2
+                    scene.cycles.samples = 128
+                    scene.cycles.max_bounces = 3
                 if ob.thug_lightmap_quality == 'High':
-                    scene.cycles.samples = 600
+                    scene.cycles.samples = 256
                     scene.cycles.max_bounces = 3
                 if ob.thug_lightmap_quality == 'Ultra':
-                    scene.cycles.samples = 1280
+                    scene.cycles.samples = 512
                     scene.cycles.max_bounces = 3
             print("Using {} bake quality. Samples: {}, bounces: {}".format(ob.thug_lightmap_quality, scene.cycles.samples, scene.cycles.max_bounces))
+            #raise Exception("TEST")
             bpy.ops.object.bake(type='DIFFUSE')
             save_baked_texture(image, _folder)
             
@@ -695,16 +731,9 @@ def bake_hl2_lightmaps(meshes, context):
         baked_obs.append(ob.name)
         bpy.ops.object.mode_set(mode='OBJECT')
         
-        if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI' or scene.thug_bake_type == 'LIGHT' or scene.thug_bake_type == 'INDIRECT' or scene.thug_bake_type == 'SHADOW':
-            ob.active_material_index = orig_index
-        
+        ob.active_material_index = orig_index
         ob.data.uv_textures[orig_uv].active = True
         ob.data.uv_textures[orig_uv].active_render = True
-        
-        #for mat in ob.data.materials:
-        #    node_n = get_cycles_node(mat.node_tree.nodes, 'Normal Map', 'ShaderNodeNormalMap')
-        #    if node_n != None:
-        #        node_n.inputs[1].default_value = (0.5, 0.5, 1.0, 1.0)
         
         # If there is more than one material, restore the per-face material assignment
         if len(ob.data.materials) > 1:
@@ -725,24 +754,15 @@ def bake_hl2_lightmaps(meshes, context):
         for mat in ob.data.materials:
             mat.use_nodes = False
         for mat_slot in ob.material_slots:
-            mat_slot.material = mat_slot.material.copy()
+            if group_name != '':
+                group_mat_name = '{}_{}'.format(mat_slot.material.name, group_name)
+                mat_slot.material = get_material(group_mat_name, mat_slot.material)
+            else:
+                mat_slot.material = mat_slot.material.copy()
             
-            lightmap_img_x = maybe_get_image('LM_{}_{}_X'.format(scene.thug_bake_slot, ob.name))
-            lightmap_img_y = maybe_get_image('LM_{}_{}_Y'.format(scene.thug_bake_slot, ob.name))
-            lightmap_img_z = maybe_get_image('LM_{}_{}_Z'.format(scene.thug_bake_slot, ob.name))
-            lightmap_img = maybe_get_image('PM_{}_{}'.format(scene.thug_bake_slot, ob.name))
-            blender_tex = bpy.data.textures.get("Baked_{}".format(obname))
-            # Add the lightmap into the new UG+ material system, for the corresponding lightmap slot
-            if scene.thug_bake_slot == 'DAY':
-                mat_slot.material.thug_material_props.ugplus_matslot_lightmap.tex_image = lightmap_img_x
-                mat_slot.material.thug_material_props.ugplus_matslot_lightmap2.tex_image = lightmap_img_y
-                mat_slot.material.thug_material_props.ugplus_matslot_lightmap3.tex_image = lightmap_img_z
-            elif scene.thug_bake_slot == 'EVENING':
-                mat_slot.material.thug_material_props.ugplus_matslot_lightmap2.tex_image = lightmap_img
-            elif scene.thug_bake_slot == 'NIGHT':
-                mat_slot.material.thug_material_props.ugplus_matslot_lightmap3.tex_image = lightmap_img
-            elif scene.thug_bake_slot == 'MORNING':
-                mat_slot.material.thug_material_props.ugplus_matslot_lightmap4.tex_image = lightmap_img
+            mat_slot.material.thug_material_props.ugplus_matslot_lightmap.tex_image = maybe_get_image(lightmap_name_x)
+            mat_slot.material.thug_material_props.ugplus_matslot_lightmap2.tex_image = maybe_get_image(lightmap_name_y)
+            mat_slot.material.thug_material_props.ugplus_matslot_lightmap3.tex_image = maybe_get_image(lightmap_name_z)
             
             # Also add the image to the legacy material system
             if not mat_slot.material.texture_slots.get(blender_tex.name):

@@ -263,7 +263,9 @@ def _thug_object_settings_draw(self, context):
             row = box.row()
             row.column().prop(ob, "thug_no_skater_shadow")
             row.column().prop(ob, "thug_material_blend")
-            box.row().prop(ob.data.thug_billboard_props, "is_billboard")
+            row = box.row()
+            #row.column().prop(ob, "thug_allow_uv_scale")
+            row.column().prop(ob.data.thug_billboard_props, "is_billboard")
             if ob.data.thug_billboard_props.is_billboard:
                 box.row().prop(ob.data.thug_billboard_props, "type", expand=True)
                 if ob.data.thug_billboard_props.type == 'AXIS':

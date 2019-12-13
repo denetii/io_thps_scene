@@ -333,6 +333,8 @@ def read_tex(reader, printer):
                     del buf
 
             r.offset += data_size
+            
+        blend_img.thug_image_props.mip_levels = levels
 
 def get_colortex(color):
     colortex_name = 'io_thps_scene_Color_' + ''.join('{:02X}'.format(int(255*a)) for a in color)
@@ -402,6 +404,8 @@ def export_tex(filename, directory, target_game, operator=None):
                     set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT1')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
+                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
                 export_textures.append(m.thug_material_props.ugplus_matslot_weathermask)
                 set_image_compression(m.thug_material_props.ugplus_matslot_weathermask, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
@@ -443,6 +447,13 @@ def export_tex(filename, directory, target_game, operator=None):
                 
             elif m.thug_material_props.ugplus_shader == 'Cloud':
                 export_textures.append(m.thug_material_props.ugplus_matslot_cloud)
+                set_image_compression(m.thug_material_props.ugplus_matslot_cloud, 'DXT5')
+                
+            elif m.thug_material_props.ugplus_shader == 'Grass':
+                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
+                set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
+                export_textures.append(m.thug_material_props.ugplus_matslot_normal)
                 
             elif m.thug_material_props.ugplus_shader == 'Water':
                 export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
@@ -490,14 +501,17 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
             
             for tex in export_textures:
-                if tex.tex_image == None or tex.tex_image == '':
-                    out_images.append(get_colortex(tex.tex_color))
+                if tex.tex_image == None:
+                    if tex.tex_image_name != '':
+                        out_images.append(tex.tex_image_name)
+                    else:
+                        out_images.append(get_colortex(tex.tex_color))
                 else:
                     out_images.append(tex.tex_image.name)
                     
         else:
             # denetii - only include texture slots that affect the diffuse color in the Blender material
-            passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
+            passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and (tex_slot.use_map_color_diffuse or tex_slot.use_map_normal)]
             if len(passes) > 4:
                 if operator:
                     passes = passes[:4]
@@ -543,12 +557,21 @@ def export_tex(filename, directory, target_game, operator=None):
             else:
                 dxt = 0
             #LOG.debug("compression: {}".format(dxt))
-            if operator.mipmap_offset:
+            mm_offset = 0
+            if operator.max_texture_size >= 16 and not image.name.startswith('LM_'):
+                tex_size = width if width > height else height
+                while True:
+                    if tex_size <= operator.max_texture_size:
+                        break
+                    tex_size /= 2
+                    mm_offset += 1
+                    
+            '''if operator.mipmap_offset:
                 mm_offset = operator.mipmap_offset
                 if operator.only_offset_lightmap and not image.name.startswith('LM_'):
                     mm_offset = 0
             else:
-                mm_offset = 0
+                mm_offset = 0'''
             mipmaps = get_all_compressed_mipmaps(image, dxt, mm_offset) if do_compression else get_all_mipmaps(image, mm_offset)
             #for idx, (mw, mh, mm) in enumerate(mipmaps):
                 #LOG.debug("mm #{}: {}x{} bytes: {}".format(idx, mw, mh, len(mm)))
@@ -562,7 +585,10 @@ def export_tex(filename, directory, target_game, operator=None):
             mipmaps = [mm for mw, mh, mm in mipmaps]
             #LOG.debug("width, height: {}, {}".format(width, height))
 
-            mip_levels = len(mipmaps)
+            mip_levels = min(len(mipmaps), image.thug_image_props.mip_levels)
+            if mip_levels == 0:
+                mip_levels = len(mipmaps)
+                
             texel_depth = 32
             palette_depth = 0
             palette_size = 0
@@ -579,7 +605,8 @@ def export_tex(filename, directory, target_game, operator=None):
             w("I", dxt)
             w("I", palette_size)
 
-            for mipmap in mipmaps:
+            for mip in range(0, mip_levels):
+                mipmap = mipmaps[mip]
                 w("I", len(mipmap))
                 pixels = mipmap # image.pixels[:]
                 if dxt != 0:

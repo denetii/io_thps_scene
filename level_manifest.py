@@ -81,7 +81,6 @@ class THUGSceneSettings(bpy.types.Panel):
         self.layout.row().prop(scene.thug_level_props, "level_name")
         self.layout.row().prop(scene.thug_level_props, "scene_name")
         self.layout.row().prop(scene.thug_level_props, "creator_name")
-        #self.layout.row().prop(scene.thug_level_props, "level_skybox")
         
         #self.layout.row().prop(scene.thug_level_props.export_props, "use_quick_export")
         # QUICK EXPORT SETTINGS
@@ -114,15 +113,12 @@ class THUGSceneSettings(bpy.types.Panel):
             box.row().prop(scene.thug_level_props.export_props, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
             box.row().prop(scene.thug_level_props.export_props, "export_scale")
             box2 = box.box().column(True)
-            box2.row().prop(scene.thug_level_props.export_props, "mipmap_offset")
-            #box2.row().prop(scene.thug_level_props.export_props, "only_offset_lightmap")
-        
-        #self.layout.row().prop(scene.thug_level_props, "default_terrain")
-        #self.layout.row().prop(scene.thug_level_props, "default_terrain_rail")
+            box2.row().prop(scene.thug_level_props.export_props, "max_texture_size")
         
         self.layout.row().label(text="Level Lighting", icon='LAMP_DATA')
         if scene.thug_level_props.export_props.target_game == 'THUG1':
             # Underground+ TOD/lighting settings here
+            self.layout.prop(scene.thug_level_props, "customize_tod")
             self.layout.prop(scene.thug_level_props, "tod_scale")
             self.layout.prop(scene.thug_level_props, "tod_slot")
             

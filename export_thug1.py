@@ -122,6 +122,11 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                 if original_object.data.thug_billboard_props.is_billboard:
                     flags |= SECFLAGS_BILLBOARD_PRESENT
                     flags &= ~SECFLAGS_HAS_VERTEX_NORMALS
+                # HACK!!!
+                if original_object.name.startswith('Sk5Ed_RA_') or \
+                original_object.name.startswith('Sk5Ed_RAp_') or \
+                original_object.name.startswith('Sk5Ed_RAdot_'):
+                    flags &= ~SECFLAGS_HAS_VERTEX_NORMALS
 
                     
                 mats_to_faces = {}

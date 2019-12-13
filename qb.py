@@ -1137,7 +1137,7 @@ def export_qb(filename, directory, target_game, operator=None):
             # Underground+ TOD setup script for all 4 TOD states
             p(":i function $DoTODSetup$")
             scene = bpy.context.scene
-            if hasattr(scene, 'thug_level_props'):
+            if hasattr(scene, 'thug_level_props') and scene.thug_level_props.customize_tod == True:
                 tod_slots = [ scene.thug_level_props.tod_day
                         , scene.thug_level_props.tod_evening
                         , scene.thug_level_props.tod_night
@@ -1241,7 +1241,7 @@ def export_qb(filename, directory, target_game, operator=None):
                         tmpl_end_z = tmpl_z + cm_end_pos[2] if lightprops.light_type == 'TUBE' else tmpl_z
                         tmpl_intensity = ob.data.energy
                         # Add the script line (AddAreaLight)
-                        p("\t:i $UGPlus_AddAreaLight$ $light_type$ = {} $light_id$ = {} $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $r$ = {} $g$ = {} $b$ = {} $radius$ = {} $height$ = {} $intensity$ = {} $end_pos_x$ = {} $end_pos_y$ = {} $end_pos_z$ = {} $light_dir$ = {} $light_up$ = {} $light_left$ = {}".format( 
+                        '''p("\t:i $UGPlus_AddAreaLight$ $light_type$ = {} $light_id$ = {} $pos_x$ = {} $pos_y$ = {} $pos_z$ = {} $r$ = {} $g$ = {} $b$ = {} $radius$ = {} $height$ = {} $intensity$ = {} $end_pos_x$ = {} $end_pos_y$ = {} $end_pos_z$ = {} $light_dir$ = {} $light_up$ = {} $light_left$ = {}".format( 
                             c(tmpl_type)
                             , c(get_clean_name(ob))
                             , f(tmpl_x)
@@ -1259,7 +1259,7 @@ def export_qb(filename, directory, target_game, operator=None):
                             , v3(ob.matrix_world.to_quaternion() * Vector((0.0, -1.0, 0.0)))
                             , v3(ob.matrix_world.to_quaternion() * Vector((0.0, 0.0, 1.0)))
                             , v3(ob.matrix_world.to_quaternion() * Vector((1.0, 0.0, 0.0)))
-                            ))
+                            ))'''
                 p(":i endfunction")
             
         print("Writing generated scripts...")

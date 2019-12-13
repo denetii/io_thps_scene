@@ -1003,6 +1003,10 @@ class THUGLevelExportProps(bpy.types.PropertyGroup):
     generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
     skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
     export_scale = FloatProperty(name="Export scale", default=1)
+    max_texture_size = IntProperty(name="Max Texture Size"
+        , min=0,max=8192,default=0
+        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
+    )
     mipmap_offset = IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
@@ -1061,6 +1065,7 @@ class THUGLevelProps(bpy.types.PropertyGroup):
     export_props = PointerProperty(type=THUGLevelExportProps)
     
     # These properties are used in Underground+ 1.5
+    customize_tod = BoolProperty(name="Customize TOD", description="(Underground+ only) Use custom TOD settings", default=False)
     tod_scale = FloatProperty(name="Default TOD", description="Default TOD range (0.0 = full day, 1.0 = full evening, 2.0 = full night, 3.0 = full morning)", default=0.0, min=0.0, max=4.0)
     tod_slot = EnumProperty(name="TOD Slot", items=(
         ( 'DAY', 'Day', ''),
@@ -1252,7 +1257,9 @@ def register_props():
             ("None", "None", ""),
             ("Outdoor", "Outdoor", ""),
             ("NoLevelLights", "NoLevelLights", ""),
-            ("Indoor", "Indoor", "")],
+            ("Indoor", "Indoor", ""),
+            ("Unlit", "Unlit", "")
+            ],
         default="None")
         
         

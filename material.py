@@ -20,12 +20,12 @@ def ugplus_material_update(mat, context):
 
 # Checks if our PBR material is completely diffuse (non-metallic, 0 reflectance), 
 # so we can use the less expensive Diffuse BRDF rather than the full PBR shader
-def is_full_diffuse(mat):
-    if not mat.thug_material_props.ugplus_matslot_specular.tex_image:
-        for i in range(4):
-            if mat.thug_material_props.ugplus_matslot_specular.tex_color[i] != 0.0:
+def is_full_diffuse(mprops):
+    if not mprops.ugplus_matslot_specular.tex_image:
+        for i in range(3):
+            if mprops.ugplus_matslot_specular.tex_color[i] != 0.0:
                 return False
-        if not mat.thug_material_props.ugplus_matslot_weathermask.tex_image:
+        if not mprops.ugplus_matslot_weathermask.tex_image:
             return True
     return False
 
@@ -121,13 +121,6 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 #    blender_tex.image = bpy.data.images.new(image_name)
             tex_slot.uv_layer = str(j)
 
-            if False and output_file and (True or texture_map) and j == 0:
-                """
-                output_file.write("map_Kd {}.tex_{}.tga\n".format(
-                    texture_prefix,
-                    texture_map.get(tex_checksum, 0)))
-                """
-                output_file.write("map_Kd {}.tga\n".format(tex_checksum))
             pass_flags = p("    pass material flags: {}", r.u32())
             p("    pass has color: {}", r.bool())
             pps.color = p("    pass color: {}", r.read("3f"))
@@ -148,9 +141,12 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 "vBLEND_MODE_MODULATE": "MULTIPLY"
             }.get(pps.blend_mode, "MIX")
 
-            pps.u_addressing = "Repeat" if p("    pass u addressing: {}", r.u32()) == 0 else "Clamp"
-            pps.v_addressing = "Repeat" if p("    pass v addressing: {}", r.u32()) == 0 else "Clamp"
-
+            tmp_addressing = [ "Repeat", "Clamp", "Border" ]
+            pps.u_addressing = p("    pass u addressing: {}", tmp_addressing[r.u32()])
+            pps.v_addressing = p("    pass v addressing: {}", tmp_addressing[r.u32()])
+            if pps.u_addressing == 'Border' or pps.v_addressing == 'Border':
+                raise Exception("This is actually used!")
+                
             if blender_tex.image:
                     blender_tex.image.use_clamp_x = pps.u_addressing == "Clamp"
                     blender_tex.image.use_clamp_y = pps.v_addressing == "Clamp"
@@ -209,61 +205,77 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
             if tex_checksum:  # mipmap info
                 p("    mmag: {}", r.u32())
                 p("    mmin: {}", r.u32())
-                p("    k: {}", r.f32())
+                pps.lod_bias =  p("    k: {}", r.f32()+8.0)
                 p("    l: {}", r.f32())
             else:
                 r.read("4I")
 
-
+def get_ugplus_shader_flags(mprops):
+    SHADERFLAG_DEFAULT_LIT = 0x01
+    SHADERFLAG_LIGHTMAPPED = 0x02
+    SHADERFLAG_LIGHTMAPPED_HL2 = 0x04
+    SHADERFLAG_USES_WEATHER = 0x08
+    SHADERFLAG_USES_POM = 0x10
+    SHADERFLAG_USES_REFLECTIONS = 0x20
+    SHADERFLAG_USES_REFRACTION = 0x40
+    
+    mat_flags = 0x00
+    # Set lighting mode flag
+    if mprops.ugplus_lighting_mode == 'Lit':
+        mat_flags |= SHADERFLAG_DEFAULT_LIT
+    elif mprops.ugplus_lighting_mode == 'Baked':
+        mat_flags |= SHADERFLAG_DEFAULT_LIT
+        mat_flags |= SHADERFLAG_LIGHTMAPPED
+    elif mprops.ugplus_lighting_mode == 'BakedHL2':
+        mat_flags |= SHADERFLAG_DEFAULT_LIT
+        mat_flags |= SHADERFLAG_LIGHTMAPPED_HL2
+        
+    if mprops.ugplus_shader_weather:
+        mat_flags |= SHADERFLAG_USES_WEATHER
+    if mprops.ugplus_shader_disp:
+        mat_flags |= SHADERFLAG_USES_POM
+    if not is_full_diffuse(mprops) or mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom' ]:
+        mat_flags |= SHADERFLAG_USES_REFLECTIONS
+    if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom' ]:
+        mat_flags |= SHADERFLAG_USES_REFRACTION
+    return mat_flags
+    
 def export_ugplus_material(m, output_file, target_game, operator=None):
     def w(fmt, *args):
         output_file.write(struct.pack(fmt, *args))
     
     mprops = m.thug_material_props
     
+    # Get the shader ID
     shader_id = 0.0
     if mprops.ugplus_shader == 'PBR':
         shader_id = 5.40
-        if is_full_diffuse(m):
-            print("Converting to Diffuse BRDF!")
-            shader_id = 48.0
-    if mprops.ugplus_shader == 'PBR_Lightmapped':
-        shader_id = 8.0
-        if is_full_diffuse(m):
-            print("Converting to Diffuse BRDF (Lightmapped)!")
-            shader_id = 49.0
     elif mprops.ugplus_shader == 'Water':
         shader_id = 1.08
     elif mprops.ugplus_shader == 'Water_Custom':
         shader_id = 3.16
-    elif mprops.ugplus_shader == 'Water_Displacement':
-        shader_id = 23.42
     elif mprops.ugplus_shader == 'Skybox':
         shader_id = 8.15
+    elif mprops.ugplus_shader == 'PhysicalSky':
+        shader_id = 23.0
     elif mprops.ugplus_shader == 'Cloud':
         shader_id = 16.0
+    elif mprops.ugplus_shader == 'Grass':
+        shader_id = 24.0
     elif mprops.ugplus_shader == 'Glass':
         shader_id = 32.0
+    elif mprops.ugplus_shader == 'Emission':
+        shader_id = 32.0
+    elif mprops.ugplus_shader == 'EditorGuide':
+        shader_id = -1.08
+    elif mprops.ugplus_shader == 'Unlit':
+        shader_id = -3.16
         
     mat_flags = 0
     
     export_textures = []
     # Now we export the textures in a specific order, depending on the shader
-    if mprops.ugplus_shader == 'PBR' or mprops.ugplus_shader == 'Diffuse':
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_weathermask, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
-        
-        # Mark the material as having a displacement map (POM) if the tex slot is used
-        if mprops.ugplus_extra1 != 0.0 and mprops.ugplus_matslot_reflection.tex_image != None:
-            mat_flags = 1
-            
-    elif mprops.ugplus_shader == 'PBR_Lightmapped' or mprops.ugplus_shader == 'Glass' or mprops.ugplus_shader == 'Diffuse_Lightmapped':
+    if mprops.ugplus_shader == 'PBR':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
@@ -271,14 +283,15 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_weathermask, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
         
-        # Mark the material as having a displacement map (POM) if the tex slot is used
-        if mprops.ugplus_extra1 != 0.0 and mprops.ugplus_matslot_reflection.tex_image != None:
-            mat_flags = 1
+    elif mprops.ugplus_shader == 'Glass':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_weathermask, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
         
     elif mprops.ugplus_shader == 'Skybox':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
@@ -286,8 +299,16 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_night, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_morning, 'flags': 0 })
         
+    elif mprops.ugplus_shader == 'PhysicalSky':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_night, 'flags': 0 })
+        
     elif mprops.ugplus_shader == 'Cloud':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_cloud, 'flags': 0 })
+        
+    elif mprops.ugplus_shader == 'Grass':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
         
     elif mprops.ugplus_shader == 'Water':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
@@ -302,18 +323,6 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 }) 
-        
-    elif mprops.ugplus_shader == 'Water_Displacement':
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal2, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_displacement, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_displacement2, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 }) 
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 }) 
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 }) 
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 }) 
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
         
     num_passes = 4 if len(export_textures) > 4 else len(export_textures)
     
@@ -325,7 +334,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     w("I", checksum)  # material checksum
     w("I", checksum)  # material name checksum
     w("I", num_passes)  # material passes
-    w("I", mat_flags)  # alpha cutoff (actually an unsigned byte)
+    w("I", mprops.alpha_cutoff)  # alpha cutoff (actually an unsigned byte)
     w("?", mprops.sorted)  # sorted?
     w("f", mprops.draw_order)  # draw order
     w("?", (mprops.no_backface_culling == False))  # single sided
@@ -344,7 +353,8 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         w("f", mprops.ugplus_extra1)
         w("f", mprops.ugplus_extra2)
         w("f", mprops.ugplus_extra3)
-        
+    shader_flags = get_ugplus_shader_flags(mprops)
+    
     # Export all the textures we need for the shader, as gathered above
     tex_count = -1
     for node in export_textures:
@@ -353,9 +363,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         tex_flags = node['flags']
         
         # Use the name of the texture image, or generate the color name (will be generated during .tex export)
-        if tex.tex_image == None or tex.tex_image.name == '':
-            colortex_name = 'io_thps_scene_Color_' + ''.join('{:02X}'.format(int(255*a)) for a in tex.tex_color)
-            tex_checksum = crc_from_string(bytes(colortex_name, 'ascii'))
+        if tex.tex_image == None:
+            if bpy.data.images.get(tex.tex_image_name):
+                tex_checksum = crc_from_string(bytes(tex.tex_image_name, 'ascii'))
+            else:
+                colortex_name = 'io_thps_scene_Color_' + ''.join('{:02X}'.format(int(255*a)) for a in tex.tex_color)
+                tex_checksum = crc_from_string(bytes(colortex_name, 'ascii'))
             
         elif is_hex_string(tex.tex_image.name):
             if not bpy.data.images.get(tex.tex_image.name):
@@ -377,10 +390,8 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         pass_flags = MATFLAG_SMOOTH | MATFLAG_TEXTURED
         pass_flags |= tex_flags
         if tex_count == 3 and len(export_textures) > 4:
-            print("ANIMATED TEXTURE")
             pass_flags |= MATFLAG_PASS_TEXTURE_ANIMATES
         if tex_count <= 3 and tex.has_uv_wibbles:
-            print("UV WIBBLES")
             pass_flags |= MATFLAG_UV_WIBBLE
         if tex_count == 0 and mprops.ugplus_trans:
             pass_flags |= MATFLAG_TRANSPARENT
@@ -391,20 +402,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         w("?", True)  # has color flag; seems to be ignored
         w("3f",  *(m.diffuse_color / 2.0))  # color
         
-        #w("I", globals()[pprops.blend_mode] if pprops else vBLEND_MODE_DIFFUSE)
-        
-        if tex_count == 0 and mprops.ugplus_trans:
-            w("I", vBLEND_MODE_BLEND)
-        else:
-            w("I", vBLEND_MODE_DIFFUSE)
-            
-        #w("I", pprops.blend_fixed_alpha if pprops else 0)
-        w("I", 0)
-
+        w("I", globals()[tex.blend_mode] if tex else vBLEND_MODE_DIFFUSE)  
+        w("I", 0) #w("I", pprops.blend_fixed_alpha if pprops else 0)
         w("I", 0)  # u adressing (wrap, clamp, etc)
         w("I", 0)  # v adressing
         w("2f", *((3.0, 3.0)))  # envmap multiples
-        w("I", 65540)  # filtering mode
+        w("I", shader_flags)  # new material flags (originally unused filtering mode)
         
         # Export UV wibbles on the first 4 passes
         if pass_flags & MATFLAG_UV_WIBBLE:
@@ -428,7 +431,7 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
 
         w("I", 1)  # MMAG
         w("I", 4)  # MMIN
-        w("f", -8.0)  # K
+        w("f", tex.lod_bias-8.0)  # K
         w("f", -8.0)  # L
     
     if tex_count > 3:
@@ -457,6 +460,17 @@ def cleanup_grass_materials():
             #bpy.data.materials.remove(mat)
     print("Done!")
     
+def get_material_replace_flag(mprops):
+    if not mprops.allow_replace:
+        return 0
+        
+    return MATFLAG_REPLACE
+    '''for i in range(1, 9):
+        if mprops.replace_group_index == i:
+            return globals()['MATFLAG_REPLACE_GROUP' + str(i)]
+            
+    return 0'''
+    
 def export_materials(output_file, target_game, operator=None, is_model=False):
     def w(fmt, *args):
         output_file.write(struct.pack(fmt, *args))
@@ -477,46 +491,68 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
         if mprops.grass_props.grassify:
             grass_counter += 1
             num_grass_layers = len(m.thug_material_props.grass_props.grass_textures)
+            source_material = bpy.data.materials.get(m.thug_material_props.grass_props.source_material)
+            if not source_material:
+                raise Exception("Source material {} referenced in grass material {} not found.".format(m.thug_material_props.grass_props.source_material, m.name))
             num_materials += num_grass_layers
             
             for layer in range(num_grass_layers):
                 # Clone the base material as many times as we have grass layers, and append to out_materials
                 # Also make sure to increment num_materials
-                new_mat = m.copy()
+                new_mat = source_material.copy()
                 new_mat.thug_material_props.grass_props.grassify = False
-                if not new_mat.texture_slots[0] or not new_mat.texture_slots[0].texture:
-                    raise Exception('Source material for grass effect must have at least one texture pass!')
-                texture = new_mat.texture_slots[0].texture
-                new_texture = texture.copy()
-                if not hasattr(texture, 'image') or not texture.image:
-                    raise Exception('Source material for grass effect must have at least one image texture!')
-                new_texture.image = m.thug_material_props.grass_props.grass_textures[layer].tex_image
-                new_texture.image.thug_image_props.compression = 'DXT5'
-                new_texture.name = "Grass-Tx_Grass_Layer{}_{}".format(layer, grass_counter)
-                pprops = new_texture.thug_material_pass_props
-                pprops.pf_textured = True
-                pprops.pf_smooth = True
-                pprops.pf_transparent = True
-                pprops.blend_mode = 'vBLEND_MODE_BLEND'
-                if layer > 0: # Add 'wind' UV wibbles
-                    pprops.has_uv_wibbles = True
-                    wibble_multi = layer / num_grass_layers
-                    wibble_multi2 = wibble_multi * wibble_multi
-                    pprops.uv_wibbles.uv_velocity[0] = 0.0
-                    pprops.uv_wibbles.uv_velocity[1] = 0.0
-                    pprops.uv_wibbles.uv_frequency = mprops.grass_props.uv_frequency
-                    pprops.uv_wibbles.uv_amplitude = mprops.grass_props.uv_amplitude
-                    pprops.uv_wibbles.uv_amplitude[0] *= wibble_multi2
-                    pprops.uv_wibbles.uv_amplitude[1] *= wibble_multi2
-                    pprops.uv_wibbles.uv_phase[0] = 0.0
-                    pprops.uv_wibbles.uv_phase[1] = 0.0
+                if not new_mat.thug_material_props.use_new_mats:
+                    if not new_mat.texture_slots[0] or not new_mat.texture_slots[0].texture:
+                        raise Exception('Source material for grass effect must have at least one texture pass!')
+                    texture = new_mat.texture_slots[0].texture
+                    new_texture = texture.copy()
+                    if not hasattr(texture, 'image') or not texture.image:
+                        raise Exception('Source material for grass effect must have at least one image texture!')
+                        
+                    new_texture.image = m.thug_material_props.grass_props.grass_textures[layer].tex_image
+                    new_texture.image.thug_image_props.compression_type = 'DXT5'
+                    new_texture.image.thug_image_props.mip_levels = source_material.texture_slots[0].texture.image.thug_image_props.mip_levels
+                    new_texture.name = "Grass-Tx_Grass_Layer{}_{}".format(layer, grass_counter)
+                    pprops = new_texture.thug_material_pass_props
+                    pprops.pf_textured = True
+                    pprops.pf_smooth = True
+                    pprops.pf_transparent = True
+                    pprops.blend_mode = 'vBLEND_MODE_BLEND'
+                    if layer > 0: # Add 'wind' UV wibbles
+                        pprops.has_uv_wibbles = True
+                        wibble_multi = layer / num_grass_layers
+                        wibble_multi2 = wibble_multi * wibble_multi
+                        pprops.uv_wibbles.uv_velocity[0] = 0.0
+                        pprops.uv_wibbles.uv_velocity[1] = 0.0
+                        pprops.uv_wibbles.uv_frequency = mprops.grass_props.uv_frequency
+                        pprops.uv_wibbles.uv_amplitude = mprops.grass_props.uv_amplitude
+                        pprops.uv_wibbles.uv_amplitude[0] *= wibble_multi2
+                        pprops.uv_wibbles.uv_amplitude[1] *= wibble_multi2
+                        pprops.uv_wibbles.uv_phase[0] = 0.0
+                        pprops.uv_wibbles.uv_phase[1] = 0.0
+                    new_mat.texture_slots[0].texture = new_texture
+                        
+                else:
+                    new_mat.thug_material_props.ugplus_matslot_diffuse.tex_image = m.thug_material_props.grass_props.grass_textures[layer].tex_image
+                    new_mat.thug_material_props.ugplus_matslot_diffuse.tex_image.thug_image_props.compression_type = 'DXT5'
+                    new_mat.thug_material_props.ugplus_matslot_diffuse.tex_image.thug_image_props.mip_levels = source_material.thug_material_props.ugplus_matslot_diffuse.tex_image.thug_image_props.mip_levels
                     
-                new_mat.texture_slots[0].texture = new_texture
+                    if layer > 0: # Add 'wind' UV wibbles
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.has_uv_wibbles = True
+                        wibble_multi = layer / num_grass_layers
+                        wibble_multi2 = wibble_multi * wibble_multi
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.uv_wibbles.uv_velocity[0] = 0.0
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.uv_wibbles.uv_velocity[1] = 0.0
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.uv_wibbles.uv_frequency = mprops.grass_props.uv_frequency
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.uv_wibbles.uv_amplitude = mprops.grass_props.uv_amplitude
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.uv_wibbles.uv_amplitude[0] *= wibble_multi2
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.uv_wibbles.uv_amplitude[1] *= wibble_multi2
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.uv_wibbles.uv_phase[0] = 0.0
+                        new_mat.thug_material_props.ugplus_matslot_diffuse.uv_wibbles.uv_phase[1] = 0.0
+                    
                 new_mat.name = "Grass-Grass_Layer{}_{}".format(layer, grass_counter)
                 grass_materials.append(new_mat)
-            #mprops.specular_color[2] = grass_counter
             mprops.grass_props.grass_index = grass_counter
-            #mprops.specular_power = 0.01
             
     # Append grass materials
     for g in grass_materials:
@@ -534,7 +570,7 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
             continue 
             
         #denetii - only include texture slots that affect the diffuse color in the Blender material
-        passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
+        passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and (tex_slot.use_map_color_diffuse or tex_slot.use_map_normal)]
         if len(passes) > 4:
             if operator:
                 operator.report(
@@ -558,11 +594,10 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
         w("I", mprops.alpha_cutoff)  # alpha cutoff (actually an unsigned byte)
         w("?", mprops.sorted)  # sorted?
         w("f", mprops.draw_order)  # draw order
-        w("?", (mprops.no_backface_culling == False))  # single sided
+        w("?", mprops.single_sided)  # single sided
         w("?", mprops.no_backface_culling)  # no backface culling
         w("i", mprops.z_bias)  # z-bias
 
-        #grassify = False
         w("?", mprops.grass_props.grassify)  # grassify
         if mprops.grass_props.grassify:  # if grassify
             print("EXPORTING GRASS MATERIAL!")
@@ -580,7 +615,9 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
 
         # using_default_texture = not passes
         
+        tex_count = -1
         for texture in passes:
+            tex_count += 1
             pprops = texture and texture.thug_material_pass_props
             tex_checksum = 0
             if texture and hasattr(texture, 'image') and texture.image:
@@ -611,12 +648,17 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
                 pass_flags |= MATFLAG_ENVIRONMENT
             if pprops and pprops.pf_bump:
                 print("EXPORTING BUMP MAP TEXTURE!")
-                #pass_flags |= MATFLAG_BUMP_SIGNED_TEXTURE
-                pass_flags |= MATFLAG_NORMAL_TEST
+                pass_flags |= MATFLAG_BUMP_SIGNED_TEXTURE
                 #pass_flags |= MATFLAG_BUMP_LOAD_MATRIX
             if pprops and pprops.pf_water:
                 print("EXPORTING WATER TEXTURE!")
                 pass_flags |= MATFLAG_WATER_EFFECT
+            if mprops.allow_recolor:
+                pass_flags |= MATFLAG_ALLOW_RECOLOR
+            if mprops.allow_replace:
+                pass_flags |= get_material_replace_flag(mprops)
+            if mprops.fixed_scale:
+                pass_flags |= MATFLAG_FIXED_SCALE
                 
             w("I", pass_flags)  # flags # 4132
             w("?", True)  # has color flag; seems to be ignored
@@ -630,7 +672,11 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
             w("I", 0 if (not pprops) or pprops.u_addressing == "Repeat" else 1)  # u adressing (wrap, clamp, etc)
             w("I", 0 if (not pprops) or pprops.v_addressing == "Repeat" else 1)  # v adressing
             w("2f", *(pprops.envmap_multiples if pprops else (3.0, 3.0)))  # envmap multiples
-            w("I", 65540)  # filtering mode
+            
+            if mprops.allow_replace:
+                w("I", mprops.replace_group_index if tex_count == 0 else 65540)  # Material replacement group ID
+            else:
+                w("I", TERRAIN_TYPES.index(mprops.terrain_type) if tex_count == 0 else 65540)  # terrain type (previously: unused filtering mode)
 
             # uv wibbles
             if pprops and pass_flags & MATFLAG_UV_WIBBLE:
@@ -654,7 +700,7 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
 
             w("I", 1)  # MMAG
             w("I", 4)  # MMIN
-            w("f", -8.0)  # K
+            w("f", (pprops.lod_bias-8.0) if hasattr(pprops, 'lod_bias') else -8.0)  # K
             w("f", -8.0)  # L
             
 
@@ -670,6 +716,7 @@ def _material_pass_settings_draw(self, context):
         "color",
         "blend_mode",
         "blend_fixed_alpha",
+        "lod_bias",
         "u_addressing",
         "v_addressing"]
         #"filtering_mode",
@@ -686,6 +733,7 @@ def _material_pass_settings_draw(self, context):
     if img and pass_props.pf_textured:
         box.row().prop(img.thug_image_props, 'compression_type')
         box.row().prop(img.thug_image_props, 'img_flags')
+        box.row().prop(img.thug_image_props, 'mip_levels')
     box.row().prop(pass_props, "pf_bump")
     box.row().prop(pass_props, "pf_water")
     box.row().prop(pass_props, "pf_environment")
@@ -748,6 +796,9 @@ def _material_settings_draw(self, context):
         box = self.layout.box()
         row = box.row()
         col = row.column(True)
+        
+        col.prop_search(gps, "source_material", bpy.data, "materials", text="")
+            
         col.prop(gps, "grass_height")
         #col.prop(gps, "grass_layers")
         col.label(text="Grass Layers: {}/{}".format(len(gps.grass_textures), 32))
@@ -769,94 +820,107 @@ def _material_settings_draw(self, context):
     if scn.thug_level_props.export_props.target_game != 'THUG1':
         return
         
+    self.layout.row().prop(mps, "fixed_scale", toggle=True, icon="MATERIAL")
+    self.layout.row().prop(mps, "allow_recolor", toggle=True, icon="MATERIAL")
+    self.layout.row().prop(mps, "allow_replace", toggle=True, icon="MATERIAL")
+    if mps.allow_replace:
+        self.layout.row().prop(mps, "replace_group_index")
+        
     self.layout.row().prop(mps, "use_new_mats", toggle=True, icon="MATERIAL")
     if mps.use_new_mats:
         box = self.layout.box().column()
         row = box.row(True).column()
         row.prop(mps, "ugplus_shader")
-        if mps.ugplus_shader != 'None':
+        row.prop(mps, "ugplus_lighting_mode")
+        
+        # Draw shader-specific settings first
+        if mps.ugplus_shader == 'PBR':
+            row.separator()
+            split = row.split()
+            #c = split.column()
+            #c.prop(mps, "ugplus_shader_baked", toggle=True, icon='TEXTURE_SHADED')
+            c = split.column()
+            c.prop(mps, "ugplus_shader_weather", toggle=True, icon='MOD_FLUIDSIM')
+            
+            split = row.split()
+            c = split.column()
+            c.prop(mps, "ugplus_shader_disp", toggle=True, icon='MOD_DISPLACE')
+            c = split.column()
+            c.enabled = (mps.ugplus_shader_disp != False)
+            c.prop(mps, "ugplus_extra1", text='Disp Strength')
+        elif mps.ugplus_shader == 'Water':
             row.separator()
             split = row.split()
             c = split.column()
-            if mps.ugplus_shader.startswith('Water'):
-                c.prop(mps, "ugplus_extra1", text='Bump Strength')
-            elif mps.ugplus_matslot_reflection.tex_image != None:
-                c.prop(mps, "ugplus_extra1", text='Disp Strength')
-            
-            split = split.split()
-            c = split.column()
-            c.prop(mps, "ugplus_trans", toggle=False)
-            row.separator()
-            
-        
-        if mps.ugplus_shader == 'PBR':
-            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse')
-            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
-            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_specular, box, title='Specular', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Displacement', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Lightmap', allow_uv_wibbles=False)
-            #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box, title='Smoothness')
-            ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
-            ugplus_matslot_draw(mps.ugplus_matslot_snow, box, title='Snow', allow_uv_wibbles=False)
-        if mps.ugplus_shader == 'PBR_Lightmapped' or mps.ugplus_shader == 'Glass':
-            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse')
-            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
-            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_specular, box, title='Specular', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Displacement', allow_uv_wibbles=False)
-            #ugplus_matslot_draw(mps.ugplus_matslot_smoothness, box, title='Smoothness')
-            ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
-            ugplus_matslot_draw(mps.ugplus_matslot_snow, box, title='Snow', allow_uv_wibbles=False)
-            box.separator()
-            box.label("Lightmaps")
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Day')
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap2, box, title='Evening')
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap3, box, title='Night')
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap4, box, title='Morning')
-        elif mps.ugplus_shader == 'Water':
-            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Diffuse')
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
-            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
-            box.separator()
-            box.label("Lightmaps")
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Day', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap2, box, title='Evening', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap3, box, title='Night', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap4, box, title='Morning', allow_uv_wibbles=False)
+            c.prop(mps, "ugplus_extra1", text='Bump Strength')
         elif mps.ugplus_shader == 'Water_Custom':
-            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal Map 1')
+            row.separator()
+            split = row.split()
+            c = split.column()
+            c.prop(mps, "ugplus_extra1", text='Bump Strength')
+            split = row.split()
+            c = split.column()
+            c.prop(mps, "ugplus_shader_disp", toggle=True, icon='MOD_DISPLACE')
+            c = split.column()
+            c.enabled = (mps.ugplus_shader_disp != False)
+            c.prop(mps, "ugplus_extra1", text='Disp Strength')
+            
+        row.separator()
+        
+        # Then draw the texture slots for each shader
+        if mps.ugplus_shader == 'PBR':
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_specular, box, title='Specular', allow_uv_wibbles=False)
+            if mps.ugplus_shader_disp:
+                ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Displacement', allow_uv_wibbles=False)
+            #if mps.ugplus_shader_baked:
+            #    ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Lightmap', allow_uv_wibbles=False)
+            if mps.ugplus_shader_weather:
+                ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
+                ugplus_matslot_draw(mps.ugplus_matslot_snow, box, title='Snow', allow_uv_wibbles=False)
+                
+        elif mps.ugplus_shader == 'Water':
+            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Diffuse', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail', allow_blending=True)
+            
+        elif mps.ugplus_shader == 'Water_Custom':
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal Map 1', allow_blending=True)
             ugplus_matslot_draw(mps.ugplus_matslot_normal2, box, title='Normal Map 2')
             ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Diffuse')
             ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
             ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
-            box.separator()
-            box.label("Lightmaps")
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Day', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap2, box, title='Evening', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap3, box, title='Night', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap4, box, title='Morning', allow_uv_wibbles=False)
-        elif mps.ugplus_shader == 'Water_Displacement':
-            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal Map 1')
-            ugplus_matslot_draw(mps.ugplus_matslot_normal2, box, title='Normal Map 2')
-            ugplus_matslot_draw(mps.ugplus_matslot_displacement, box, title='Displacement Map 1')
-            ugplus_matslot_draw(mps.ugplus_matslot_displacement2, box, title='Displacement Map 2')
-            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Diffuse')
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
-            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
-            box.separator()
-            box.label("Lightmaps")
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Day', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap2, box, title='Evening', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap3, box, title='Night', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_lightmap4, box, title='Morning', allow_uv_wibbles=False)
+            
+        elif mps.ugplus_shader == 'Glass':
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
+            
+        elif mps.ugplus_shader == 'Emission':
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Emissive Map', allow_uv_wibbles=False)
+            
+        elif mps.ugplus_shader == 'PhysicalSky':
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse_night, box, title='Night Sky', allow_blending=True)
+            
         elif mps.ugplus_shader == 'Skybox':
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Day')
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse_evening, box, title='Evening')
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse_night, box, title='Night')
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse_morning, box, title='Morning')
+            
         elif mps.ugplus_shader == 'Cloud':
-            ugplus_matslot_draw(mps.ugplus_matslot_cloud, box, title='Cloud')
+            ugplus_matslot_draw(mps.ugplus_matslot_cloud, box, title='Cloud/Weather Mask', allow_blending=True)
+            
+        elif mps.ugplus_shader == 'Grass':
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Layer Mask', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail', allow_blending=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Noise', allow_blending=False)
+            
+        elif mps.ugplus_shader == 'EditorGuide' or mps.ugplus_shader == 'Unlit':
+            ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Base Texture', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail', allow_blending=True)
             
 
 # PROPERTIES
@@ -867,6 +931,8 @@ class THUGImageProps(bpy.types.PropertyGroup):
         ("DXT5", "DXT5", "DXT5. Full alpha. 1:4 compression")),
     name="Compression Type",
     default="DXT1")
+    
+    mip_levels = IntProperty(name="Mip Levels", min=1, max=8, default=0, description="Maximum number of mip levels (0 to use automatic settings)")
     
     img_flags = EnumProperty(items=(
         ("1", "Invert Alpha", "Invert alpha channel on this image"),
@@ -967,6 +1033,9 @@ class THUGGrassTexture(bpy.types.PropertyGroup):
 #----------------------------------------------------------------------------------
 class THUGGrassEffect(bpy.types.PropertyGroup):
     grassify = BoolProperty(name="Grass Effect", description="Use generated grass particles on this material")
+    
+    source_material = StringProperty(name="Source Material")
+    
     grass_height = FloatProperty(name="Grass Height", min=0.0, max=1000.0, description="Height of the grass particles")
     grass_layers = IntProperty(name="Grass Layers", min=0, max=32, description="Number of layers")
     grass_textures = CollectionProperty(type=THUGGrassTexture)
@@ -1148,7 +1217,6 @@ def set_ugplus_materialslot(self, context):
         self.tex_image_name = ''
 #----------------------------------------------------------------------------------
 class UGPlusMaterialSlotProps(bpy.types.PropertyGroup):
-    #tex_image = StringProperty(name="Texture", description="Texture to be used.")
     tex_image = PointerProperty(name="Texture", type=bpy.types.Image, update=set_ugplus_materialslot)
     tex_image_name = StringProperty(name="ImageName")
     tex_color = FloatVectorProperty(name="Color",
@@ -1161,24 +1229,52 @@ class UGPlusMaterialSlotProps(bpy.types.PropertyGroup):
     has_uv_wibbles = BoolProperty(name="Animate UVs", default=False, description='Animate UVs for this slot.')
     uv_wibbles = PointerProperty(type=THUGUVWibbles)
     
-def ugplus_matslot_draw(self, layout, title, allow_uv_wibbles=True, mat_icon='FILE_IMAGE'):
+    blend_mode = EnumProperty(items=(
+        ("vBLEND_MODE_DIFFUSE", "DIFFUSE", "( 0 - 0 ) * 0 + Src"),
+        ("vBLEND_MODE_ADD", "ADD", "( Src - 0 ) * Src + Dst"),
+        #("vBLEND_MODE_ADD_FIXED", "ADD_FIXED", "( Src - 0 ) * Fixed + Dst"),
+        ("vBLEND_MODE_SUBTRACT", "SUBTRACT", "( 0 - Src ) * Src + Dst"),
+        #("vBLEND_MODE_SUB_FIXED", "SUB_FIXED", "( 0 - Src ) * Fixed + Dst"),
+        ("vBLEND_MODE_BLEND", "BLEND", "( Src * Dst ) * Src + Dst"),
+        #("vBLEND_MODE_BLEND_FIXED", "BLEND_FIXED", "( Src * Dst ) * Fixed + Dst"),
+        ("vBLEND_MODE_MODULATE", "MODULATE", "( Dst - 0 ) * Src + 0"),
+        #("vBLEND_MODE_MODULATE_FIXED", "MODULATE_FIXED", "( Dst - 0 ) * Fixed + 0"),
+        ("vBLEND_MODE_BRIGHTEN", "BRIGHTEN", "( Dst - 0 ) * Src + Dst"),
+        #("vBLEND_MODE_BRIGHTEN_FIXED", "BRIGHTEN_FIXED", "( Dst - 0 ) * Fixed + Dst"),
+        ("vBLEND_MODE_GLOSS_MAP", "GLOSS_MAP", ""),
+        ("vBLEND_MODE_BLEND_PREVIOUS_MASK", "BLEND_PREVIOUS_MASK", ""),
+        ("vBLEND_MODE_BLEND_INVERSE_PREVIOUS_MASK", "BLEND_INVERSE_PREVIOUS_MASK", ""),
+        ("vBLEND_MODE_MODULATE_COLOR", "MODULATE_COLOR", ""),
+        ("vBLEND_MODE_ONE_INV_SRC_ALPHA", "ONE_INV_SRC_ALPHA", ""),
+        ("vBLEND_MODE_OVERLAY", "OVERLAY", ""),
+        ("vBLEND_MODE_LIGHTMAP", "LIGHTMAP", ""),
+    ), name="Blend Mode", default="vBLEND_MODE_DIFFUSE")
+    blend_fixed_alpha = IntProperty(name="Fixed Alpha", min=0, max=255)
+    
+    lod_bias = FloatProperty(name="LOD Bias", soft_min=-1.0, soft_max=8.0, default=0.0, description="Bias the mip selection of this texture (-1.0 disables mipmapping)")
+    
+def ugplus_matslot_draw(self, layout, title, allow_uv_wibbles=True, allow_blending=False, mat_icon='TEXTURE'):
+    layout.separator()
     c = layout.column()
+    c.scale_x = 0.5
     row = c.row()
-    split = row.split(percentage=0.3)
-    c = split.column()
-    c.label(title)
-    split = split.split(percentage=0.7)
-    c = split.column()
-    c.scale_x = 0.8
-    c.template_ID(self, "tex_image", open="image.open")
-    c = split.column()
-    c.scale_x = 0.1
-    c.prop(self, 'tex_color', text='')
+    row.label(title, icon=mat_icon)
+    row = c.row()
+    row.column().template_ID_preview(self, "tex_image", open="image.open", rows=4, cols=6)
+    row = c.row()
+    col = row.column()
+    col.prop(self, 'lod_bias')
+    if self.tex_image:
+        col = row.column()
+        col.prop(self.tex_image.thug_image_props, 'mip_levels')
+    row = c.row()
+    if allow_blending:
+        row.column().prop(self, 'blend_mode', text='')
+    #row = c.row()
+    row.column().prop(self, 'tex_color', text='')
+    #c.template_ID(self, "tex_image", open="image.open")
     if allow_uv_wibbles:
-        col = split.column(align=True)
-        col.scale_x = 0.1
-        col.prop(self, 'has_uv_wibbles', toggle=True, icon='PLAY', text='')
-        
+        row.column().prop(self, 'has_uv_wibbles', toggle=True, icon='PLAY', text='')
         if (self.has_uv_wibbles):
             row = layout.row(True)
             col = row.column(align=True)
@@ -1191,10 +1287,7 @@ def ugplus_matslot_draw(self, layout, title, allow_uv_wibbles=True, mat_icon='FI
             row.prop(self.uv_wibbles, "uv_amplitude")
             row = col.row()
             row.prop(self.uv_wibbles, "uv_phase")
-    else:
-        col = split.column(align=True)
-        col.scale_x = 0.1
-        col.label("")
+            
         
 
 #----------------------------------------------------------------------------------
@@ -1225,6 +1318,15 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         description="The terrain type that will be used for faces using this material when their terrain type is set to \"Auto\".",
         items=[(tt, tt, tt) for tt in TERRAIN_TYPES])
 
+    fixed_scale = BoolProperty(name="Fixed Scale", default=False, 
+        description="This material's textures will not scale with the mesh (used in the park editor)")
+    allow_replace = BoolProperty(name="Allow Replacement", default=False, 
+        description="Allow this material to be replaced (Underground+ 1.9+ only)")
+    allow_recolor = BoolProperty(name="Allow Custom Color", default=False, 
+        description="Allow meshes using this material to have their diffuse color changed (Underground+ 1.9+ only)")
+    replace_group_index = IntProperty(name="Group Index", default=1, min=1, max=127, 
+        description="Group index used for material replacement")
+    
     ###############################################################
     # NEW MATERIAL SYSTEM PROPERTIES
     ###############################################################
@@ -1234,18 +1336,34 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         description="The shader to use for this material",
         items=[
         ("None", "None", ""),
-        ("PBR", "PBR - Dynamic", "PBR material shader with fully dynamic lighting (most expensive)"),
-        ("PBR_Lightmapped", "PBR - Solid", "PBR shader with baked shadows/indirect light"),
-        ("Skybox", "Sky/TOD", "Material shader blending 4 diffuse textures based on in-game TOD"),
+        ("PBR", "PBR", "Standard material shader using physically based rendering"),
+        ("Skybox", "Sky - Static", "Blends between 4 diffuse textures based on in-game TOD"),
+        ("PhysicalSky", "Sky - Dynamic", "Physical sky shader"),
         ("Cloud", "Cloud", "Material with an appearance that fades/changes based on in-game weather settings (cloudiness)"),
-        ("Water", "Water", "Built-in water effect, creates a water surface using an animated texture"),
-        ("Water_Custom", "Water - Custom", "Custom water effect using two normal maps and UV wibbles"),
-        ("Water_Displacement", "Water - Displacement", "More expensive custom water effect using two normal maps, two displacement maps, and UV wibbles"),
-        ("Glass", "PBR - Glass", "Glass effect"),
-        ("Diffuse", "PBR - Static", "PBR shader with fully baked diffuse lighting"),
-        ("Diffuse_Lightmapped", "PBR - Diffuse Static", "PBR shader with fully baked diffuse lighting and no reflectivity"),
+        ("Water", "Water - Default", "Built-in water effect, creates a water surface using an animated texture"),
+        ("Water_Custom", "Water - Custom", "Custom water effect using multiple textures and UV wibbles"),
+        ("Glass", "Glass", "Glass shader"),
+        ("Emission", "Emission", "Emission shader"),
+        ("EditorGuide", "Editor Guide", "Only rendered when in the Park/Level editor"),
+        ("Unlit", "Unlit", "Unlit textured material"),
+        ("Grass", "Grass", "Grass material"),
         ])
+    ugplus_lighting_mode = EnumProperty(
+        name="Lighting Mode",
+        description="Controls how the mesh is lit using the shader",
+        items=[
+        ("Lit", "Dynamic", "Dynamic, per-pixel lighting"),
+        ("Baked", "Lightmap", "Diffuse lighting is determined by a flat lightmap"),
+        ("BakedHL2", "Dir. Lightmap", "Diffuse lighting is determined by a directional lightmap"),
+        ("Unlit", "Unlit", "No lighting"),
+        ])
+    # User-configurable shader options, others are generated during export
+    #ugplus_shader_baked = BoolProperty(name="Baked", description="Use pre-baked lighting rather than dynamic lighting")
+    ugplus_shader_weather = BoolProperty(name="Weather", description="Use dynamic weather effects")
+    ugplus_shader_disp = BoolProperty(name="Displacement", description="Use POM (expensive!)")
+    
     ugplus_trans = BoolProperty(name="Transparency", description="Enable transparency on this material")
+    
     ugplus_extra1 = FloatProperty(name="Extra 1", description="Shader-specific setting", default=0.0)
     ugplus_extra2 = FloatProperty(name="Extra 2", description="Shader-specific setting", default=0.0)
     ugplus_extra3 = FloatProperty(name="Extra 3", description="Shader-specific setting", default=0.0)
@@ -1283,42 +1401,37 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
         update=_thug_material_pass_props_color_updated)
     blend_mode = EnumProperty(items=(
      ("vBLEND_MODE_DIFFUSE", "DIFFUSE", "( 0 - 0 ) * 0 + Src"),
-     # ( 0 - 0 ) * 0 + Src
      ("vBLEND_MODE_ADD", "ADD", "( Src - 0 ) * Src + Dst"),
-     # ( Src - 0 ) * Src + Dst
      ("vBLEND_MODE_ADD_FIXED", "ADD_FIXED", "( Src - 0 ) * Fixed + Dst"),
-     # ( Src - 0 ) * Fixed + Dst
      ("vBLEND_MODE_SUBTRACT", "SUBTRACT", "( 0 - Src ) * Src + Dst"),
-     # ( 0 - Src ) * Src + Dst
      ("vBLEND_MODE_SUB_FIXED", "SUB_FIXED", "( 0 - Src ) * Fixed + Dst"),
-     # ( 0 - Src ) * Fixed + Dst
      ("vBLEND_MODE_BLEND", "BLEND", "( Src * Dst ) * Src + Dst"),
-     # ( Src * Dst ) * Src + Dst
      ("vBLEND_MODE_BLEND_FIXED", "BLEND_FIXED", "( Src * Dst ) * Fixed + Dst"),
-     # ( Src * Dst ) * Fixed + Dst
      ("vBLEND_MODE_MODULATE", "MODULATE", "( Dst - 0 ) * Src + 0"),
-     # ( Dst - 0 ) * Src + 0
      ("vBLEND_MODE_MODULATE_FIXED", "MODULATE_FIXED", "( Dst - 0 ) * Fixed + 0"),
-     # ( Dst - 0 ) * Fixed + 0
      ("vBLEND_MODE_BRIGHTEN", "BRIGHTEN", "( Dst - 0 ) * Src + Dst"),
-     # ( Dst - 0 ) * Src + Dst
      ("vBLEND_MODE_BRIGHTEN_FIXED", "BRIGHTEN_FIXED", "( Dst - 0 ) * Fixed + Dst"),
-     # ( Dst - 0 ) * Fixed + Dst
-     ("vBLEND_MODE_GLOSS_MAP", "GLOSS_MAP", ""),                             # Specular = Specular * Src    - special mode for gloss mapping
-     ("vBLEND_MODE_BLEND_PREVIOUS_MASK", "BLEND_PREVIOUS_MASK", ""),                   # ( Src - Dst ) * Dst + Dst
-     ("vBLEND_MODE_BLEND_INVERSE_PREVIOUS_MASK", "BLEND_INVERSE_PREVIOUS_MASK", ""),           # ( Dst - Src ) * Dst + Src
+     ("vBLEND_MODE_GLOSS_MAP", "GLOSS_MAP", ""),
+     ("vBLEND_MODE_BLEND_PREVIOUS_MASK", "BLEND_PREVIOUS_MASK", ""),
+     ("vBLEND_MODE_BLEND_INVERSE_PREVIOUS_MASK", "BLEND_INVERSE_PREVIOUS_MASK", ""),
      ("vBLEND_MODE_MODULATE_COLOR", "MODULATE_COLOR", ""),
      ("vBLEND_MODE_ONE_INV_SRC_ALPHA", "ONE_INV_SRC_ALPHA", ""),
      ("vBLEND_MODE_OVERLAY", "OVERLAY", ""),
+     ("vBLEND_MODE_NORMAL_MAP", "NORMAL_MAP", ""),
+     ("vBLEND_MODE_LIGHTMAP", "LIGHTMAP", ""),
+     ("vBLEND_MODE_NORMAL_ROUGH", "NORMAL_ROUGHNESS", ""),
+     ("vBLEND_MODE_MASK", "MASK", ""),
     ), name="Blend Mode", default="vBLEND_MODE_DIFFUSE")
     blend_fixed_alpha = IntProperty(name="Fixed Alpha", min=0, max=255)
     u_addressing = EnumProperty(items=(
         ("Repeat", "Repeat", ""),
         ("Clamp", "Clamp", ""),
+        ("Border", "Border", ""),
     ), name="U Addressing", default="Repeat")
     v_addressing = EnumProperty(items=(
         ("Repeat", "Repeat", ""),
         ("Clamp", "Clamp", ""),
+        ("Border", "Border", ""),
     ), name="V Addressing", default="Repeat")
     
     pf_textured = BoolProperty(name="Textured", default=True)
@@ -1340,4 +1453,6 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
 
     has_animated_texture = BoolProperty(name="Has Animated Texture", default=False)
     animated_texture = PointerProperty(type=THUGAnimatedTexture)
+    
+    lod_bias = FloatProperty(name="LOD Bias", soft_min=-1.0, soft_max=8.0, default=0.0, description="Bias the mip selection of this texture (-1.0 disables mipmapping)")
     
