@@ -279,9 +279,9 @@ def clear_bake_vcs(scene, meshes):
 #----------------------------------------------------------------------------------
 #- Converts a baked texture to vertex colors (allows Cycles VC bakes)
 #----------------------------------------------------------------------------------
-def convert_bake_to_vcs(scene, meshes):
+def convert_bake_to_vcs(scene, meshes, layer_name):
     for obj in meshes:
-        bake_vcs = get_vcs(obj, 'bake')
+        bake_vcs = get_vcs(obj, layer_name)
         
         obdata = obj.data
         obdata.vertex_colors.active = bake_vcs
@@ -336,7 +336,13 @@ def convert_bake_to_vcs(scene, meshes):
                 col_in = r, g, b # texture-color
                 col_result = [r,g,b] # existing / 'base' color
                 col_result = col_in
-                bake_vcs.data[loop].color = col_result
+                
+                # Full black is likely a pixel sampled outside the bake result
+                if r == 0.0 and g == 0.0 and b == 0.0: 
+                    bake_vcs.data[loop].color = 0.5, 0.5, 0.5
+                else:
+                    bake_vcs.data[loop].color = col_result
+                
         
 #----------------------------------------------------------------------------------
 #- 'Un-bakes' the object (restores the original materials)
@@ -2581,7 +2587,7 @@ class ConvertLightmapsToVCs(bpy.types.Operator):
 
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH']
-        convert_bake_to_vcs(context.scene, meshes)
+        convert_bake_to_vcs(context.scene, meshes, 'bake')
         return {"FINISHED"}
         
 #----------------------------------------------------------------------------------
@@ -2590,7 +2596,8 @@ class UnBakeLightmaps(bpy.types.Operator):
     bl_label = "Un-Bake Objects"
     bl_options = {'REGISTER', 'UNDO'}
     unbake_option = EnumProperty(items=(
-        ("ClearToVCs", "Convert to vertex colors", "Converts baked lightmap texture to vertex colors (more efficient, less accurate)"),
+        ("CopyToIntensity", "Copy to intensity", "Copies baked lightmap texture to collision intensity values without clearing the bake"),
+        ("ClearToVCs", "Clear to vertex colors", "Converts baked lightmap texture to vertex colors"),
         ("ClearAll", "Clear All", "Completely clears baked results and deletes baked vertex colors"),
         ), name="Options", default="ClearToVCs")
     
@@ -2603,8 +2610,11 @@ class UnBakeLightmaps(bpy.types.Operator):
         scene = context.scene
         meshes = [o for o in context.selected_objects if o.type == 'MESH' and ("is_baked" in o and o["is_baked"] == True) ]
 
-        if self.unbake_option == 'ClearToVCs':
-            convert_bake_to_vcs(scene, meshes)
+        if self.unbake_option == 'CopyToIntensity':
+            convert_bake_to_vcs(scene, meshes, 'intensity')
+            return {"FINISHED"}
+        elif self.unbake_option == 'ClearToVCs':
+            convert_bake_to_vcs(scene, meshes, 'bake')
         elif self.unbake_option == 'ClearAll':
             clear_bake_vcs(scene, meshes)
             for ob in meshes: # Also remove lightmap UVs
@@ -2646,7 +2656,7 @@ class UnBakeLightmaps(bpy.types.Operator):
         
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=600, height=350)
+        return wm.invoke_props_dialog(self, width=700, height=350)
     
     def draw(self, context):
         layout = self.layout
