@@ -367,6 +367,16 @@ def crc_from_string(string):
 
     return rc
 #----------------------------------------------------------------------------------
+def crc32b_from_string(string):
+    # This is the checksum format used in THPS1/2
+    # https://www.hackersdelight.org/hdcodetxt/crc.c.txt
+    crc = 0xffffffff
+    for ch in string:
+        crc ^= ord(ch)
+        for j in range(8):
+            crc = (crc>>1) ^ (0xEDB88320 & (-(crc & 1)))
+    return crc
+#----------------------------------------------------------------------------------
 def safe_mode_set(mode):
     if bpy.context.mode != mode:
         bpy.ops.object.mode_set(mode=mode)

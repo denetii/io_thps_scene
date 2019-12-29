@@ -29,9 +29,9 @@ def ps1_to_32bpp(c):
         return [ 0.0, 0.0, 0.0, 0.0 ]
     else:
         return [ r/32.0, g/32.0, b/32.0, 1.0 ]
-        
-        
-def import_psx_th2(filename, directory, context, operator, texlib_data):
+
+#----------------------------------------------------------------------------------
+def import_psx_th2(filename, directory, context, operator, texlib_data, debug_names):
     p = Printer()
     p.on = True
     input_file = os.path.join(directory, filename)
@@ -141,11 +141,15 @@ def import_psx_th2(filename, directory, context, operator, texlib_data):
         print("we are at: {}".format(hex(r.tell())))
         # Go back to the start of mesh data, so we can generate the meshes now that we have texture info
         r.seek(mesh_start)
-        mesh_list = read_meshes_thps2(r, p, obj_count, directory, operator, PSX_DATA)
+        mesh_list = read_meshes_thps2(r, p, obj_count, directory, operator, PSX_DATA, debug_names)
     
         for obj in object_list:
             this_mesh = mesh_list[obj["model_idx"]]
-            blender_object = bpy.data.objects.new("obj_{}".format(this_mesh.name), this_mesh)
+            if this_mesh.name.lower().startswith('0x'):
+                new_mesh_name = "obj_{}".format(this_mesh.name)
+            else:
+                new_mesh_name = this_mesh.name
+            blender_object = bpy.data.objects.new(new_mesh_name, this_mesh)
             blender_object.thug_export_collision = True
             blender_object.thug_export_scene = True
             to_group(blender_object, "SceneMesh")
@@ -179,7 +183,7 @@ def find_texture(psx_tex_names, texlib_data, tex_index):
     return None
     
 #----------------------------------------------------------------------------------
-def read_meshes_thps2(reader, printer, num_objects, directory, operator, psx_data):
+def read_meshes_thps2(reader, printer, num_objects, directory, operator, psx_data, debug_names):
     import os
     r = reader
     p = printer
@@ -193,9 +197,10 @@ def read_meshes_thps2(reader, printer, num_objects, directory, operator, psx_dat
     f = (1 << 12)
     
     for (mdl_i, ptr) in enumerate(mdl_ptr_list):
-        mesh_name = "{:08x}".format(psx_data["mesh_names"][mdl_i])
-        blender_mesh = bpy.data.meshes.new("0x{}".format(mesh_name))
-        print("New mesh: {}".format("0x{}".format(mesh_name)))
+
+        mesh_name = debug_names.get(psx_data["mesh_names"][mdl_i], "0x{:08x}".format(psx_data["mesh_names"][mdl_i]))
+        blender_mesh = bpy.data.meshes.new(mesh_name)
+        print("New mesh: {}".format(mesh_name))
         
         # Create new mesh
         bm = bmesh.new()
@@ -274,9 +279,9 @@ def read_meshes_thps2(reader, printer, num_objects, directory, operator, psx_dat
             
             is_quad = False
             has_vertex_colors = False
-            if not face_flags & 0x0010:
+            if not face_flags & FACEFLAGS_TRIANGLE:
                 is_quad = True
-            if face_flags & 0x0800:
+            if face_flags & FACEFLAGS_GOURAUD:
                 has_vertex_colors = True
                 
             #p("vert indices: {} {} {} {}", vertex_indices[0],vertex_indices[1],vertex_indices[2],vertex_indices[3])
@@ -312,7 +317,7 @@ def read_meshes_thps2(reader, printer, num_objects, directory, operator, psx_dat
                     
             is_textured = False
             mat_index = None
-            if face_flags & 0x0003:
+            if face_flags & FACEFLAGS_TEXTURED_ANY:
                 # Read tex index and do a lookup in tex_names to find the material that should have been
                 # created during the texlib import earlier
                 tex_index = struct.unpack("<I", r.read(4))[0]
@@ -433,11 +438,11 @@ def read_meshes_thps2(reader, printer, num_objects, directory, operator, psx_dat
         face_count = -1
         for face in bm.faces:
             face_count += 1
-            if m_flags[face_count] & 0x0010: # Wallridable
+            if m_flags[face_count] & COLLISIONFLAGS_WALLRIDEABLE: # Wallridable
                 face[cfl] |= FACE_FLAGS["mFD_WALL_RIDABLE"]
-            elif m_flags[face_count] & 0x0040: # Vert
+            elif m_flags[face_count] & COLLISIONFLAGS_VERT: # Vert
                 face[cfl] |= FACE_FLAGS["mFD_VERT"]
-            elif m_flags[face_count] & 0x0100: # Not skateable (THPS1 beta considers this wallride)
+            elif m_flags[face_count] & COLLISIONFLAGS_NOT_SKATEABLE: # Not skateable (THPS1 beta considers this wallride)
                 if psx_data["version_num"] == VERSION_NUM_THPS1:
                     face[cfl] |= FACE_FLAGS["mFD_WALL_RIDABLE"]
                 else:
@@ -663,7 +668,32 @@ def import_texlib_th2(filename, directory, context, operator):
                 
     return TEXPSX_DATA
 
-                
+#----------------------------------------------------------------------------------
+def import_dbg_th2(filename, directory): 
+    # Import object checksum lookup table.
+    # Can also pass a list of object names, and the checksum will be calculated. 
+
+    input_file = os.path.join(directory, filename)
+    checksum_lookup_table = {}
+    print('import_dbg_th2')
+    print('input_file=' + input_file)
+
+    if os.path.exists(input_file):
+        with open(input_file, "r") as inp:
+            for line in inp.read().split('\n'):
+
+                if line and len(line) > 0:
+                    if len(line) > 12: # len(0x00000000 A)
+                        checksum_name = line[10:].strip()
+                        checksum = int(line[:10].strip(), 0)
+                    else:
+                        checksum_name = line.strip()
+                        checksum = crc32b_from_string(checksum_name)
+
+                    if not checksum_lookup_table.get(checksum, None):
+                        checksum_lookup_table[checksum] = checksum_name
+
+    return checksum_lookup_table
 
 # OPERATORS
 #############################################
@@ -681,7 +711,9 @@ class THPS2PsxToScene(bpy.types.Operator):
     def execute(self, context):
         filename = self.filename
         directory = self.directory
-        
+
+        debug_names = import_dbg_th2('DebugNames.dbg', directory)
+
         if self.load_tex:
             # Look for the texture lib file for levels, which is usually [scene]_l.psx
             # Also account for _2 scenes (usually 2-player variants of a level)
@@ -734,7 +766,7 @@ class THPS2PsxToScene(bpy.types.Operator):
             texlib_data["tex_names"] = []
             texlib_data["texinfo"] = []
             
-        import_psx_th2(filename, directory, context, self, texlib_data)
+        import_psx_th2(filename, directory, context, self, texlib_data, debug_names)
 
         return {'FINISHED'}
 

@@ -342,3 +342,40 @@ SIZEOF_LARGE_FACE_THPS4 = 2 * 2 + 2 * 4
 SIZEOF_SMALL_FACE = 2 * 2 + 1 * 3
 SIZEOF_SMALL_FACE_THPS4 = 8
 SIZEOF_BSP_NODE = 2 * 4
+
+# THPS1/2 Flags!
+ITEMFLAGS_RGB                   = 0x0004
+ITEMFLAGS_SCALED                = 0x0010
+ITEMFLAGS_LIT                   = 0x0080
+ITEMFLAGS_GOURAUD               = 0x0400 # smooth shading
+ITEMFLAGS_CULL                  = 0x8000
+ITEMFLAGS_REFLECTIONMAPPED      = 0xFFFF # unknown bits
+ITEMFLAGS_ISSUPER               = 0xFFFF # unknown bits
+ITEMFLAGS_TRN                   = 0xFFFF # unknown bits
+ITEMFLAGS_INWATER               = 0xFFFF # unknown bits
+ITEMFLAGS_IGNOREDPQ             = 0xFFFF # unknown bits
+
+MODELFLAGS_ALWAYSFACING         = 0xFFFF # unknown bits
+MODELFLAGS_SUBDIVIDABLE         = 0xFFFF # unknown bits
+MODELFLAGS_REFLECTIONMAPPED     = 0xFFFF # unknown bits
+MODELFLAGS_LIT                  = 0xFFFF # unknown bits
+MODELFLAGS_WIREFRAME            = 0xFFFF # unknown bits
+MODELFLAGS_VIDEO                = 0xFFFF # unknown bits
+MODELFLAGS_INVISIBLE            = 0xFFFF # unknown bits
+
+FACEFLAGS_TEXTURED              = 0x0001
+FACEFLAGS_TEXTURED_BAD          = 0x0002
+FACEFLAGS_TEXTURED_ANY          = (FACEFLAGS_TEXTURED | FACEFLAGS_TEXTURED_BAD)
+FACEFLAGS_TRIANGLE              = 0x0010
+FACEFLAGS_TILED                 = 0x0020
+FACEFLAGS_INVISIBLE             = 0x0080
+FACEFLAGS_GOURAUD               = 0x0800 # smooth shading
+FACEFLAGS_SUBDIVIDE             = 0x1000
+FACEFLAGS_TRANSPARENT           = 0xFFFF # unknown bits
+FACEFLAGS_LIT                   = 0xFFFF # unknown bits
+FACEFLAGS_RELATIVEUVS           = 0xFFFF # unknown bits
+
+COLLISIONFLAGS_WALLRIDEABLE     = 0x0010
+COLLISIONFLAGS_VERT             = 0x0040
+COLLISIONFLAGS_UNKNOWN          = 0x0080
+COLLISIONFLAGS_NOT_SKATEABLE    = 0x0100
