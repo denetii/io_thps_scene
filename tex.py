@@ -439,15 +439,17 @@ def export_tex(filename, directory, target_game, operator=None):
                 export_textures.append(m.thug_material_props.ugplus_matslot_specular)
                 set_image_compression(m.thug_material_props.ugplus_matslot_specular, 'DXT5')
                 
-            elif m.thug_material_props.ugplus_shader == 'Skybox':
-                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
-                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_evening)
+            elif m.thug_material_props.ugplus_shader == 'PhysicalSky':
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_night)
-                export_textures.append(m.thug_material_props.ugplus_matslot_diffuse_morning)
+                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 
             elif m.thug_material_props.ugplus_shader == 'Cloud':
                 export_textures.append(m.thug_material_props.ugplus_matslot_cloud)
                 set_image_compression(m.thug_material_props.ugplus_matslot_cloud, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_detail)
+                set_image_compression(m.thug_material_props.ugplus_matslot_detail, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
+                set_image_compression(m.thug_material_props.ugplus_matslot_fallback, 'DXT5')
                 
             elif m.thug_material_props.ugplus_shader == 'Grass':
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
@@ -478,28 +480,15 @@ def export_tex(filename, directory, target_game, operator=None):
                 set_image_compression(m.thug_material_props.ugplus_matslot_lightmap4, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
                 
-            elif m.thug_material_props.ugplus_shader == 'Water_Displacement':
+            elif m.thug_material_props.ugplus_shader == 'Ocean':
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal2)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal2, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_displacement)
-                set_image_compression(m.thug_material_props.ugplus_matslot_displacement, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_displacement2)
-                set_image_compression(m.thug_material_props.ugplus_matslot_displacement2, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
-                set_image_compression(m.thug_material_props.ugplus_matslot_fallback, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
-                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap)
-                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap2)
-                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap2, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap3)
-                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap3, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_lightmap4)
-                set_image_compression(m.thug_material_props.ugplus_matslot_lightmap4, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_detail)
-            
+                set_image_compression(m.thug_material_props.ugplus_matslot_detail, 'DXT5')
+                export_textures.append(m.thug_material_props.ugplus_matslot_fallback)
+                
             for tex in export_textures:
                 if tex.tex_image == None:
                     if tex.tex_image_name != '':

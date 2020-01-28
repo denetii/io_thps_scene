@@ -28,6 +28,8 @@ def _thug_object_settings_draw(self, context):
         row = self.layout.row()
         row.column().prop(ob, "thug_created_at_start", toggle=True, icon='MOD_BUILD')
         row.column().prop(ob, "thug_network_option", text='')
+        row = self.layout.row()
+        row.column().row().prop(ob, "thug_tod_values", expand=True)
         box = self.layout.box().column()
         box.row().prop(ob.data.thug_light_props, "light_type")
         if ob.data.thug_light_props.light_type == 'TUBE':
@@ -64,6 +66,7 @@ def _thug_object_settings_draw(self, context):
             row.column().prop(ob.thug_restart_props, "restart_horse")
             row = box.row()
             row.column().prop(ob.thug_restart_props, "restart_ctf")
+            row.column().prop(ob.thug_restart_props, "primary_restart")
         # ********************************************************
         # * REFLECTION PROBE 
         # ********************************************************
@@ -258,7 +261,7 @@ def _thug_object_settings_draw(self, context):
             box = self.layout.box().column()          
             box.row().prop(ob, "thug_lightgroup")
             row = box.row()
-            row.column().prop(ob, "thug_cast_shadow")
+            row.column().prop(ob, "thug_tod_controlled")
             row.column().prop(ob, "thug_is_shadow_volume")
             row = box.row()
             row.column().prop(ob, "thug_no_skater_shadow")
@@ -272,6 +275,9 @@ def _thug_object_settings_draw(self, context):
                     #box.row().prop(ob.data.thug_billboard_props, "pivot_origin")
                     #box.row().prop(ob.data.thug_billboard_props, "pivot_pos")
                     box.row().prop(ob.data.thug_billboard_props, "pivot_axis")
+            if ob.thug_tod_controlled:
+                box.row().prop(ob, "thug_tod_values", expand=True)
+                
                 
                 
         box = self.layout.column()    

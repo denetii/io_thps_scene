@@ -776,6 +776,7 @@ class THUGRestartProps(bpy.types.PropertyGroup):
         ("CTF", "CTF", "")),
     name="Primary Type", default="Player1", update=thug_empty_update)
     restart_name = StringProperty(name="Restart Name", description="Name that appears in restart menu.")
+    primary_restart = BoolProperty(name="Primary Restart", default=False)
     
 
 #----------------------------------------------------------------------------------
@@ -1249,6 +1250,9 @@ def register_props():
         items=[(t, t, t) for t in ["Auto"] + TERRAIN_TYPES],
         default="Auto")
     bpy.types.Object.thug_rail_connects_to = StringProperty(name="Linked To", description="Path this object links to (must be a rail/ladder/waypoint).")
+    
+    bpy.types.Object.thug_tod_controlled = BoolProperty(name="TOD Controlled", default=False, description="This object's state is controlled by the TOD system")
+    bpy.types.Object.thug_tod_values = FloatVectorProperty(name="TOD Range", size=2, default=[1.2,2.2], description="Start/End TOD range where the object is active")
 
 
     bpy.types.Object.thug_lightgroup = EnumProperty(

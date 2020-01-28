@@ -13,6 +13,7 @@ from . constants import *
 from . scene_props import *
 from . import_nodes import *
 import ntpath
+from random import randrange
 
 # METHODS
 #############################################
@@ -105,15 +106,30 @@ class THUGUtilFillVehicles(bpy.types.Operator):
 
     def execute(self, context):
         vehs = [o for o in bpy.data.objects if o.type == 'EMPTY' and o.thug_empty_props.empty_type == 'Vehicle' ]
+        veh_models = [
+            'veh\\Veh_Chevy_Impala\\Veh_Chevy_Impala.mdl'
+            ,'veh\\Veh_DCShoeTruck\\Veh_DCShoeTruck.mdl'
+            ,'veh\\Veh_Focus\\Veh_Focus.mdl'
+            ,'veh\\Veh_Galaxie\\Veh_Galaxie.mdl'
+            ,'veh\\Veh_Limo\\Veh_Limo.mdl'
+            ,'veh\\Veh_Minivan\\Veh_Minivan.mdl'
+            ,'veh\\Veh_OldVan\\Veh_OldVan.mdl'
+            ,'veh\\Veh_Pickup\\Veh_Pickup.mdl'
+            ,'veh\\Veh_PTCruiser\\Veh_PTCruiser.mdl'
+            ,'veh\\Veh_SlamCityTruck\\Veh_SlamCityTruck.mdl'
+            ,'veh\\Veh_SmallSportscar\\Veh_SmallSportscar.mdl'
+            ,'veh\\Veh_SUV_THUG\\Veh_SUV_THUG.mdl'
+        ]
         for veh in vehs:
             veh.thug_veh_props.veh_type = 'Generic'
-            veh.thug_veh_props.veh_model = 'veh\\Veh_DCShoeTruck\\Veh_DCShoeTruck.mdl'
+            veh.thug_veh_props.veh_model = veh_models[randrange(len(veh_models)-1)]
+            #veh.thug_veh_props.veh_model = 'veh\\Veh_DCShoeTruck\\Veh_DCShoeTruck.mdl'
             veh.thug_veh_props.veh_skeleton = 'car'
-            veh.thug_veh_props.veh_suspend = 108000
+            veh.thug_veh_props.veh_suspend = 128000
             veh.thug_veh_props.veh_norail = False
             veh.thug_veh_props.veh_noskitch = False
             veh.thug_veh_props.veh_usemodellights = False
-            veh.thug_veh_props.veh_allowreplacetex = False
+            veh.thug_veh_props.veh_allowreplacetex = True
             
         return {'FINISHED'}
 

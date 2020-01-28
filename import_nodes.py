@@ -353,6 +353,11 @@ def import_nodearray(gamemode):
                 if "Cluster" in node:
                     curveOB.thug_cluster_name = node["Cluster"]
 
+            if "CreatedAtStart" in node:
+                curveOB.thug_created_at_start = True
+            else:
+                curveOB.thug_created_at_start = False
+                
             # attach to scene and validate context
             scn = bpy.context.scene
             scn.objects.link(curveOB)
@@ -917,9 +922,9 @@ def read_until(textblock, start_line, trigger):
         line_num += 1
         if line_num < start_line:
             continue
-        if line.body.startswith(":i function "):
+        if line.body.strip().startswith(":i function "):
             continue
-        if line.body.startswith(trigger):
+        if line.body.strip().startswith(trigger):
             return lines
         lines.append(line)
     
@@ -933,7 +938,7 @@ def import_triggerscripts(should_replace = False):
     line_number = 0
     for line in old_scripts.lines:
         line_number += 1
-        if line.body.startswith(":i function "):
+        if line.body.strip().startswith(":i function "):
             script_name = line.body.replace(":i function ", "").replace("$", "").strip()
             #print("Found script: " + script_name)
             script_text = read_until(old_scripts, line_number, ":i endfunction")

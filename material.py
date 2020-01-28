@@ -234,9 +234,9 @@ def get_ugplus_shader_flags(mprops):
         mat_flags |= SHADERFLAG_USES_WEATHER
     if mprops.ugplus_shader_disp:
         mat_flags |= SHADERFLAG_USES_POM
-    if not is_full_diffuse(mprops) or mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom' ]:
+    if not is_full_diffuse(mprops) or mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom', 'Ocean' ]:
         mat_flags |= SHADERFLAG_USES_REFLECTIONS
-    if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom' ]:
+    if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom', 'Ocean' ]:
         mat_flags |= SHADERFLAG_USES_REFRACTION
     return mat_flags
     
@@ -254,10 +254,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         shader_id = 1.08
     elif mprops.ugplus_shader == 'Water_Custom':
         shader_id = 3.16
+    elif mprops.ugplus_shader == 'Ocean':
+        shader_id = 23.42
     elif mprops.ugplus_shader == 'Skybox':
         shader_id = 8.15
     elif mprops.ugplus_shader == 'PhysicalSky':
-        shader_id = 23.0
+        shader_id = 8.15
     elif mprops.ugplus_shader == 'Cloud':
         shader_id = 16.0
     elif mprops.ugplus_shader == 'Grass':
@@ -301,9 +303,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         
     elif mprops.ugplus_shader == 'PhysicalSky':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse_night, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
         
     elif mprops.ugplus_shader == 'Cloud':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_cloud, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
         
     elif mprops.ugplus_shader == 'Grass':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
@@ -323,6 +328,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 }) 
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap4, 'flags': 0 }) 
+        
+    elif mprops.ugplus_shader == 'Ocean':
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal2, 'flags': 0 })
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 }) 
+        export_textures.append({ 'mat_node': mprops.ugplus_matslot_fallback, 'flags': 0 })
         
     num_passes = 4 if len(export_textures) > 4 else len(export_textures)
     
@@ -400,7 +411,8 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         
         w("I", pass_flags)  # flags # 4132
         w("?", True)  # has color flag; seems to be ignored
-        w("3f",  *(m.diffuse_color / 2.0))  # color
+        w("3f",  *((tex.tex_color[0]/2.0,tex.tex_color[1]/2.0,tex.tex_color[2]/2.0) ))
+        #w("3f",  *(m.diffuse_color / 2.0))  # color
         
         w("I", globals()[tex.blend_mode] if tex else vBLEND_MODE_DIFFUSE)  
         w("I", 0) #w("I", pprops.blend_fixed_alpha if pprops else 0)
@@ -848,7 +860,7 @@ def _material_settings_draw(self, context):
             c = split.column()
             c.enabled = (mps.ugplus_shader_disp != False)
             c.prop(mps, "ugplus_extra1", text='Disp Strength')
-        elif mps.ugplus_shader == 'Water':
+        elif mps.ugplus_shader == 'Water' or mps.ugplus_shader == 'Ocean':
             row.separator()
             split = row.split()
             c = split.column()
@@ -858,12 +870,6 @@ def _material_settings_draw(self, context):
             split = row.split()
             c = split.column()
             c.prop(mps, "ugplus_extra1", text='Bump Strength')
-            split = row.split()
-            c = split.column()
-            c.prop(mps, "ugplus_shader_disp", toggle=True, icon='MOD_DISPLACE')
-            c = split.column()
-            c.enabled = (mps.ugplus_shader_disp != False)
-            c.prop(mps, "ugplus_extra1", text='Disp Strength')
             
         row.separator()
         
@@ -893,6 +899,12 @@ def _material_settings_draw(self, context):
             ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
             ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
             
+        elif mps.ugplus_shader == 'Ocean':
+            ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal Map 1', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_normal2, box, title='Normal Map 2')
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Foam')
+            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Disp Map 1')
+            
         elif mps.ugplus_shader == 'Glass':
             ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail', allow_blending=True)
             ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
@@ -903,6 +915,7 @@ def _material_settings_draw(self, context):
             
         elif mps.ugplus_shader == 'PhysicalSky':
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse_night, box, title='Night Sky', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Moon', allow_blending=False)
             
         elif mps.ugplus_shader == 'Skybox':
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Day')
@@ -912,6 +925,8 @@ def _material_settings_draw(self, context):
             
         elif mps.ugplus_shader == 'Cloud':
             ugplus_matslot_draw(mps.ugplus_matslot_cloud, box, title='Cloud/Weather Mask', allow_blending=True)
+            ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Cloud/Weather Mask', allow_blending=False)
+            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Cloud/Weather Mask', allow_blending=False)
             
         elif mps.ugplus_shader == 'Grass':
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Layer Mask', allow_blending=True)
@@ -1347,6 +1362,7 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         ("EditorGuide", "Editor Guide", "Only rendered when in the Park/Level editor"),
         ("Unlit", "Unlit", "Unlit textured material"),
         ("Grass", "Grass", "Grass material"),
+        ("Ocean", "Ocean", "Ocean material"),
         ])
     ugplus_lighting_mode = EnumProperty(
         name="Lighting Mode",

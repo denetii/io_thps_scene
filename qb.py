@@ -191,8 +191,91 @@ def export_qb(filename, directory, target_game, operator=None):
         has_team_green_base = False
         has_team_blue_base = False
         
+        # Export 'primary' restarts first so they will be used first
+        # (e.g., the primary Player1 restart will be used over any others)
+        primary_restarts = [o for o in bpy.data.objects if hasattr(o, 'thug_empty_props') and o.thug_empty_props.empty_type == "Restart" and o.thug_restart_props.primary_restart]
+        for ob in primary_restarts:
+            p("\t:i :s{")
+            p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
+            p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
+            p("\t\t:i {} = {}".format(c("Name"), c(get_clean_name(ob))))
+            p("\t\t:i {} = {}".format(c("Class"), c("Restart")))
+            p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_restart_props.restart_type)))
+            auto_restart_name = ""
+            str_all_types = ":a{"
+            if ob.thug_restart_props.restart_p1:
+                has_restart_p1 = True
+                str_all_types += c("Player1")
+                if auto_restart_name == "": auto_restart_name = "P1: Restart"
+            if ob.thug_restart_props.restart_p2:
+                has_restart_p2 = True
+                str_all_types += c("Player2")
+                if auto_restart_name == "": auto_restart_name = "P2: Restart"
+            if ob.thug_restart_props.restart_gen:
+                has_restart_gen = True
+                str_all_types += c("Generic")
+                if auto_restart_name == "": auto_restart_name = "Gen: Restart"
+            if ob.thug_restart_props.restart_multi:
+                has_restart_multi = True
+                str_all_types += c("Multiplayer")
+                if auto_restart_name == "": auto_restart_name = "Multi: Restart"
+            if ob.thug_restart_props.restart_team:
+                has_restart_team = True
+                str_all_types += c("Team")
+                if auto_restart_name == "": auto_restart_name = "Team: Restart"
+            if ob.thug_restart_props.restart_horse:
+                has_restart_horse = True
+                str_all_types += c("Horse")
+                if auto_restart_name == "": auto_restart_name = "Horse: Restart"
+            if ob.thug_restart_props.restart_ctf:
+                has_restart_ctf = True
+                str_all_types += c("CTF")
+                if auto_restart_name == "": auto_restart_name = "CTF: Restart"
+            
+            if auto_restart_name == "":
+                # If none of the type boxes were checked off, use the primary type!
+                #raise Exception("Restart node {} has no restart type(s).".format(ob.name))
+                if ob.thug_restart_props.restart_type == "Player1":
+                    str_all_types += c("Player1")
+                    auto_restart_name = "P1: Restart"
+                    has_restart_p1 = True
+                elif ob.thug_restart_props.restart_type == "Player2":
+                    str_all_types += c("Player2")
+                    auto_restart_name = "P2: Restart"
+                    has_restart_p2 = True
+                if ob.thug_restart_props.restart_type == "Generic":
+                    str_all_types += c("Generic")
+                    auto_restart_name = "Gen: Restart"
+                    has_restart_gen = True
+                if ob.thug_restart_props.restart_type == "Multiplayer":
+                    str_all_types += c("Multiplayer")
+                    auto_restart_name = "Multi: Restart"
+                    has_restart_multi = True
+                if ob.thug_restart_props.restart_type == "Team":
+                    str_all_types += c("Team")
+                    auto_restart_name = "Team: Restart"
+                    has_restart_team = True
+                if ob.thug_restart_props.restart_type == "Horse":
+                    str_all_types += c("Horse")
+                    auto_restart_name = "Ho: Restart"
+                    has_restart_horse = True
+                if ob.thug_restart_props.restart_type == "CTF":
+                    str_all_types += c("CTF")
+                    auto_restart_name = "CTF: Restart"
+                    has_restart_ctf = True
+            str_all_types += ":a}"
+            p("\t\t:i {} = {}".format(c("restart_types"), str_all_types))
+            actual_restart_name = ob.thug_restart_props.restart_name
+            if ob.thug_restart_props.restart_name == "":
+                actual_restart_name = auto_restart_name
+            p("\t\t:i {} = {}".format(c("RestartName"), blub_str(actual_restart_name)))
+            p("\t:i :s}")
+        # Yes, this is duplicated again below for the other restarts, will clean it up later!
         
         for ob in bpy.data.objects:
+            # Don't export non-mesh objects if marked hidden from render
+            if ob.type != 'MESH' and ob.hide_render:
+                continue
             # -----------------------------------------------------------------------------------------------------------
             # - Export node definitions for mesh-based objects (level geometry, level object)
             # -----------------------------------------------------------------------------------------------------------
@@ -218,6 +301,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     not custom_node_props.get(clean_name) and \
                     col_ob.thug_occluder == False and \
                     ob.thug_lightgroup == "None" and \
+                    ob.thug_tod_controlled == False and \
                     not ob.name.lower().startswith("NightOn") and \
                     not ob.name.lower().startswith("NightOff") :
                     if (not getattr(ob, "thug_is_trickobject", False) and
@@ -309,6 +393,10 @@ def export_qb(filename, directory, target_game, operator=None):
                         p("\t\t:i {}".format(c("Permanent")))
                 if ob.thug_lightgroup != "None" and ob.thug_export_scene:
                     p("\t\t:i {} = {}".format(c("LightGroup"), c(ob.thug_lightgroup)))
+                if ob.thug_tod_controlled == True and ob.thug_export_scene:
+                    p("\t\t:i {}".format(c("TODControlled")))
+                    p("\t\t:i {} = {}".format(c("TOD_On"), f(ob.thug_tod_values[0])))
+                    p("\t\t:i {} = {}".format(c("TOD_Off"), f(ob.thug_tod_values[1])))
                     
                 if getattr(col_ob, "thug_is_trickobject", False):
                     p("\t\t:i call {} arguments".format(c("TrickObject")))
@@ -365,6 +453,9 @@ def export_qb(filename, directory, target_game, operator=None):
                                 int((ob.data.color[2] * 255) / 1)]
                 p("\t\t:i {} = :a{{ {};{};{} :a}}".format(c("Color"),
                             i(light_color[0]), i(light_color[1]),i(light_color[2])))
+                            
+                p("\t\t:i {} = {}".format(c("TOD_On"), f(ob.thug_tod_values[0])))
+                p("\t\t:i {} = {}".format(c("TOD_Off"), f(ob.thug_tod_values[1])))
                 if ob.thug_node_expansion:
                     p("\t\t:i {}".format(c(ob.thug_node_expansion)))
                 #p("\t:i :s}")
@@ -487,7 +578,7 @@ def export_qb(filename, directory, target_game, operator=None):
                 p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 # RESTART NODE
-                if ob.thug_empty_props.empty_type == "Restart":
+                if ob.thug_empty_props.empty_type == "Restart" and ob.thug_restart_props.primary_restart == False:
                     p("\t\t:i {} = {}".format(c("Class"), c("Restart")))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_restart_props.restart_type)))
                     auto_restart_name = ""
