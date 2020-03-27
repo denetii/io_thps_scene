@@ -193,7 +193,7 @@ def export_qb(filename, directory, target_game, operator=None):
         
         # Export 'primary' restarts first so they will be used first
         # (e.g., the primary Player1 restart will be used over any others)
-        primary_restarts = [o for o in bpy.data.objects if hasattr(o, 'thug_empty_props') and o.thug_empty_props.empty_type == "Restart" and o.thug_restart_props.primary_restart]
+        primary_restarts = [o for o in bpy.data.objects if hasattr(o, 'thug_empty_props') and o.thug_empty_props.empty_type == "Restart" and hasattr(o.thug_restart_props, 'primary_restart') and o.thug_restart_props.primary_restart == True]
         for ob in primary_restarts:
             p("\t:i :s{")
             p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
@@ -273,9 +273,6 @@ def export_qb(filename, directory, target_game, operator=None):
         # Yes, this is duplicated again below for the other restarts, will clean it up later!
         
         for ob in bpy.data.objects:
-            # Don't export non-mesh objects if marked hidden from render
-            if ob.type != 'MESH' and ob.hide_render:
-                continue
             # -----------------------------------------------------------------------------------------------------------
             # - Export node definitions for mesh-based objects (level geometry, level object)
             # -----------------------------------------------------------------------------------------------------------
@@ -584,7 +581,7 @@ def export_qb(filename, directory, target_game, operator=None):
                 p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 # RESTART NODE
-                if ob.thug_empty_props.empty_type == "Restart" and ob.thug_restart_props.primary_restart == False:
+                if ob.thug_empty_props.empty_type == "Restart" and ( not hasattr(ob.thug_restart_props, 'primary_restart') or ob.thug_restart_props.primary_restart == False ):
                     p("\t\t:i {} = {}".format(c("Class"), c("Restart")))
                     p("\t\t:i {} = {}".format(c("Type"), c(ob.thug_restart_props.restart_type)))
                     auto_restart_name = ""

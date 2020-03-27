@@ -14,6 +14,7 @@ from . material import *
 
 from . import prefs
 from . prefs import *
+from mathutils import Color
 
 
 # METHODS
@@ -267,6 +268,15 @@ def setup_cycles_nodes(node_tree, diffuse_tex = None, normal_tex = None, color =
     node_tree.links.new(node_mo.inputs[0], node_sm.outputs[0]) # Material Output Surface
     
     
+def avg_color(color_list):
+    color = Color()
+    len_list = len(color_list)
+    
+    for col in color_list:
+        color += col
+    if len_list > 0:
+        color /= len_list
+    return color
 
 #----------------------------------------------------------------------------------
 #- Removes baked vertex color data on specified objects
@@ -343,6 +353,18 @@ def convert_bake_to_vcs(scene, meshes, layer_name):
                 else:
                     bake_vcs.data[loop].color = col_result
                 
+        # Do a second pass to smooth the vertex colors (average the loop colors)
+        col_map = {}
+        for l in obdata.loops:
+            col = bake_vcs.data[l.index].color
+            try:
+                col_map[l.vertex_index].append(col)
+            except KeyError:
+                col_map[l.vertex_index] = [col]
+
+        for i, l in enumerate(obdata.loops):
+            bake_vcs.data[i].color = avg_color(col_map[l.vertex_index])
+        obdata.update()
         
 #----------------------------------------------------------------------------------
 #- 'Un-bakes' the object (restores the original materials)
