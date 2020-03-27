@@ -302,6 +302,7 @@ def export_qb(filename, directory, target_game, operator=None):
                     col_ob.thug_occluder == False and \
                     ob.thug_lightgroup == "None" and \
                     ob.thug_tod_controlled == False and \
+                    ob.thug_lighting_mesh == False and \
                     not ob.name.lower().startswith("NightOn") and \
                     not ob.name.lower().startswith("NightOff") :
                     if (not getattr(ob, "thug_is_trickobject", False) and
@@ -397,6 +398,8 @@ def export_qb(filename, directory, target_game, operator=None):
                     p("\t\t:i {}".format(c("TODControlled")))
                     p("\t\t:i {} = {}".format(c("TOD_On"), f(ob.thug_tod_values[0])))
                     p("\t\t:i {} = {}".format(c("TOD_Off"), f(ob.thug_tod_values[1])))
+                if ob.thug_lighting_mesh == True and ob.thug_export_scene:
+                    p("\t\t:i {}".format(c("LightingObject")))
                     
                 if getattr(col_ob, "thug_is_trickobject", False):
                     p("\t\t:i call {} arguments".format(c("TrickObject")))
@@ -413,6 +416,9 @@ def export_qb(filename, directory, target_game, operator=None):
                     if col_ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = col_ob.thug_triggerscript_props.custom_name
                         custom_triggerscript_names.append(script_name)
+                    elif col_ob.thug_triggerscript_props.template_name_txt == "Template":
+                        script_name, script_code = script_template.generate_custom_template_script(col_ob, 'Blub')
+                        generated_scripts.setdefault(script_name, script_code)
                     else:
                         script_name, script_code = _generate_script(col_ob)
                         generated_scripts.setdefault(script_name, script_code)
@@ -885,6 +891,9 @@ def export_qb(filename, directory, target_game, operator=None):
                     if ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = ob.thug_triggerscript_props.custom_name
                         custom_triggerscript_names.append(script_name)
+                    elif col_ob.thug_triggerscript_props.template_name_txt == "Template":
+                        script_name, script_code = script_template.generate_custom_template_script(col_ob, 'Blub')
+                        generated_scripts.setdefault(script_name, script_code)
                     else:
                         script_name, script_code = _generate_script(ob)
                         generated_scripts.setdefault(script_name, script_code)
@@ -1528,6 +1537,9 @@ def export_model_qb(filename, directory, target_game, operator=None):
                     if ob.thug_triggerscript_props.template_name_txt == "Custom":
                         script_name = ob.thug_triggerscript_props.custom_name
                         custom_triggerscript_names.append(script_name)
+                    elif col_ob.thug_triggerscript_props.template_name_txt == "Template":
+                        script_name, script_code = script_template.generate_custom_template_script(col_ob, 'Blub')
+                        generated_scripts.setdefault(script_name, script_code)
                     else:
                         script_name, script_code = _generate_script(ob)
                         generated_scripts.setdefault(script_name, script_code)

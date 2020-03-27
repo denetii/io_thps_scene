@@ -243,7 +243,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                         r, g, b, a = v.vc or FULL_WHITE
                         if is_levelobject:
                             r, g, b, a = FULL_WHITE
-                        a = (int(a * 255) & 0xff) << 24
+                        a = (int(a * 127) & 0xff) << 24
                         r = (int(r * VC_MULT) & 0xff) << 16
                         g = (int(g * VC_MULT) & 0xff) << 8
                         b = (int(b * VC_MULT) & 0xff) << 0

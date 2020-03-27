@@ -69,6 +69,14 @@ def format_triggerscript_name(script_name):
     return script_name
     
 #----------------------------------------------------------------------------------
+#- Returns a cleaned version of a template name for exporting
+#----------------------------------------------------------------------------------
+def format_template_script_name(template_name):
+    if template_name.startswith('template_') or template_name.startswith('Template_'):
+        return template_name[9:]
+    return template_name
+    
+#----------------------------------------------------------------------------------
 #- Scales a 2D vector v by scale s, with a pivot point
 #----------------------------------------------------------------------------------
 def scale_2d( v, s, p ):

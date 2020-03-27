@@ -49,7 +49,8 @@ def get_templates(self, context):
     global SCRIPT_TEMPLATES
     items = []
     items.append( ('None', 'None', '', 'EMPTY', 0) )
-    items.append( ('Custom', 'Custom', 'Write your own Trigger Script.', 'SCRIPT', 1) )
+    items.append( ('Custom', 'Custom', 'Write your own Trigger Script', 'SCRIPT', 1) )
+    items.append( ('Template', 'Template', 'Custom template', 'SCRIPT', 2) )
     
     add_items = []
     for tmp in SCRIPT_TEMPLATES:
@@ -168,7 +169,7 @@ def parse_template(config_path):
 def store_triggerscript_params(self, context):
     ob = context.object
     ob.thug_triggerscript_props.template_name_txt = ob.thug_triggerscript_props.template_name
-    if ob.thug_triggerscript_props.template_name in [ 'None', 'Custom' ]:
+    if ob.thug_triggerscript_props.template_name in [ 'None', 'Custom', 'Template' ]:
         return
         
     for i in range(1,5):
@@ -195,6 +196,31 @@ def store_triggerscript_params(self, context):
         #print("Storing thug_{} from {}".format(paramname, paramname))
         ob['thug_' + paramname] = paramvalue
         
+
+def generate_custom_template_script(ob, compiler):
+    script_name = get_clean_name(ob) + "_Script"
+    script_header = ":i function ${}$".format(script_name)
+    script_footer = ":i endfunction"
+    if compiler == 'QConsole':
+        script_header = "script {}".format(script_name)
+        script_footer = "endscript"
+    
+    base_replace = [
+        [ '~this.object~', '$' + get_clean_name(ob) + '$' ]
+    ]
+    
+    template_name = ob.thug_triggerscript_props.custom_name
+    template_text = bpy.data.texts.get("template_" + template_name, None)
+    if not template_text:
+        print("TriggerScript template {} does not exist, creating it!".format(template_name))
+        template_text = bpy.data.texts.new(name="template_" + template_name)
+        
+    final_text = template_text.as_string()
+    for token in base_replace:
+        final_text = final_text.replace(token[0], token[1])
+    final_text = script_header + "\n" + final_text + "\n" + script_footer + "\n"
+    
+    return script_name, final_text
 
 def generate_template_script(ob, template, compiler):
     script_text = template['Script_Blub']
@@ -268,6 +294,6 @@ def generate_template_script(ob, template, compiler):
         final_text = final_text.replace(token[0], token[1])
         
     final_text = script_header + "\n" + final_text + "\n" + script_footer + "\n"
-    print(final_text)
+    #print(final_text)
     return script_name, final_text
         

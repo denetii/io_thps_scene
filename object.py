@@ -256,7 +256,10 @@ def _thug_object_settings_draw(self, context):
                 box.row().prop(ob.thug_levelobj_props, "SoundType")
                 
                 box.row().prop_search(ob.thug_levelobj_props, "stuckscript", 
-                        context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT' )        
+                        context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT' )       
+
+            box.row().prop_search(ob, "thug_rail_connects_to", context.window_manager.thug_all_nodes, "paths")
+            
         elif ob.thug_object_class == "LevelGeometry" and ob.thug_export_scene:  
             box = self.layout.box().column()          
             box.row().prop(ob, "thug_lightgroup")
@@ -269,6 +272,7 @@ def _thug_object_settings_draw(self, context):
             row = box.row()
             #row.column().prop(ob, "thug_allow_uv_scale")
             row.column().prop(ob.data.thug_billboard_props, "is_billboard")
+            row.column().prop(ob, "thug_lighting_mesh")
             if ob.data.thug_billboard_props.is_billboard:
                 box.row().prop(ob.data.thug_billboard_props, "type", expand=True)
                 if ob.data.thug_billboard_props.type == 'AXIS':
@@ -317,11 +321,12 @@ def _thug_object_settings_draw(self, context):
         # New template system below!
         box = self.layout.box().column()
         box.row().prop(ob.thug_triggerscript_props, "template_name")
-        if ob.thug_triggerscript_props.template_name not in [ "None", "Custom" ]:
+        if ob.thug_triggerscript_props.template_name not in [ "None", "Custom", "Template" ]:
             #print("attempting to show template params")
             tmpl = script_template.get_template(ob.thug_triggerscript_props.template_name)
             #print(tmpl)
             paramindex = 0
+            
             for prm in tmpl['Parameters']:
                 paramindex += 1
                 if prm['Name'] and prm['Type']:
@@ -350,12 +355,10 @@ def _thug_object_settings_draw(self, context):
         elif ob.thug_triggerscript_props.template_name == "Custom":
             box.row().prop_search(ob.thug_triggerscript_props, "custom_name", 
                         context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT' )
-            #box.row().prop_search(ob.thug_triggerscript_props, "custom_name", bpy.data, "texts")
             box.row().operator(THUGCreateTriggerScript.bl_idname, THUGCreateTriggerScript.bl_label)
-            #if ob.thug_triggerscript_props.custom_name != '' and not ob.thug_triggerscript_props.custom_name.startswith("script_"):
-            #    box = self.layout.box().column(True)
-            #    box.label("Bad TriggerScript name!", icon="ERROR")
-            #    box.label("Name must start with '_script' to be exported.")
+        elif ob.thug_triggerscript_props.template_name == "Template":
+            box.row().prop_search(ob.thug_triggerscript_props, "custom_name", 
+                        context.window_manager.thug_all_nodes, "templates", icon='SCRIPT' )
         # End new template system
         
     if (ob.type == "CURVE" and ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom")):

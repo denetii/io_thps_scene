@@ -218,6 +218,7 @@ def update_node_collection(*args):
     context.window_manager.thug_all_nodes.restarts.clear()
     context.window_manager.thug_all_nodes.meshes.clear()
     context.window_manager.thug_all_nodes.scripts.clear()
+    context.window_manager.thug_all_nodes.templates.clear()
     
     for ob in bpy.data.objects:
         if ob.type == 'MESH' and ( ob.thug_export_collision or ob.thug_export_scene ):
@@ -234,6 +235,9 @@ def update_node_collection(*args):
         if tx.name.startswith('script_'):
             entry = context.window_manager.thug_all_nodes.scripts.add()
             entry.name = format_triggerscript_name(tx.name)
+        elif tx.name.startswith('template_'):
+            entry = context.window_manager.thug_all_nodes.templates.add()
+            entry.name = format_template_script_name(tx.name)
             
             
 #----------------------------------------------------------------------------------
@@ -633,6 +637,7 @@ class THUGNodeListProps(bpy.types.PropertyGroup):
     restarts = CollectionProperty(type=bpy.types.PropertyGroup)
     meshes = CollectionProperty(type=bpy.types.PropertyGroup)
     scripts = CollectionProperty(type=bpy.types.PropertyGroup)
+    templates = CollectionProperty(type=bpy.types.PropertyGroup)
     
 #----------------------------------------------------------------------------------
 #- A list of base game assets, used to fill autocomplete lists in scenes,
@@ -1252,7 +1257,8 @@ def register_props():
     bpy.types.Object.thug_rail_connects_to = StringProperty(name="Linked To", description="Path this object links to (must be a rail/ladder/waypoint).")
     
     bpy.types.Object.thug_tod_controlled = BoolProperty(name="TOD Controlled", default=False, description="This object's state is controlled by the TOD system")
-    bpy.types.Object.thug_tod_values = FloatVectorProperty(name="TOD Range", size=2, default=[1.2,2.2], description="Start/End TOD range where the object is active")
+    bpy.types.Object.thug_tod_values = FloatVectorProperty(name="TOD Range", size=2, default=[1.25,2.85], description="Start/End TOD range where the object is active")
+    bpy.types.Object.thug_lighting_mesh = BoolProperty(name="Lighting", default=False, description="This object is used for static lighting (not rendered with dynamic lighting)")
 
 
     bpy.types.Object.thug_lightgroup = EnumProperty(

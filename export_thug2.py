@@ -122,6 +122,9 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
                     flags |= SECFLAGS_SHADOW_VOLUME
                 if len(original_object.vertex_groups) or need_vertex_normals:
                     flags |= SECFLAGS_HAS_VERTEX_NORMALS
+                if original_object.data.thug_billboard_props.is_billboard:
+                    flags |= SECFLAGS_BILLBOARD_PRESENT
+                    flags &= ~SECFLAGS_HAS_VERTEX_NORMALS
 
                 mats_to_faces = {}
                 if ob.thug_material_blend and len(ob.data.materials) >= 2:
@@ -161,7 +164,20 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
                     bbox[1][0], bbox[1][1], bbox[1][2])  # bbox
                 bsphere = get_sphere_from_bbox(bbox)
                 w("4f", *bsphere)  # bounding sphere
-
+                
+                # Export billboard data
+                if flags & SECFLAGS_BILLBOARD_PRESENT:
+                    w("I", int(BILLBOARD_TYPES[original_object.data.thug_billboard_props.type])) # billboard type
+                    
+                    # billboard pivot pos
+                    if original_object.data.thug_billboard_props.custom_pos == True:
+                        w("3f", *to_thug_coords_ns(mathutils.Vector(original_object.data.thug_billboard_props.pivot_origin))) 
+                        w("3f", *to_thug_coords_ns(mathutils.Vector(original_object.data.thug_billboard_props.pivot_pos))) 
+                    else:
+                        w("3f", *mathutils.Vector( [ bsphere[0], bsphere[1], bsphere[2] ] ))
+                        w("3f", *mathutils.Vector( [ bsphere[0], bsphere[1], -bsphere[2] ] ))
+                    w("3f", *to_thug_coords_ns(mathutils.Vector(original_object.data.thug_billboard_props.pivot_axis))) # billboard pivot axis
+                    
                 for mat_index, mat_faces in mats_to_faces.items():
                     if len(mat_faces) == 0: continue
                     # TODO fix this

@@ -250,6 +250,7 @@ MATFLAG_WATER_EFFECT =             (1 << 27)  # This material should be processe
 MATFLAG_NO_MAT_COL_MOD =           (1 << 28)  # No material color modulation required (all passes have m.rgb = 0.5).
 
 MATFLAG_REPLACE =                   (1 << 15)   # (Underground+) Material replacement is allowed (group number defined in m_filtering_mode[0])
+MATFLAG_STATIC =                   (1 << 16)   # (Underground+) This tex pass should only render in static lighting (fake shadows, etc)
 
 MATFLAG_ALLOW_RECOLOR =             (1 << 25)   # (Underground+) This material can be recolored
 MATFLAG_FIXED_SCALE =               (1 << 26)   # (Underground+) This material uses a fixed scale

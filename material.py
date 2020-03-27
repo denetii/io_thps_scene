@@ -236,7 +236,7 @@ def get_ugplus_shader_flags(mprops):
         mat_flags |= SHADERFLAG_USES_POM
     if not is_full_diffuse(mprops) or mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom', 'Ocean' ]:
         mat_flags |= SHADERFLAG_USES_REFLECTIONS
-    if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom', 'Ocean' ]:
+    if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom' ]:
         mat_flags |= SHADERFLAG_USES_REFRACTION
     return mat_flags
     
@@ -665,6 +665,8 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
             if pprops and pprops.pf_water:
                 print("EXPORTING WATER TEXTURE!")
                 pass_flags |= MATFLAG_WATER_EFFECT
+            if pprops and pprops.pf_static:
+                pass_flags |= MATFLAG_STATIC
             if mprops.allow_recolor:
                 pass_flags |= MATFLAG_ALLOW_RECOLOR
             if mprops.allow_replace:
@@ -754,6 +756,7 @@ def _material_pass_settings_draw(self, context):
     box.row().prop(pass_props, "pf_decal")
     box.row().prop(pass_props, "pf_smooth")
     box.row().prop(pass_props, "pf_transparent")
+    box.row().prop(pass_props, "pf_static")
     box.row().prop(pass_props, "ignore_vertex_alpha")
     box.row().prop(pass_props, "has_uv_wibbles")
     box.row().prop(pass_props, 'has_animated_texture')
@@ -865,6 +868,11 @@ def _material_settings_draw(self, context):
             split = row.split()
             c = split.column()
             c.prop(mps, "ugplus_extra1", text='Bump Strength')
+            c = split.column()
+            c.prop(mps, "ugplus_shader_disp", toggle=True, icon='MOD_DISPLACE')
+            c = split.column()
+            c.enabled = (mps.ugplus_shader_disp != False)
+            c.prop(mps, "ugplus_extra2", text='Height')
         elif mps.ugplus_shader == 'Water_Custom':
             row.separator()
             split = row.split()
@@ -895,8 +903,7 @@ def _material_settings_draw(self, context):
         elif mps.ugplus_shader == 'Water_Custom':
             ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal Map 1', allow_blending=True)
             ugplus_matslot_draw(mps.ugplus_matslot_normal2, box, title='Normal Map 2')
-            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Diffuse')
-            ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Reflection')
+            ugplus_matslot_draw(mps.ugplus_matslot_fallback, box, title='Mask')
             ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail')
             
         elif mps.ugplus_shader == 'Ocean':
@@ -1457,6 +1464,7 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
     pf_decal = BoolProperty(name="Decal", default=False) 
     pf_smooth = BoolProperty(name="Smooth", default=True) 
     pf_transparent = BoolProperty(name="Use Transparency", default=True)
+    pf_static = BoolProperty(name="Static", default=False)
     ignore_vertex_alpha = BoolProperty(name="Ignore Vertex Alpha", default=False)
     envmap_multiples = FloatVectorProperty(name="Envmap Multiples", size=2, default=(3.0, 3.0), min=0.1, max=10.0)
     
