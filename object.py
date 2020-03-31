@@ -25,6 +25,7 @@ def _thug_object_settings_draw(self, context):
     # * LEVEL LIGHT
     # ********************************************************
     if ob.type == "LAMP" and ob.data.type in ["POINT", "AREA"]:
+        self.layout.row().prop(ob, "thug_export_scene", toggle=True, icon='SCENE_DATA', text='Export to Scene')
         row = self.layout.row()
         row.column().prop(ob, "thug_created_at_start", toggle=True, icon='MOD_BUILD')
         row.column().prop(ob, "thug_network_option", text='')
@@ -47,6 +48,7 @@ def _thug_object_settings_draw(self, context):
         row.column().prop(ob.data.thug_light_props, "light_excludelevel")
         
     elif ob.type == "EMPTY":
+        self.layout.row().prop(ob, "thug_export_scene", toggle=True, icon='SCENE_DATA', text='Export to Scene')
         self.layout.row().prop(ob.thug_empty_props, "empty_type")
         # ********************************************************
         # * RESTART
@@ -294,6 +296,7 @@ def _thug_object_settings_draw(self, context):
             row.column().prop(ob, "thug_do_autosplit_max_radius", text='Radius')
         
     if ob.type == "CURVE":
+        self.layout.row().prop(ob, "thug_export_scene", toggle=True, icon='SCENE_DATA', text='Export to Scene')
         self.layout.row().prop(ob, "thug_path_type")
         if ob.thug_path_type == 'Waypoint':
             box = self.layout.box().column()

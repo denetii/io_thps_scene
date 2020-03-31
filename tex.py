@@ -301,11 +301,13 @@ def read_tex(reader, printer):
                     data_bytes = swizzle(data_bytes, img_width, img_height, 8, 0, True)
                     blend_img = bpy.data.images.new(str(checksum), img_width, img_height, alpha=True)
                     blend_img.pixels = [pal_col for pal_idx in data_bytes for pal_col in pal_colors[pal_idx]]
-            elif j == 0 and dxt_version in (1, 5):
+                    blend_img.thug_image_props.mip_levels = levels
+            elif j == 0 and dxt_version in (1, 5):  
                 data_bytes = r.buf[r.offset:r.offset+data_size]
                 blend_img = bpy.data.images.new(str(checksum), img_width, img_height, alpha=True)
                 blend_img.gl_load()
                 blend_img.thug_image_props.compression_type = "DXT5" if dxt_version == 5 else "DXT1"
+                blend_img.thug_image_props.mip_levels = levels
                 image_id = blend_img.bindcode[0]
                 if image_id == 0:
                     print("Got 0 bindcode for " + blend_img.name)
@@ -334,7 +336,6 @@ def read_tex(reader, printer):
 
             r.offset += data_size
             
-        blend_img.thug_image_props.mip_levels = levels
 
 def get_colortex(color):
     colortex_name = 'io_thps_scene_Color_' + ''.join('{:02X}'.format(int(255*a)) for a in color)
@@ -547,7 +548,16 @@ def export_tex(filename, directory, target_game, operator=None):
                 dxt = 0
             #LOG.debug("compression: {}".format(dxt))
             mm_offset = 0
-            if operator.max_texture_size >= 16 and not image.name.startswith('LM_'):
+            clamp_texture_size = False
+            if operator.max_texture_size >= 16:
+                if image.name.startswith('LM_'):
+                    if operator.max_texture_lightmap_tex == True:
+                        clamp_texture_size = True
+                else:
+                    if operator.max_texture_base_tex == True:
+                        clamp_texture_size = True
+                        
+            if clamp_texture_size == True:
                 tex_size = width if width > height else height
                 while True:
                     if tex_size <= operator.max_texture_size:
@@ -555,12 +565,6 @@ def export_tex(filename, directory, target_game, operator=None):
                     tex_size /= 2
                     mm_offset += 1
                     
-            '''if operator.mipmap_offset:
-                mm_offset = operator.mipmap_offset
-                if operator.only_offset_lightmap and not image.name.startswith('LM_'):
-                    mm_offset = 0
-            else:
-                mm_offset = 0'''
             mipmaps = get_all_compressed_mipmaps(image, dxt, mm_offset) if do_compression else get_all_mipmaps(image, mm_offset)
             #for idx, (mw, mh, mm) in enumerate(mipmaps):
                 #LOG.debug("mm #{}: {}x{} bytes: {}".format(idx, mw, mh, len(mm)))

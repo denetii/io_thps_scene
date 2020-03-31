@@ -289,7 +289,7 @@ def clear_bake_vcs(scene, meshes):
 #----------------------------------------------------------------------------------
 #- Converts a baked texture to vertex colors (allows Cycles VC bakes)
 #----------------------------------------------------------------------------------
-def convert_bake_to_vcs(scene, meshes, layer_name):
+def convert_bake_to_vcs(scene, meshes, layer_name, smooth=True):
     for obj in meshes:
         bake_vcs = get_vcs(obj, layer_name)
         
@@ -353,18 +353,19 @@ def convert_bake_to_vcs(scene, meshes, layer_name):
                 else:
                     bake_vcs.data[loop].color = col_result
                 
-        # Do a second pass to smooth the vertex colors (average the loop colors)
-        col_map = {}
-        for l in obdata.loops:
-            col = bake_vcs.data[l.index].color
-            try:
-                col_map[l.vertex_index].append(col)
-            except KeyError:
-                col_map[l.vertex_index] = [col]
+        if smooth:
+            # Do a second pass to smooth the vertex colors (average the loop colors)
+            col_map = {}
+            for l in obdata.loops:
+                col = bake_vcs.data[l.index].color
+                try:
+                    col_map[l.vertex_index].append(col)
+                except KeyError:
+                    col_map[l.vertex_index] = [col]
 
-        for i, l in enumerate(obdata.loops):
-            bake_vcs.data[i].color = avg_color(col_map[l.vertex_index])
-        obdata.update()
+            for i, l in enumerate(obdata.loops):
+                bake_vcs.data[i].color = avg_color(col_map[l.vertex_index])
+            obdata.update()
         
 #----------------------------------------------------------------------------------
 #- 'Un-bakes' the object (restores the original materials)
@@ -2609,7 +2610,7 @@ class ConvertLightmapsToVCs(bpy.types.Operator):
 
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH']
-        convert_bake_to_vcs(context.scene, meshes, 'bake')
+        convert_bake_to_vcs(context.scene, meshes, 'bake', True)
         return {"FINISHED"}
         
 #----------------------------------------------------------------------------------
@@ -2622,21 +2623,22 @@ class UnBakeLightmaps(bpy.types.Operator):
         ("ClearToVCs", "Clear to vertex colors", "Converts baked lightmap texture to vertex colors"),
         ("ClearAll", "Clear All", "Completely clears baked results and deletes baked vertex colors"),
         ), name="Options", default="ClearToVCs")
+    smooth_vcs = BoolProperty(name="Smooth",default=True,description="Smooth vertex colors when generating VCs/intensity data")
     
     @classmethod
     def poll(cls, context):
-        meshes = [o for o in context.selected_objects if o.type == 'MESH' and ("is_baked" in o and o["is_baked"] == True) ]
+        meshes = [o for o in context.selected_objects if o.type == 'MESH' and (("is_baked" in o and o["is_baked"] == True) or o.data.vertex_colors.get('bake')) ]
         return len(meshes) > 0
 
     def execute(self, context):
         scene = context.scene
-        meshes = [o for o in context.selected_objects if o.type == 'MESH' and ("is_baked" in o and o["is_baked"] == True) ]
+        meshes = [o for o in context.selected_objects if o.type == 'MESH' and (("is_baked" in o and o["is_baked"] == True) or o.data.vertex_colors.get('bake')) ]
 
         if self.unbake_option == 'CopyToIntensity':
-            convert_bake_to_vcs(scene, meshes, 'intensity')
+            convert_bake_to_vcs(scene, meshes, 'intensity', self.smooth_vcs)
             return {"FINISHED"}
         elif self.unbake_option == 'ClearToVCs':
-            convert_bake_to_vcs(scene, meshes, 'bake')
+            convert_bake_to_vcs(scene, meshes, 'bake', self.smooth_vcs)
         elif self.unbake_option == 'ClearAll':
             clear_bake_vcs(scene, meshes)
             for ob in meshes: # Also remove lightmap UVs
@@ -2685,6 +2687,8 @@ class UnBakeLightmaps(bpy.types.Operator):
         col = layout.column()
         row = col.row()
         row.prop(self, "unbake_option", icon='SETTINGS', expand=True)
+        row = col.row()
+        row.prop(self, "smooth_vcs")
         
 #----------------------------------------------------------------------------------
 class BakeLightmaps(bpy.types.Operator):

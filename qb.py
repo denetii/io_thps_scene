@@ -195,6 +195,8 @@ def export_qb(filename, directory, target_game, operator=None):
         # (e.g., the primary Player1 restart will be used over any others)
         primary_restarts = [o for o in bpy.data.objects if hasattr(o, 'thug_empty_props') and o.thug_empty_props.empty_type == "Restart" and hasattr(o.thug_restart_props, 'primary_restart') and o.thug_restart_props.primary_restart == True]
         for ob in primary_restarts:
+            if not ob.thug_export_scene:
+                continue
             p("\t:i :s{")
             p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
             p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
@@ -431,6 +433,9 @@ def export_qb(filename, directory, target_game, operator=None):
             # - Export node definitions for lamps (LevelLights)!
             # -----------------------------------------------------------------------------------------------------------
             elif ob.type == "LAMP" and ob.data.type == "POINT":
+                if not ob.thug_export_scene:
+                    continue
+                    
                 clean_name = get_clean_name(ob)
                     
                 p("\t:i :s{")
@@ -468,6 +473,8 @@ def export_qb(filename, directory, target_game, operator=None):
             # -----------------------------------------------------------------------------------------------------------
             elif ob.type == "EMPTY" and ob.thug_empty_props.empty_type != "" and ob.thug_empty_props.empty_type != "None":
                 if ob.thug_empty_props.empty_type == "BouncyObject":
+                    continue
+                if not ob.thug_export_scene:
                     continue
                     
                 clean_name = get_clean_name(ob)
@@ -1284,6 +1291,8 @@ def export_qb(filename, directory, target_game, operator=None):
             print("Writing script LoadCubemaps...")
             p(":i function $LoadCubemaps$")
             for ob in bpy.data.objects:
+                if not ob.thug_export_scene:
+                    continue
                 if ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type == 'CubemapProbe' \
                     and ob.thug_cubemap_props and ob.thug_cubemap_props.exported == True:
                     cm_pos = to_thug_coords(ob.location)
@@ -1310,6 +1319,8 @@ def export_qb(filename, directory, target_game, operator=None):
                 p(":i function $AddPBRLights$")
                 # We need to add the light bounding volumes first, as the lights immediately check for these when added
                 for ob in bpy.data.objects:
+                    if not ob.thug_export_scene:
+                        continue
                     if ob.type == 'EMPTY' and hasattr(ob, 'thug_empty_props') and ob.thug_empty_props.empty_type == 'LightVolume':
                         # Get light volume min/max coords and export
                         bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_node(ob)
@@ -1317,6 +1328,8 @@ def export_qb(filename, directory, target_game, operator=None):
                             v3(bbox_min), v3(bbox_max), v3(bbox_mid)))
                         
                 for ob in bpy.data.objects:
+                    if not ob.thug_export_scene:
+                        continue
                     if ob.type == 'LAMP' and hasattr(ob.data, 'thug_light_props'):
                         lightprops = ob.data.thug_light_props
                         # Collect light properties for QB export

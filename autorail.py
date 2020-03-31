@@ -560,6 +560,8 @@ def _export_rails(p, c, operator=None):
     # Make a first pass through paths to get the node numbers, which are used when linking two paths together
     temp_rail_node_counter = rail_node_counter
     for ob in bpy.data.objects:
+        if not ob.thug_export_scene:
+            continue
         if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): 
             continue
         if ob.thug_path_type == "Custom" and ob.thug_node_expansion == "": 
@@ -570,6 +572,8 @@ def _export_rails(p, c, operator=None):
 
     # Actually export rails
     for ob in bpy.data.objects:
+        if not ob.thug_export_scene:
+            continue
         if ob.type != "CURVE" or ob.thug_path_type not in ("Rail", "Ladder", "Waypoint"): 
             continue
         if ob.thug_path_type == "Custom" and ob.thug_node_expansion == "": 

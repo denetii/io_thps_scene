@@ -1013,6 +1013,9 @@ class THUGLevelExportProps(bpy.types.PropertyGroup):
         , min=0,max=8192,default=0
         , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
     )
+    max_texture_base_tex = BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
+    max_texture_lightmap_tex = BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
+    
     mipmap_offset = IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",

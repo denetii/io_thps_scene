@@ -24,8 +24,6 @@ def is_valid_game_path(path):
     # We need at least these folders to be available to consider it a valid game path
     if not os.path.exists(os.path.join(path, "images")):
         return False
-    if not os.path.exists(os.path.join(path, "Levels")):
-        return False
     if not os.path.exists(os.path.join(path, "models")):
         return False
     if not os.path.exists(os.path.join(path, "textures")):

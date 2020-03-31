@@ -114,7 +114,10 @@ class THUGSceneSettings(bpy.types.Panel):
             box.row().prop(scene.thug_level_props.export_props, "export_scale")
             box2 = box.box().column(True)
             box2.row().prop(scene.thug_level_props.export_props, "max_texture_size")
-        
+            row2 = box2.row()
+            row2.column().prop(scene.thug_level_props.export_props, "max_texture_base_tex", toggle=True)
+            row2.column().prop(scene.thug_level_props.export_props, "max_texture_lightmap_tex", toggle=True)
+            
         self.layout.row().label(text="Level Lighting", icon='LAMP_DATA')
         if scene.thug_level_props.export_props.target_game == 'THUG1':
             # Underground+ TOD/lighting settings here

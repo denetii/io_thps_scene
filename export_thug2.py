@@ -35,7 +35,7 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
     object_amount_offset = output_file.tell()
     w("i", 0)
     for ob in out_objects:
-        LOG.debug("exporting object: {}".format(ob))
+        LOG.debug("Exporting scene object: {}".format(ob.name))
         # bpy.ops.object.mode_set(mode="OBJECT")
         original_object = ob
         original_object_name = ob.name
