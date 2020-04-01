@@ -1463,7 +1463,7 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
     pf_water = BoolProperty(name="Water texture", default=False) 
     pf_decal = BoolProperty(name="Decal", default=False) 
     pf_smooth = BoolProperty(name="Smooth", default=True) 
-    pf_transparent = BoolProperty(name="Use Transparency", default=True)
+    pf_transparent = BoolProperty(name="Use Transparency", default=False)
     pf_static = BoolProperty(name="Static", default=False)
     ignore_vertex_alpha = BoolProperty(name="Ignore Vertex Alpha", default=False)
     envmap_multiples = FloatVectorProperty(name="Envmap Multiples", size=2, default=(3.0, 3.0), min=0.1, max=10.0)
