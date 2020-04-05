@@ -1320,7 +1320,7 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
     sorted = BoolProperty(name="Sorted", default=False)
     draw_order = FloatProperty(
         name="Draw Order",
-        default=-1.0,
+        default=0.0,
         description="The lesser the draw order the earlier the texture will be drawn. Used for sorting transparent textures.")
     single_sided = BoolProperty(name="Single Sided", default=False,
         description="If the material is not using the Diffuse blend mode this can be toggled to force it to be single sided.")
@@ -1465,7 +1465,7 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
     pf_smooth = BoolProperty(name="Smooth", default=True) 
     pf_transparent = BoolProperty(name="Use Transparency", default=False)
     pf_static = BoolProperty(name="Static", default=False)
-    ignore_vertex_alpha = BoolProperty(name="Ignore Vertex Alpha", default=False)
+    ignore_vertex_alpha = BoolProperty(name="Ignore Vertex Alpha", default=True)
     envmap_multiples = FloatVectorProperty(name="Envmap Multiples", size=2, default=(3.0, 3.0), min=0.1, max=10.0)
     
     filtering_mode = IntProperty(name="Filtering Mode", min=0, max=100000)
