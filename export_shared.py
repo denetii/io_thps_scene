@@ -26,6 +26,72 @@ class ExportError(Exception):
 
 # METHODS
 #############################################
+def append_referenced_assets(directory, target_game, addon_prefs):
+    from pathlib import Path
+    import shutil
+    
+    def maybe_copy_file(source_path, dest_path):
+        if not os.path.exists(os.path.dirname(dest_path)):
+            os.makedirs(os.path.dirname(dest_path))
+        if not os.path.exists(dest_path):
+            shutil.copy(source_path, dest_path)
+            
+    asset_objs = [o for o in bpy.data.objects if o.type == 'EMPTY' and o.thug_export_scene]
+    asset_paths = []
+    for ob in asset_objs:
+        if ob.thug_empty_props.empty_type == "GameObject" and ob.thug_go_props.go_model != "":
+            asset_paths.append(ob.thug_go_props.go_model)
+        elif ob.thug_empty_props.empty_type == "Pedestrian" and ob.thug_ped_props.ped_model != "":
+            asset_paths.append(ob.thug_ped_props.ped_model)
+        elif ob.thug_empty_props.empty_type == "Vehicle" and ob.thug_veh_props.veh_model != "":
+            asset_paths.append(ob.thug_veh_props.veh_model)
+            
+    j = os.path.join
+        
+    ext_suffix = ""
+    dest_suffix = ".xbx"
+    game_paths = []
+    if target_game == 'THUG1':
+        game_paths.append(addon_prefs.game_data_dir_thug1)
+    elif target_game == 'THUG2':
+        game_paths.append(addon_prefs.game_data_dir_thug2)
+        game_paths.append(addon_prefs.game_data_dir_thugpro)
+        ext_suffix = ".xbx"
+    else:
+        print("Unable to read game files - target game is {}".format(target_game))
+        return
+        
+    asset_files = [
+        [ '.col' + ext_suffix, '.col' + dest_suffix ]
+        ,[ '.mdl' + ext_suffix, '.mdl' + dest_suffix ]
+        ,[ '.skin' + ext_suffix, '.skin' + dest_suffix ]
+        ,[ '.tex' + ext_suffix, '.tex' + dest_suffix ]
+        ,[ '.qb', '.qb' ]
+    ]
+    pack_files = []
+    for path in asset_paths:
+        for game_path in game_paths:
+            base_asset_path = j(game_path, 'Models', os.path.dirname(path))
+            try:
+                file_base = Path(base_asset_path).resolve().stem
+                print('{}: {}'.format(base_asset_path, file_base))
+                model_path = j(directory, "Models", os.path.dirname(path))
+                print('{}'.format(model_path))
+                
+                # Search for col/mdl/skin/qb/tex files
+                for asset_file in asset_files:
+                    source_file_path = j(base_asset_path, file_base + asset_file[0])
+                    dest_file_path = j(directory, 'Models', os.path.dirname(path), file_base + asset_file[1])
+                    if os.path.exists(source_file_path) and dest_file_path not in pack_files:
+                        maybe_copy_file(source_file_path, dest_file_path)
+                        pack_files.append(dest_file_path)
+                        
+            except FileNotFoundError:
+                continue
+        
+    return pack_files
+        
+
 def pack_pre(root_dir, files, output_file):
     pack = struct.pack
     with open(output_file, "wb") as outp:
@@ -247,6 +313,11 @@ def do_export(operator, context, target_game):
                     pack_files = []
                     pack_files.append(j(path, filename + ext_qb))
                     pack_files.append(j(path, filename + "_scripts" + ext_qb))
+                    pack_assets = append_referenced_assets(directory, target_game, addon_prefs)
+                    for addl_asset in pack_assets:
+                        pack_files.append(addl_asset)
+                    print('{}'.format(pack_files))
+                    
                     if target_game == "THUG2":
                         pack_files.append(j(path, filename + "_thugpro" + ext_qb))
                         pack_pre( directory, pack_files, j(directory, "pre", filename + "_scripts" + ext_pre) )

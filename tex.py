@@ -549,7 +549,9 @@ def export_tex(filename, directory, target_game, operator=None):
             #LOG.debug("compression: {}".format(dxt))
             mm_offset = 0
             clamp_texture_size = False
-            if operator.max_texture_size >= 16:
+            if image.thug_image_props.max_size >= 16:
+                clamp_texture_size = True
+            elif operator.max_texture_size >= 16:
                 if image.name.startswith('LM_'):
                     if operator.max_texture_lightmap_tex == True:
                         clamp_texture_size = True
@@ -559,8 +561,9 @@ def export_tex(filename, directory, target_game, operator=None):
                         
             if clamp_texture_size == True:
                 tex_size = width if width > height else height
+                test_size = image.thug_image_props.max_size if image.thug_image_props.max_size >= 16 else operator.max_texture_size
                 while True:
-                    if tex_size <= operator.max_texture_size:
+                    if tex_size <= test_size:
                         break
                     tex_size /= 2
                     mm_offset += 1

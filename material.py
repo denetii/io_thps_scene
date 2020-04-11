@@ -747,6 +747,7 @@ def _material_pass_settings_draw(self, context):
     if img and pass_props.pf_textured:
         box.row().prop(img.thug_image_props, 'compression_type')
         box.row().prop(img.thug_image_props, 'img_flags')
+        box.row().prop(img.thug_image_props, 'max_size')
         box.row().prop(img.thug_image_props, 'mip_levels')
     box.row().prop(pass_props, "pf_bump")
     box.row().prop(pass_props, "pf_water")
@@ -955,6 +956,8 @@ class THUGImageProps(bpy.types.PropertyGroup):
     default="DXT1")
     
     mip_levels = IntProperty(name="Mip Levels", min=1, max=8, default=0, description="Maximum number of mip levels (0 to use automatic settings)")
+    
+    max_size = IntProperty(name="Max Size", min=0, max=16384, default=0, description="Maximum width/height of image allowed during export (0 to disable)")
     
     img_flags = EnumProperty(items=(
         ("1", "Invert Alpha", "Invert alpha channel on this image"),
