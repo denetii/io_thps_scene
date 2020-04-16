@@ -69,10 +69,13 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
         p("material {}", i)
         mat_checksum = p("  material checksum: {}", to_hex_string(r.u32()))
         mat_name_checksum = p("  material name checksum: {}", to_hex_string(r.u32()))
-        blender_mat = bpy.data.materials.new(str(mat_checksum))
+        if bpy.data.materials.get(mat_name_checksum):
+            blender_mat = bpy.data.materials.get(mat_name_checksum)
+        else:
+            blender_mat = bpy.data.materials.new(mat_checksum)
         ps = blender_mat.thug_material_props
         blender_mat["thug_mat_name_checksum"] = mat_name_checksum
-
+        
         num_passes = p("  material passes: {}", r.u32())
         # MATERIAL_PASSES[mat_name_checksum] = num_passes
         ps.alpha_cutoff = p("  alpha cutoff: {}", r.u32() % 256)
@@ -96,10 +99,13 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
         blender_mat.diffuse_intensity = 1
         blender_mat.specular_intensity = 0
         blender_mat.alpha = 0
-
+            
         for j in range(num_passes):
-            blender_tex = bpy.data.textures.new("{}/{}".format(mat_name_checksum, j), "IMAGE")
-            tex_slot = blender_mat.texture_slots.add()
+            blender_tex = get_texture("{}/{}".format(mat_name_checksum, j))
+            if blender_mat.texture_slots[j]:
+                tex_slot = blender_mat.texture_slots[j]
+            else:
+                tex_slot = blender_mat.texture_slots.add()
             tex_slot.texture = blender_tex
             pps = blender_tex.thug_material_pass_props
             p("  pass #{}", j)
@@ -171,6 +177,8 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 
             if pass_flags & MATFLAG_PASS_IGNORE_VERTEX_ALPHA:
                 pps.ignore_vertex_alpha = True
+            else:
+                pps.ignore_vertex_alpha = False
 
             if pass_flags & MATFLAG_UV_WIBBLE:
                 p("    pass has uv wibble!", None)
@@ -234,7 +242,7 @@ def get_ugplus_shader_flags(mprops):
         mat_flags |= SHADERFLAG_USES_WEATHER
     if mprops.ugplus_shader_disp:
         mat_flags |= SHADERFLAG_USES_POM
-    if not is_full_diffuse(mprops) or mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom', 'Ocean' ]:
+    if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom', 'Ocean' ]:
         mat_flags |= SHADERFLAG_USES_REFLECTIONS
     if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom' ]:
         mat_flags |= SHADERFLAG_USES_REFRACTION

@@ -147,11 +147,10 @@ def import_scn_ug2(filename, directory, context, operator):
     num_materials = p("num materials: ", r.u32())
     read_materials(r, p, num_materials, directory, operator)
     num_sectors = p("num sectors: {}", r.i32())
-    objects = read_sectors_ug2(r, p, num_sectors, context, operator)
+    if (operator.load_scene):
+        read_sectors_ug2(r, p, num_sectors, context, operator)
     rename_imported_materials()
     
-    return objects
-
 #----------------------------------------------------------------------------------
 def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, output_file=None):
     r = reader
@@ -455,6 +454,7 @@ class THUG2ScnToScene(bpy.types.Operator):
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
     load_tex = BoolProperty(name="Load the tex file", default=True)
+    load_scene = BoolProperty(name="Load the scene", default=True)
     import_custom_normals = BoolProperty(name="Import custom normals", default=True)
 
     def execute(self, context):

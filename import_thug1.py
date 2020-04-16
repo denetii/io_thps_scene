@@ -14,7 +14,7 @@ from . material import *
 #############################################
 def import_scn_ug1(filename, directory, context, operator):
     p = Printer()
-    p.on = True
+    p.on = False
     input_file = os.path.join(directory, filename)
     with open(input_file, "rb") as inp:
         r = Reader(inp.read())
@@ -26,7 +26,8 @@ def import_scn_ug1(filename, directory, context, operator):
     num_materials = p("num materials: {}", r.u32())
     read_materials(r, p, num_materials, directory, operator)
     num_sectors = p("num sectors: {}", r.i32())
-    read_sectors_ug1(r, p, num_sectors, context, operator)
+    if (operator.load_scene):
+        read_sectors_ug1(r, p, num_sectors, context, operator)
     rename_imported_materials()
     
 #----------------------------------------------------------------------------------
@@ -314,6 +315,7 @@ class THUG1ScnToScene(bpy.types.Operator):
     filename = StringProperty(name="File Name")
     directory = StringProperty(name="Directory")
     load_tex = BoolProperty(name="Load the tex file", default=True)
+    load_scene = BoolProperty(name="Load the scene", default=True)
     import_custom_normals = BoolProperty(name="Import custom normals", default=True)
 
     def execute(self, context):
