@@ -109,7 +109,7 @@ def draw_stuff():
             bgl.glEnable(bgl.GL_BLEND)
             bgl.glBlendFunc(bgl.GL_SRC_ALPHA, bgl.GL_ONE_MINUS_SRC_ALPHA);
 
-            prefs = ctx.user_preferences.addons[ADDON_NAME].preferences
+            prefs = ctx.preferences.addons[ADDON_NAME].preferences
 
             bgl.glLineWidth(prefs.line_width)
 

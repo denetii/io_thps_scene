@@ -43,7 +43,7 @@ def preset_place_node(node_type, position):
         ob.name = get_unique_name('TRG_Restart')
         scene.objects.link( ob )
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         ob.thug_empty_props.empty_type = 'Restart'
         ob.thug_restart_props.restart_type = "Player1"
         ob.thug_restart_props.restart_p1 = True
@@ -53,7 +53,7 @@ def preset_place_node(node_type, position):
         ob.name = get_unique_name('TRG_KOTH')
         scene.objects.link( ob )
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         ob.thug_empty_props.empty_type = "GenericNode"
         ob.thug_generic_props.generic_type = "Crown"
         to_group(ob, "GenericNodes")
@@ -62,7 +62,7 @@ def preset_place_node(node_type, position):
         ob.name = get_unique_name('TRG_Pedestrian')
         scene.objects.link( ob )
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         ob.thug_empty_props.empty_type = 'Pedestrian'
         ob.thug_ped_props.ped_type = "Ped_From_Profile"
         ob.thug_ped_props.ped_source = "Profile"
@@ -75,7 +75,7 @@ def preset_place_node(node_type, position):
         ob.name = get_unique_name('TRG_Vehicle')
         scene.objects.link( ob )
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         ob.thug_empty_props.empty_type = 'Vehicle'
         ob.thug_veh_props.veh_type = "Generic"
         to_group(ob, "Vehicles")
@@ -101,7 +101,7 @@ def preset_place_node(node_type, position):
         camera_ob.data.draw_size = 48.0
         
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         
     elif node_type == 'LIGHT_PROBE':
         ob.name = get_unique_name('LightProbe')
@@ -124,13 +124,13 @@ def preset_place_node(node_type, position):
         camera_ob.data.draw_size = 48.0
         
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         
     elif node_type == 'LIGHT_VOLUME':
         ob.name = get_unique_name('LightVolume')
         scene.objects.link( ob )
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         ob.thug_empty_props.empty_type = 'LightVolume'
         
         
@@ -141,7 +141,7 @@ def preset_place_node(node_type, position):
             ob.name = get_unique_name('TRG_GO')
         scene.objects.link( ob )
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         ob.thug_empty_props.empty_type = 'GameObject'
         if node_type == 'CTF_FLAG':
             ob.thug_go_props.go_type = 'Flag_Red'
@@ -155,7 +155,7 @@ def preset_place_node(node_type, position):
         ob.name = get_unique_name('Particle')
         scene.objects.link( ob )
         scene.objects.active = ob 
-        ob.select = True
+        ob.select_set(True)
         ob.thug_empty_props.empty_type = 'ParticleObject'
         ob.thug_particle_props.particle_boxdimsstart = [0, 0, 24]
         ob.thug_particle_props.particle_boxdimsmid = [30, 30, 30]
@@ -209,7 +209,7 @@ def preset_place_node(node_type, position):
         # attach to scene and validate context
         scene.objects.link(curveOB)
         scene.objects.active = curveOB
-        curveOB.select = True
+        curveOB.select_set(True)
         to_group(curveOB, "RailNodes")
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
         if node_type == 'RAIL_PREMADE':
@@ -253,7 +253,7 @@ def preset_place_node(node_type, position):
         scene.objects.active = curveOB
         if node_type == 'RAIL_POINT_PREMADE':
             curveOB.parent = meshOB
-        curveOB.select = True
+        curveOB.select_set(True)
         curveOB.show_texture_space = True
         curveOB.show_name = True
         to_group(curveOB, "RailNodes")
@@ -294,7 +294,7 @@ def preset_place_node(node_type, position):
         # attach to scene and validate context
         scene.objects.link(curveOB)
         scene.objects.active = curveOB
-        curveOB.select = True
+        curveOB.select_set(True)
         if node_type == 'WAYPOINT':
             to_group(curveOB, 'Waypoints')
         else:
@@ -302,7 +302,7 @@ def preset_place_node(node_type, position):
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
     
 def append_from_assets(asset_path, target_game, context):
-    addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = context.preferences.addons[ADDON_NAME].preferences
     ext_suffix = ""
     
     game_paths = []
@@ -370,7 +370,7 @@ def append_from_assets(asset_path, target_game, context):
 def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, include_rails = True):
     # Get the path to the dictionary .blend file - it should always be within the
     # base files as defined in the plugin configuration
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = bpy.context.preferences.addons[ADDON_NAME].preferences
     base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         self.report({"WARNING"}, "Base files directory error: {} - Unable to find path to template .blend files.".format(base_files_dir_error))
@@ -455,7 +455,7 @@ def preset_place_mesh(dictionary_name, piece_name, position):
     #new_piece.thug_export_collision = True
     #scene.objects.link(new_piece)
     scene.objects.active = new_piece
-    new_piece.select = True
+    new_piece.select_set(True)
     return new_piece
     
 def preset_place_compositeobject(piece_name):

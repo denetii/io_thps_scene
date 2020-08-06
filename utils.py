@@ -43,7 +43,7 @@ class THUGUtilShowFirstPoint(bpy.types.Operator):
         if len(ob.data.splines) > 0:
             if len(ob.data.splines[0].points) > 0:
                 bpy.ops.curve.select_all(action='DESELECT')
-                ob.data.splines[0].points[0].select = True
+                ob.data.splines[0].points[0].select_set(True)
         return {'FINISHED'}
 
     
@@ -219,7 +219,7 @@ class THUGUtilBatchTerrain(bpy.types.Operator):
         for ob in meshes:
             bpy.context.scene.objects.active = ob
             bpy.ops.object.select_all(action='DESELECT')
-            ob.select = True
+            ob.select_set(True)
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.select_all(action='SELECT')
             bm = bmesh.from_edit_mesh(ob.data)
@@ -235,7 +235,7 @@ class THUGUtilBatchTerrain(bpy.types.Operator):
                     face[ttl] = TERRAIN_TYPES.index(self.terrain_type)
             bmesh.update_edit_mesh(context.edit_object.data)
             bpy.ops.object.editmode_toggle()
-            ob.select = False
+            ob.select_set(False)
         
         for ob in curves:
             ob.thug_rail_terrain_type = self.terrain_type
@@ -458,7 +458,7 @@ class THUGUtilBatchImport(bpy.types.Operator):
 #----------------------------------------------------------------------------------
 class THUGObjectUtils(bpy.types.Panel):
     bl_label = "TH Object Utilities"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
     bl_category = "THUG Tools"
 

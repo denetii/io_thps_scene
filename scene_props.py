@@ -264,7 +264,7 @@ def update_game_files_collections(*args):
         return
         
     target_game = scn.thug_level_props.export_props.target_game
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = bpy.context.preferences.addons[ADDON_NAME].preferences
     ext_suffix = ""
     
     game_paths = []
@@ -462,7 +462,7 @@ def maybe_upgrade_scene(*args):
 #- Defines the Class of an empty
 #----------------------------------------------------------------------------------
 class THUGEmptyProps(bpy.types.PropertyGroup):
-    empty_type = EnumProperty(items=(
+    empty_type: EnumProperty(items=(
         ("None", "None", ""),
         ("Restart", "Restart", "Player restarts."),
         ("GenericNode", "Generic Node", "KOTH crown and other objects."),
@@ -485,80 +485,80 @@ class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     # LEGACY PROPERTY - NO LONGER USED
     # List is maintained so the scene converter can still read the value, scripts are assigned
     # using the new template properties below
-    triggerscript_type = EnumProperty(items=(
+    triggerscript_type: EnumProperty(items=(
         ("None", "None", ""),
         ("Killskater", "Killskater", "Bail the skater and restart them at the given node."),
         ("Killskater_Water", "Killskater (Water)", "Bail the skater and restart them at the given node."),
         ("Teleport", "Teleport", "Teleport the skater to a given node without breaking their combo."),
         ("Custom", "Custom", "Runs a custom script."),
         ), name="TriggerScript Type", default="None")
-    target_node = StringProperty(name="Target Node")
-    custom_name = StringProperty(name="Custom Script Name")
+    target_node: StringProperty(name="Target Node")
+    custom_name: StringProperty(name="Custom Script Name")
     
     # New props used by the templating system!
-    template_name = EnumProperty(items=script_template.get_templates, name="Trigger Script", description="This script is executed when the local skater hits the object (or, for nodes, when it is loaded/triggered from another script).", update=script_template.store_triggerscript_params)
+    template_name: EnumProperty(items=script_template.get_templates, name="Trigger Script", description="This script is executed when the local skater hits the object (or, for nodes, when it is loaded/triggered from another script).", update=script_template.store_triggerscript_params)
     # This is what we actually use for exporting!
-    template_name_txt = StringProperty(name="Trigger Script", default="")
+    template_name_txt: StringProperty(name="Trigger Script", default="")
     
-    param1_int = IntProperty(name="Temp", description="")
-    param1_float = FloatProperty(name="Temp", description="")
-    param1_string = StringProperty(name="Temp", description="")
-    param1_bool = BoolProperty(name="Temp", description="", default=False)
-    param1_enum = EnumProperty(items=script_template.get_param1_values, name="Temp", description="", update=script_template.store_triggerscript_params)
-    param1_flags = EnumProperty(items=script_template.get_param1_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
+    param1_int: IntProperty(name="Temp", description="")
+    param1_float: FloatProperty(name="Temp", description="")
+    param1_string: StringProperty(name="Temp", description="")
+    param1_bool: BoolProperty(name="Temp", description="", default=False)
+    param1_enum: EnumProperty(items=script_template.get_param1_values, name="Temp", description="", update=script_template.store_triggerscript_params)
+    param1_flags: EnumProperty(items=script_template.get_param1_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
-    param2_int = IntProperty(name="Temp", description="")
-    param2_float = FloatProperty(name="Temp", description="")
-    param2_string = StringProperty(name="Temp", description="")
-    param2_bool = BoolProperty(name="Temp", description="", default=False)
-    param2_enum = EnumProperty(items=script_template.get_param2_values, name="Temp", description="", update=script_template.store_triggerscript_params)
-    param2_flags = EnumProperty(items=script_template.get_param2_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
+    param2_int: IntProperty(name="Temp", description="")
+    param2_float: FloatProperty(name="Temp", description="")
+    param2_string: StringProperty(name="Temp", description="")
+    param2_bool: BoolProperty(name="Temp", description="", default=False)
+    param2_enum: EnumProperty(items=script_template.get_param2_values, name="Temp", description="", update=script_template.store_triggerscript_params)
+    param2_flags: EnumProperty(items=script_template.get_param2_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
-    param3_int = IntProperty(name="Temp", description="")
-    param3_float = FloatProperty(name="Temp", description="")
-    param3_string = StringProperty(name="Temp", description="")
-    param3_bool = BoolProperty(name="Temp", description="", default=False)
-    param3_enum = EnumProperty(items=script_template.get_param3_values, name="Temp", description="", update=script_template.store_triggerscript_params)
-    param3_flags = EnumProperty(items=script_template.get_param3_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
+    param3_int: IntProperty(name="Temp", description="")
+    param3_float: FloatProperty(name="Temp", description="")
+    param3_string: StringProperty(name="Temp", description="")
+    param3_bool: BoolProperty(name="Temp", description="", default=False)
+    param3_enum: EnumProperty(items=script_template.get_param3_values, name="Temp", description="", update=script_template.store_triggerscript_params)
+    param3_flags: EnumProperty(items=script_template.get_param3_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
     
-    param4_int = IntProperty(name="Temp", description="")
-    param4_float = FloatProperty(name="Temp", description="")
-    param4_string = StringProperty(name="Temp", description="")
-    param4_bool = BoolProperty(name="Temp", description="", default=False)
-    param4_enum = EnumProperty(items=script_template.get_param4_values, name="Temp", description="", update=script_template.store_triggerscript_params)
-    param4_flags = EnumProperty(items=script_template.get_param4_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
+    param4_int: IntProperty(name="Temp", description="")
+    param4_float: FloatProperty(name="Temp", description="")
+    param4_string: StringProperty(name="Temp", description="")
+    param4_bool: BoolProperty(name="Temp", description="", default=False)
+    param4_enum: EnumProperty(items=script_template.get_param4_values, name="Temp", description="", update=script_template.store_triggerscript_params)
+    param4_flags: EnumProperty(items=script_template.get_param4_values, name="Temp", description="", options={'ENUM_FLAG'}, update=script_template.store_triggerscript_params)
 
 #----------------------------------------------------------------------------------
 #- Proximity node properties
 #----------------------------------------------------------------------------------
 class THUGProximNodeProps(bpy.types.PropertyGroup):
-    proxim_type = EnumProperty(items=(
+    proxim_type: EnumProperty(items=(
         ("Camera", "Camera", ""), 
         ("Other", "Other", "")), 
     name="Type", default="Camera")
-    proxim_shape = EnumProperty(items=(
+    proxim_shape: EnumProperty(items=(
         ("BoundingBox", "Bounding Box", ""), 
         ("Sphere", "Sphere", "")), 
     name="Shape", default="BoundingBox")
-    proxim_object = BoolProperty(name="Object", default=True)
-    proxim_rendertoviewport = BoolProperty(name="RenderToViewport", default=True)
-    proxim_selectrenderonly = BoolProperty(name="SelectRenderOnly", default=True)
-    proxim_radius = IntProperty(name="Radius", min=0, max=1000000, default=150)
+    proxim_object: BoolProperty(name="Object", default=True)
+    proxim_rendertoviewport: BoolProperty(name="RenderToViewport", default=True)
+    proxim_selectrenderonly: BoolProperty(name="SelectRenderOnly", default=True)
+    proxim_radius: IntProperty(name="Radius", min=0, max=1000000, default=150)
     
 
 #----------------------------------------------------------------------------------
 #- Emitter properties
 #----------------------------------------------------------------------------------
 class THUGEmitterProps(bpy.types.PropertyGroup):
-    emit_type = StringProperty(name="Type", default="BoundingBox")
-    emit_radius = FloatProperty(name="Radius", min=0, max=1000000, default=0)
+    emit_type: StringProperty(name="Type", default="BoundingBox")
+    emit_radius: FloatProperty(name="Radius", min=0, max=1000000, default=0)
     
 
 #----------------------------------------------------------------------------------
 #- Cubemap probe properties
 #----------------------------------------------------------------------------------
 class THUGCubemapProps(bpy.types.PropertyGroup):
-    resolution = EnumProperty(
+    resolution: EnumProperty(
         name="Resolution",
         items=[
             ("64", "64", ""),
@@ -570,22 +570,22 @@ class THUGCubemapProps(bpy.types.PropertyGroup):
         default="256", 
         description="Maximum resolution for each side of the baked reflection")
         
-    box_size = FloatVectorProperty(name="Size", size=3, default=[256.0,256.0,256.0], description="Approximate size of the area captured by this probe. Use (0,0,0) to disable parallax correction")
-    size = FloatProperty(name="Size", default=0.0, min=128.0, max=128000.0, description="Approximate size of the rendered area in Blender units (for parallax correction). Use 0.0 to render cubemap at infinite distance")
-    exported = BoolProperty(name="Exported", default=False)
+    box_size: FloatVectorProperty(name="Size", size=3, default=[256.0,256.0,256.0], description="Approximate size of the area captured by this probe. Use (0,0,0) to disable parallax correction")
+    size: FloatProperty(name="Size", default=0.0, min=128.0, max=128000.0, description="Approximate size of the rendered area in Blender units (for parallax correction). Use 0.0 to render cubemap at infinite distance")
+    exported: BoolProperty(name="Exported", default=False)
     
     
 #----------------------------------------------------------------------------------
 #- Emitter properties
 #----------------------------------------------------------------------------------
 class THUGLightVolumeProps(bpy.types.PropertyGroup):
-    box_size = FloatVectorProperty(name="Size", size=3, default=[128.0,128.0,128.0], description="Size of the light volume")
+    box_size: FloatVectorProperty(name="Size", size=3, default=[128.0,128.0,128.0], description="Size of the light volume")
     
 #----------------------------------------------------------------------------------
 #- If you know of another thing GenericNode is used for, let me know!
 #----------------------------------------------------------------------------------
 class THUGGenericNodeProps(bpy.types.PropertyGroup):
-    generic_type = EnumProperty(items=(
+    generic_type: EnumProperty(items=(
         ("Crown", "KOTH Crown", ""), 
         ("Other", "Other", "")) 
     ,name="Node Type",default="Crown")
@@ -595,7 +595,7 @@ class THUGGenericNodeProps(bpy.types.PropertyGroup):
 #- Game objects - models with collision that affect gameplay
 #----------------------------------------------------------------------------------
 class THUGGameObjectProps(bpy.types.PropertyGroup):
-    go_type = EnumProperty(items=(
+    go_type: EnumProperty(items=(
         ("Ghost", "Ghost", "No model, used for game logic."), 
         ("Flag_Red", "CTF Flag - Red", "Red team flag for CTF."), 
         ("Flag_Blue", "CTF Flag - Blue", "Blue team flag for CTF."), 
@@ -620,58 +620,58 @@ class THUGGameObjectProps(bpy.types.PropertyGroup):
         ("Combo_B", "Combo Letter B", ""), 
         ("Custom", "Custom", "Specify a custom type and model.")), 
     name="Type", default="Ghost", update=thug_empty_update)
-    go_type_other = StringProperty(name="Type", description="Custom type.")
-    go_model = StringProperty(name="Model path", default="none", description="Path to the model, relative to Data/Models/.", update=thug_empty_update)
-    go_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion of the object pauses.", min=0, max=1000000, default=0)
+    go_type_other: StringProperty(name="Type", description="Custom type.")
+    go_model: StringProperty(name="Model path", default="none", description="Path to the model, relative to Data/Models/.", update=thug_empty_update)
+    go_suspend: IntProperty(name="Suspend Distance", description="Distance at which the logic/motion of the object pauses.", min=0, max=1000000, default=0)
     
     
 class THUGBouncyProps(bpy.types.PropertyGroup):
-    contact = FloatVectorProperty(name="Contact", description="A point used for collision detection.")
+    contact: FloatVectorProperty(name="Contact", description="A point used for collision detection.")
     
 #----------------------------------------------------------------------------------
 #- A list of node names by type, used by the WindowManager to fill
 #- autocomplete lists on other properties
 #----------------------------------------------------------------------------------
 class THUGNodeListProps(bpy.types.PropertyGroup):
-    paths = CollectionProperty(type=bpy.types.PropertyGroup)
-    restarts = CollectionProperty(type=bpy.types.PropertyGroup)
-    meshes = CollectionProperty(type=bpy.types.PropertyGroup)
-    scripts = CollectionProperty(type=bpy.types.PropertyGroup)
-    templates = CollectionProperty(type=bpy.types.PropertyGroup)
+    paths: CollectionProperty(type=bpy.types.PropertyGroup)
+    restarts: CollectionProperty(type=bpy.types.PropertyGroup)
+    meshes: CollectionProperty(type=bpy.types.PropertyGroup)
+    scripts: CollectionProperty(type=bpy.types.PropertyGroup)
+    templates: CollectionProperty(type=bpy.types.PropertyGroup)
     
 #----------------------------------------------------------------------------------
 #- A list of base game assets, used to fill autocomplete lists in scenes,
 #- when the base game path and target game are set
 #----------------------------------------------------------------------------------
 class THUGAssetListProps(bpy.types.PropertyGroup):
-    models = CollectionProperty(type=bpy.types.PropertyGroup)
-    skins = CollectionProperty(type=bpy.types.PropertyGroup)
-    images = CollectionProperty(type=bpy.types.PropertyGroup)
-    particle_textures = CollectionProperty(type=bpy.types.PropertyGroup)
+    models: CollectionProperty(type=bpy.types.PropertyGroup)
+    skins: CollectionProperty(type=bpy.types.PropertyGroup)
+    images: CollectionProperty(type=bpy.types.PropertyGroup)
+    particle_textures: CollectionProperty(type=bpy.types.PropertyGroup)
     
 #----------------------------------------------------------------------------------
 #- Level obj properties! There's a lot of them!
 #----------------------------------------------------------------------------------
 class THUGLevelObjectProps(bpy.types.PropertyGroup):
-    obj_type = StringProperty(name="Type", description="Type of level object.")
-    obj_bouncy = BoolProperty(name="Bouncy", description="Enable collision physics on this object.")
-    center_of_mass = FloatVectorProperty(name="Center Of Mass")
-    contacts = CollectionProperty(type=THUGBouncyProps, name="Contacts")
-    coeff_restitution = FloatProperty(name="coeff_restitution", min=0, max=1024, default=0.25)
-    coeff_friction = FloatProperty(name="coeff_friction", min=0, max=1024, default=0.25)
-    skater_collision_impulse_factor = FloatProperty(name="skater_collision_impulse_factor", min=0, max=1024, default=1.5)
-    skater_collision_rotation_factor = FloatProperty(name="skater_collision_rotation_factor", min=0, max=1024, default=1)
-    skater_collision_assent = IntProperty(name="skater_collision_assent", min=0, max=1024, default=0)
-    skater_collision_radius = IntProperty(name="skater_collision_radius", min=0, max=1024, default=0)
-    mass_over_moment = FloatProperty(name="mass_over_moment", min=-1, max=1024, default=-1, description="Use value of -1 to not export this property to the QB.")
-    stuckscript = StringProperty(name="stuckscript")
-    SoundType = StringProperty(name="Sound", description="Sound used when colliding with the object.")
+    obj_type: StringProperty(name="Type", description="Type of level object.")
+    obj_bouncy: BoolProperty(name="Bouncy", description="Enable collision physics on this object.")
+    center_of_mass: FloatVectorProperty(name="Center Of Mass")
+    contacts: CollectionProperty(type=THUGBouncyProps, name="Contacts")
+    coeff_restitution: FloatProperty(name="coeff_restitution", min=0, max=1024, default=0.25)
+    coeff_friction: FloatProperty(name="coeff_friction", min=0, max=1024, default=0.25)
+    skater_collision_impulse_factor: FloatProperty(name="skater_collision_impulse_factor", min=0, max=1024, default=1.5)
+    skater_collision_rotation_factor: FloatProperty(name="skater_collision_rotation_factor", min=0, max=1024, default=1)
+    skater_collision_assent: IntProperty(name="skater_collision_assent", min=0, max=1024, default=0)
+    skater_collision_radius: IntProperty(name="skater_collision_radius", min=0, max=1024, default=0)
+    mass_over_moment: FloatProperty(name="mass_over_moment", min=-1, max=1024, default=-1, description="Use value of -1 to not export this property to the QB.")
+    stuckscript: StringProperty(name="stuckscript")
+    SoundType: StringProperty(name="Sound", description="Sound used when colliding with the object.")
     
 #----------------------------------------------------------------------------------
 #- Properties for waypoints curves (applies to all points)
 #----------------------------------------------------------------------------------
 class THUGWaypointProps(bpy.types.PropertyGroup):
-    waypt_type = EnumProperty(items=(
+    waypt_type: EnumProperty(items=(
         ("None", "None", ""), 
         ("PedAI", "Ped AI", "This path is used for pedestrian navigation."), 
         ("Accel", "Accel", "(THUG2+) Used for vehicle motion/acceleration."), 
@@ -679,7 +679,7 @@ class THUGWaypointProps(bpy.types.PropertyGroup):
         ), 
     name="Waypoint Type", default="None", description="Type of waypoint. Use PedAI for detailed pedestrian movement and AI skaters.")
     
-    PedType = EnumProperty(items=(
+    PedType: EnumProperty(items=(
         ("Walk", "Walk", "Movement logic for pedestrians."), 
         ("Skate", "Skate", "Movement/trick logic for AI skaters."), 
         ), 
@@ -689,47 +689,47 @@ class THUGWaypointProps(bpy.types.PropertyGroup):
 #- Properties for individual nodes along a path (rail, ladder, waypoints)
 #----------------------------------------------------------------------------------
 class THUGPathNodeProps(bpy.types.PropertyGroup):
-    name = StringProperty(name="Node Name")
-    waypt_type = StringProperty(name="Type")
-    script_name = StringProperty(name="TriggerScript Name")
-    terrain = StringProperty(name="Terrain Type")
-    spawnobjscript = StringProperty(name="SpawnObj Script")
-    PedType = StringProperty(name="PedType")
-    do_continue = BoolProperty(name="Continue")
-    JumpToNextNode = BoolProperty(name="JumpToNextNode")
-    Priority = StringProperty(name="Priority")
-    ContinueWeight = FloatProperty(name="Continue Weight")
-    SkateAction = StringProperty(name="Skate Action")
-    JumpHeight = FloatProperty(name="Jump Height")
-    skaterai_terrain = StringProperty(name="TerrainType")
-    ManualType = StringProperty(name="ManualType")
-    Deceleration = FloatProperty(name="Deceleration")
-    StopTime = FloatProperty(name="StopTime")
-    SpinAngle = FloatProperty(name="SpinAngle")
-    RandomSpin = BoolProperty(name="Random Spin", default=False)
-    SpineTransfer = BoolProperty(name="Spine Transfer", default=False)
-    SpinDirection = StringProperty(name="SpinDirection")
+    name: StringProperty(name="Node Name")
+    waypt_type: StringProperty(name="Type")
+    script_name: StringProperty(name="TriggerScript Name")
+    terrain: StringProperty(name="Terrain Type")
+    spawnobjscript: StringProperty(name="SpawnObj Script")
+    PedType: StringProperty(name="PedType")
+    do_continue: BoolProperty(name="Continue")
+    JumpToNextNode: BoolProperty(name="JumpToNextNode")
+    Priority: StringProperty(name="Priority")
+    ContinueWeight: FloatProperty(name="Continue Weight")
+    SkateAction: StringProperty(name="Skate Action")
+    JumpHeight: FloatProperty(name="Jump Height")
+    skaterai_terrain: StringProperty(name="TerrainType")
+    ManualType: StringProperty(name="ManualType")
+    Deceleration: FloatProperty(name="Deceleration")
+    StopTime: FloatProperty(name="StopTime")
+    SpinAngle: FloatProperty(name="SpinAngle")
+    RandomSpin: BoolProperty(name="Random Spin", default=False)
+    SpineTransfer: BoolProperty(name="Spine Transfer", default=False)
+    SpinDirection: StringProperty(name="SpinDirection")
 #----------------------------------------------------------------------------------
 #- Properties for individual nodes along a path (rail, ladder, waypoints)
 #- These are shown to the user via the WindowManager, the separate ones above are
 #- what is actually stored on the object
 #----------------------------------------------------------------------------------
 class THUGPathNodeUIProps(bpy.types.PropertyGroup):
-    name = StringProperty(name="Node Name", update=update_pathnode)
-    script_name = StringProperty(name="TriggerScript Name", update=update_pathnode)
-    terrain = EnumProperty(
+    name: StringProperty(name="Node Name", update=update_pathnode)
+    script_name: StringProperty(name="TriggerScript Name", update=update_pathnode)
+    terrain: EnumProperty(
         name="Terrain Type",
         items=[(t, t, t) for t in ["None", "Auto"] + [tt for tt in TERRAIN_TYPES if tt.lower().startswith("grind")]], default="Auto", update=update_pathnode)
-    spawnobjscript = StringProperty(name="SpawnObj Script", update=update_pathnode)
-    PedType = StringProperty(name="Ped Type", update=update_pathnode)
-    do_continue = BoolProperty(name="Continue", update=update_pathnode)
-    JumpToNextNode = BoolProperty(name="Jump To Next Node", description="The AI skater will jump to the next point.", update=update_pathnode)
-    Priority = EnumProperty(items=(
+    spawnobjscript: StringProperty(name="SpawnObj Script", update=update_pathnode)
+    PedType: StringProperty(name="Ped Type", update=update_pathnode)
+    do_continue: BoolProperty(name="Continue", update=update_pathnode)
+    JumpToNextNode: BoolProperty(name="Jump To Next Node", description="The AI skater will jump to the next point.", update=update_pathnode)
+    Priority: EnumProperty(items=(
         ("Normal", "Normal", ""),
         ("Low", "Low", ""),
         ), 
     name="Priority", default="Normal", description="Used for branching paths (coming soon!)", update=update_pathnode)
-    SkateAction = EnumProperty(items=(
+    SkateAction: EnumProperty(items=(
         ("Continue", "Continue", ""),
         ("Grind", "Grind", ""),
         ("Vert_Grind", "Vert_Grind", ""),
@@ -748,12 +748,12 @@ class THUGPathNodeUIProps(bpy.types.PropertyGroup):
         ("Stop", "Stop", ""),
         ), 
     name="Skate Action", default="Continue", description="The action taken by the AI skater when they reach this point.", update=update_pathnode)
-    JumpHeight = FloatProperty(name="Jump Height", min=0, max=100000, description="How high the AI skater will jump.", update=update_pathnode)
-    Deceleration = FloatProperty(name="Deceleration", update=update_pathnode)
-    SpinAngle = FloatProperty(name="Spin Angle", min=0, max=10000, description="Rotation done by the AI skater.", update=update_pathnode)
-    RandomSpin = BoolProperty(name="Random Spin", default=False, description="Use a random spin amount instead of the spin angle.", update=update_pathnode)
-    SpineTransfer = BoolProperty(name="Spine Transfer", default=False, description="AI skater should do a spine transfer.", update=update_pathnode)
-    SpinDirection = EnumProperty(items=(
+    JumpHeight: FloatProperty(name="Jump Height", min=0, max=100000, description="How high the AI skater will jump.", update=update_pathnode)
+    Deceleration: FloatProperty(name="Deceleration", update=update_pathnode)
+    SpinAngle: FloatProperty(name="Spin Angle", min=0, max=10000, description="Rotation done by the AI skater.", update=update_pathnode)
+    RandomSpin: BoolProperty(name="Random Spin", default=False, description="Use a random spin amount instead of the spin angle.", update=update_pathnode)
+    SpineTransfer: BoolProperty(name="Spine Transfer", default=False, description="AI skater should do a spine transfer.", update=update_pathnode)
+    SpinDirection: EnumProperty(items=(
         ("BS", "BS", ""),
         ("FS", "FS", ""),
         ("Rand", "Random", "Random direction."),
@@ -764,14 +764,14 @@ class THUGPathNodeUIProps(bpy.types.PropertyGroup):
 #- Restart properties
 #----------------------------------------------------------------------------------
 class THUGRestartProps(bpy.types.PropertyGroup):
-    restart_p1 = BoolProperty(name="Player 1", default=False)
-    restart_p2 = BoolProperty(name="Player 2", default=False)
-    restart_gen = BoolProperty(name="Generic", default=False)
-    restart_multi = BoolProperty(name="Multiplayer", default=False)
-    restart_team = BoolProperty(name="Team", default=False)
-    restart_horse = BoolProperty(name="Horse", default=False)
-    restart_ctf = BoolProperty(name="CTF", default=False)
-    restart_type = EnumProperty(items=(
+    restart_p1: BoolProperty(name="Player 1", default=False)
+    restart_p2: BoolProperty(name="Player 2", default=False)
+    restart_gen: BoolProperty(name="Generic", default=False)
+    restart_multi: BoolProperty(name="Multiplayer", default=False)
+    restart_team: BoolProperty(name="Team", default=False)
+    restart_horse: BoolProperty(name="Horse", default=False)
+    restart_ctf: BoolProperty(name="CTF", default=False)
+    restart_type: EnumProperty(items=(
         ("Player1", "Player 1", ""),
         ("Player2", "Player 2", ""),
         ("Generic", "Generic", ""),
@@ -780,39 +780,39 @@ class THUGRestartProps(bpy.types.PropertyGroup):
         ("Horse", "Horse", ""),
         ("CTF", "CTF", "")),
     name="Primary Type", default="Player1", update=thug_empty_update)
-    restart_name = StringProperty(name="Restart Name", description="Name that appears in restart menu.")
-    primary_restart = BoolProperty(name="Primary Restart", default=False)
+    restart_name: StringProperty(name="Restart Name", description="Name that appears in restart menu.")
+    primary_restart: BoolProperty(name="Primary Restart", default=False)
     
 
 #----------------------------------------------------------------------------------
 #- Pedestrian properties
 #----------------------------------------------------------------------------------
 class THUGPedestrianProps(bpy.types.PropertyGroup):
-    ped_type = StringProperty(name="Type", default="Ped_From_Profile")
-    ped_source = EnumProperty(name="Source", items=(
+    ped_type: StringProperty(name="Type", default="Ped_From_Profile")
+    ped_source: EnumProperty(name="Source", items=(
         ( 'Profile', 'Profile', 'Pedestrian model is defined in a profile.'),
         ( 'Model', 'Model', 'Use an explicit path to the mdl file.')
     ), default="Profile", update=thug_empty_update)
-    ped_profile = StringProperty(name="Profile", default="random_male_profile", description="Pedestrian profile name.")
-    ped_skeleton = StringProperty(name="Skeleton", default="THPS5_human")
-    ped_animset = StringProperty(name="Anim Set", default="animload_THPS5_human", description="Anim set to load for this pedestrian.")
-    ped_extra_anims = StringProperty(name="Extra Anims", description="Additional anim sets to load.")
-    ped_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
-    ped_model = StringProperty(name="Model", default="", description="Relative path to mdl file.", update=thug_empty_update)
-    ped_nologic = BoolProperty(name="No Logic", default=False, description="Pedestrian will not have any logic, only animations.")
+    ped_profile: StringProperty(name="Profile", default="random_male_profile", description="Pedestrian profile name.")
+    ped_skeleton: StringProperty(name="Skeleton", default="THPS5_human")
+    ped_animset: StringProperty(name="Anim Set", default="animload_THPS5_human", description="Anim set to load for this pedestrian.")
+    ped_extra_anims: StringProperty(name="Extra Anims", description="Additional anim sets to load.")
+    ped_suspend: IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
+    ped_model: StringProperty(name="Model", default="", description="Relative path to mdl file.", update=thug_empty_update)
+    ped_nologic: BoolProperty(name="No Logic", default=False, description="Pedestrian will not have any logic, only animations.")
     
 #----------------------------------------------------------------------------------
 #- Vehicle properties
 #----------------------------------------------------------------------------------
 class THUGVehicleProps(bpy.types.PropertyGroup):
-    veh_type = StringProperty(name="Type", default="Generic", description="Type of vehicle.")
-    veh_model = StringProperty(name="Model", default="", description="Relative path to mdl file.", update=thug_empty_update)
-    veh_skeleton = StringProperty(name="Skeleton", default="car", description="Name of skeleton.")
-    veh_suspend = IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
-    veh_norail = BoolProperty(name="No Rails", default=False, description="Vehicle will not have any rails (even if the model does).")
-    veh_noskitch = BoolProperty(name="No Skitch", default=False, description="Vehicle cannot be skitched.")
-    veh_usemodellights = BoolProperty(name="Use Model Lights", default=False)
-    veh_allowreplacetex = BoolProperty(name="Texture Replacement", default=False, description="Allow model textures to be changed by scripts.")
+    veh_type: StringProperty(name="Type", default="Generic", description="Type of vehicle.")
+    veh_model: StringProperty(name="Model", default="", description="Relative path to mdl file.", update=thug_empty_update)
+    veh_skeleton: StringProperty(name="Skeleton", default="car", description="Name of skeleton.")
+    veh_suspend: IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
+    veh_norail: BoolProperty(name="No Rails", default=False, description="Vehicle will not have any rails (even if the model does).")
+    veh_noskitch: BoolProperty(name="No Skitch", default=False, description="Vehicle cannot be skitched.")
+    veh_usemodellights: BoolProperty(name="Use Model Lights", default=False)
+    veh_allowreplacetex: BoolProperty(name="Texture Replacement", default=False, description="Allow model textures to be changed by scripts.")
     
 def thug_light_update(self, context):
     if context.object.type == "LAMP":
@@ -840,49 +840,49 @@ def thug_light_update(self, context):
 #- Light properties
 #----------------------------------------------------------------------------------
 class THUGLightProps(bpy.types.PropertyGroup):
-    light_type = EnumProperty(name="Source", items=(
+    light_type: EnumProperty(name="Source", items=(
         ( 'POINT', 'Point', 'Punctual light source'),
         ( 'SPHERE', 'Sphere', 'Spherical light source with a custom radius'),
         ( 'TUBE', 'Tube', 'Light which emits from a tube shape, with a custom size/radius'),
         ( 'AREA', 'Rectangle', 'Rectangular area light'),
         ( 'DISK', 'Disk', 'Disk area light')
     ), default="POINT", update=thug_light_update)
-    light_end_pos = FloatVectorProperty(name="End", size=3, default=[0,256,0], description="End position for lamp")
-    light_radius = FloatVectorProperty(name="Radius", size=2, min=0, max=128000, default=[300,300], description="Inner/outer radius", update=thug_light_update)
-    light_area = FloatVectorProperty(name="Area", size=2, min=0, max=128000, default=[256,256], description="Width/height of area light", update=thug_light_update)
-    light_excludeskater = BoolProperty(name="Exclude Skater", default=False, description="Light will not influence the skater")
-    light_excludelevel = BoolProperty(name="Exclude Level", default=False, description="Light will not influence the scene")
+    light_end_pos: FloatVectorProperty(name="End", size=3, default=[0,256,0], description="End position for lamp")
+    light_radius: FloatVectorProperty(name="Radius", size=2, min=0, max=128000, default=[300,300], description="Inner/outer radius", update=thug_light_update)
+    light_area: FloatVectorProperty(name="Area", size=2, min=0, max=128000, default=[256,256], description="Width/height of area light", update=thug_light_update)
+    light_excludeskater: BoolProperty(name="Exclude Skater", default=False, description="Light will not influence the skater")
+    light_excludelevel: BoolProperty(name="Exclude Level", default=False, description="Light will not influence the scene")
     
 #----------------------------------------------------------------------------------
 #- Light properties
 #----------------------------------------------------------------------------------
 class THUGBillboardProps(bpy.types.PropertyGroup):
-    is_billboard = BoolProperty(name="Billboard", default=False, description="This mesh is rendered as a billboard")
-    type = EnumProperty(name="Type", items=(
+    is_billboard: BoolProperty(name="Billboard", default=False, description="This mesh is rendered as a billboard")
+    type: EnumProperty(name="Type", items=(
         ( 'SCREEN', 'Screen', 'Billboard that always faces the screen'),
         ( 'AXIS', 'Axis-aligned', 'Billboard fixed around an axis')
     ), default="SCREEN")
-    custom_pos = BoolProperty(name="Custom Position", default=False, description="Use a custom pivot position")
-    pivot_origin = FloatVectorProperty(name="Pivot Origin", size=3, default=[0,0,0], description="Midpoint of the billboard")
-    pivot_pos = FloatVectorProperty(name="Pivot Position", size=3, default=[0,0,0], description="Position the billboard pivots around (for axis-aligned billboards)")
-    pivot_axis = FloatVectorProperty(name="Pivot Axis", size=3, default=[0,0,1], description="Axis the billboard pivots around (for axis-aligned billboards)")
+    custom_pos: BoolProperty(name="Custom Position", default=False, description="Use a custom pivot position")
+    pivot_origin: FloatVectorProperty(name="Pivot Origin", size=3, default=[0,0,0], description="Midpoint of the billboard")
+    pivot_pos: FloatVectorProperty(name="Pivot Position", size=3, default=[0,0,0], description="Position the billboard pivots around (for axis-aligned billboards)")
+    pivot_axis: FloatVectorProperty(name="Pivot Axis", size=3, default=[0,0,1], description="Axis the billboard pivots around (for axis-aligned billboards)")
     
 #----------------------------------------------------------------------------------
 #- Particle system properties! There's a lot of them!
 #----------------------------------------------------------------------------------
 class THUGParticleProps(bpy.types.PropertyGroup):
-    particle_boxdimsstart = FloatVectorProperty(name="Box Dims Start", update=thug_empty_update)
-    particle_boxdimsmid = FloatVectorProperty(name="Box Dims Mid", update=thug_empty_update)
-    particle_boxdimsend = FloatVectorProperty(name="Box Dims End", update=thug_empty_update)
-    particle_usestartpos = BoolProperty(name="Use Start Pos", default=False)
-    particle_startposition = FloatVectorProperty(name="Start Position", update=thug_empty_update)
-    particle_midposition = FloatVectorProperty(name="Mid Position", update=thug_empty_update)
-    particle_endposition = FloatVectorProperty(name="End Position", update=thug_empty_update)
+    particle_boxdimsstart: FloatVectorProperty(name="Box Dims Start", update=thug_empty_update)
+    particle_boxdimsmid: FloatVectorProperty(name="Box Dims Mid", update=thug_empty_update)
+    particle_boxdimsend: FloatVectorProperty(name="Box Dims End", update=thug_empty_update)
+    particle_usestartpos: BoolProperty(name="Use Start Pos", default=False)
+    particle_startposition: FloatVectorProperty(name="Start Position", update=thug_empty_update)
+    particle_midposition: FloatVectorProperty(name="Mid Position", update=thug_empty_update)
+    particle_endposition: FloatVectorProperty(name="End Position", update=thug_empty_update)
     
-    particle_texture = StringProperty(name="Texture", description="Texture assigned to the particles.", update=thug_empty_update)
-    particle_usemidpoint = BoolProperty(name="Use Midpoint", default=False)
-    particle_profile = StringProperty(name="Profile", default="Default")
-    particle_type = EnumProperty(name="Type", items=(
+    particle_texture: StringProperty(name="Texture", description="Texture assigned to the particles.", update=thug_empty_update)
+    particle_usemidpoint: BoolProperty(name="Use Midpoint", default=False)
+    particle_profile: StringProperty(name="Profile", default="Default")
+    particle_type: EnumProperty(name="Type", items=(
         ( 'NewFlat', 'NewFlat', ''),
         ( 'Line', 'Line', ''),
         ( 'Flat', 'Flat', ''),
@@ -897,7 +897,7 @@ class THUGParticleProps(bpy.types.PropertyGroup):
         ( 'GlowRibbonTrail', 'GlowRibbonTrail', ''),
     ), default="NewFlat")
     
-    particle_blendmode = EnumProperty(items=(
+    particle_blendmode: EnumProperty(items=(
      ('Diffuse', 'Diffuse', ''),
      ('Blend', 'Blend', ''),
      ('Add', 'Add', ''),
@@ -910,54 +910,54 @@ class THUGParticleProps(bpy.types.PropertyGroup):
      ('FixModulate', 'Modulate (Fixed Alpha)', ''),
      ('FixBrighten', 'Brighten (Fixed Alpha)', ''),
     ), name="Blend Mode", default="Blend")
-    particle_fixedalpha = IntProperty(name="Fixed Alpha", min=0, max=256, default=128)
-    particle_alphacutoff = IntProperty(name="Alpha Cutoff", soft_min=0, max=256, default=-1)
-    particle_maxstreams = IntProperty(name="Max Streams", soft_min=0, max=256, default=-1)
-    particle_emitrate = FloatProperty(name="Emit Rate", soft_min=0, max=4096, default=-1)
-    particle_lifetime = FloatProperty(name="Lifetime", soft_min=0, max=128000, default=-1)
-    particle_midpointpct = IntProperty(name="Midpoint Pct", soft_min=0, max=100, default=-1)
-    particle_radius = FloatVectorProperty(name="Radius", description="Start, mid and end radius.", default=(-1,-1,-1))
-    particle_radiusspread = FloatVectorProperty(name="Radius Spread", default=(-1, -1, -1))
-    particle_startcolor = FloatVectorProperty(name="Start Color",
+    particle_fixedalpha: IntProperty(name="Fixed Alpha", min=0, max=256, default=128)
+    particle_alphacutoff: IntProperty(name="Alpha Cutoff", soft_min=0, max=256, default=-1)
+    particle_maxstreams: IntProperty(name="Max Streams", soft_min=0, max=256, default=-1)
+    particle_emitrate: FloatProperty(name="Emit Rate", soft_min=0, max=4096, default=-1)
+    particle_lifetime: FloatProperty(name="Lifetime", soft_min=0, max=128000, default=-1)
+    particle_midpointpct: IntProperty(name="Midpoint Pct", soft_min=0, max=100, default=-1)
+    particle_radius: FloatVectorProperty(name="Radius", description="Start, mid and end radius.", default=(-1,-1,-1))
+    particle_radiusspread: FloatVectorProperty(name="Radius Spread", default=(-1, -1, -1))
+    particle_startcolor: FloatVectorProperty(name="Start Color",
                            subtype='COLOR',
                            default=(1.0, 1.0, 1.0, 1.0),
                            size=4,
                            min=0.0, max=1.0,
                            description="Start Color (with alpha).")
-    particle_usecolormidtime = BoolProperty(name="Use Color Mid Time", default=False)
-    particle_colormidtime = FloatProperty(name="Color Mid Time", min=0, max=128000, default=50)
-    particle_midcolor = FloatVectorProperty(name="Mid Color",
+    particle_usecolormidtime: BoolProperty(name="Use Color Mid Time", default=False)
+    particle_colormidtime: FloatProperty(name="Color Mid Time", min=0, max=128000, default=50)
+    particle_midcolor: FloatVectorProperty(name="Mid Color",
                            subtype='COLOR',
                            default=(1.0, 1.0, 1.0, 1.0),
                            size=4,
                            min=0.0, max=1.0,
                            description="Mid Color (with alpha).")
-    particle_endcolor = FloatVectorProperty(name="End Color",
+    particle_endcolor: FloatVectorProperty(name="End Color",
                            subtype='COLOR',
                            default=(1.0, 1.0, 1.0, 1.0),
                            size=4,
                            min=0.0, max=1.0,
                            description="End Color (with alpha).")
-    particle_suspend = IntProperty(name="Suspend Distance", description="Distance at which the system pauses.", min=0, max=1000000, default=0)
+    particle_suspend: IntProperty(name="Suspend Distance", description="Distance at which the system pauses.", min=0, max=1000000, default=0)
     
     # Even more particle properties that I missed the first time!
-    #EmitSize = FloatVectorProperty(name="Emit Size", size=3, min=0, max=4096, default=16)
-    EmitScript = StringProperty(name="Emit Script")
-    Force = FloatVectorProperty(name="Emit Force", size=3, soft_min=0, soft_max=4096, default=(-1, -1, -1))
-    Speed = FloatVectorProperty(name="Speed", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
-    Size = FloatVectorProperty(name="Emit Size", description="Width/height.", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
-    Width = FloatVectorProperty(name="Start/End Width", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
-    AngleSpread = FloatProperty(name="Angle Spread", soft_min=0, soft_max=4096, default=-1)
-    UsePulseEmit = BoolProperty(name="UsePulseEmit", default=False)
-    RandomEmitRate = BoolProperty(name="RandomEmitRate", default=False)
-    RandomEmitDelay = BoolProperty(name="RandomEmitDelay", default=False)
-    UseMidTime = BoolProperty(name="UseMidTime", default=False)
-    MidTime = IntProperty(name="MidTime", default=-1)
-    EmitTarget = FloatVectorProperty(name="Emit Target", size=3, default=(-1, -1, -1))
-    EmitRate1 = FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
-    EmitRate1Delay = FloatVectorProperty(name="Emit Delay 1", size=3, default=(-1, -1, -1))
-    EmitRate2 = FloatVectorProperty(name="Emit Rate 2", size=3, default=(-1, -1, -1))
-    EmitRate2Delay = FloatVectorProperty(name="Emit Delay 2", size=3, default=(-1, -1, -1))
+    #EmitSize: FloatVectorProperty(name="Emit Size", size=3, min=0, max=4096, default=16)
+    EmitScript: StringProperty(name="Emit Script")
+    Force: FloatVectorProperty(name="Emit Force", size=3, soft_min=0, soft_max=4096, default=(-1, -1, -1))
+    Speed: FloatVectorProperty(name="Speed", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
+    Size: FloatVectorProperty(name="Emit Size", description="Width/height.", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
+    Width: FloatVectorProperty(name="Start/End Width", size=2, soft_min=0, soft_max=4096, default=(-1, -1))
+    AngleSpread: FloatProperty(name="Angle Spread", soft_min=0, soft_max=4096, default=-1)
+    UsePulseEmit: BoolProperty(name="UsePulseEmit", default=False)
+    RandomEmitRate: BoolProperty(name="RandomEmitRate", default=False)
+    RandomEmitDelay: BoolProperty(name="RandomEmitDelay", default=False)
+    UseMidTime: BoolProperty(name="UseMidTime", default=False)
+    MidTime: IntProperty(name="MidTime", default=-1)
+    EmitTarget: FloatVectorProperty(name="Emit Target", size=3, default=(-1, -1, -1))
+    EmitRate1: FloatVectorProperty(name="Emit Rate 1", size=3, default=(-1, -1, -1))
+    EmitRate1Delay: FloatVectorProperty(name="Emit Delay 1", size=3, default=(-1, -1, -1))
+    EmitRate2: FloatVectorProperty(name="Emit Rate 2", size=3, default=(-1, -1, -1))
+    EmitRate2Delay: FloatVectorProperty(name="Emit Delay 2", size=3, default=(-1, -1, -1))
     
     
 #----------------------------------------------------------------------------------
@@ -970,60 +970,60 @@ class THUGLevelExportProps(bpy.types.PropertyGroup):
         #super().report(category, message)
         
     # The following properties are unique to the quick export option
-    use_quick_export = BoolProperty(name="Quick Export", description="When this option is enabled, the settings below will be used by default when exporting.", default=False)
-    filename = StringProperty(name="Filename")
-    directory = StringProperty(name="Export Path", description="Path the scene/model will be exported to when using the 'Quick Export' option. If exporting directly to a TH game, choose the 'Data' folder.", subtype='DIR_PATH')
-    target_game = EnumProperty(name="Target Game", items=(
+    use_quick_export: BoolProperty(name="Quick Export", description="When this option is enabled, the settings below will be used by default when exporting.", default=False)
+    filename: StringProperty(name="Filename")
+    directory: StringProperty(name="Export Path", description="Path the scene/model will be exported to when using the 'Quick Export' option. If exporting directly to a TH game, choose the 'Data' folder.", subtype='DIR_PATH')
+    target_game: EnumProperty(name="Target Game", items=(
         ( 'THUG1', 'THUG1', 'THUG1/Underground+'),
         ( 'THUG2', 'THUG2', 'THUG2/THUG PRO'),
     ), default="THUG2")
-    scene_type = EnumProperty(name="Scene Type", items=(
+    scene_type: EnumProperty(name="Scene Type", items=(
         ( 'Level', 'Level', 'Export this scene as a level.'),
         ( 'Model', 'Model', 'Export this scene as a model.'),
     ), default="Level")
     # These are the same as the normal export operators
     
-    always_export_normals = BoolProperty(name="Export normals", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack",
+    always_export_normals: BoolProperty(name="Export normals", default=False)
+    use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+    speed_hack: BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All",
+    autosplit_everything: BoolProperty(name="Autosplit All",
         description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
-    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
-        description="The max amount of faces for every created subobject.",
+    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
+        description = "The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(name="Max Radius",
-        description="The max radius of for every created subobject.",
+    autosplit_max_radius: FloatProperty(name="Max Radius",
+        description = "The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    pack_pre = BoolProperty(name="Pack files into .prx", default=True)
-    is_park_editor = BoolProperty(name="Is Park Editor",
+    pack_pre: BoolProperty(name="Pack files into .prx", default=True)
+    is_park_editor: BoolProperty(name="Is Park Editor",
         description="Use this option when exporting a park editor dictionary.", default=False)
-    generate_tex_file = BoolProperty(name="Generate a .tex file", default=True)
-    generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
-    generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
-    generate_col_file = BoolProperty(name="Generate a .col file", default=True)
-    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
-    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
-    export_scale = FloatProperty(name="Export scale", default=1)
-    max_texture_size = IntProperty(name="Max Texture Size"
+    generate_tex_file: BoolProperty(name="Generate a .tex file", default=True)
+    generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
+    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_col_file: BoolProperty(name="Generate a .col file", default=True)
+    generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
+    skybox_name: StringProperty(name="Skybox name", default="THUG_Sky")
+    export_scale: FloatProperty(name="Export scale", default=1)
+    max_texture_size: IntProperty(name="Max Texture Size"
         , min=0,max=8192,default=0
         , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
     )
-    max_texture_base_tex = BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex = BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
+    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
+    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
     
-    mipmap_offset = IntProperty(
+    mipmap_offset: IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
 
     # The following props are specific to models
-    model_type = EnumProperty(items = (
+    model_type: EnumProperty(items = (
         ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
         ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
     ), name="Model Type", default="skin")
@@ -1033,29 +1033,29 @@ class THUGLevelExportProps(bpy.types.PropertyGroup):
 #- Properties for a TOD slot
 #----------------------------------------------------------------------------------
 class THUGTODProps(bpy.types.PropertyGroup):
-    ambient_down_rgb = FloatVectorProperty(name="Ambient: Down Color",
+    ambient_down_rgb: FloatVectorProperty(name="Ambient: Down Color",
                            subtype='COLOR',
                            default=(0.25, 0.25, 0.3),
                            size=3, min=0.0, max=1.0,
                            description="Light color used for faces which point down")
-    ambient_up_rgb = FloatVectorProperty(name="Ambient: Up Color",
+    ambient_up_rgb: FloatVectorProperty(name="Ambient: Up Color",
                            subtype='COLOR',
                            default=(0.6, 0.55, 0.5),
                            size=3, min=0.0, max=1.0,
                            description="Light color used for faces which point up")
-    sun_headpitch = IntVectorProperty(name="Sun: Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
-    light1_headpitch = IntVectorProperty(name="Light 2: Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
-    sun_rgb = FloatVectorProperty(name="Sun: Diffuse Color",
+    sun_headpitch: IntVectorProperty(name="Sun: Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
+    light1_headpitch: IntVectorProperty(name="Light 2: Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
+    sun_rgb: FloatVectorProperty(name="Sun: Diffuse Color",
                            subtype='COLOR',
                            default=(0.7, 0.65, 0.6),
                            size=3, min=0.0, max=1.0)
-    light1_rgb = FloatVectorProperty(name="Light 2: Diffuse Color",
+    light1_rgb: FloatVectorProperty(name="Light 2: Diffuse Color",
                            subtype='COLOR',
                            default=(0.7, 0.65, 0.6),
                            size=3, min=0.0, max=1.0)
-    fog_startend = IntVectorProperty(name="Fog: Start/End", size=2, default=(0, 25000))
-    fog_bottomtop = IntVectorProperty(name="Fog: Bottom/Top", size=2, default=(-5000, 5000), description="Start/end height for fog")
-    fog_rgba = FloatVectorProperty(name="Fog: Color/Alpha",
+    fog_startend: IntVectorProperty(name="Fog: Start/End", size=2, default=(0, 25000))
+    fog_bottomtop: IntVectorProperty(name="Fog: Bottom/Top", size=2, default=(-5000, 5000), description="Start/end height for fog")
+    fog_rgba: FloatVectorProperty(name="Fog: Color/Alpha",
                            subtype='COLOR',
                            default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
@@ -1066,17 +1066,17 @@ class THUGTODProps(bpy.types.PropertyGroup):
 #- Properties for the entire level
 #----------------------------------------------------------------------------------
 class THUGLevelProps(bpy.types.PropertyGroup):
-    level_name = StringProperty(name="Level Name", description="Name of your level, used for in-game menus")
-    scene_name = StringProperty(name="Scene Name", description="Short name referenced by scripts")
-    creator_name = StringProperty(name="Creator Name", description="Name of the person(s) who created this level")
-    level_skybox = StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level")
+    level_name: StringProperty(name="Level Name", description="Name of your level, used for in-game menus")
+    scene_name: StringProperty(name="Scene Name", description="Short name referenced by scripts")
+    creator_name: StringProperty(name="Creator Name", description="Name of the person(s) who created this level")
+    level_skybox: StringProperty(name="Skybox Name", description="Name of the skybox to be used with this level")
     
-    export_props = PointerProperty(type=THUGLevelExportProps)
+    export_props: PointerProperty(type=THUGLevelExportProps)
     
     # These properties are used in Underground+ 1.5
-    customize_tod = BoolProperty(name="Customize TOD", description="(Underground+ only) Use custom TOD settings", default=False)
-    tod_scale = FloatProperty(name="Default TOD", description="Default TOD range (0.0 = full day, 1.0 = full evening, 2.0 = full night, 3.0 = full morning)", default=0.0, min=0.0, max=4.0)
-    tod_slot = EnumProperty(name="TOD Slot", items=(
+    customize_tod: BoolProperty(name="Customize TOD", description="(Underground+ only) Use custom TOD settings", default=False)
+    tod_scale: FloatProperty(name="Default TOD", description="Default TOD range (0.0 = full day, 1.0 = full evening, 2.0 = full night, 3.0 = full morning)", default=0.0, min=0.0, max=4.0)
+    tod_slot: EnumProperty(name="TOD Slot", items=(
         ( 'DAY', 'Day', ''),
         ( 'EVENING', 'Evening', ''),
         ( 'NIGHT', 'Night', ''),
@@ -1084,44 +1084,44 @@ class THUGLevelProps(bpy.types.PropertyGroup):
     ), default="DAY", description="TOD slot to edit")
     
     
-    tod_day = PointerProperty(type=THUGTODProps)
-    tod_evening = PointerProperty(type=THUGTODProps)
-    tod_night = PointerProperty(type=THUGTODProps)
-    tod_morning = PointerProperty(type=THUGTODProps)
+    tod_day: PointerProperty(type=THUGTODProps)
+    tod_evening: PointerProperty(type=THUGTODProps)
+    tod_night: PointerProperty(type=THUGTODProps)
+    tod_morning: PointerProperty(type=THUGTODProps)
     
     # Legacy properties - used in the base games
-    level_ambient_rgba = FloatVectorProperty(name="Ambient: Color/Mod",
+    level_ambient_rgba: FloatVectorProperty(name="Ambient: Color/Mod",
                            subtype='COLOR',
                            default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
                            description="Light color, with alpha used as the mod value")
-    level_light0_rgba = FloatVectorProperty(name="Light #1: Color/Mod",
+    level_light0_rgba: FloatVectorProperty(name="Light #1: Color/Mod",
                            subtype='COLOR',
                            default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
                            description="Light color, with alpha used as the mod value")
-    level_light0_headpitch = FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
-    level_light1_rgba = FloatVectorProperty(name="Light #2: Color/Mod",
+    level_light0_headpitch: FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
+    level_light1_rgba: FloatVectorProperty(name="Light #2: Color/Mod",
                            subtype='COLOR',
                            default=(0.5, 0.5, 0.5, 0.25),
                            size=4,
                            min=0.0, max=1.0,
                            description="Light color, with alpha used as the mod value")
-    level_light1_headpitch = FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
+    level_light1_headpitch: FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
     
-    level_flag_offline = BoolProperty(name="Offline Only", description="This level is not enabled for online play", default=False)
-    level_flag_indoor = BoolProperty(name="Indoor", description="(THUG PRO only) This level is indoor", default=False)
-    level_flag_nosun = BoolProperty(name="No Sun", description="(THUG PRO only) Don't display the dynamic sun in this level", default=False)
-    level_flag_defaultsky = BoolProperty(name="Default Sky", description="(THUG PRO only) Use the default skybox", default=False)
-    level_flag_wallridehack = BoolProperty(name="Wallride Hack", description="(THUG PRO only) Automatically makes all walls wallridable", default=False)
-    level_flag_nobackfacehack = BoolProperty(name="No Backface Hack", description="(THUG PRO only)", default=False)
-    level_flag_modelsinprx = BoolProperty(name="Models in scripts .prx", description="(THUG PRO only)", default=False)
-    level_flag_nogoaleditor = BoolProperty(name="Disable goal editor", description="(THUG PRO only)", default=False)
-    level_flag_nogoalattack = BoolProperty(name="Disable goal attack", description="(THUG PRO only)", default=False)
-    level_flag_noprx = BoolProperty(name="Don't use prx files", description="(THUG PRO only) This level uses uncompressed files, not packed in .prx files", default=False)
-    level_flag_biglevel = BoolProperty(name="Big Level", description="(THUG PRO only) Use extended online position broadcast limits", default=False)
+    level_flag_offline: BoolProperty(name="Offline Only", description="This level is not enabled for online play", default=False)
+    level_flag_indoor: BoolProperty(name="Indoor", description="(THUG PRO only) This level is indoor", default=False)
+    level_flag_nosun: BoolProperty(name="No Sun", description="(THUG PRO only) Don't display the dynamic sun in this level", default=False)
+    level_flag_defaultsky: BoolProperty(name="Default Sky", description="(THUG PRO only) Use the default skybox", default=False)
+    level_flag_wallridehack: BoolProperty(name="Wallride Hack", description="(THUG PRO only) Automatically makes all walls wallridable", default=False)
+    level_flag_nobackfacehack: BoolProperty(name="No Backface Hack", description="(THUG PRO only)", default=False)
+    level_flag_modelsinprx: BoolProperty(name="Models in scripts .prx", description="(THUG PRO only)", default=False)
+    level_flag_nogoaleditor: BoolProperty(name="Disable goal editor", description="(THUG PRO only)", default=False)
+    level_flag_nogoalattack: BoolProperty(name="Disable goal attack", description="(THUG PRO only)", default=False)
+    level_flag_noprx: BoolProperty(name="Don't use prx files", description="(THUG PRO only) This level uses uncompressed files, not packed in .prx files", default=False)
+    level_flag_biglevel: BoolProperty(name="Big Level", description="(THUG PRO only) Use extended online position broadcast limits", default=False)
     
 # METHODS
 #############################################

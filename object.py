@@ -404,13 +404,13 @@ def _update_restart_collection(self, context):
 #############################################
 class THUGObjectSettingsTools(bpy.types.Panel):
     bl_label = "TH Object Settings"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
     bl_category = "THUG Tools"
 
     @classmethod
     def poll(cls, context):
-        return context.object and context.user_preferences.addons[ADDON_NAME].preferences.object_settings_tools
+        return context.object and context.preferences.addons[ADDON_NAME].preferences.object_settings_tools
 
     def draw(self, context):
         _thug_object_settings_draw(self, context)

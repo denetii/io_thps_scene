@@ -174,7 +174,7 @@ def _alt_split_obj(ob, context, max_radius=500, faces_per_subobject=250, preserv
             nz = bm.loops.layers.float.new("norm_z")
 
             for face in bm.faces:
-                face.select = False
+                face.select_set(False)
                 face.select_set(False)
 
                 for loop in face.loops:
@@ -184,7 +184,7 @@ def _alt_split_obj(ob, context, max_radius=500, faces_per_subobject=250, preserv
                     loop[nz] = orig_loop.normal[2]
         else:
             for face in bm.faces:
-                face.select = False
+                face.select_set(False)
                 face.select_set(False)
 
         temp_bm = bmesh.new()
@@ -374,7 +374,7 @@ def _prepare_autosplit_objects(operator, context, target_game):
         if helpers._need_to_flip_normals(ob):
             helpers._flip_normals(temporary_object)
 
-        temporary_object.select = True
+        temporary_object.select_set(True)
         bpy.context.scene.objects.active = temporary_object
         # bpy.ops.object.thug_split_object(
         final_objs = _alt_split_obj(
@@ -387,7 +387,7 @@ def _prepare_autosplit_objects(operator, context, target_game):
         bpy.data.objects.remove(temporary_object)
         bpy.data.meshes.remove(final_mesh)
 
-        for fob in final_objs: fob.select = False
+        for fob in final_objs: fob.select_set(False)
         temporary_objects += final_objs
         # LOG.debug("Object {} split into {} objects".format(temporary_object.name, len(final_objs)))
 

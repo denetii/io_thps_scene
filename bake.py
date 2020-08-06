@@ -161,9 +161,9 @@ def restore_mat_assignments(obj, orig_polys):
     bm = bmesh.from_edit_mesh(obj.data) 
     
     for face in bm.faces: 
-        face.select = False
+        face.select_set(False)
     for face in bm.faces: 
-        face.select = True
+        face.select_set(True)
         face.material_index = orig_polys[face.index]
         #print("assigning mat {} to face {}".format(face.material_index, face.index))
         
@@ -407,7 +407,7 @@ def bake_thug_vcs(meshes, context):
     # De-select any objects currently selected
     if context.selected_objects:
         for ob in context.selected_objects:
-            ob.select = False
+            ob.select_set(False)
             
     # We need to be in Cycles to run the lightmap bake
     previous_engine = 'BLENDER_RENDER'
@@ -435,7 +435,7 @@ def bake_thug_vcs(meshes, context):
             continue
         # Set it to active and go into edit mode
         scene.objects.active = ob
-        ob.select = True
+        ob.select_set(True)
         
         # Add the 'color' vertex color channel (used by THUG) and make sure we are baking onto it
         if "color" not in ob.data.vertex_colors:
@@ -468,7 +468,7 @@ def bake_thug_vcs(meshes, context):
             restore_mat_assignments(ob, orig_polys)
             
         print("Object " + ob.name + " baked to vertex colors!")
-        ob.select = False
+        ob.select_set(False)
         
         
 #----------------------------------------------------------------------------------
@@ -479,7 +479,7 @@ def bake_hl2_lightmaps(meshes, context):
     # De-select any objects currently selected
     if context.selected_objects:
         for ob in context.selected_objects:
-            ob.select = False
+            ob.select_set(False)
             
     is_cycles = True
     previous_engine = 'CYCLES'
@@ -536,7 +536,7 @@ def bake_hl2_lightmaps(meshes, context):
             
         # Set it to active and go into edit mode
         scene.objects.active = ob
-        ob.select = True
+        ob.select_set(True)
         
         # Set the desired resolution, both for the UV map and the lightmap texture
         img_res = 128
@@ -767,7 +767,7 @@ def bake_hl2_lightmaps(meshes, context):
         # If there is more than one material, restore the per-face material assignment
         if len(ob.data.materials) > 1:
             restore_mat_assignments(ob, orig_polys)
-        ob.select = False
+        ob.select_set(False)
         ob["is_baked"] = True
         ob["thug_last_bake_res"] = img_res
         ob["thug_last_bake_type"] = ob.thug_lightmap_type
@@ -843,7 +843,7 @@ def bake_ugplus_lightmaps(meshes, context):
     # De-select any objects currently selected
     if context.selected_objects:
         for ob in context.selected_objects:
-            ob.select = False
+            ob.select_set(False)
             
     is_cycles = True
     previous_engine = 'CYCLES'
@@ -893,7 +893,7 @@ def bake_ugplus_lightmaps(meshes, context):
             
         # Set it to active and go into edit mode
         scene.objects.active = ob
-        ob.select = True
+        ob.select_set(True)
         
         # Set the desired resolution, both for the UV map and the lightmap texture
         img_res = 128
@@ -1101,7 +1101,7 @@ def bake_ugplus_lightmaps(meshes, context):
         # If there is more than one material, restore the per-face material assignment
         if len(ob.data.materials) > 1:
             restore_mat_assignments(ob, orig_polys)
-        ob.select = False
+        ob.select_set(False)
         ob["is_baked"] = True
         ob["thug_last_bake_res"] = img_res
         ob["thug_last_bake_type"] = ob.thug_lightmap_type
@@ -1174,7 +1174,7 @@ def bake_thug_lightmaps(meshes, context):
     # De-select any objects currently selected
     if context.selected_objects:
         for ob in context.selected_objects:
-            ob.select = False
+            ob.select_set(False)
             
     is_cycles = ( scene.thug_bake_type in [ 'LIGHT', 'FULL', 'SHADOW', 'INDIRECT' ] )
     if is_cycles:
@@ -1252,7 +1252,7 @@ def bake_thug_lightmaps(meshes, context):
             
         # Set it to active and go into edit mode
         scene.objects.active = ob
-        ob.select = True
+        ob.select_set(True)
         
         # Set the desired resolution, both for the UV map and the lightmap texture
         img_res = 128
@@ -1454,7 +1454,7 @@ def bake_thug_lightmaps(meshes, context):
                 node_bake = get_cycles_node(blender_mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
                 node_bake.image = blender_tex.image
                 node_bake.location = (-160,100)
-                node_bake.select = True
+                node_bake.select_set(True)
                 blender_mat.node_tree.nodes.active = node_bake
             else:
                 blender_mat.use_textures[0] = False
@@ -1541,12 +1541,12 @@ def bake_thug_lightmaps(meshes, context):
             ob.data.uv_textures['Lightmap'].data[p.index].image = blender_tex.image
             
         if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI':
-            ob.select = False
+            ob.select_set(False)
         else:
             # If there is more than one material, restore the per-face material assignment
             if len(ob.data.materials) > 1:
                 restore_mat_assignments(ob, orig_polys)
-        ob.select = False
+        ob.select_set(False)
         ob["is_baked"] = True
         ob["thug_last_bake_res"] = img_res
         ob["thug_last_bake_type"] = ob.thug_lightmap_type
@@ -1752,7 +1752,7 @@ def render_cubemap(probe):
     # Attempt to auto-generate the DX9 DDS cubemap!
     print("Done. Attempting to generate DDS file {}.dds...".format(probe.name))
     
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = bpy.context.preferences.addons[ADDON_NAME].preferences
     base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Unable to generate DDS file.".format(base_files_dir_error))
@@ -1901,11 +1901,11 @@ def lightmap_group_exists(self, context, use_report=True):
         return False
     
 def register_props_bake():
-    bpy.types.Scene.lightmap_view = EnumProperty(items=(
+    bpy.types.Scene.lightmap_view: EnumProperty(items=(
         ("DEFAULT", "Default", "Default view"),
         ("LIGHTMAP", "Lightmap Only", "Shows only the lightmap textures/vertex colors"),
         ), name="View Mode", default="DEFAULT", update=change_lightmap_view)
-    bpy.types.Scene.thug_lightmap_scale = EnumProperty(
+    bpy.types.Scene.thug_lightmap_scale: EnumProperty(
         name="Lightmap Scale",
         items=[
             ("0.25", "0.25", ""),
@@ -1916,21 +1916,21 @@ def register_props_bake():
             ("8", "8", "")],
         default="1", 
         description="Scales the resolution of all lightmaps by the specified factor")
-    bpy.types.Scene.thug_lightmap_uglymode = BoolProperty(
+    bpy.types.Scene.thug_lightmap_uglymode: BoolProperty(
         name="Performance Mode",
         default=False, 
         description="Disable all Cycles materials when baking. Bakes faster, but with much less accuracy")
-    bpy.types.Scene.thug_lightmap_clamp = FloatProperty(
+    bpy.types.Scene.thug_lightmap_clamp: FloatProperty(
         name="Shadow Intensity",
         description="Controls the maximum intensity of shadowed areas. Reduce in low-light scenes if you need to improve visibility",
         min=0, max=1.0, default=1.0)
-    bpy.types.Scene.thug_lightmap_color = FloatVectorProperty(name="Ambient Color",
+    bpy.types.Scene.thug_lightmap_color: FloatVectorProperty(name="Ambient Color",
                        subtype='COLOR',
                        default=(1.0, 1.0, 1.0, 1.0),
                        size=4,
                        min=0.0, max=1.0,
                        description="Lightmaps are baked onto a surface of this color")
-    bpy.types.Scene.thug_bake_type = EnumProperty(
+    bpy.types.Scene.thug_bake_type: EnumProperty(
         name="Bake Type",
         items=[
             ("LIGHT", "Lighting Only (Cycles)", "(Uses the Cycles render engine) Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting"),
@@ -1944,7 +1944,7 @@ def register_props_bake():
             ],
         default="LIGHT_BI", 
         description="Type of bakes to use for this scene")
-    bpy.types.Scene.thug_bake_slot = EnumProperty(
+    bpy.types.Scene.thug_bake_slot: EnumProperty(
         name="Bake Slot",
         items=[
             ("DAY", "Day (Default)", "Bakes lighting into the Day TOD slot"),
@@ -1954,11 +1954,11 @@ def register_props_bake():
         default="DAY", 
         description="(Underground+ 1.5+ only) TOD slot to bake lighting into. Multiple TOD bakes are only supported by the new material system", update=change_bake_slot)
         
-    bpy.types.Scene.thug_bake_automargin = BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings")                       
-    bpy.types.Scene.thug_bake_force_remake = BoolProperty(name="Force new UVs", default=False, description="Always discards and recreates the lightmap UVs. Slower, use only as a shortcut if you are making changes to meshes or need to fix UV issues")                       
-    bpy.types.Scene.thug_bake_pad_uvs = BoolProperty(name="Pad UVs", default=True, description="Adds a 'safe zone' to the edges of the UV map. Use if you are experiencing problems with seams/gaps in bake results")                       
+    bpy.types.Scene.thug_bake_automargin: BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings")                       
+    bpy.types.Scene.thug_bake_force_remake: BoolProperty(name="Force new UVs", default=False, description="Always discards and recreates the lightmap UVs. Slower, use only as a shortcut if you are making changes to meshes or need to fix UV issues")                       
+    bpy.types.Scene.thug_bake_pad_uvs: BoolProperty(name="Pad UVs", default=True, description="Adds a 'safe zone' to the edges of the UV map. Use if you are experiencing problems with seams/gaps in bake results")                       
     
-    bpy.types.Object.thug_lightmap_resolution = EnumProperty(
+    bpy.types.Object.thug_lightmap_resolution: EnumProperty(
         name="Lightmap Resolution",
         items=[
             ("16", "16", ""),
@@ -1973,7 +1973,7 @@ def register_props_bake():
             ("8192", "8192", "")],
         default="128", 
         description="Controls the resolution (squared) of baked lightmaps")
-    bpy.types.Object.thug_lightmap_quality = EnumProperty(
+    bpy.types.Object.thug_lightmap_quality: EnumProperty(
         name="Lightmap Quality",
         items=[
             ("Draft", "Draft", ""),
@@ -1984,7 +1984,7 @@ def register_props_bake():
             ("Custom", "Custom", "Uses existing Cycles render settings")],
         default="Preview", 
         description="Preset controls for the bake quality.")
-    bpy.types.Object.thug_lightmap_type = EnumProperty(
+    bpy.types.Object.thug_lightmap_type: EnumProperty(
         name="UV Type",
         items=[
             ("Lightmap", "Lightmap", "Lightmap pack with preset margins"),
@@ -1992,35 +1992,35 @@ def register_props_bake():
         default="Lightmap", 
         description="Determines the type of UV unwrapping done on the object for the bake.")
     
-    bpy.types.Object.thug_lightmap_merged_objects = CollectionProperty(type=THUGMergedObjects)
-    bpy.types.Object.thug_lightmap_group_id = IntProperty(default=-1)
-    bpy.types.Scene.thug_lightmap_groups = CollectionProperty(type=THUGLightmapGroup)
-    bpy.types.Scene.thug_lightmap_groups_index = IntProperty()
+    bpy.types.Object.thug_lightmap_merged_objects: CollectionProperty(type=THUGMergedObjects)
+    bpy.types.Object.thug_lightmap_group_id: IntProperty(default=-1)
+    bpy.types.Scene.thug_lightmap_groups: CollectionProperty(type=THUGLightmapGroup)
+    bpy.types.Scene.thug_lightmap_groups_index: IntProperty()
         
 # CLASSES
 #############################################
 class THUGMergedObjects_UVLayers(bpy.types.PropertyGroup):
-    name = StringProperty(default="")
+    name: StringProperty(default="")
 class THUGMergedObjects_VertexGroups(bpy.types.PropertyGroup):
-    name = StringProperty(default="")
+    name: StringProperty(default="")
 class THUGMergedObjects_Groups(bpy.types.PropertyGroup):
-    name = StringProperty(default="")
+    name: StringProperty(default="")
 class THUGMergedObjects(bpy.types.PropertyGroup):
-    name = StringProperty()
-    vertex_groups = CollectionProperty(type=THUGMergedObjects_VertexGroups)
-    groups = CollectionProperty(type=THUGMergedObjects_Groups)
-    uv_layers = CollectionProperty(type=THUGMergedObjects_UVLayers)
+    name: StringProperty()
+    vertex_groups: CollectionProperty(type=THUGMergedObjects_VertexGroups)
+    groups: CollectionProperty(type=THUGMergedObjects_Groups)
+    uv_layers: CollectionProperty(type=THUGMergedObjects_UVLayers)
     
 class THUGLightmapGroup(bpy.types.PropertyGroup):
-    name = StringProperty(default="", description="Name for this lightmap group")
-    bake = BoolProperty(default=True)
-    unwrap_type = EnumProperty(
+    name: StringProperty(default="", description="Name for this lightmap group")
+    bake: BoolProperty(default=True)
+    unwrap_type: EnumProperty(
         name="UV Type",
         items=[
             ("Lightmap", "Lightmap", "Lightmap pack with preset margins"),
             ("Smart", "Smart", "Smart UV projection with default settings")],
     )
-    resolution = EnumProperty(
+    resolution: EnumProperty(
         name="Resolution",
         items=(('256', '256', ''),
                ('512', '512', ''),
@@ -2033,7 +2033,7 @@ class THUGLightmapGroup(bpy.types.PropertyGroup):
         default='1024',
         description="Controls the resolution (squared) of baked lightmaps"
     )
-    template_list_controls = StringProperty(
+    template_list_controls: StringProperty(
         default="bake",
         options={"HIDDEN"},
     )
@@ -2085,7 +2085,7 @@ class THUG_SelectGroup(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         obj_group = bpy.data.groups[group_name]
         for object in obj_group.objects:
-            object.select = True
+            object.select_set(True)
         return {'FINISHED'}
 
 
@@ -2127,9 +2127,9 @@ class THUG_RemoveFromGroup(bpy.types.Operator):
                             orig_polys[f.index] = f.material_index
                         unbake(object)
                         bpy.context.scene.objects.active = object
-                        object.select = True
+                        object.select_set(True)
                         restore_mat_assignments(object, orig_polys)
-                        object.select = False
+                        object.select_set(False)
                     
 
         return {'FINISHED'}
@@ -2140,7 +2140,7 @@ class THUG_AddLightmapGroup(bpy.types.Operator):
     bl_label = "Add Lightmap Group"
     bl_description = "Adds a new Lightmap Group"
 
-    name = StringProperty(name="Group Name", default='LightmapGroup', description="Name for this lightmap group")
+    name: StringProperty(name="Group Name", default='LightmapGroup', description="Name for this lightmap group")
 
     def execute(self, context):
         scene = context.scene
@@ -2197,8 +2197,8 @@ class THUG_CreateLightmap(bpy.types.Operator):
     bl_label = "Create Lightmap"
     bl_description = "Creates a lightmap"
 
-    group_name = StringProperty(default='')
-    resolution = IntProperty(default=1024)
+    group_name: StringProperty(default='')
+    resolution: IntProperty(default=1024)
 
     def execute(self, context):
         scene = context.scene
@@ -2249,8 +2249,8 @@ class THUG_MergeObjects(bpy.types.Operator):
     bl_label = "Merge Objects"
     bl_description = "Merges objects and stores origins"
 
-    group_name = StringProperty(default='')
-    unwrap = BoolProperty(default=False)
+    group_name: StringProperty(default='')
+    unwrap: BoolProperty(default=False)
 
     def execute(self, context):
         scene = context.scene
@@ -2258,7 +2258,7 @@ class THUG_MergeObjects(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         ob_merged_old = bpy.data.objects.get(self.group_name + "_mergedObject")
         if ob_merged_old is not None:
-            ob_merged_old.select = True
+            ob_merged_old.select_set(True)
             scene.objects.active = ob_merged_old
             bpy.ops.object.delete(use_global=True)
 
@@ -2267,7 +2267,7 @@ class THUG_MergeObjects(bpy.types.Operator):
         ob_merge.location = scene.cursor_location   # position object at 3d-cursor
         scene.objects.link(ob_merge)                # Link object to scene
         me.update()
-        ob_merge.select = False
+        ob_merge.select_set(False)
 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -2283,7 +2283,7 @@ class THUG_MergeObjects(bpy.types.Operator):
             object.hide_select = False
 
             bpy.ops.object.select_all(action='DESELECT')
-            object.select = True
+            object.select_set(True)
 
             # Activate lightmap UVs
             for uv in object.data.uv_textures:
@@ -2293,16 +2293,16 @@ class THUG_MergeObjects(bpy.types.Operator):
 
             # Duplicate temp object
             bpy.ops.object.select_all(action='DESELECT')
-            object.select = True
+            object.select_set(True)
             scene.objects.active = object
             bpy.ops.object.duplicate(linked=False, mode='TRANSLATION')
             activeNowObject = scene.objects.active
-            activeNowObject.select = True
+            activeNowObject.select_set(True)
 
             # Hide render of original mesh
             object.hide_render = True
             object.hide = True
-            object.select = False
+            object.select_set(False)
             object.hide_select = isObjHideSelect
 
             # Remove UVs
@@ -2333,15 +2333,15 @@ class THUG_MergeObjects(bpy.types.Operator):
 
             # Merge objects together
             bpy.ops.object.select_all(action='DESELECT')
-            activeNowObject.select = True
-            ob_merge.select = True
+            activeNowObject.select_set(True)
+            ob_merge.select_set(True)
             scene.objects.active = ob_merge
             bpy.ops.object.join()
 
         mergeList.clear()
 
         bpy.ops.object.select_all(action='DESELECT')
-        ob_merge.select = True
+        ob_merge.select_set(True)
         scene.objects.active = ob_merge
 
         # Unhide all faces
@@ -2373,7 +2373,7 @@ class THUG_SeparateObjects(bpy.types.Operator):
     bl_label = "Separate Objects"
     bl_description = "Separates objects and restores origins"
 
-    group_name = StringProperty(default='')
+    group_name: StringProperty(default='')
 
     def execute(self, context):
         scene = context.scene
@@ -2382,16 +2382,16 @@ class THUG_SeparateObjects(bpy.types.Operator):
         if ob_merged is not None:
             bpy.ops.object.select_all(action='DESELECT')
             ob_merged.hide = False
-            ob_merged.select = True
+            ob_merged.select_set(True)
             groupSeparate = bpy.data.groups.new(ob_merged.name)
             groupSeparate.objects.link(ob_merged)
-            ob_merged.select = False
+            ob_merged.select_set(False)
 
             doUnhidePolygons = False
             for ms_obj in ob_merged.thug_lightmap_merged_objects:
                 # Select vertex groups and separate group from merged object
                 bpy.ops.object.select_all(action='DESELECT')
-                ob_merged.select = True
+                ob_merged.select_set(True)
                 scene.objects.active = ob_merged
 
                 bpy.ops.object.mode_set(mode='EDIT')
@@ -2405,7 +2405,7 @@ class THUG_SeparateObjects(bpy.types.Operator):
                 bpy.ops.object.vertex_group_select()
                 bpy.ops.mesh.separate(type='SELECTED')
                 bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-                # scene.objects.active.select = False
+                # scene.objects.active.select_set(False)
 
                 # Find separated object
                 ob_separeted = None
@@ -2416,27 +2416,27 @@ class THUG_SeparateObjects(bpy.types.Operator):
 
                 # Copy UV coordinates to the original mesh
                 if ms_obj.name in scene.objects:
-                    ob_merged.select = False
+                    ob_merged.select_set(False)
                     ob_original = scene.objects[ms_obj.name]
                     isOriginalToSelect = ob_original.hide_select
                     ob_original.hide_select = False
                     ob_original.hide = False
-                    ob_original.select = True
+                    ob_original.select_set(True)
                     scene.objects.active = ob_separeted
                     bpy.ops.object.join_uvs()
                     ob_original.hide_render = False
-                    ob_original.select = False
+                    ob_original.select_set(False)
                     ob_original.hide_select = isOriginalToSelect
                     ob_original.data.update()
 
                 # Delete separated object
                 bpy.ops.object.select_all(action='DESELECT')
-                ob_separeted.select = True
+                ob_separeted.select_set(True)
                 bpy.ops.object.delete(use_global=False)
 
             # Delete duplicated object
             bpy.ops.object.select_all(action='DESELECT')
-            ob_merged.select = True
+            ob_merged.select_set(True)
             bpy.ops.object.delete(use_global=False)
 
         return{'FINISHED'}
@@ -2577,7 +2577,7 @@ class ToggleLightmapPreview(bpy.types.Operator):
     bl_label = "Toggle Lightmap Preview"
     bl_options = {'REGISTER', 'UNDO'}
     
-    preview_on = bpy.props.BoolProperty()
+    preview_on: bpy.props.BoolProperty()
     
     @classmethod
     def poll(cls, context):
@@ -2618,12 +2618,12 @@ class UnBakeLightmaps(bpy.types.Operator):
     bl_idname = "object.thug_unbake_scene"
     bl_label = "Un-Bake Objects"
     bl_options = {'REGISTER', 'UNDO'}
-    unbake_option = EnumProperty(items=(
+    unbake_option: EnumProperty(items=(
         ("CopyToIntensity", "Copy to intensity", "Copies baked lightmap texture to collision intensity values without clearing the bake"),
         ("ClearToVCs", "Clear to vertex colors", "Converts baked lightmap texture to vertex colors"),
         ("ClearAll", "Clear All", "Completely clears baked results and deletes baked vertex colors"),
         ), name="Options", default="ClearToVCs")
-    smooth_vcs = BoolProperty(name="Smooth",default=True,description="Smooth vertex colors when generating VCs/intensity data")
+    smooth_vcs: BoolProperty(name="Smooth",default=True,description="Smooth vertex colors when generating VCs/intensity data")
     
     @classmethod
     def poll(cls, context):
@@ -2659,9 +2659,9 @@ class UnBakeLightmaps(bpy.types.Operator):
             unbake(ob)
             
             bpy.context.scene.objects.active = ob
-            ob.select = True
+            ob.select_set(True)
             restore_mat_assignments(ob, orig_polys)
-            ob.select = False
+            ob.select_set(False)
             
             # If this object belongs to a lightmap group, remove it
             if ob.thug_lightmap_group_id > -1:
@@ -2771,7 +2771,7 @@ class SelectAllBaked(bpy.types.Operator):
     def execute(self, context):
         meshes = [o for o in bpy.data.objects if o.type == 'MESH' and "is_baked" in o and o["is_baked"] == True ]
         for ob in meshes:
-            ob.select = True
+            ob.select_set(True)
         return {"FINISHED"}
         
 #----------------------------------------------------------------------------------
@@ -2787,7 +2787,7 @@ class SelectAllNotBaked(bpy.types.Operator):
     def execute(self, context):
         meshes = [o for o in bpy.data.objects if o.type == 'MESH' and ("is_baked" not in o or o["is_baked"] == False) ]
         for ob in meshes:
-            ob.select = True
+            ob.select_set(True)
         return {"FINISHED"}
         
 #----------------------------------------------------------------------------------
@@ -2866,13 +2866,13 @@ class RenderCubemaps(bpy.types.Operator):
 #----------------------------------------------------------------------------------
 class THUGLightingTools(bpy.types.Panel):
     bl_label = "TH Lighting Tools"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
     bl_category = "THUG Tools"
 
     @classmethod
     def poll(cls, context):
-        return context.user_preferences.addons[ADDON_NAME].preferences.object_settings_tools
+        return context.preferences.addons[ADDON_NAME].preferences.object_settings_tools
 
     def draw(self, context):
         if not context.object: return

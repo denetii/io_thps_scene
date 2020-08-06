@@ -425,7 +425,7 @@ def _generate_lambert_shading(ob):
         LOG.debug("_generate_lambert_shading got a bad object! {}".format(ob))
         return
     for other_ob in bpy.context.selected_objects:
-        other_ob.select = False
+        other_ob.select_set(False)
 
     mesh = ob.data
     mixing = False
@@ -441,7 +441,7 @@ def _generate_lambert_shading(ob):
     # bpy.ops.object.mode_set(mode='EDIT')
     if False:
         bpy.context.scene.objects.active = ob
-        ob.select = True
+        ob.select_set(True)
         bpy.context.scene.render.bake_type = "SHADOW"
         bpy.context.scene.render.bake_normal_space = "WORLD"
         bpy.context.scene.render.use_bake_to_vertex_color = True

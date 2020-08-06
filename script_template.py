@@ -27,7 +27,7 @@ def init_templates():
         self.layout.label("Please configure the base files directory before working on any THPS scenes.")
         self.layout.label("Once you've set the path to the base files, save your configuration and then restart Blender!")
         
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = bpy.context.preferences.addons[ADDON_NAME].preferences
     base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         bpy.context.window_manager.popup_menu(draw_firstrun, title="Welcome!", icon='INFO')

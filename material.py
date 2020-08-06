@@ -1156,13 +1156,13 @@ class THUGUVWibbles(bpy.types.PropertyGroup):
 #----------------------------------------------------------------------------------
 class THUGMaterialSettingsTools(bpy.types.Panel):
     bl_label = "TH Material Settings"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
     bl_category = "THUG Tools"
 
     @classmethod
     def poll(cls, context):
-        return context.object and context.user_preferences.addons[ADDON_NAME].preferences.material_settings_tools
+        return context.object and context.preferences.addons[ADDON_NAME].preferences.material_settings_tools
 
     def draw(self, context):
         if not context.object: return
@@ -1207,13 +1207,13 @@ class THUGMaterialSettings(bpy.types.Panel):
 #----------------------------------------------------------------------------------
 class THUGMaterialPassSettingsTools(bpy.types.Panel):
     bl_label = "TH Material Pass Tools"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
     bl_category = "THUG Tools"
 
     @classmethod
     def poll(self, context):
-        return context.object and context.user_preferences.addons[ADDON_NAME].preferences.material_pass_settings_tools
+        return context.object and context.preferences.addons[ADDON_NAME].preferences.material_pass_settings_tools
 
     def draw(self, context):
         from bl_ui.properties_material import active_node_mat

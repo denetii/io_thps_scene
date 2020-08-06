@@ -127,7 +127,7 @@ def do_export(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
 
-    addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = context.preferences.addons[ADDON_NAME].preferences
     base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Aborting export.".format(base_files_dir_error))
@@ -378,7 +378,7 @@ def do_export_model(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
 
-    addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = context.preferences.addons[ADDON_NAME].preferences
     base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Aborting export.".format(base_files_dir_error))
@@ -1450,13 +1450,13 @@ class THUGQuickExport(bpy.types.Operator):
 #----------------------------------------------------------------------------------
 class THUGExportTools(bpy.types.Panel):
     bl_label = "TH Export Tools"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
     bl_category = "THUG Tools"
 
     @classmethod
     def poll(cls, context):
-        return context.user_preferences.addons[ADDON_NAME].preferences.object_settings_tools
+        return context.preferences.addons[ADDON_NAME].preferences.object_settings_tools
 
     def draw(self, context):
         if not context.scene: return

@@ -33,7 +33,7 @@ def is_valid_game_path(path):
     
 def get_game_asset_paths(context):
     scn = context.scene
-    addon_prefs = context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = context.preferences.addons[ADDON_NAME].preferences
     if not hasattr(scn, 'thug_level_props') or not hasattr(scn.thug_level_props, 'export_props'):
         print("Unable to read game files - Cannot find level/export properties")
         return [], ""

@@ -252,7 +252,7 @@ def update_collision_flag_ui_properties(scene):
 #############################################
 class THUGCollisionMeshTools(bpy.types.Panel):
     bl_label = "TH Collision Mesh Tools"
-    bl_region_type = "TOOLS"
+    bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
     bl_category = "THUG Tools"
 

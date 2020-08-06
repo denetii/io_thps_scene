@@ -19,14 +19,14 @@ AUTORAIL_AUTO = -1
 #############################################
 
 def get_path_bevel_size():
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = bpy.context.preferences.addons[ADDON_NAME].preferences
     return (2 * addon_prefs.path_bevel_size) / bpy.context.scene.thug_level_props.export_props.export_scale
     
 def get_autorail_image():
     if bpy.data.images.get("Autorail_Metal"):
         return bpy.data.images.get("Autorail_Metal")
         
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+    addon_prefs = bpy.context.preferences.addons[ADDON_NAME].preferences
     base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
     if base_files_dir_error:
         self.report({"WARNING"}, "Base files directory error: {} - Unable to find autorail texture, using color instead.".format(base_files_dir_error))
@@ -878,7 +878,7 @@ class ExtractRail(bpy.types.Operator):
         new_object.name = new_name
         bpy.ops.object.mode_set(mode="OBJECT")
         bpy.ops.object.select_all()
-        new_object.select = True
+        new_object.select_set(True)
         context.scene.objects.active = new_object
         bpy.ops.object.convert(target='CURVE')
         new_object.parent = old_object
