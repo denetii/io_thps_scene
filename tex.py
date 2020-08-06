@@ -393,11 +393,9 @@ def export_tex(filename, directory, target_game, operator=None):
             # Make sure we always export textures which are plugged into the new material/shader system
             # Also need to generate a texture based on a specified color, if no texture was used
             export_textures = []
-            if m.thug_material_props.ugplus_shader == 'PBR' or m.thug_material_props.ugplus_shader == 'Diffuse':
+            if m.thug_material_props.ugplus_shader == 'PBR':
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)
                 set_image_compression(m.thug_material_props.ugplus_matslot_normal, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_reflection)
-                set_image_compression(m.thug_material_props.ugplus_matslot_reflection, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_diffuse)
                 if m.thug_material_props.ugplus_trans:
                     set_image_compression(m.thug_material_props.ugplus_matslot_diffuse, 'DXT5')
@@ -411,8 +409,6 @@ def export_tex(filename, directory, target_game, operator=None):
                 set_image_compression(m.thug_material_props.ugplus_matslot_weathermask, 'DXT5')
                 export_textures.append(m.thug_material_props.ugplus_matslot_snow)
                 set_image_compression(m.thug_material_props.ugplus_matslot_snow, 'DXT5')
-                export_textures.append(m.thug_material_props.ugplus_matslot_specular)
-                set_image_compression(m.thug_material_props.ugplus_matslot_specular, 'DXT5')
                 
             if m.thug_material_props.ugplus_shader == 'PBR_Lightmapped' or m.thug_material_props.ugplus_shader == 'Glass' or m.thug_material_props.ugplus_shader == 'Diffuse_Lightmapped':
                 export_textures.append(m.thug_material_props.ugplus_matslot_normal)

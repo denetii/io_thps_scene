@@ -242,7 +242,7 @@ def get_ugplus_shader_flags(mprops):
         mat_flags |= SHADERFLAG_USES_WEATHER
     if mprops.ugplus_shader_disp:
         mat_flags |= SHADERFLAG_USES_POM
-    if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom', 'Ocean' ]:
+    if mprops.ugplus_shader in [ 'PBR', 'Glass', 'Water', 'Water_Custom', 'Ocean' ]:
         mat_flags |= SHADERFLAG_USES_REFLECTIONS
     if mprops.ugplus_shader in [ 'Glass', 'Water', 'Water_Custom' ]:
         mat_flags |= SHADERFLAG_USES_REFRACTION
@@ -288,14 +288,12 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
     if mprops.ugplus_shader == 'PBR':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_normal, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_reflection, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_detail, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap2, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_lightmap3, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_weathermask, 'flags': 0 })
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_snow, 'flags': 0 })
-        export_textures.append({ 'mat_node': mprops.ugplus_matslot_specular, 'flags': 0 })
         
     elif mprops.ugplus_shader == 'Glass':
         export_textures.append({ 'mat_node': mprops.ugplus_matslot_diffuse, 'flags': 0 })
@@ -419,11 +417,11 @@ def export_ugplus_material(m, output_file, target_game, operator=None):
         
         w("I", pass_flags)  # flags # 4132
         w("?", True)  # has color flag; seems to be ignored
-        w("3f",  *((tex.tex_color[0]/2.0,tex.tex_color[1]/2.0,tex.tex_color[2]/2.0) ))
+        w("3f",  *((tex.tex_color[0],tex.tex_color[1],tex.tex_color[2]) ))
         #w("3f",  *(m.diffuse_color / 2.0))  # color
         
         w("I", globals()[tex.blend_mode] if tex else vBLEND_MODE_DIFFUSE)  
-        w("I", 0) #w("I", pprops.blend_fixed_alpha if pprops else 0)
+        w("I", int(tex.tex_color[3]*127.0)) #w("I", pprops.blend_fixed_alpha if pprops else 0)
         w("I", 0)  # u adressing (wrap, clamp, etc)
         w("I", 0)  # v adressing
         w("2f", *((3.0, 3.0)))  # envmap multiples
@@ -895,11 +893,6 @@ def _material_settings_draw(self, context):
             ugplus_matslot_draw(mps.ugplus_matslot_diffuse, box, title='Diffuse', allow_blending=True)
             ugplus_matslot_draw(mps.ugplus_matslot_detail, box, title='Detail', allow_blending=True)
             ugplus_matslot_draw(mps.ugplus_matslot_normal, box, title='Normal', allow_uv_wibbles=False)
-            ugplus_matslot_draw(mps.ugplus_matslot_specular, box, title='Specular', allow_uv_wibbles=False)
-            if mps.ugplus_shader_disp:
-                ugplus_matslot_draw(mps.ugplus_matslot_reflection, box, title='Displacement', allow_uv_wibbles=False)
-            #if mps.ugplus_shader_baked:
-            #    ugplus_matslot_draw(mps.ugplus_matslot_lightmap, box, title='Lightmap', allow_uv_wibbles=False)
             if mps.ugplus_shader_weather:
                 ugplus_matslot_draw(mps.ugplus_matslot_weathermask, box, title='Rain/Snow Mask')
                 ugplus_matslot_draw(mps.ugplus_matslot_snow, box, title='Snow', allow_uv_wibbles=False)

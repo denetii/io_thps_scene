@@ -883,6 +883,15 @@ def export_qb(filename, directory, target_game, operator=None):
                     if ob.thug_generic_props.generic_type == 'Crown':
                         has_koth = True
                 
+                elif ob.thug_empty_props.empty_type == 'CubemapProbe':
+                    p("\t\t:i {} = {}".format(c("Class"), c("ReflectionProbe")))
+                    bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_node(ob)
+                    p("\t\t:i {} = {}".format(c("BoxMin"), v3(bbox_min)))
+                    p("\t\t:i {} = {}".format(c("BoxMax"), v3(bbox_max)))
+                        
+                elif ob.thug_empty_props.empty_type == 'LightProbe':
+                    p("\t\t:i {} = {}".format(c("Class"), c("LightProbe")))
+                    
                 # COMMON PROPERTIES
                 if ob.thug_created_at_start:
                     p("\t\t:i {}".format(c("CreatedAtStart")))
