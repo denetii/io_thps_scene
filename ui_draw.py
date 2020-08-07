@@ -23,47 +23,16 @@ from mathutils import Vector
 
 # PROPERTIES
 #############################################
-draw_stuff_display_list_id = bgl.glGenLists(1)
-draw_stuff_dirty = True
 draw_stuff_objects = set()
 draw_handle = None
 
 # METHODS
 #############################################
-@bpy.app.handlers.persistent
-def draw_stuff_post_update(scene):
-    # print("draw_stuff_post_update")
-    global draw_stuff_dirty, draw_stuff_objects
-    if draw_stuff_dirty: return
-
-    if not draw_stuff_objects:
-        draw_stuff_dirty = True
-        return
-
-    # import time
-    # print(time.clock())
-    scn_objs = { ob.name: ob for ob in scene.objects }
-    for ob in draw_stuff_objects:
-        ob = scn_objs.get(ob) # scene.objects.get(ob)
-        if (not ob) or ob.is_updated or ob.is_updated_data:
-            draw_stuff_dirty = True
-            return
-    # print(time.clock())
-
-#----------------------------------------------------------------------------------
-@bpy.app.handlers.persistent
-def draw_stuff_pre_load_cleanup(*args):
-    # print("draw_stuff_post_update")
-    global draw_stuff_dirty, draw_stuff_objects
-    draw_stuff_dirty = True
-    draw_stuff_objects = set()
 
 #----------------------------------------------------------------------------------
 @bpy.app.handlers.persistent
 def draw_stuff():
-    # print("draw_stuff")
-    # FIXME this should use glPushAttrib
-    from bgl import glColor3f, glVertex3f, glBegin, glEnd, GL_POLYGON, GL_LINES
+    from . bglx import glColor4f, glVertex3f, glBegin, glEnd, GL_POLYGON, GL_LINES
     global draw_stuff_dirty, draw_stuff_objects
     ctx = bpy.context
     if not len(ctx.selected_objects) and not ctx.object:
@@ -86,24 +55,12 @@ def draw_stuff():
         del _tmp_buf
 
         objects = set([ob.name for ob in ctx.selected_objects] if ctx.mode == "OBJECT" else [ctx.object.name])
-        if draw_stuff_objects != objects:
-            draw_stuff_dirty = True
-        # print("draw_stuff2")
-
-        if not draw_stuff_dirty:
-            bgl.glCallList(draw_stuff_display_list_id)
-            bgl.glPolygonOffset(old_offset_factor, old_offset_units)
-            bgl.glDisable(bgl.GL_POLYGON_OFFSET_FILL)
-            bgl.glDisable(bgl.GL_CULL_FACE)
-            return
-
         bm = None
-        bgl.glNewList(draw_stuff_display_list_id, bgl.GL_COMPILE_AND_EXECUTE)
+        #bgl.glNewList(draw_stuff_display_list_id, bgl.GL_COMPILE_AND_EXECUTE)
         try:
             bgl.glCullFace(bgl.GL_BACK)
             bgl.glEnable(bgl.GL_CULL_FACE)
             bgl.glEnable(bgl.GL_POLYGON_OFFSET_FILL)
-            #bgl.glEnable(bgl.GL_POLYGON_OFFSET_LINE)
             bgl.glPolygonOffset(-2, -2)
 
             bgl.glEnable(bgl.GL_BLEND)
@@ -130,7 +87,7 @@ def draw_stuff():
                             connects_to.data.splines and
                             connects_to.data.splines[0].points):
                         glBegin(GL_LINES)
-                        bgl.glColor4f(*prefs.rail_end_connection_color)
+                        glColor4f(*prefs.rail_end_connection_color)
                         v = ob.matrix_world * ob.data.splines[-1].points[-1].co.to_3d()
                         glVertex3f(v[0], v[1], v[2])
                         v = connects_to.matrix_world * connects_to.data.splines[0].points[0].co.to_3d()
@@ -142,7 +99,7 @@ def draw_stuff():
                     if ob.data.thug_light_props.light_type == 'TUBE':
                         if ob.data.thug_light_props.light_end_pos != (0, 0, 0):
                             glBegin(GL_LINES)
-                            bgl.glColor4f(1.0, 0.75, 0.25, 1.0)
+                            glColor4f(1.0, 0.75, 0.25, 1.0)
                             glVertex3f(ob.location[0], ob.location[1], ob.location[2])
                             glVertex3f(ob.location[0] + ob.data.thug_light_props.light_end_pos[0], ob.location[1] + ob.data.thug_light_props.light_end_pos[1], ob.location[2] + ob.data.thug_light_props.light_end_pos[2])
                             glEnd()
@@ -159,30 +116,30 @@ def draw_stuff():
                         bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_node(ob)
                         
                         # 50% alpha, 2 pixel width line
-                        bgl.glEnable(bgl.GL_BLEND)
-                        bgl.glColor4f(1.0, 0.0, 0.0, 0.5)
-                        bgl.glLineWidth(4)
+                        glEnable(bgl.GL_BLEND)
+                        glColor4f(1.0, 0.0, 0.0, 0.5)
+                        glLineWidth(4)
                         
                         glBegin(bgl.GL_LINE_STRIP)
-                        bgl.glVertex3f(*bbox[0])
-                        bgl.glVertex3f(*bbox[1])
-                        bgl.glVertex3f(*bbox[2])
-                        bgl.glVertex3f(*bbox[3])
-                        bgl.glVertex3f(*bbox[0])
-                        bgl.glVertex3f(*bbox[4])
-                        bgl.glVertex3f(*bbox[5])
-                        bgl.glVertex3f(*bbox[6])
-                        bgl.glVertex3f(*bbox[7])
-                        bgl.glVertex3f(*bbox[4])
-                        bgl.glEnd()
+                        glVertex3f(*bbox[0])
+                        glVertex3f(*bbox[1])
+                        glVertex3f(*bbox[2])
+                        glVertex3f(*bbox[3])
+                        glVertex3f(*bbox[0])
+                        glVertex3f(*bbox[4])
+                        glVertex3f(*bbox[5])
+                        glVertex3f(*bbox[6])
+                        glVertex3f(*bbox[7])
+                        glVertex3f(*bbox[4])
+                        glEnd()
 
-                        bgl.glBegin(bgl.GL_LINES)
-                        bgl.glVertex3f(*bbox[1])
-                        bgl.glVertex3f(*bbox[5])
-                        bgl.glVertex3f(*bbox[2])
-                        bgl.glVertex3f(*bbox[6])
-                        bgl.glVertex3f(*bbox[3])
-                        bgl.glVertex3f(*bbox[7])
+                        glBegin(bgl.GL_LINES)
+                        glVertex3f(*bbox[1])
+                        glVertex3f(*bbox[5])
+                        glVertex3f(*bbox[2])
+                        glVertex3f(*bbox[6])
+                        glVertex3f(*bbox[3])
+                        glVertex3f(*bbox[7])
                         glEnd()
                         
                 if not ob or ob.type != "MESH":
@@ -204,7 +161,7 @@ def draw_stuff():
 
                 arl = bm.edges.layers.int.get("thug_autorail")
                 if arl:
-                    bgl.glColor4f(*prefs.autorail_edge_color)
+                    glColor4f(*prefs.autorail_edge_color)
                     glBegin(GL_LINES)
                     for edge in bm.edges:
                         if edge[arl] == AUTORAIL_NONE:
@@ -228,7 +185,7 @@ def draw_stuff():
                         if prefs.show_bad_face_colors:
                             if (face[cfl] & (VERT_FLAG | WALLRIDABLE_FLAG | NON_COLLIDABLE_FLAG) not in
                                 (VERT_FLAG, WALLRIDABLE_FLAG, NON_COLLIDABLE_FLAG, 0)):
-                                bgl.glColor4f(*prefs.bad_face_color)
+                                glColor4f(*prefs.bad_face_color)
                                 glBegin(GL_POLYGON)
                                 for vert in face.verts:
                                     v = ob.matrix_world * vert.co
@@ -238,7 +195,7 @@ def draw_stuff():
 
                         for face_flag, face_color in flag_stuff:
                             if face[cfl] & face_flag and (not drawn_face or prefs.mix_face_colors):
-                                bgl.glColor4f(*face_color)
+                                glColor4f(*face_color)
                                 drawn_face = True
 
                                 glBegin(GL_POLYGON)
@@ -248,10 +205,10 @@ def draw_stuff():
                                 glEnd()
         finally:
             draw_stuff_dirty = False
-            bgl.glEndList()
+            glEndList()
             if bm: bm.free()
-            bgl.glPolygonOffset(old_offset_factor, old_offset_units)
-            bgl.glDisable(bgl.GL_POLYGON_OFFSET_FILL)
+            glPolygonOffset(old_offset_factor, old_offset_units)
+            glDisable(bgl.GL_POLYGON_OFFSET_FILL)
     finally:
         bgl.glPopAttrib()
 
