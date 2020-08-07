@@ -474,13 +474,13 @@ class THUGObjectUtils(bpy.types.Panel):
         if not context.scene: return
         scene = context.scene
         row = self.layout.row()
-        row.column().operator(THUGUtilFillPedestrians.bl_idname, THUGUtilFillPedestrians.bl_label, icon="TEXT")
-        row.column().operator(THUGUtilFillVehicles.bl_idname, THUGUtilFillVehicles.bl_label, icon="TEXT")
+        row.column().operator(THUGUtilFillPedestrians.bl_idname, text=THUGUtilFillPedestrians.bl_label, icon="TEXT")
+        row.column().operator(THUGUtilFillVehicles.bl_idname, text=THUGUtilFillVehicles.bl_label, icon="TEXT")
         row = self.layout.row()
-        row.column().operator(THUGUtilBatchTerrain.bl_idname, THUGUtilBatchTerrain.bl_label, icon="TEXT")
-        row.column().operator(THUGUtilBatchObjectProps.bl_idname, THUGUtilBatchObjectProps.bl_label, icon="TEXT")
+        row.column().operator(THUGUtilBatchTerrain.bl_idname, text=THUGUtilBatchTerrain.bl_label, icon="TEXT")
+        row.column().operator(THUGUtilBatchObjectProps.bl_idname, text=THUGUtilBatchObjectProps.bl_label, icon="TEXT")
         if context.edit_object and context.edit_object.type == 'CURVE':
-            self.layout.row().operator(THUGUtilShowFirstPoint.bl_idname, THUGUtilShowFirstPoint.bl_label, icon="TEXT")
+            self.layout.row().operator(THUGUtilShowFirstPoint.bl_idname, text=THUGUtilShowFirstPoint.bl_label, icon="TEXT")
             
         self.layout.row().operator(THUGUtilBatchImport.bl_idname, text=THUGUtilBatchImport.bl_label, icon='PLUGIN')
         self.layout.row().operator(THUGImportNodeArray.bl_idname, text=THUGImportNodeArray.bl_label, icon='PLUGIN')

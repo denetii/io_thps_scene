@@ -1063,6 +1063,7 @@ def __init_wm_props():
         default=True)
 #----------------------------------------------------------------------------------
 def register_props():
+    print("Registering object properties...")
     __init_wm_props()
     bpy.types.Object.thug_object_class = EnumProperty(
         name="Object Class",
@@ -1087,12 +1088,7 @@ def register_props():
         name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
-    """
-    bpy.types.Object.thug_do_autosplit_preserve_normals = BoolProperty(
-        name="Preserve Normals",
-        description="Preserve the normals of the ",
-        default=True)
-    """
+        
     bpy.types.Object.thug_col_obj_flags = IntProperty()
     bpy.types.Object.thug_created_at_start = BoolProperty(name="Created At Start", default=True)
     bpy.types.Object.thug_network_option = EnumProperty(
@@ -1108,7 +1104,6 @@ def register_props():
     bpy.types.Object.thug_cast_shadow = BoolProperty(name="Cast Shadow", default=False, 
         description="(Underground+ 1.5+ only) If selected, this object will render dynamic shadows. Expensive effect - use carefully")
         
-    #bpy.types.Object.thug_is_billboard = BoolProperty(name="Billboard", description="This mesh is rendered as a billboard", default=False)
     bpy.types.Object.thug_no_skater_shadow = BoolProperty(name="No Skater Shadow", description="Dynamic shadows will not render on this object.", default=False)
     bpy.types.Object.thug_is_shadow_volume = BoolProperty(name="Detail Mesh", default=False, description="(Underground+ 1.5+ only) This mesh is treated as extra detail, and will be culled based on distance from camera (or not rendered at all on lower graphics settings)")
     bpy.types.Object.thug_material_blend = BoolProperty(name="Mat Blend", default=False, description="The first two material slots attached to this mesh will be blended together using the vertex alpha channel")
@@ -1188,6 +1183,7 @@ def register_props():
     
     bake.register_props_bake()
 
+    print("TEST!")
     global draw_handle
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
     # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)
@@ -1196,8 +1192,8 @@ def register_props():
     #bpy.app.handlers.scene_update_post.append(update_pathnode_ui_properties)
 
     #bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
-    bpy.app.handlers.load_post.append(update_node_collection)
-    bpy.app.handlers.load_post.append(update_game_files_collections)
+    #bpy.app.handlers.load_post.append(update_node_collection)
+    #bpy.app.handlers.load_post.append(update_game_files_collections)
     
     
 #----------------------------------------------------------------------------------
@@ -1208,11 +1204,6 @@ def unregister_props():
     if draw_handle:
         bpy.types.SpaceView3D.draw_handler_remove(draw_handle, 'WINDOW')
         draw_handle = None
-
-    """
-    if draw_stuff_pre_update in bpy.app.handlers.scene_update_pre:
-        bpy.app.handlers.scene_update_pre.remove(draw_stuff_pre_update)
-    """
 
     if update_collision_flag_ui_properties in bpy.app.handlers.scene_update_post:
         bpy.app.handlers.scene_update_post.remove(update_collision_flag_ui_properties)

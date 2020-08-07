@@ -987,14 +987,14 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
     def draw(self, context):
         self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
         if self.generate_sky:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "skybox_name")
         self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
         self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
@@ -1004,7 +1004,7 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().prop(self, "max_texture_size")
         row2 = box.row()
         row2.column().prop(self, "max_texture_base_tex", toggle=True)
@@ -1080,13 +1080,13 @@ class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
         self.layout.row().prop(self, "model_type", expand=True)
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().prop(self, "max_texture_size")
         row2 = box.row()
         row2.column().prop(self, "max_texture_base_tex", toggle=True)
@@ -1160,14 +1160,14 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
     def draw(self, context):
         self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
         if self.generate_sky:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "skybox_name")
         self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
         self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
@@ -1177,7 +1177,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().prop(self, "max_texture_size")
         row2 = box.row()
         row2.column().prop(self, "max_texture_base_tex", toggle=True)
@@ -1253,13 +1253,13 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
         self.layout.row().prop(self, "model_type", expand=True)
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().prop(self, "max_texture_size")
         row2 = box.row()
         row2.column().prop(self, "max_texture_base_tex", toggle=True)
@@ -1334,14 +1334,14 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
     def draw(self, context):
         self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
         if self.generate_sky:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "skybox_name")
         self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
         self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
@@ -1350,7 +1350,7 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().prop(self, "max_texture_size")
         row2 = box.row()
         row2.column().prop(self, "max_texture_base_tex", toggle=True)
@@ -1421,13 +1421,13 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(self, "autosplit_faces_per_subobject")
             box.row().prop(self, "autosplit_max_radius")
         self.layout.row().prop(self, "model_type", expand=True)
         self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
         self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().prop(self, "max_texture_size")
         row2 = box.row()
         row2.column().prop(self, "max_texture_base_tex", toggle=True)
@@ -1461,7 +1461,7 @@ class THUGExportTools(bpy.types.Panel):
     def draw(self, context):
         if not context.scene: return
         scene = context.scene
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().operator(THUGQuickExport.bl_idname, text=THUGQuickExport.bl_label, icon='PACKAGE')
             
             

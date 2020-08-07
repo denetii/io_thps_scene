@@ -358,7 +358,7 @@ def _thug_object_settings_draw(self, context):
         elif ob.thug_triggerscript_props.template_name == "Custom":
             box.row().prop_search(ob.thug_triggerscript_props, "custom_name", 
                         context.window_manager.thug_all_nodes, "scripts", icon='SCRIPT' )
-            box.row().operator(THUGCreateTriggerScript.bl_idname, THUGCreateTriggerScript.bl_label)
+            box.row().operator(THUGCreateTriggerScript.bl_idname, text=THUGCreateTriggerScript.bl_label)
         elif ob.thug_triggerscript_props.template_name == "Template":
             box.row().prop_search(ob.thug_triggerscript_props, "custom_name", 
                         context.window_manager.thug_all_nodes, "templates", icon='SCRIPT' )
@@ -368,7 +368,7 @@ def _thug_object_settings_draw(self, context):
         # context.window_manager.thug_rail_objects = [obj for obj in context.scene.objects if obj.type == "CURVE"]
         if ob.thug_path_type == "Rail":
             self.layout.row().prop(ob, "thug_rail_terrain_type")
-            self.layout.row().operator(AutoRailMesh.bl_idname, AutoRailMesh.bl_label)
+            self.layout.row().operator(AutoRailMesh.bl_idname, text=AutoRailMesh.bl_label)
             
         self.layout.row().prop_search(
             ob, "thug_rail_connects_to",

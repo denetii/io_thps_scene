@@ -1901,11 +1901,11 @@ def lightmap_group_exists(self, context, use_report=True):
         return False
     
 def register_props_bake():
-    bpy.types.Scene.lightmap_view: EnumProperty(items=(
+    bpy.types.Scene.lightmap_view = EnumProperty(items=(
         ("DEFAULT", "Default", "Default view"),
         ("LIGHTMAP", "Lightmap Only", "Shows only the lightmap textures/vertex colors"),
         ), name="View Mode", default="DEFAULT", update=change_lightmap_view)
-    bpy.types.Scene.thug_lightmap_scale: EnumProperty(
+    bpy.types.Scene.thug_lightmap_scale = EnumProperty(
         name="Lightmap Scale",
         items=[
             ("0.25", "0.25", ""),
@@ -1916,21 +1916,21 @@ def register_props_bake():
             ("8", "8", "")],
         default="1", 
         description="Scales the resolution of all lightmaps by the specified factor")
-    bpy.types.Scene.thug_lightmap_uglymode: BoolProperty(
+    bpy.types.Scene.thug_lightmap_uglymode = BoolProperty(
         name="Performance Mode",
         default=False, 
         description="Disable all Cycles materials when baking. Bakes faster, but with much less accuracy")
-    bpy.types.Scene.thug_lightmap_clamp: FloatProperty(
+    bpy.types.Scene.thug_lightmap_clamp = FloatProperty(
         name="Shadow Intensity",
         description="Controls the maximum intensity of shadowed areas. Reduce in low-light scenes if you need to improve visibility",
         min=0, max=1.0, default=1.0)
-    bpy.types.Scene.thug_lightmap_color: FloatVectorProperty(name="Ambient Color",
+    bpy.types.Scene.thug_lightmap_color = FloatVectorProperty(name="Ambient Color",
                        subtype='COLOR',
                        default=(1.0, 1.0, 1.0, 1.0),
                        size=4,
                        min=0.0, max=1.0,
                        description="Lightmaps are baked onto a surface of this color")
-    bpy.types.Scene.thug_bake_type: EnumProperty(
+    bpy.types.Scene.thug_bake_type = EnumProperty(
         name="Bake Type",
         items=[
             ("LIGHT", "Lighting Only (Cycles)", "(Uses the Cycles render engine) Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting"),
@@ -1944,7 +1944,7 @@ def register_props_bake():
             ],
         default="LIGHT_BI", 
         description="Type of bakes to use for this scene")
-    bpy.types.Scene.thug_bake_slot: EnumProperty(
+    bpy.types.Scene.thug_bake_slot = EnumProperty(
         name="Bake Slot",
         items=[
             ("DAY", "Day (Default)", "Bakes lighting into the Day TOD slot"),
@@ -1954,11 +1954,11 @@ def register_props_bake():
         default="DAY", 
         description="(Underground+ 1.5+ only) TOD slot to bake lighting into. Multiple TOD bakes are only supported by the new material system", update=change_bake_slot)
         
-    bpy.types.Scene.thug_bake_automargin: BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings")                       
-    bpy.types.Scene.thug_bake_force_remake: BoolProperty(name="Force new UVs", default=False, description="Always discards and recreates the lightmap UVs. Slower, use only as a shortcut if you are making changes to meshes or need to fix UV issues")                       
-    bpy.types.Scene.thug_bake_pad_uvs: BoolProperty(name="Pad UVs", default=True, description="Adds a 'safe zone' to the edges of the UV map. Use if you are experiencing problems with seams/gaps in bake results")                       
+    bpy.types.Scene.thug_bake_automargin = BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings")                       
+    bpy.types.Scene.thug_bake_force_remake = BoolProperty(name="Force new UVs", default=False, description="Always discards and recreates the lightmap UVs. Slower, use only as a shortcut if you are making changes to meshes or need to fix UV issues")                       
+    bpy.types.Scene.thug_bake_pad_uvs = BoolProperty(name="Pad UVs", default=True, description="Adds a 'safe zone' to the edges of the UV map. Use if you are experiencing problems with seams/gaps in bake results")                       
     
-    bpy.types.Object.thug_lightmap_resolution: EnumProperty(
+    bpy.types.Object.thug_lightmap_resolution = EnumProperty(
         name="Lightmap Resolution",
         items=[
             ("16", "16", ""),
@@ -1973,7 +1973,7 @@ def register_props_bake():
             ("8192", "8192", "")],
         default="128", 
         description="Controls the resolution (squared) of baked lightmaps")
-    bpy.types.Object.thug_lightmap_quality: EnumProperty(
+    bpy.types.Object.thug_lightmap_quality = EnumProperty(
         name="Lightmap Quality",
         items=[
             ("Draft", "Draft", ""),
@@ -1984,7 +1984,7 @@ def register_props_bake():
             ("Custom", "Custom", "Uses existing Cycles render settings")],
         default="Preview", 
         description="Preset controls for the bake quality.")
-    bpy.types.Object.thug_lightmap_type: EnumProperty(
+    bpy.types.Object.thug_lightmap_type = EnumProperty(
         name="UV Type",
         items=[
             ("Lightmap", "Lightmap", "Lightmap pack with preset margins"),
@@ -1992,10 +1992,10 @@ def register_props_bake():
         default="Lightmap", 
         description="Determines the type of UV unwrapping done on the object for the bake.")
     
-    bpy.types.Object.thug_lightmap_merged_objects: CollectionProperty(type=THUGMergedObjects)
-    bpy.types.Object.thug_lightmap_group_id: IntProperty(default=-1)
-    bpy.types.Scene.thug_lightmap_groups: CollectionProperty(type=THUGLightmapGroup)
-    bpy.types.Scene.thug_lightmap_groups_index: IntProperty()
+    bpy.types.Object.thug_lightmap_merged_objects = CollectionProperty(type=THUGMergedObjects)
+    bpy.types.Object.thug_lightmap_group_id = IntProperty(default=-1)
+    bpy.types.Scene.thug_lightmap_groups = CollectionProperty(type=THUGLightmapGroup)
+    bpy.types.Scene.thug_lightmap_groups_index = IntProperty()
         
 # CLASSES
 #############################################
@@ -2887,17 +2887,17 @@ class THUGLightingTools(bpy.types.Panel):
                 box.row().prop(ob, "thug_lightmap_quality")
                 
             tmp_row = box.row().split()
-            tmp_row.column().operator(BakeLightmaps.bl_idname, text=BakeLightmaps.bl_label, icon='LIGHTPAINT')
-            tmp_row.column().operator(UnBakeLightmaps.bl_idname, text=UnBakeLightmaps.bl_label, icon='SMOOTH')
+            tmp_row.column().operator(BakeLightmaps.bl_idname, text=BakeLightmaps.bl_label, icon='IMAGE')
+            tmp_row.column().operator(UnBakeLightmaps.bl_idname, text=UnBakeLightmaps.bl_label, icon='SHADING_RENDERED')
             
             
         elif ob.type == 'EMPTY' and ob.thug_empty_props and ob.thug_empty_props.empty_type in ['CubemapProbe','LightProbe']:
             box = self.layout.box().column(True)
             tmp_row = box.row().split()
-            tmp_row.column().operator(RenderCubemaps.bl_idname, text=RenderCubemaps.bl_label, icon='MAT_SPHERE_SKY')
+            tmp_row.column().operator(RenderCubemaps.bl_idname, text=RenderCubemaps.bl_label, icon='LIGHTPROBE_CUBEMAP')
 
-        if context.space_data.viewport_shade == 'TEXTURED':
-            self.layout.row().prop(context.scene, "lightmap_view", expand=False)
+        #if context.space_data.viewport_shade == 'TEXTURED':
+        #    self.layout.row().prop(context.scene, "lightmap_view", expand=False)
             
 class THUGSceneLightingTools(bpy.types.Panel):
     bl_label = "TH Lighting Settings"
@@ -2942,8 +2942,8 @@ class THUGSceneLightingTools(bpy.types.Panel):
         row.template_list("UI_UL_list", "template_list_controls", scene,
                           "thug_lightmap_groups", scene, "thug_lightmap_groups_index", rows=2, maxrows=8)
         col = row.column(align=True)
-        col.operator("scene.thug_bake_add_lightmap_group", icon='ZOOMIN', text="")
-        col.operator("scene.thug_bake_del_lightmap_group", icon='ZOOMOUT', text="")
+        col.operator("scene.thug_bake_add_lightmap_group", icon='ADD', text="")
+        col.operator("scene.thug_bake_del_lightmap_group", icon='REMOVE', text="")
 
         row = self.layout.row(align=True)
 

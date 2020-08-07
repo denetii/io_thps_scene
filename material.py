@@ -769,7 +769,7 @@ def _material_pass_settings_draw(self, context):
     box.row().prop(pass_props, 'has_animated_texture')
     
     if pass_props.has_uv_wibbles:
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().prop(pass_props.uv_wibbles, "uv_velocity")
         box.row().prop(pass_props.uv_wibbles, "uv_frequency")
         box.row().prop(pass_props.uv_wibbles, "uv_amplitude")
@@ -778,7 +778,7 @@ def _material_pass_settings_draw(self, context):
         at = pass_props.animated_texture
 
         box = self.layout.box()
-        col = box.column(True)
+        col = box.column(align=True)
         col.prop(at, "period")
         col.prop(at, "iterations")
         col.prop(at, "phase")
@@ -817,7 +817,7 @@ def _material_settings_draw(self, context):
     if gps.grassify:
         box = self.layout.box()
         row = box.row()
-        col = row.column(True)
+        col = row.column(align=True)
         
         col.prop_search(gps, "source_material", bpy.data, "materials", text="")
             
@@ -828,7 +828,7 @@ def _material_settings_draw(self, context):
         row.operator("object.thug_add_grass_texture", text="Add")
         row.operator("object.thug_remove_grass_texture", text="Remove")
         row = box.row()
-        col = row.column(True)
+        col = row.column(align=True)
         col.template_list("THUGGrassTextureUIList", "", gps, "grass_textures", gps, "texture_index", rows=1)
         
         row = box.row(True)
@@ -1076,7 +1076,7 @@ class THUGGrassEffect(bpy.types.PropertyGroup):
 #----------------------------------------------------------------------------------
 class THUGGrassTextureUIList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        box = layout.row().column(True)
+        box = layout.row().column(align=True)
         box.template_ID(item, "tex_image", open="image.open")
         
 #----------------------------------------------------------------------------------
@@ -1166,33 +1166,6 @@ class THUGMaterialSettingsTools(bpy.types.Panel):
 
     def draw(self, context):
         if not context.object: return
-        ob = context.object
-
-        rows = 1
-        is_sortable = len(ob.material_slots) > 1
-        if is_sortable:
-            rows = 4
-
-        row = self.layout.row()
-        row.template_list("MATERIAL_UL_matslots", "", ob, "material_slots", ob, "active_material_index", rows=rows)
-        col = row.column(align=True)
-        col.operator("object.material_slot_add", icon='ZOOMIN', text="")
-        col.operator("object.material_slot_remove", icon='ZOOMOUT', text="")
-        col.menu("MATERIAL_MT_specials", icon='DOWNARROW_HLT', text="")
-        if is_sortable:
-            col.separator()
-            col.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
-            col.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
-
-        self.layout.template_ID(ob, "active_material", new="material.new")
-
-        if ob.mode == 'EDIT':
-            row = self.layout.row(align=True)
-            row.operator("object.material_slot_assign", text="Assign")
-            row.operator("object.material_slot_select", text="Select")
-            row.operator("object.material_slot_deselect", text="Deselect")
-
-        # self.layout.template_preview(context.object.active_material)
         _material_settings_draw(self, context)
 
 #----------------------------------------------------------------------------------
@@ -1205,36 +1178,6 @@ class THUGMaterialSettings(bpy.types.Panel):
     def draw(self, context):
         _material_settings_draw(self, context)
 #----------------------------------------------------------------------------------
-class THUGMaterialPassSettingsTools(bpy.types.Panel):
-    bl_label = "TH Material Pass Tools"
-    bl_region_type = "UI"
-    bl_space_type = "VIEW_3D"
-    bl_category = "THUG Tools"
-
-    @classmethod
-    def poll(self, context):
-        return context.object and context.preferences.addons[ADDON_NAME].preferences.material_pass_settings_tools
-
-    def draw(self, context):
-        from bl_ui.properties_material import active_node_mat
-        mat = context.object.active_material
-        if not mat:
-            self.layout.label(text="You need a material to configure it's passes.")
-            return
-        idblock = active_node_mat(mat)
-        self.layout.template_list("TEXTURE_UL_texslots", "", idblock, "texture_slots", idblock, "active_texture_index", rows=2)
-        self.layout.template_ID(idblock, "active_texture", new="texture.new")
-        _material_pass_settings_draw(self, context)
-
-#----------------------------------------------------------------------------------
-class THUGMaterialPassSettings(bpy.types.Panel):
-    bl_label = "TH Material Pass Settings"
-    bl_region_type = "WINDOW"
-    bl_space_type = "PROPERTIES"
-    bl_context = "texture"
-
-    def draw(self, context):
-        _material_pass_settings_draw(self, context)
 
 def set_ugplus_materialslot(self, context):
     if self.tex_image:

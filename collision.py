@@ -274,7 +274,7 @@ class THUGCollisionMeshTools(bpy.types.Panel):
             collision_flag_layer = bm.faces.layers.int.get("collision_flags")
             terrain_type_layer = bm.faces.layers.int.get("terrain_type")
             if any_face_selected:
-                box = self.layout.box().column(True)
+                box = self.layout.box().column(align=True)
                 tmp_row = box.split()
                 col = tmp_row.column()
                 for idx, ff in enumerate(SETTABLE_FACE_FLAGS):
@@ -286,14 +286,14 @@ class THUGCollisionMeshTools(bpy.types.Panel):
                 self.layout.label(text="No faces selected.")
 
             if any_face_selected or any(edge for edge in bm.edges if edge.select):
-                box = self.layout.box().column(True)
+                box = self.layout.box().column(align=True)
                 tmp_row = box.split()
                 col = tmp_row.column()
-                col.operator(MarkAutorail.bl_idname)
+                col.operator("mesh.thug_mark_autorail")
                 col = tmp_row.column()
-                col.operator(ClearAutorail.bl_idname)
+                col.operator("mesh.thug_clear_autorail")
                 box.row().prop(context.window_manager, "thug_autorail_terrain_type")
-                box.row().operator(ExtractRail.bl_idname)
+                box.row().operator("object.thug_extract_rail")
             else:
                 self.layout.label(text="No edges selected.")
         elif False and context.mode == "OBJECT":
