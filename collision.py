@@ -283,7 +283,7 @@ class THUGCollisionMeshTools(bpy.types.Panel):
                     col.prop(context.window_manager, "thug_face_" + ff, toggle=True)
                 self.layout.prop(context.window_manager, "thug_face_terrain_type")
             else:
-                self.layout.label("No faces selected.")
+                self.layout.label(text="No faces selected.")
 
             if any_face_selected or any(edge for edge in bm.edges if edge.select):
                 box = self.layout.box().column(True)
@@ -295,10 +295,10 @@ class THUGCollisionMeshTools(bpy.types.Panel):
                 box.row().prop(context.window_manager, "thug_autorail_terrain_type")
                 box.row().operator(ExtractRail.bl_idname)
             else:
-                self.layout.label("No edges selected.")
+                self.layout.label(text="No edges selected.")
         elif False and context.mode == "OBJECT":
-            self.layout.row().label("Object: {}".format(context.object.type))
-            self.layout.row().label("Object flags: {}".format(context.object.thug_col_obj_flags))
+            self.layout.row().label(text="Object: {}".format(context.object.type))
+            self.layout.row().label(text="Object flags: {}".format(context.object.thug_col_obj_flags))
 
         elif context.mode == "EDIT_CURVE" and context.object.type == "CURVE":
             if (context.object.type == "CURVE" and

@@ -645,8 +645,8 @@ class THUG2TexToImages(bpy.types.Operator):
     bl_label = "THPS Xbox/PC .tex"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
     def execute(self, context):
         filename = self.filename
@@ -675,14 +675,14 @@ class THUGImgToImages(bpy.types.Operator, ImportHelper):
     bl_idname = "io.thug_img"
     bl_label = "THPS/THUG .img"
     bl_options = {'PRESET', 'UNDO'}
-
-    filter_glob = StringProperty(default="*.img;*.img.xbx;*img.dat", options={"HIDDEN"})
     filename_ext = ".img"
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+
+    filter_glob: StringProperty(default="*.img;*.img.xbx;*img.dat", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
     # Selected files
-    files = CollectionProperty(type=bpy.types.PropertyGroup)
+    files: CollectionProperty(type=bpy.types.PropertyGroup)
     
     def execute(self, context):
         filename = self.filename

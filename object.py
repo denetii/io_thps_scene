@@ -317,9 +317,9 @@ def _thug_object_settings_draw(self, context):
                 self.layout.row().prop(ob, "thug_cluster_name")
                 if not is_string_clean(ob.thug_cluster_name):
                     box = self.layout.box().column(True)
-                    box.label("Bad cluster name!", icon="ERROR")
-                    box.label("Only valid characters are small and large letters")
-                    box.label("digits, and underscores.")
+                    box.label(text="Bad cluster name!", icon="ERROR")
+                    box.label(text="Only valid characters are small and large letters")
+                    box.label(text="digits, and underscores.")
                     
         # New template system below!
         box = self.layout.box().column()

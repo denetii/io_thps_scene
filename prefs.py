@@ -73,15 +73,15 @@ def get_game_asset_paths(context):
 class THUGAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = ADDON_NAME
 
-    base_files_dir = StringProperty(
+    base_files_dir: StringProperty(
         name="Base files directory",
         subtype='DIR_PATH',
         default="D:\\thug_tools\\",
         )
 
-    line_width = FloatProperty(name="Line Width", min=0, max=15, default=10, description="Size of autorail lines displayed in the viewport.")
+    line_width: FloatProperty(name="Line Width", min=0, max=15, default=10, description="Size of autorail lines displayed in the viewport.")
 
-    autorail_edge_color = FloatVectorProperty(
+    autorail_edge_color: FloatVectorProperty(
         name="Mesh Rail Edge Color",
         size=4,
         min=0.0,
@@ -89,7 +89,7 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         subtype="COLOR",
         default=(1.0, 0.0, 0.0, 1.0))
 
-    rail_end_connection_color = FloatVectorProperty(
+    rail_end_connection_color: FloatVectorProperty(
         name="Rail End Connection Color",
         size=4,
         min=0.0,
@@ -97,7 +97,7 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         subtype="COLOR",
         default=(1.0, 1.0, 0.0, 1.0))
 
-    bad_face_color = FloatVectorProperty(
+    bad_face_color: FloatVectorProperty(
         name="Bad Face Color",
         size=4,
         min=0.0,
@@ -105,7 +105,7 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         subtype="COLOR",
         default=(1.0, 0.0, 1.0, 0.5))
 
-    vert_face_color = FloatVectorProperty(
+    vert_face_color: FloatVectorProperty(
         name="Vert Face Color",
         size=4,
         min=0.0,
@@ -113,7 +113,7 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         subtype="COLOR",
         default=(0.0, 0.0, 1.0, 0.5))
 
-    wallridable_face_color = FloatVectorProperty(
+    wallridable_face_color: FloatVectorProperty(
         name="Wallridable Face Color",
         size=4,
         min=0.0,
@@ -121,7 +121,7 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         subtype="COLOR",
         default=(0.0, 1.0, 1.0, 0.5))
 
-    trigger_face_color = FloatVectorProperty(
+    trigger_face_color: FloatVectorProperty(
         name="Trigger Face Color",
         size=4,
         min=0.0,
@@ -129,7 +129,7 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         subtype="COLOR",
         default=(0.0, 1.0, 0.0, 0.5))
 
-    non_collidable_face_color = FloatVectorProperty(
+    non_collidable_face_color: FloatVectorProperty(
         name="Non Collidable Face Color",
         size=4,
         min=0.0,
@@ -137,29 +137,29 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         subtype="COLOR",
         default=(1.0, 1.0, 0.0, 0.5))
 
-    mix_face_colors = BoolProperty(name="Mix Face Colors", default=False)
-    show_bad_face_colors = BoolProperty(name="Highlight Bad Faces", default=True,
+    mix_face_colors: BoolProperty(name="Mix Face Colors", default=False)
+    show_bad_face_colors: BoolProperty(name="Highlight Bad Faces", default=True,
         description="Colorize faces with bad collision flag combinations using Bad Face Color.")
 
-    object_settings_tools = BoolProperty(name="Show Object Settings in the Tools Tab", default=True)
-    material_settings_tools = BoolProperty(name="Show Material Settings in the Tools Tab", default=True)
-    material_pass_settings_tools = BoolProperty(name="Show Material Pass Settings in the Tools Tab", default=True)
+    object_settings_tools: BoolProperty(name="Show Object Settings in the Tools Tab", default=True)
+    material_settings_tools: BoolProperty(name="Show Material Settings in the Tools Tab", default=True)
+    material_pass_settings_tools: BoolProperty(name="Show Material Pass Settings in the Tools Tab", default=True)
 
     # New settings as of io_thps_scene v1.2
-    path_bevel_size = FloatProperty(name="Rail/Waypoint path size", min=0.1, max=128, default=1, description="Default size displayed in the viewport for all rail, ladder, and waypoint paths.")
-    game_data_dir_thug1 = StringProperty(
+    path_bevel_size: FloatProperty(name="Rail/Waypoint path size", min=0.1, max=128, default=1, description="Default size displayed in the viewport for all rail, ladder, and waypoint paths.")
+    game_data_dir_thug1: StringProperty(
         name="Game directory - THUG1",
         subtype='DIR_PATH',
         default="C:\\",
         description="Path to your game files for THUG1 - select the 'Data' folder."
         )
-    game_data_dir_thug2 = StringProperty(
+    game_data_dir_thug2: StringProperty(
         name="Game directory - THUG2",
         subtype='DIR_PATH',
         default="C:\\",
         description="Path to your game files for THUG2 (Base game, NOT the THUG PRO files) - select the 'Data' folder."
         )
-    game_data_dir_thugpro = StringProperty(
+    game_data_dir_thugpro: StringProperty(
         name="Game directory - THUG PRO",
         subtype='DIR_PATH',
         default="C:\\",

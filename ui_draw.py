@@ -1,5 +1,8 @@
 import bpy
+import bgl
 from bpy.props import *
+from mathutils import Vector
+
 from . import_thps4 import THPS4ScnToScene, THPS4ColToScene
 from . import_thug1 import THUG1ScnToScene
 from . import_thug2 import THUG2ScnToScene, THUG2ColToScene
@@ -8,18 +11,18 @@ from . import_thps2 import THPS2PsxToScene
 from . tex import THUGImgToImages
 from . qb import THUGImportLevelQB
 from . skeleton import THUGImportSkeleton
+
 from . scene_props import *
-import bgl
 from . constants import *
 from . material import *
+from . constants import *
 from . collision import *
 from . export_thug1 import *
 from . export_thug2 import *
 from . export_shared import *
 from . import_nodes import *
 from . presets import *
-from . import script_template
-from mathutils import Vector
+from . script_template import *
 
 # PROPERTIES
 #############################################
@@ -239,17 +242,17 @@ def add_menu_func(self, context):
     self.layout.menu(THUGPresetsMenu.bl_idname, text="THUG", icon='PLUGIN')
 #----------------------------------------------------------------------------------
 def register_menus():
-    bpy.types.INFO_MT_file_import.append(import_menu_func)
-    bpy.types.INFO_MT_file_export.append(export_menu_func)
+    bpy.types.TOPBAR_MT_file_import.append(import_menu_func)
+    bpy.types.TOPBAR_MT_file_export.append(export_menu_func)
     addPresetNodes()
     addPresetMesh()
-    bpy.types.INFO_MT_add.append(add_menu_func)
+    bpy.types.VIEW3D_MT_mesh_add.append(add_menu_func)
     script_template.init_templates()
 #----------------------------------------------------------------------------------
 def unregister_menus():
-    bpy.types.INFO_MT_file_import.remove(import_menu_func)
-    bpy.types.INFO_MT_file_export.remove(export_menu_func)
-    bpy.types.INFO_MT_add.remove(add_menu_func)
+    bpy.types.TOPBAR_MT_file_import.remove(import_menu_func)
+    bpy.types.TOPBAR_MT_file_export.remove(export_menu_func)
+    bpy.types.VIEW3D_MT_mesh_add.remove(add_menu_func)
     clearPresetNodes()
     clearPresetMesh()
 

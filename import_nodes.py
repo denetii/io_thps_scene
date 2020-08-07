@@ -389,7 +389,7 @@ def import_nodearray(gamemode):
                 
             # Create level lights - these are point lamps and not empties
             if node["Class"] == "LevelLight":
-                lamp_data = bpy.data.lamps.new(name="Lamp_" + node["Name"], type='POINT')
+                lamp_data = bpy.data.lights.new(name="Lamp_" + node["Name"], type='POINT')
                 if "Brightness" in node:
                     if node["Brightness"] != 0:
                         lamp_data.energy = float(node["Brightness"])
@@ -962,11 +962,11 @@ def import_triggerscripts(should_replace = False):
 class THUGImportTriggerScripts(bpy.types.Operator):
     bl_idname = "io.import_thug_triggerscripts"
     bl_label = "Import TriggerScripts"
-    import_type = EnumProperty(items=(
+    import_type: EnumProperty(items=(
         ("ScriptsOnly", "Scripts only", "Copies scripts from THUG_SCRIPTS into individual text blocks (the new format)."),
         ("ScriptsAndObjects", "Scripts and objects", "Also updates object references to script names."),
         ), name="Import type", default="ScriptsOnly")
-    replace_scripts = BoolProperty(name="Replace Existing Scripts", default=False, description="Existing scripts with the same name will be replaced.")
+    replace_scripts: BoolProperty(name="Replace Existing Scripts", default=False, description="Existing scripts with the same name will be replaced.")
     # bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -1013,7 +1013,7 @@ class THUGImportNodeArray(bpy.types.Operator):
     bl_idname = "io.import_thug_nodearray"
     bl_label = "Import NodeArray"
     # bl_options = {'REGISTER', 'UNDO'}
-    game_mode = EnumProperty(items=(
+    game_mode: EnumProperty(items=(
         ("THPS3", "THPS3", ""),
         ("THPS4", "THPS4", ""),
         ("THUG", "THUG+", "THUG and later games."),

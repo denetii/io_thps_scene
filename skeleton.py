@@ -101,10 +101,10 @@ class THUGImportSkeleton(bpy.types.Operator):
     bl_label = "THUG Skeleton (.ske.xbx)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.ske.xbx", options={"HIDDEN"})
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
-    set_rotation = BoolProperty(name="Set Rotation", default=False)
+    filter_glob: StringProperty(default="*.ske.xbx", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
+    set_rotation: BoolProperty(name="Set Rotation", default=False)
 
     def execute(self, context):
         import os

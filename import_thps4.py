@@ -661,12 +661,12 @@ class THPS4ScnToScene(bpy.types.Operator):
     bl_label = "THPS4 Scene (.scn/.skin/.mdl)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.skin;*.scn;*.mdl;*skin.dat;*mdl.dat;*scn.dat", options={"HIDDEN"})
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
-    load_tex = BoolProperty(name="Load the tex file", default=True)
-    import_custom_normals = BoolProperty(name="Import custom normals", default=True)
-    is_desa = BoolProperty(name="Is DESA Level", default=False, description="Use when importing scenes from DESA (the format is slightly different)")
+    filter_glob: StringProperty(default="*.skin;*.scn;*.mdl;*skin.dat;*mdl.dat;*scn.dat", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
+    load_tex: BoolProperty(name="Load the tex file", default=True)
+    import_custom_normals: BoolProperty(name="Import custom normals", default=True)
+    is_desa: BoolProperty(name="Is DESA Level", default=False, description="Use when importing scenes from DESA (the format is slightly different)")
 
     def execute(self, context):
         filename = self.filename
@@ -699,9 +699,9 @@ class THPS4ColToScene(bpy.types.Operator):
     bl_label = "THPS4 Collision (.col, col.dat)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.col;*col.dat", options={"HIDDEN"})
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filter_glob: StringProperty(default="*.col;*col.dat", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
     def execute(self, context):
         filename = self.filename

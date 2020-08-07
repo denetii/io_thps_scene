@@ -930,50 +930,50 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
 
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
-    always_export_normals = BoolProperty(name="Export normals", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack",
+    always_export_normals: BoolProperty(name="Export normals", default=False)
+    use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+    speed_hack: BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All",
+    autosplit_everything: BoolProperty(name="Autosplit All",
         description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
-    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(name="Max Radius",
+    autosplit_max_radius: FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    pack_pre = BoolProperty(name="Pack files into .prx", default=True)
-    is_park_editor = BoolProperty(name="Is Park Editor",
+    pack_pre: BoolProperty(name="Pack files into .prx", default=True)
+    is_park_editor: BoolProperty(name="Is Park Editor",
         description="Use this option when exporting a park editor dictionary.", default=False)
-    generate_tex_file = BoolProperty(name="Generate a .tex file", default=True)
-    generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
-    generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
-    generate_col_file = BoolProperty(name="Generate a .col file", default=True)
-    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
+    generate_tex_file: BoolProperty(name="Generate a .tex file", default=True)
+    generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
+    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_col_file: BoolProperty(name="Generate a .col file", default=True)
+    generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
 
-#    filepath = StringProperty()
-    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
-    export_scale = FloatProperty(name="Export scale", default=1)
+#    filepath: StringProperty()
+    skybox_name: StringProperty(name="Skybox name", default="THUG_Sky")
+    export_scale: FloatProperty(name="Export scale", default=1)
     
-    max_texture_size = IntProperty(name="Max Texture Size"
+    max_texture_size: IntProperty(name="Max Texture Size"
         , min=0,max=8192,default=0
         , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
     )
-    max_texture_base_tex = BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex = BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
+    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
+    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
     
-    mipmap_offset = IntProperty(
+    mipmap_offset: IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
 
     def execute(self, context):
         return do_export(self, context, "THPS4")
@@ -1021,49 +1021,49 @@ class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
 
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
-    always_export_normals = BoolProperty(name="Export normals", default=False)
-    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    use_vc_hack = BoolProperty(name="Vertex color hack",
+    always_export_normals: BoolProperty(name="Export normals", default=False)
+    is_park_editor: BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
+    use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+    speed_hack: BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All"
+    autosplit_everything: BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
-    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(name="Max Radius",
+    autosplit_max_radius: FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    model_type = EnumProperty(items = (
+    model_type: EnumProperty(items = (
         ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
         ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
     ), name="Model Type", default="skin")
-    generate_scripts_files = BoolProperty(
+    generate_scripts_files: BoolProperty(
         name="Generate scripts",
         default=True)
-    export_scale = FloatProperty(name="Export scale", default=1)
+    export_scale: FloatProperty(name="Export scale", default=1)
     
-    max_texture_size = IntProperty(name="Max Texture Size"
+    max_texture_size: IntProperty(name="Max Texture Size"
         , min=0,max=8192,default=0
         , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
     )
-    max_texture_base_tex = BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex = BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
+    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
+    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
     
-    mipmap_offset = IntProperty(
+    mipmap_offset: IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
         
     def execute(self, context):
         return do_export_model(self, context, "THPS4")
@@ -1103,50 +1103,50 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
 
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
-    always_export_normals = BoolProperty(name="Export normals", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack",
+    always_export_normals: BoolProperty(name="Export normals", default=False)
+    use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+    speed_hack: BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All",
+    autosplit_everything: BoolProperty(name="Autosplit All",
         description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
-    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(name="Max Radius",
+    autosplit_max_radius: FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    pack_pre = BoolProperty(name="Pack files into .prx", default=True)
-    is_park_editor = BoolProperty(name="Is Park Editor",
+    pack_pre: BoolProperty(name="Pack files into .prx", default=True)
+    is_park_editor: BoolProperty(name="Is Park Editor",
         description="Use this option when exporting a park editor dictionary.", default=False)
-    generate_tex_file = BoolProperty(name="Generate a .tex file", default=True)
-    generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
-    generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
-    generate_col_file = BoolProperty(name="Generate a .col file", default=True)
-    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
+    generate_tex_file: BoolProperty(name="Generate a .tex file", default=True)
+    generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
+    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_col_file: BoolProperty(name="Generate a .col file", default=True)
+    generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
 
-#    filepath = StringProperty()
-    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
-    export_scale = FloatProperty(name="Export scale", default=1)
+#    filepath: StringProperty()
+    skybox_name: StringProperty(name="Skybox name", default="THUG_Sky")
+    export_scale: FloatProperty(name="Export scale", default=1)
     
-    max_texture_size = IntProperty(name="Max Texture Size"
+    max_texture_size: IntProperty(name="Max Texture Size"
         , min=0,max=8192,default=0
         , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
     )
-    max_texture_base_tex = BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex = BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
+    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
+    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
     
-    mipmap_offset = IntProperty(
+    mipmap_offset: IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
 
     def execute(self, context):
         return do_export(self, context, "THUG1")
@@ -1194,49 +1194,49 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
 
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
-    always_export_normals = BoolProperty(name="Export normals", default=False)
-    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    use_vc_hack = BoolProperty(name="Vertex color hack",
+    always_export_normals: BoolProperty(name="Export normals", default=False)
+    is_park_editor: BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
+    use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+    speed_hack: BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All"
+    autosplit_everything: BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
-    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(name="Max Radius",
+    autosplit_max_radius: FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    model_type = EnumProperty(items = (
+    model_type: EnumProperty(items = (
         ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
         ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
     ), name="Model Type", default="skin")
-    generate_scripts_files = BoolProperty(
+    generate_scripts_files: BoolProperty(
         name="Generate scripts",
         default=True)
-    export_scale = FloatProperty(name="Export scale", default=1)
+    export_scale: FloatProperty(name="Export scale", default=1)
     
-    max_texture_size = IntProperty(name="Max Texture Size"
+    max_texture_size: IntProperty(name="Max Texture Size"
         , min=0,max=8192,default=0
         , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
     )
-    max_texture_base_tex = BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex = BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
+    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
+    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
     
-    mipmap_offset = IntProperty(
+    mipmap_offset: IntProperty(
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
         
     def execute(self, context):
         return do_export_model(self, context, "THUG1")
@@ -1276,51 +1276,51 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
 
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
-    always_export_normals = BoolProperty(name="Export normals", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack",
+    always_export_normals: BoolProperty(name="Export normals", default=False)
+    use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+    speed_hack: BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All"
+    autosplit_everything: BoolProperty(name="Autosplit All"
         , description = "Applies the autosplit setting to all objects in the scene, with default settings."
         , default=False)
-    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(name="Max Radius",
+    autosplit_max_radius: FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    is_park_editor = BoolProperty(name="Is Park Editor",
+    is_park_editor: BoolProperty(name="Is Park Editor",
         description="Use this option when exporting a park editor dictionary.", default=False)
-    pack_pre = BoolProperty(name="Pack files into .prx", default=True)
-    generate_tex_file = BoolProperty(
+    pack_pre: BoolProperty(name="Pack files into .prx", default=True)
+    generate_tex_file: BoolProperty(
         name="Generate a .tex file",
         description="If you have already generated a .tex file, and didn't change/add any new images in meantime, you can uncheck this.", default=True)
-    generate_scn_file = BoolProperty(name="Generate a .scn file", default=True)
-    generate_col_file = BoolProperty(name="Generate a .col file", default=True)
-    generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
-    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
+    generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
+    generate_col_file: BoolProperty(name="Generate a .col file", default=True)
+    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
 
-    skybox_name = StringProperty(name="Skybox name", default="THUG2_Sky")
-    export_scale = FloatProperty(name="Export scale", default=1)
+    skybox_name: StringProperty(name="Skybox name", default="THUG2_Sky")
+    export_scale: FloatProperty(name="Export scale", default=1)
     
-    max_texture_size = IntProperty(name="Max Texture Size"
+    max_texture_size: IntProperty(name="Max Texture Size"
         , min=0,max=8192,default=0
         , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
     )
-    max_texture_base_tex = BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex = BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
+    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
+    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
     
-    mipmap_offset = IntProperty(name="Mipmap offset",
+    mipmap_offset: IntProperty(name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
 
     def execute(self, context):
         return do_export(self, context, "THUG2")
@@ -1367,44 +1367,44 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
 
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
-    always_export_normals = BoolProperty(name="Export normals", default=False)
-    use_vc_hack = BoolProperty(name="Vertex color hack",
+    always_export_normals: BoolProperty(name="Export normals", default=False)
+    use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack = BoolProperty(name="No modifiers (speed hack)",
+    speed_hack: BoolProperty(name="No modifiers (speed hack)",
         description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
-    autosplit_everything = BoolProperty(name="Autosplit All",
+    autosplit_everything: BoolProperty(name="Autosplit All",
         description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
-    autosplit_faces_per_subobject = IntProperty(name="Faces Per Subobject",
+    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
         description="The max amount of faces for every created subobject.",
         default=800, min=50, max=6000)
-    autosplit_max_radius = FloatProperty(name="Max Radius",
+    autosplit_max_radius: FloatProperty(name="Max Radius",
         description="The max radius of for every created subobject.",
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
-    is_park_editor = BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    model_type = EnumProperty(items = (
+    is_park_editor: BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
+    model_type: EnumProperty(items = (
         ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
         ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
     ), name="Model Type", default="skin")
-    generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
-    export_scale = FloatProperty(name="Export scale", default=1)
+    generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
+    export_scale: FloatProperty(name="Export scale", default=1)
     
-    max_texture_size = IntProperty(name="Max Texture Size"
+    max_texture_size: IntProperty(name="Max Texture Size"
         , min=0,max=8192,default=0
         , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
     )
-    max_texture_base_tex = BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex = BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
+    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
+    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
     
-    mipmap_offset = IntProperty(name="Mipmap offset",
+    mipmap_offset: IntProperty(name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap = BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
         
     def execute(self, context):
         return do_export_model(self, context, "THUG2")

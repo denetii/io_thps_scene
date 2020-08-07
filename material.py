@@ -950,17 +950,17 @@ def _material_settings_draw(self, context):
 # PROPERTIES
 #############################################
 class THUGImageProps(bpy.types.PropertyGroup):
-    compression_type = EnumProperty(items=(
+    compression_type: EnumProperty(items=(
         ("DXT1", "DXT1", "DXT1. 1-bit alpha. 1:8 compression for RGBA, 1:6 for RGB"),
         ("DXT5", "DXT5", "DXT5. Full alpha. 1:4 compression")),
     name="Compression Type",
     default="DXT1")
     
-    mip_levels = IntProperty(name="Mip Levels", min=1, max=8, default=0, description="Maximum number of mip levels (0 to use automatic settings)")
+    mip_levels: IntProperty(name="Mip Levels", min=1, max=8, default=0, description="Maximum number of mip levels (0 to use automatic settings)")
     
-    max_size = IntProperty(name="Max Size", min=0, max=16384, default=0, description="Maximum width/height of image allowed during export (0 to disable)")
+    max_size: IntProperty(name="Max Size", min=0, max=16384, default=0, description="Maximum width/height of image allowed during export (0 to disable)")
     
-    img_flags = EnumProperty(items=(
+    img_flags: EnumProperty(items=(
         ("1", "Invert Alpha", "Invert alpha channel on this image"),
         ("2", "Grayscale", "Export as grayscale")
         ),
@@ -1036,16 +1036,16 @@ class THUGAnimatedTextureKeyframesUIList(bpy.types.UIList):
         split.prop_search(item, "image", bpy.data, "images", text="")
 #----------------------------------------------------------------------------------
 class THUGAnimatedTextureKeyframe(bpy.types.PropertyGroup):
-    time = IntProperty(name="Time", min=0)
-    image = StringProperty(name="Image")
+    time: IntProperty(name="Time", min=0)
+    image: StringProperty(name="Image")
 #----------------------------------------------------------------------------------
 class THUGAnimatedTexture(bpy.types.PropertyGroup):
-    period = IntProperty(name="Period")
-    iterations = IntProperty(name="Iterations")
-    phase = IntProperty(name="Phase")
+    period: IntProperty(name="Period")
+    iterations: IntProperty(name="Iterations")
+    phase: IntProperty(name="Phase")
 
-    keyframes = CollectionProperty(type=THUGAnimatedTextureKeyframe)
-    keyframes_index = IntProperty()
+    keyframes: CollectionProperty(type=THUGAnimatedTextureKeyframe)
+    keyframes_index: IntProperty()
 #----------------------------------------------------------------------------------
 def set_thug_grass_texture(self, context):
     if self.tex_image:
@@ -1054,24 +1054,24 @@ def set_thug_grass_texture(self, context):
         self.tex_image_name = ''
 #----------------------------------------------------------------------------------
 class THUGGrassTexture(bpy.types.PropertyGroup):
-    tex_image = PointerProperty(type=bpy.types.Image, update=set_thug_grass_texture)
-    tex_image_name = StringProperty(name="ImageName")
+    tex_image: PointerProperty(type=bpy.types.Image, update=set_thug_grass_texture)
+    tex_image_name: StringProperty(name="ImageName")
 #----------------------------------------------------------------------------------
 class THUGGrassEffect(bpy.types.PropertyGroup):
-    grassify = BoolProperty(name="Grass Effect", description="Use generated grass particles on this material")
+    grassify: BoolProperty(name="Grass Effect", description="Use generated grass particles on this material")
     
-    source_material = StringProperty(name="Source Material")
+    source_material: StringProperty(name="Source Material")
     
-    grass_height = FloatProperty(name="Grass Height", min=0.0, max=1000.0, description="Height of the grass particles")
-    grass_layers = IntProperty(name="Grass Layers", min=0, max=32, description="Number of layers")
-    grass_textures = CollectionProperty(type=THUGGrassTexture)
-    texture_index = IntProperty()
-    grass_index = FloatProperty() # Not user-editable, only generated during export
+    grass_height: FloatProperty(name="Grass Height", min=0.0, max=1000.0, description="Height of the grass particles")
+    grass_layers: IntProperty(name="Grass Layers", min=0, max=32, description="Number of layers")
+    grass_textures: CollectionProperty(type=THUGGrassTexture)
+    texture_index: IntProperty()
+    grass_index: FloatProperty() # Not user-editable, only generated during export
     
-    #uv_velocity = FloatVectorProperty(name="Wind Velocity", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
-    uv_frequency = FloatVectorProperty(name="Wind Factor", size=2, default=(2.0, 0.0), soft_min=-100, soft_max=100)
-    uv_amplitude = FloatVectorProperty(name="Wind Strength", size=2, default=(0.03, 0.0), soft_min=-100, soft_max=100)
-    #uv_phase = FloatVectorProperty(name="Wind Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    #uv_velocity: FloatVectorProperty(name="Wind Velocity", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_frequency: FloatVectorProperty(name="Wind Factor", size=2, default=(2.0, 0.0), soft_min=-100, soft_max=100)
+    uv_amplitude: FloatVectorProperty(name="Wind Strength", size=2, default=(0.03, 0.0), soft_min=-100, soft_max=100)
+    #uv_phase: FloatVectorProperty(name="Wind Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
     
 #----------------------------------------------------------------------------------
 class THUGGrassTextureUIList(bpy.types.UIList):
@@ -1149,10 +1149,10 @@ class RemoveGrassTexture(bpy.types.Operator):
     
 #----------------------------------------------------------------------------------
 class THUGUVWibbles(bpy.types.PropertyGroup):
-    uv_velocity = FloatVectorProperty(name="Velocity", size=2, default=(1.0, 1.0), soft_min=-100, soft_max=100)
-    uv_frequency = FloatVectorProperty(name="Frequency", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
-    uv_amplitude = FloatVectorProperty(name="Amplitude", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
-    uv_phase = FloatVectorProperty(name="Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_velocity: FloatVectorProperty(name="Velocity", size=2, default=(1.0, 1.0), soft_min=-100, soft_max=100)
+    uv_frequency: FloatVectorProperty(name="Frequency", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_amplitude: FloatVectorProperty(name="Amplitude", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    uv_phase: FloatVectorProperty(name="Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
 #----------------------------------------------------------------------------------
 class THUGMaterialSettingsTools(bpy.types.Panel):
     bl_label = "TH Material Settings"
@@ -1219,7 +1219,7 @@ class THUGMaterialPassSettingsTools(bpy.types.Panel):
         from bl_ui.properties_material import active_node_mat
         mat = context.object.active_material
         if not mat:
-            self.layout.label("You need a material to configure it's passes.")
+            self.layout.label(text="You need a material to configure it's passes.")
             return
         idblock = active_node_mat(mat)
         self.layout.template_list("TEXTURE_UL_texslots", "", idblock, "texture_slots", idblock, "active_texture_index", rows=2)
@@ -1243,19 +1243,19 @@ def set_ugplus_materialslot(self, context):
         self.tex_image_name = ''
 #----------------------------------------------------------------------------------
 class UGPlusMaterialSlotProps(bpy.types.PropertyGroup):
-    tex_image = PointerProperty(name="Texture", type=bpy.types.Image, update=set_ugplus_materialslot)
-    tex_image_name = StringProperty(name="ImageName")
-    tex_color = FloatVectorProperty(name="Color",
+    tex_image: PointerProperty(name="Texture", type=bpy.types.Image, update=set_ugplus_materialslot)
+    tex_image_name: StringProperty(name="ImageName")
+    tex_color: FloatVectorProperty(name="Color",
                            subtype='COLOR',
                            default=(1.0, 1.0, 1.0, 1.0),
                            size=4,
                            min=0.0, max=1.0,
                            description="Color used if no texture provided.")
                            
-    has_uv_wibbles = BoolProperty(name="Animate UVs", default=False, description='Animate UVs for this slot.')
-    uv_wibbles = PointerProperty(type=THUGUVWibbles)
+    has_uv_wibbles: BoolProperty(name="Animate UVs", default=False, description='Animate UVs for this slot.')
+    uv_wibbles: PointerProperty(type=THUGUVWibbles)
     
-    blend_mode = EnumProperty(items=(
+    blend_mode: EnumProperty(items=(
         ("vBLEND_MODE_DIFFUSE", "DIFFUSE", "( 0 - 0 ) * 0 + Src"),
         ("vBLEND_MODE_ADD", "ADD", "( Src - 0 ) * Src + Dst"),
         #("vBLEND_MODE_ADD_FIXED", "ADD_FIXED", "( Src - 0 ) * Fixed + Dst"),
@@ -1275,16 +1275,16 @@ class UGPlusMaterialSlotProps(bpy.types.PropertyGroup):
         ("vBLEND_MODE_OVERLAY", "OVERLAY", ""),
         ("vBLEND_MODE_LIGHTMAP", "LIGHTMAP", ""),
     ), name="Blend Mode", default="vBLEND_MODE_DIFFUSE")
-    blend_fixed_alpha = IntProperty(name="Fixed Alpha", min=0, max=255)
+    blend_fixed_alpha: IntProperty(name="Fixed Alpha", min=0, max=255)
     
-    lod_bias = FloatProperty(name="LOD Bias", soft_min=-1.0, soft_max=8.0, default=0.0, description="Bias the mip selection of this texture (-1.0 disables mipmapping)")
+    lod_bias: FloatProperty(name="LOD Bias", soft_min=-1.0, soft_max=8.0, default=0.0, description="Bias the mip selection of this texture (-1.0 disables mipmapping)")
     
 def ugplus_matslot_draw(self, layout, title, allow_uv_wibbles=True, allow_blending=False, mat_icon='TEXTURE'):
     layout.separator()
     c = layout.column()
     c.scale_x = 0.5
     row = c.row()
-    row.label(title, icon=mat_icon)
+    row.label(text=title, icon=mat_icon)
     row = c.row()
     row.column().template_ID_preview(self, "tex_image", open="image.open", rows=4, cols=6)
     row = c.row()
@@ -1318,46 +1318,46 @@ def ugplus_matslot_draw(self, layout, title, allow_uv_wibbles=True, allow_blendi
 
 #----------------------------------------------------------------------------------
 class THUGMaterialProps(bpy.types.PropertyGroup):
-    alpha_cutoff = IntProperty(
+    alpha_cutoff: IntProperty(
         name="Alpha Cutoff", min=0, max=255, default=1,
         description="The pixels will alpha lower than this will be discarded.")
-    sorted = BoolProperty(name="Sorted", default=False)
-    draw_order = FloatProperty(
+    sorted: BoolProperty(name="Sorted", default=False)
+    draw_order: FloatProperty(
         name="Draw Order",
         default=0.0,
         description="The lesser the draw order the earlier the texture will be drawn. Used for sorting transparent textures.")
-    single_sided = BoolProperty(name="Single Sided", default=False,
+    single_sided: BoolProperty(name="Single Sided", default=False,
         description="If the material is not using the Diffuse blend mode this can be toggled to force it to be single sided.")
-    no_backface_culling = BoolProperty(name="No Backface Culling", default=False,
+    no_backface_culling: BoolProperty(name="No Backface Culling", default=False,
         description="Makes material with Diffuse blend mode double sided")
-    no_skater_shadow = BoolProperty(name="No Skater Shadow", default=False,
+    no_skater_shadow: BoolProperty(name="No Skater Shadow", default=False,
         description="Any mesh using this material will not render dynamic shadows.")
-    z_bias = IntProperty(name="Z-Bias", default=0,
+    z_bias: IntProperty(name="Z-Bias", default=0,
         description="Adjust this value to prevent Z-fighting on overlapping meshes.")
-    specular_power = FloatProperty(name="Specular Power", default=0.0)
-    specular_color = FloatVectorProperty(name="Specular Color", subtype="COLOR", min=0, max=1)
+    specular_power: FloatProperty(name="Specular Power", default=0.0)
+    specular_color: FloatVectorProperty(name="Specular Color", subtype="COLOR", min=0, max=1)
     
-    grass_props = PointerProperty(type=THUGGrassEffect)
+    grass_props: PointerProperty(type=THUGGrassEffect)
     
-    terrain_type = EnumProperty(
+    terrain_type: EnumProperty(
         name="Terrain Type",
         description="The terrain type that will be used for faces using this material when their terrain type is set to \"Auto\".",
         items=[(tt, tt, tt) for tt in TERRAIN_TYPES])
 
-    fixed_scale = BoolProperty(name="Fixed Scale", default=False, 
+    fixed_scale: BoolProperty(name="Fixed Scale", default=False, 
         description="This material's textures will not scale with the mesh (used in the park editor)")
-    allow_replace = BoolProperty(name="Allow Replacement", default=False, 
+    allow_replace: BoolProperty(name="Allow Replacement", default=False, 
         description="Allow this material to be replaced (Underground+ 1.9+ only)")
-    allow_recolor = BoolProperty(name="Allow Custom Color", default=False, 
+    allow_recolor: BoolProperty(name="Allow Custom Color", default=False, 
         description="Allow meshes using this material to have their diffuse color changed (Underground+ 1.9+ only)")
-    replace_group_index = IntProperty(name="Group Index", default=1, min=1, max=127, 
+    replace_group_index: IntProperty(name="Group Index", default=1, min=1, max=127, 
         description="Group index used for material replacement")
     
     ###############################################################
     # NEW MATERIAL SYSTEM PROPERTIES
     ###############################################################
-    use_new_mats = BoolProperty(name="Use New Material System", description="(Underground+ 1.5+ only) Use the new material/shader system")
-    ugplus_shader = EnumProperty(
+    use_new_mats: BoolProperty(name="Use New Material System", description="(Underground+ 1.5+ only) Use the new material/shader system")
+    ugplus_shader: EnumProperty(
         name="Shader",
         description="The shader to use for this material",
         items=[
@@ -1375,7 +1375,7 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         ("Grass", "Grass", "Grass material"),
         ("Ocean", "Ocean", "Ocean material"),
         ])
-    ugplus_lighting_mode = EnumProperty(
+    ugplus_lighting_mode: EnumProperty(
         name="Lighting Mode",
         description="Controls how the mesh is lit using the shader",
         items=[
@@ -1385,48 +1385,48 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
         ("Unlit", "Unlit", "No lighting"),
         ])
     # User-configurable shader options, others are generated during export
-    #ugplus_shader_baked = BoolProperty(name="Baked", description="Use pre-baked lighting rather than dynamic lighting")
-    ugplus_shader_weather = BoolProperty(name="Weather", description="Use dynamic weather effects")
-    ugplus_shader_disp = BoolProperty(name="Displacement", description="Use POM (expensive!)")
+    #ugplus_shader_baked: BoolProperty(name="Baked", description="Use pre-baked lighting rather than dynamic lighting")
+    ugplus_shader_weather: BoolProperty(name="Weather", description="Use dynamic weather effects")
+    ugplus_shader_disp: BoolProperty(name="Displacement", description="Use POM (expensive!)")
     
-    ugplus_trans = BoolProperty(name="Transparency", description="Enable transparency on this material")
+    ugplus_trans: BoolProperty(name="Transparency", description="Enable transparency on this material")
     
-    ugplus_extra1 = FloatProperty(name="Extra 1", description="Shader-specific setting", default=0.0)
-    ugplus_extra2 = FloatProperty(name="Extra 2", description="Shader-specific setting", default=0.0)
-    ugplus_extra3 = FloatProperty(name="Extra 3", description="Shader-specific setting", default=0.0)
+    ugplus_extra1: FloatProperty(name="Extra 1", description="Shader-specific setting", default=0.0)
+    ugplus_extra2: FloatProperty(name="Extra 2", description="Shader-specific setting", default=0.0)
+    ugplus_extra3: FloatProperty(name="Extra 3", description="Shader-specific setting", default=0.0)
     
-    ugplus_matslot_diffuse = PointerProperty(type=UGPlusMaterialSlotProps, name="Diffuse", description="Albedo/diffuse texture")
-    ugplus_matslot_detail = PointerProperty(type=UGPlusMaterialSlotProps, name="Detail", description="Detail texture which is multiplied onto the albedo")
-    ugplus_matslot_normal = PointerProperty(type=UGPlusMaterialSlotProps, name="Normal", description="Normal map (roughness in alpha channel)")
-    ugplus_matslot_normal2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Normal #2", description="Normal map")
-    ugplus_matslot_displacement = PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement", description="Displacement map")
-    ugplus_matslot_displacement2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement 2", description="Displacement map #2")
-    ugplus_matslot_specular = PointerProperty(type=UGPlusMaterialSlotProps, name="Metal", description="How metallic the surface is")
+    ugplus_matslot_diffuse: PointerProperty(type=UGPlusMaterialSlotProps, name="Diffuse", description="Albedo/diffuse texture")
+    ugplus_matslot_detail: PointerProperty(type=UGPlusMaterialSlotProps, name="Detail", description="Detail texture which is multiplied onto the albedo")
+    ugplus_matslot_normal: PointerProperty(type=UGPlusMaterialSlotProps, name="Normal", description="Normal map (roughness in alpha channel)")
+    ugplus_matslot_normal2: PointerProperty(type=UGPlusMaterialSlotProps, name="Normal #2", description="Normal map")
+    ugplus_matslot_displacement: PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement", description="Displacement map")
+    ugplus_matslot_displacement2: PointerProperty(type=UGPlusMaterialSlotProps, name="Displacement 2", description="Displacement map #2")
+    ugplus_matslot_specular: PointerProperty(type=UGPlusMaterialSlotProps, name="Metal", description="How metallic the surface is")
     # Eventually, roughness will be a separate texture that is mixed into the alpha channel for the normal texture
-    #ugplus_matslot_smoothness = PointerProperty(type=UGPlusMaterialSlotProps, name="Roughness", description="")
-    ugplus_matslot_reflection = PointerProperty(type=UGPlusMaterialSlotProps, name="Reflection", description="Texture used for specular reflections")
-    ugplus_matslot_lightmap = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
-    ugplus_matslot_lightmap2 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
-    ugplus_matslot_lightmap3 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
-    ugplus_matslot_lightmap4 = PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
-    ugplus_matslot_weathermask = PointerProperty(type=UGPlusMaterialSlotProps, name="Rain Mask", description="Mask used for rain/snow effects")
-    ugplus_matslot_snow = PointerProperty(type=UGPlusMaterialSlotProps, name="Snow", description="Snow texture")
+    #ugplus_matslot_smoothness: PointerProperty(type=UGPlusMaterialSlotProps, name="Roughness", description="")
+    ugplus_matslot_reflection: PointerProperty(type=UGPlusMaterialSlotProps, name="Reflection", description="Texture used for specular reflections")
+    ugplus_matslot_lightmap: PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
+    ugplus_matslot_lightmap2: PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
+    ugplus_matslot_lightmap3: PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
+    ugplus_matslot_lightmap4: PointerProperty(type=UGPlusMaterialSlotProps, name="Lightmap", description="Lightmap texture")
+    ugplus_matslot_weathermask: PointerProperty(type=UGPlusMaterialSlotProps, name="Rain Mask", description="Mask used for rain/snow effects")
+    ugplus_matslot_snow: PointerProperty(type=UGPlusMaterialSlotProps, name="Snow", description="Snow texture")
         
-    ugplus_matslot_fallback = PointerProperty(type=UGPlusMaterialSlotProps, name="Fallback", description="Texture used on lower graphics settings/lower shader detail settings")
-    ugplus_matslot_diffuse_night = PointerProperty(type=UGPlusMaterialSlotProps, name="Night", description="Texture used when the TOD is night")
-    ugplus_matslot_diffuse_evening = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is evening")
-    ugplus_matslot_diffuse_morning = PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is morning")
-    ugplus_matslot_cloud = PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active")
+    ugplus_matslot_fallback: PointerProperty(type=UGPlusMaterialSlotProps, name="Fallback", description="Texture used on lower graphics settings/lower shader detail settings")
+    ugplus_matslot_diffuse_night: PointerProperty(type=UGPlusMaterialSlotProps, name="Night", description="Texture used when the TOD is night")
+    ugplus_matslot_diffuse_evening: PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is evening")
+    ugplus_matslot_diffuse_morning: PointerProperty(type=UGPlusMaterialSlotProps, name="Evening", description="Texture used when the TOD is morning")
+    ugplus_matslot_cloud: PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active")
     ###############################################################
     
 #----------------------------------------------------------------------------------
 class THUGMaterialPassProps(bpy.types.PropertyGroup):
-    color = FloatVectorProperty(
+    color: FloatVectorProperty(
         name="Color", subtype="COLOR",
         default=(0.5, 0.5, 0.5),
         min=0.0, max=1.0,
         update=_thug_material_pass_props_color_updated)
-    blend_mode = EnumProperty(items=(
+    blend_mode: EnumProperty(items=(
      ("vBLEND_MODE_DIFFUSE", "DIFFUSE", "( 0 - 0 ) * 0 + Src"),
      ("vBLEND_MODE_ADD", "ADD", "( Src - 0 ) * Src + Dst"),
      ("vBLEND_MODE_ADD_FIXED", "ADD_FIXED", "( Src - 0 ) * Fixed + Dst"),
@@ -1449,38 +1449,38 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
      ("vBLEND_MODE_NORMAL_ROUGH", "NORMAL_ROUGHNESS", ""),
      ("vBLEND_MODE_MASK", "MASK", ""),
     ), name="Blend Mode", default="vBLEND_MODE_DIFFUSE")
-    blend_fixed_alpha = IntProperty(name="Fixed Alpha", min=0, max=255)
-    u_addressing = EnumProperty(items=(
+    blend_fixed_alpha: IntProperty(name="Fixed Alpha", min=0, max=255)
+    u_addressing: EnumProperty(items=(
         ("Repeat", "Repeat", ""),
         ("Clamp", "Clamp", ""),
         ("Border", "Border", ""),
     ), name="U Addressing", default="Repeat")
-    v_addressing = EnumProperty(items=(
+    v_addressing: EnumProperty(items=(
         ("Repeat", "Repeat", ""),
         ("Clamp", "Clamp", ""),
         ("Border", "Border", ""),
     ), name="V Addressing", default="Repeat")
     
-    pf_textured = BoolProperty(name="Textured", default=True)
-    pf_environment = BoolProperty(name="Environment texture", default=False) 
-    pf_bump = BoolProperty(name="Bump texture", default=False) 
-    pf_water = BoolProperty(name="Water texture", default=False) 
-    pf_decal = BoolProperty(name="Decal", default=False) 
-    pf_smooth = BoolProperty(name="Smooth", default=True) 
-    pf_transparent = BoolProperty(name="Use Transparency", default=False)
-    pf_static = BoolProperty(name="Static", default=False)
-    ignore_vertex_alpha = BoolProperty(name="Ignore Vertex Alpha", default=True)
-    envmap_multiples = FloatVectorProperty(name="Envmap Multiples", size=2, default=(3.0, 3.0), min=0.1, max=10.0)
+    pf_textured: BoolProperty(name="Textured", default=True)
+    pf_environment: BoolProperty(name="Environment texture", default=False) 
+    pf_bump: BoolProperty(name="Bump texture", default=False) 
+    pf_water: BoolProperty(name="Water texture", default=False) 
+    pf_decal: BoolProperty(name="Decal", default=False) 
+    pf_smooth: BoolProperty(name="Smooth", default=True) 
+    pf_transparent: BoolProperty(name="Use Transparency", default=False)
+    pf_static: BoolProperty(name="Static", default=False)
+    ignore_vertex_alpha: BoolProperty(name="Ignore Vertex Alpha", default=True)
+    envmap_multiples: FloatVectorProperty(name="Envmap Multiples", size=2, default=(3.0, 3.0), min=0.1, max=10.0)
     
-    filtering_mode = IntProperty(name="Filtering Mode", min=0, max=100000)
-    test_passes = IntProperty(name="Material passes (test)", min=0, max=100000)
+    filtering_mode: IntProperty(name="Filtering Mode", min=0, max=100000)
+    test_passes: IntProperty(name="Material passes (test)", min=0, max=100000)
     # filtering mode?
 
-    has_uv_wibbles = BoolProperty(name="Has UV Wibbles", default=False)
-    uv_wibbles = PointerProperty(type=THUGUVWibbles)
+    has_uv_wibbles: BoolProperty(name="Has UV Wibbles", default=False)
+    uv_wibbles: PointerProperty(type=THUGUVWibbles)
 
-    has_animated_texture = BoolProperty(name="Has Animated Texture", default=False)
-    animated_texture = PointerProperty(type=THUGAnimatedTexture)
+    has_animated_texture: BoolProperty(name="Has Animated Texture", default=False)
+    animated_texture: PointerProperty(type=THUGAnimatedTexture)
     
-    lod_bias = FloatProperty(name="LOD Bias", soft_min=-1.0, soft_max=8.0, default=0.0, description="Bias the mip selection of this texture (-1.0 disables mipmapping)")
+    lod_bias: FloatProperty(name="LOD Bias", soft_min=-1.0, soft_max=8.0, default=0.0, description="Bias the mip selection of this texture (-1.0 disables mipmapping)")
     

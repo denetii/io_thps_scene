@@ -54,7 +54,8 @@ class THUGUtilFillPedestrians(bpy.types.Operator):
     bl_label = "Set Pedestrians"
     # bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Fills a selection (or all) pedestrian objects with default settings for THUG1/2/PRO."
-    game_mode = EnumProperty(items=(
+    
+    game_mode: EnumProperty(items=(
         ("THUG1", "THUG1", ""),
         ("THUG2", "THUG2/PRO", ""),
         ), name="Target Game", default="THUG1")
@@ -99,7 +100,8 @@ class THUGUtilFillVehicles(bpy.types.Operator):
     bl_label = "Set Vehicles"
     # bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Fills a selection (or all) vehicle objects with default settings for THUG1/2/PRO."
-    game_mode = EnumProperty(items=(
+    
+    game_mode: EnumProperty(items=(
         ("THUG1", "THUG1/Underground+", ""),
         ("THUG2", "THUG2/PRO", ""),
         ), name="Target Game", default="THUG1")
@@ -154,11 +156,12 @@ class THUGUtilAutoWall(bpy.types.Operator):
     bl_idname = "io.import_thug_util_autowall"
     bl_label = "Auto-Wall"
     bl_description = "Detects walls in your scene and marks them wallrideable."
-    pass_options = EnumProperty(items=(
+    
+    pass_options: EnumProperty(items=(
         ("ClearInvalid", "Clear Invalid", "Unsets the wallride flag on faces that are not considered walls."),
         ("MarkValid", "Mark Valid", "Sets the wallride flag on faces considered walls."),
         ), name="Options", default={"MarkValid"}, options={'ENUM_FLAG'})
-    tolerance = FloatProperty(name="Tolerance", min=0.001, max=0.99, default=0.15, description="How much slope is allowed when detecting walls")
+    tolerance: FloatProperty(name="Tolerance", min=0.001, max=0.99, default=0.15, description="How much slope is allowed when detecting walls")
 
     def execute(self, context):
         objects = [o for o in bpy.data.objects if o.type == 'MESH' and o.thug_export_collision == True ]
@@ -208,7 +211,8 @@ class THUGUtilBatchTerrain(bpy.types.Operator):
     bl_label = "Set Terrain"
     # bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Sets the terrain type on all faces/points for all selected objects/rail paths."
-    terrain_type = EnumProperty(
+    
+    terrain_type: EnumProperty(
         name="Terrain Type",
         items=[(t, t, t) for t in ["Auto"] + TERRAIN_TYPES], 
         description="Terrain type to set.")
@@ -277,40 +281,40 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
     bl_description = "Applies a selection of properties on all selected objects."
     
     # Basic object properties
-    thug_created_at_start = EnumProperty(name="Created At Start", items=[
+    thug_created_at_start: EnumProperty(name="Created At Start", items=[
         ("NULL", " --- ", "This property will not be modified."),
         ("True", "Yes", ""),
         ("False", "No", "")
     ], default="NULL")
-    thug_network_option = EnumProperty(name="Network Options", items=[
+    thug_network_option: EnumProperty(name="Network Options", items=[
             ("NULL", " --- ", "This property will not be modified."),
             ("Default", "Default", "Appears in network games."),
             ("AbsentInNetGames", "Offline Only", "Only appears in single-player."),
             ("NetEnabled", "Online (Broadcast)", "Appears in network games, events/scripts appear on all clients.")],
         default="NULL")
-    thug_export_collision = EnumProperty(name="Export to Collisions", items=[
+    thug_export_collision: EnumProperty(name="Export to Collisions", items=[
         ("NULL", " --- ", "This property will not be modified."),
         ("True", "Yes", ""),
         ("False", "No", "")
     ], default="NULL")
-    thug_export_scene = EnumProperty(name="Export to Scene", items=[
+    thug_export_scene: EnumProperty(name="Export to Scene", items=[
         ("NULL", " --- ", "This property will not be modified."),
         ("True", "Yes", ""),
         ("False", "No", "")
     ], default="NULL")
-    thug_lightgroup = EnumProperty(name="Light Group", items=[
+    thug_lightgroup: EnumProperty(name="Light Group", items=[
             ("NULL", " --- ", "This property will not be modified."),
             ("None", "None", ""),
             ("Outdoor", "Outdoor", ""),
             ("NoLevelLights", "NoLevelLights", ""),
             ("Indoor", "Indoor", "")],
         default="NULL")
-    thug_is_trickobject = EnumProperty(name="Is a TrickObject", items=[
+    thug_is_trickobject: EnumProperty(name="Is a TrickObject", items=[
         ("NULL", " --- ", "This property will not be modified."),
         ("True", "Yes", ""),
         ("False", "No", "")
     ], default="NULL")
-    thug_cluster_name = StringProperty(name="TrickObject Cluster")
+    thug_cluster_name: StringProperty(name="TrickObject Cluster")
         
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH' or o.type == 'CURVE']
@@ -372,17 +376,17 @@ class THUGUtilBatchImport(bpy.types.Operator):
     bl_description = "Imports mesh/collision/textures in one process."
     
     # Basic object properties
-    game_mode = EnumProperty(name="Game Engine", items=[
+    game_mode: EnumProperty(name="Game Engine", items=[
         ("NULL", " --- ", ""),
         ("THPS4", "THPS4", "Note: THPS4 collision importing not yet supported."),
         ("THUG1", "THUG1", ""),
         ("THUG2", "THUG2", "THUG2/THUG PRO."),
     ], default="NULL")
     
-    scn_file_path = StringProperty(name="Scene/skin file", default="", description="Path to the .scn/.skin/.mdl file.", subtype="FILE_PATH")
-    col_file_path = StringProperty(name="Collision file", default="", description="Path to the .col file.", subtype="FILE_PATH")
-    tex_file_path = StringProperty(name="Texture file", default="", description="Path to the .tex file.", subtype="FILE_PATH")
-    ske_file_path = StringProperty(name="Skeleton file", default="", description="Path to the .ske file.", subtype="FILE_PATH")
+    scn_file_path: StringProperty(name="Scene/skin file", default="", description="Path to the .scn/.skin/.mdl file.", subtype="FILE_PATH")
+    col_file_path: StringProperty(name="Collision file", default="", description="Path to the .col file.", subtype="FILE_PATH")
+    tex_file_path: StringProperty(name="Texture file", default="", description="Path to the .tex file.", subtype="FILE_PATH")
+    ske_file_path: StringProperty(name="Skeleton file", default="", description="Path to the .ske file.", subtype="FILE_PATH")
     
     def execute(self, context):
         # IMPORT TEX FILE

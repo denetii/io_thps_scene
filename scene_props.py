@@ -330,131 +330,7 @@ def update_game_files_collections(*args):
         
     
 
-#----------------------------------------------------------------------------------
-#- Determines the version of the Blender plugin that the scene was created with
-#- and if it's out of date, attempts to automatically convert old nodes to any
-#- systems that have been updated - e.g., empty nodes on the asdf plugin need to be
-#- migrated, along with TriggerScript references
-#----------------------------------------------------------------------------------
-@bpy.app.handlers.persistent
-def maybe_upgrade_scene(*args):
-    should_upgrade = False
-    something_was_updated = False
-    fix_objects = []
-    
-    newmat_passes = [
-        'ugplus_matslot_diffuse'
-        ,'ugplus_matslot_detail'
-        ,'ugplus_matslot_normal'
-        ,'ugplus_matslot_normal2'
-        ,'ugplus_matslot_displacement'
-        ,'ugplus_matslot_displacement2'
-        ,'ugplus_matslot_specular'
-        #,'ugplus_matslot_smoothness'
-        ,'ugplus_matslot_reflection'
-        ,'ugplus_matslot_lightmap'
-        ,'ugplus_matslot_lightmap2'
-        ,'ugplus_matslot_lightmap3'
-        ,'ugplus_matslot_lightmap4'
-        ,'ugplus_matslot_weathermask'
-        ,'ugplus_matslot_snow'
-        ,'ugplus_matslot_fallback'
-        ,'ugplus_matslot_diffuse_night'
-        ,'ugplus_matslot_diffuse_evening'
-        ,'ugplus_matslot_diffuse_morning'
-        ,'ugplus_matslot_cloud'
-    ]
-    # Hack for the new material system's image fields - read from the txt reference and set the image
-    for mat in bpy.data.materials:
-        if hasattr(mat, 'thug_material_props') and hasattr(mat.thug_material_props, 'grass_props'):
-            gps = mat.thug_material_props.grass_props
-            for i in range(len(gps.grass_textures)):
-                if gps.grass_textures[i].tex_image_name != '':
-                    thisimage = bpy.data.images.get(gps.grass_textures[i].tex_image_name)
-                    if thisimage:
-                        #print("Updating grass texture {}...".format(i))
-                        gps.grass_textures[i].tex_image = thisimage
-                    
-                
-        if hasattr(mat, 'thug_material_props') and hasattr(mat.thug_material_props, 'ugplus_shader') \
-            and mat.thug_material_props.ugplus_shader != '':
-            for passname in newmat_passes:
-                thispass = getattr(mat.thug_material_props, passname)
-                if thispass and thispass.tex_image_name:
-                    thisimage = bpy.data.images.get(thispass.tex_image_name)
-                    if thisimage:
-                        thispass.tex_image = thisimage
-                    
-                    
-    #print("Updating node collections...")
-    context = bpy.context
-    if 'io_thps_scene_version' not in context.scene or context.scene['io_thps_scene_version'] == None:
-        print("This blend file was built with the asdf plugin, or a pre-release version of io_thps_scene. Needs to be updated!")
-        should_upgrade = True
-    elif context.scene['io_thps_scene_version'] != ADDON_VERSION:
-        print("This blend file was built with an older version io_thps_scene. May need to be updated in the future!")
-        # Any future versions which require node conversions can be handled here!
-        
-    if should_upgrade:
-        print("Attempting to update nodes in scene to match current version of io_thps_scene...")
-        # This is where we actually convert the nodes!
-        for ob in bpy.data.objects:
-            if ob.type in ['MESH', 'EMPTY', 'CURVE'] and ob.thug_triggerscript_props.triggerscript_type:
-            
-                # Per-point script references need to be updated from pre-release builds, as they still used the unfiltered script names
-                if hasattr(ob.data, 'thug_pathnode_triggers'):
-                    tmp_idx = -1
-                    for tmp_trig in ob.data.thug_pathnode_triggers:
-                        tmp_idx += 1
-                        if tmp_trig.script_name != '':
-                            print("Updating point script reference {}".format(tmp_trig.script_name))
-                            ob.data.thug_pathnode_triggers[tmp_idx].script_name = format_triggerscript_name(tmp_trig.script_name)
-                            
-                ob_ts = ob.thug_triggerscript_props
-                if ob_ts.triggerscript_type == 'None':
-                    continue
-                # Should be able to do a straight conversion of these over to the template system, 
-                # as the base templates should include everything from the old setup
-                old_ts_name = ob_ts.triggerscript_type
-                ob.thug_triggerscript_props.template_name = old_ts_name
-                ob.thug_triggerscript_props.template_name_txt = old_ts_name
-                if ob_ts.target_node and bpy.data.objects.get(ob_ts.target_node):
-                    # Target node (for Teleport/Killskater) should always be param1 on the new template(s)
-                    ob.thug_triggerscript_props.param1_string = get_clean_name(bpy.data.objects.get(ob_ts.target_node))
-                    
-                # Custom TriggerScript names now use a filtered list of formatted text block names, so we need to
-                # update references to remove any leading 'script_' names
-                if old_ts_name == 'Custom':
-                    ob.thug_triggerscript_props.custom_name = format_triggerscript_name(ob.thug_triggerscript_props.custom_name)
-                    
-                
-                something_was_updated = True
-                print("Updated TriggerScript reference for object: {}. Previous TriggerScript was: {}".format(ob.name, old_ts_name))
-        
-            if ob.type == 'EMPTY' and ob.thug_empty_props.empty_type != 'None':
-                # No easy solution for converting these, just warn the user
-                something_was_updated = True
-                fix_objects.append(ob.name)
-                print("Updated empty data for object: {}".format(ob.name))
-                    
-        # Auto-update the old THUG_SCRIPTS block!
-        if 'THUG_SCRIPTS' in bpy.data.texts:
-            bpy.ops.io.import_thug_triggerscripts("EXEC_DEFAULT", import_type='ScriptsAndObjects', replace_scripts=False)
-            
-    context.scene['io_thps_scene_version'] = ADDON_VERSION
-    
-    def draw(self, context):
-        self.layout.label("This scene was built on an older version of the THPS Blender plugin (io_thug_tools). Your scene has been auto-converted to be compatible with this version of the plugin.")
-        self.layout.label("However, it may no longer be BACKWARD compatible with the previous plugin. If this is not desired, please make a backup copy before saving the scene.")
-        if len(fix_objects) > 0:
-            self.layout.label("-------------------------------------------")
-            self.layout.label("Some nodes were unable to be converted automatically, such as restarts/CTF Flags. Please review the following objects, as they may need to be re-configured:")
-            for obname in fix_objects:
-                self.layout.label("        " + obname)
-            
-    if something_was_updated:
-        bpy.context.window_manager.popup_menu(draw, title="Conversion Notice", icon='INFO')
-          
+
           
 # PROPERTIES
 #############################################
@@ -1292,7 +1168,7 @@ def register_props():
     
     bpy.types.Mesh.thug_billboard_props = PointerProperty(type=THUGBillboardProps)
     
-    bpy.types.Lamp.thug_light_props = PointerProperty(type=THUGLightProps)
+    bpy.types.Light.thug_light_props = PointerProperty(type=THUGLightProps)
     
     bpy.types.Curve.thug_pathnode_triggers = CollectionProperty(type=THUGPathNodeProps)
     bpy.types.Object.thug_waypoint_props = PointerProperty(type=THUGWaypointProps)
@@ -1315,13 +1191,12 @@ def register_props():
     global draw_handle
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
     # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)
-    bpy.app.handlers.scene_update_post.append(draw_stuff_post_update)
-    bpy.app.handlers.scene_update_post.append(update_collision_flag_ui_properties)
-    bpy.app.handlers.scene_update_post.append(update_pathnode_ui_properties)
+    #bpy.app.handlers.scene_update_post.append(draw_stuff_post_update)
+    #bpy.app.handlers.scene_update_post.append(update_collision_flag_ui_properties)
+    #bpy.app.handlers.scene_update_post.append(update_pathnode_ui_properties)
 
-    bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
+    #bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
     bpy.app.handlers.load_post.append(update_node_collection)
-    bpy.app.handlers.load_post.append(maybe_upgrade_scene)
     bpy.app.handlers.load_post.append(update_game_files_collections)
     
     
@@ -1350,7 +1225,5 @@ def unregister_props():
         bpy.app.handlers.load_pre.remove(draw_stuff_pre_load_cleanup)
     if update_node_collection in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(update_node_collection)
-    if maybe_upgrade_scene in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.remove(maybe_upgrade_scene)
     if update_game_files_collections in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(update_game_files_collections)

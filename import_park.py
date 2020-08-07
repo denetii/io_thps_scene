@@ -414,12 +414,12 @@ class ImportTHUGPrk(bpy.types.Operator):
     bl_label = "THUG1/2 Custom Park (.prk)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.prk", options={"HIDDEN"})
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
-    import_floors = BoolProperty(name="Generate Floor/Risers", default=True)
-    import_pieces = BoolProperty(name="Import Pieces", default=True)
-    import_rails = BoolProperty(name="Import Rails", default=True)
+    filter_glob: StringProperty(default="*.prk", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
+    import_floors: BoolProperty(name="Generate Floor/Risers", default=True)
+    import_pieces: BoolProperty(name="Import Pieces", default=True)
+    import_rails: BoolProperty(name="Import Rails", default=True)
 
     def execute(self, context):
         filename = self.filename

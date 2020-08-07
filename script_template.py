@@ -24,8 +24,8 @@ def init_templates():
     global SCRIPT_TEMPLATES
     
     def draw_firstrun(self, context):
-        self.layout.label("Please configure the base files directory before working on any THPS scenes.")
-        self.layout.label("Once you've set the path to the base files, save your configuration and then restart Blender!")
+        self.layout.label(text="Please configure the base files directory before working on any THPS scenes.")
+        self.layout.label(text="Once you've set the path to the base files, save your configuration and then restart Blender!")
         
     addon_prefs = bpy.context.preferences.addons[ADDON_NAME].preferences
     base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)

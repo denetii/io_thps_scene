@@ -702,11 +702,11 @@ class THPS2PsxToScene(bpy.types.Operator):
     bl_label = "THPS 1st-gen Scene (.psx)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.psx", options={"HIDDEN"})
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
-    load_tex = BoolProperty(name="Load textures", default=True)
-    #import_custom_normals = BoolProperty(name="Import custom normals", default=True)
+    filter_glob: StringProperty(default="*.psx", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
+    load_tex: BoolProperty(name="Load textures", default=True)
+    #import_custom_normals: BoolProperty(name="Import custom normals", default=True)
 
     def execute(self, context):
         filename = self.filename

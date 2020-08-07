@@ -1752,9 +1752,9 @@ class THUGImportLevelQB(bpy.types.Operator):
     bl_label = "THPS Level QB (.qb)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.qb", options={"HIDDEN"})
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filter_glob: StringProperty(default="*.qb", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
     
     def execute(self, context):
         filename = self.filename

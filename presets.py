@@ -626,7 +626,7 @@ class AddTHUGNode(bpy.types.Operator):
     bl_description = "Base operator for adding custom objects"
     bl_options = {'REGISTER', 'UNDO'}
 
-    node_type = bpy.props.StringProperty()
+    node_type: bpy.props.StringProperty()
 
     def execute(self, context):
         preset_place_node(self.node_type, bpy.context.scene.cursor_location)
@@ -638,8 +638,8 @@ class AddTHUGMesh(bpy.types.Operator):
     bl_description = "Base operator for adding custom mesh (usually CAP pieces)"
     bl_options = {'REGISTER', 'UNDO'}
 
-    piece_name = bpy.props.StringProperty()
-    template_name = bpy.props.StringProperty()
+    piece_name: bpy.props.StringProperty()
+    template_name: bpy.props.StringProperty()
 
     def execute(self, context):
         preset_place_mesh(self.template_name, self.piece_name, bpy.context.scene.cursor_location)
@@ -660,8 +660,8 @@ class THUGNodesMenu(bpy.types.Menu):
 class THUGMeshSubSubMenu(bpy.types.Menu):
     bl_label = 'Objects'
     bl_idname = 'mesh.thug_presetsubmenu'
-    template_name = bpy.props.StringProperty()
-    category_name = bpy.props.StringProperty()
+    template_name: bpy.props.StringProperty()
+    category_name: bpy.props.StringProperty()
     
     def draw(self, context):
         print("drawing mesh menu")
@@ -675,7 +675,7 @@ class THUGMeshSubSubMenu(bpy.types.Menu):
 class THUGMeshSubMenu(bpy.types.Menu):
     bl_label = 'Objects'
     bl_idname = 'mesh.thug_presetmenu'
-    template_name = bpy.props.StringProperty()
+    template_name: bpy.props.StringProperty()
     
     def draw(self, context):
         print("drawing mesh menu")

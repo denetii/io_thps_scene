@@ -450,12 +450,12 @@ class THUG2ScnToScene(bpy.types.Operator):
     bl_label = "THUG2 Scene (.scn.xbx/.skin.xbx/.mdl.xbx)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.skin.xbx;*.scn.xbx;*.mdl.xbx", options={"HIDDEN"})
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
-    load_tex = BoolProperty(name="Load the tex file", default=True)
-    load_scene = BoolProperty(name="Load the scene", default=True)
-    import_custom_normals = BoolProperty(name="Import custom normals", default=True)
+    filter_glob: StringProperty(default="*.skin.xbx;*.scn.xbx;*.mdl.xbx", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
+    load_tex: BoolProperty(name="Load the tex file", default=True)
+    load_scene: BoolProperty(name="Load the scene", default=True)
+    import_custom_normals: BoolProperty(name="Import custom normals", default=True)
 
     def execute(self, context):
         filename = self.filename
@@ -484,9 +484,9 @@ class THUG2ColToScene(bpy.types.Operator):
     bl_label = "THUG1/2 Collision (.col.xbx)"
     # bl_options = {'REGISTER', 'UNDO'}
 
-    filter_glob = StringProperty(default="*.col.xbx;*.col", options={"HIDDEN"})
-    filename = StringProperty(name="File Name")
-    directory = StringProperty(name="Directory")
+    filter_glob: StringProperty(default="*.col.xbx;*.col", options={"HIDDEN"})
+    filename: StringProperty(name="File Name")
+    directory: StringProperty(name="Directory")
 
     def execute(self, context):
         filename = self.filename
