@@ -43,9 +43,10 @@ def to_hex_string(checksum):
 #- Auto-creates (if needed) and assigns the given object to a group
 #----------------------------------------------------------------------------------
 def to_group(blender_object, group_name):
-    group = bpy.data.groups.get(group_name)
+    group = bpy.data.collections.get(group_name)
     if not group:
-        group = bpy.data.groups.new(group_name)
+        group = bpy.data.collections.new(group_name)
+        bpy.context.scene.collection.children.link(group)
     if blender_object.name not in group.objects:
         group.objects.link(blender_object)
         

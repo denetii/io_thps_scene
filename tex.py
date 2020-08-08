@@ -239,7 +239,7 @@ def import_img(path, img_name):
             blend_img = bpy.data.images.new(img_name, img_width, img_height, alpha=True)
             blend_img.pixels = colors
     
-    blend_img.pack(as_png=True)
+    blend_img.pack()
     return blend_img
         
 def read_tex(reader, printer):
@@ -308,7 +308,7 @@ def read_tex(reader, printer):
                 blend_img.gl_load()
                 blend_img.thug_image_props.compression_type = "DXT5" if dxt_version == 5 else "DXT1"
                 blend_img.thug_image_props.mip_levels = levels
-                image_id = blend_img.bindcode[0]
+                image_id = blend_img.bindcode
                 if image_id == 0:
                     print("Got 0 bindcode for " + blend_img.name)
                 else:
@@ -331,7 +331,7 @@ def read_tex(reader, printer):
                     buf = bgl.Buffer(bgl.GL_FLOAT, buf_size)
                     bgl.glGetTexImage(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, bgl.GL_FLOAT, buf)
                     blend_img.pixels = buf
-                    blend_img.pack(as_png=True)
+                    blend_img.pack()
                     del buf
 
             r.offset += data_size

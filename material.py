@@ -42,18 +42,6 @@ def _ensure_default_material_exists():
     tex_slot = default_mat.texture_slots.add()
     tex_slot.texture = bpy.data.textures["_THUG_DEFAULT_MATERIAL_TEXTURE_"]
 
-def _thug_material_pass_props_color_updated(self, context):
-    from bl_ui.properties_material import active_node_mat
-    if not context or not context.object:
-        return
-    mat = context.object.active_material
-    if not mat:
-        return
-    idblock = active_node_mat(mat)
-    r, g, b = self.color
-    idblock.active_texture.factor_red = r * 2
-    idblock.active_texture.factor_green = g * 2
-    idblock.active_texture.factor_blue = b * 2
 
 def rename_imported_materials():
     for mat in bpy.data.materials:
@@ -1362,13 +1350,16 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
     ugplus_matslot_cloud: PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active")
     ###############################################################
     
-#----------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------        
 class THUGMaterialPassProps(bpy.types.PropertyGroup):
     color: FloatVectorProperty(
         name="Color", subtype="COLOR",
         default=(0.5, 0.5, 0.5),
-        min=0.0, max=1.0,
-        update=_thug_material_pass_props_color_updated)
+        min=0.0, max=1.0)
+        
+    tex_image: PointerProperty(type=bpy.types.Image)
+    tex_image_name: StringProperty(name="ImageName")
+    
     blend_mode: EnumProperty(items=(
      ("vBLEND_MODE_DIFFUSE", "DIFFUSE", "( 0 - 0 ) * 0 + Src"),
      ("vBLEND_MODE_ADD", "ADD", "( Src - 0 ) * Src + Dst"),
@@ -1405,19 +1396,16 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
     ), name="V Addressing", default="Repeat")
     
     pf_textured: BoolProperty(name="Textured", default=True)
-    pf_environment: BoolProperty(name="Environment texture", default=False) 
-    pf_bump: BoolProperty(name="Bump texture", default=False) 
-    pf_water: BoolProperty(name="Water texture", default=False) 
-    pf_decal: BoolProperty(name="Decal", default=False) 
-    pf_smooth: BoolProperty(name="Smooth", default=True) 
+    pf_environment: BoolProperty(name="Environment texture", default=False)
+    pf_bump: BoolProperty(name="Bump texture", default=False)
+    pf_water: BoolProperty(name="Water texture", default=False)
+    pf_decal: BoolProperty(name="Decal", default=False)
+    pf_smooth: BoolProperty(name="Smooth", default=True)
     pf_transparent: BoolProperty(name="Use Transparency", default=False)
     pf_static: BoolProperty(name="Static", default=False)
     ignore_vertex_alpha: BoolProperty(name="Ignore Vertex Alpha", default=True)
     envmap_multiples: FloatVectorProperty(name="Envmap Multiples", size=2, default=(3.0, 3.0), min=0.1, max=10.0)
-    
     filtering_mode: IntProperty(name="Filtering Mode", min=0, max=100000)
-    test_passes: IntProperty(name="Material passes (test)", min=0, max=100000)
-    # filtering mode?
 
     has_uv_wibbles: BoolProperty(name="Has UV Wibbles", default=False)
     uv_wibbles: PointerProperty(type=THUGUVWibbles)

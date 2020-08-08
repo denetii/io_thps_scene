@@ -1170,8 +1170,9 @@ def register_props():
     
     bpy.types.Image.thug_image_props = PointerProperty(type=THUGImageProps)
 
+    #bpy.types.ImageTexture.thug_material_pass_props = PointerProperty(type=THUGMaterialPassProps)
     bpy.types.Material.thug_material_props = PointerProperty(type=THUGMaterialProps)
-    bpy.types.Texture.thug_material_pass_props = PointerProperty(type=THUGMaterialPassProps)
+    bpy.types.Material.thug_texture_slots = CollectionProperty(type=THUGMaterialPassProps)
 
     bpy.types.WindowManager.thug_all_nodes = PointerProperty(type=THUGNodeListProps)
     bpy.types.WindowManager.thug_game_assets = PointerProperty(type=THUGAssetListProps)

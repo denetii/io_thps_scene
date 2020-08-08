@@ -57,60 +57,32 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
             p("  grass height: {}", r.f32())
             p("  grass layers: {}", r.i32())
 
-        blender_mat.use_transparency = True
-        blender_mat.diffuse_color = (1, 1, 1)
-        blender_mat.diffuse_intensity = 1
-        blender_mat.specular_intensity = 0
-        blender_mat.alpha = 0
-
         for j in range(num_passes):
-            blender_tex = bpy.data.textures.new("{}/{}".format(mat_checksum, j), "IMAGE")
-            tex_slot = blender_mat.texture_slots.add()
-            tex_slot.texture = blender_tex
-            pps = blender_tex.thug_material_pass_props
+            pps = blender_mat.thug_texture_slots.add()
             p("  pass #{}", j)
             tex_checksum = p("    pass texture checksum: {}", r.u32())
             actual_tex_checksum = to_hex_string(tex_checksum)
             image_name = str(actual_tex_checksum) #+ ".png"
-            blender_tex.image = bpy.data.images.get(image_name)
+            pps.tex_image = bpy.data.images.get(image_name)
             full_path = os.path.join(directory, image_name)
             full_path2 = os.path.join(directory, str("tex\\{:08x}.tga".format(tex_checksum)))
             full_path3 = os.path.join(directory, str("tex\\{:08x}.png".format(tex_checksum)))
-            if not blender_tex.image:
+            if not pps.tex_image:
                 if os.path.exists(full_path):
-                    blender_tex.image = bpy.data.images.load(full_path)
+                    pps.tex_image = bpy.data.images.load(full_path)
                 elif os.path.exists(full_path2):
-                    blender_tex.image = bpy.data.images.load(full_path2)
+                    pps.tex_image = bpy.data.images.load(full_path2)
                 elif os.path.exists(full_path3):
-                    blender_tex.image = bpy.data.images.load(full_path3)
-                #else:
-                #    blender_tex.image = bpy.data.images.new(image_name)
-            tex_slot.uv_layer = str(j)
-
+                    pps.tex_image = bpy.data.images.load(full_path3)
+                    
             pass_flags = p("    pass material flags: {}", r.u32())
             p("    pass has color: {}", r.bool())
             pps.color = p("    pass color: {}", r.read("3f"))
             pps.blend_mode = p("    blend mode: {}", BLEND_MODES[r.u32()])
             pps.blend_fixed_alpha = r.u32() & 0xFF
 
-            if j == 0:
-                tex_slot.use_map_alpha = True
-
-            tex_slot.blend_type = {
-                "vBLEND_MODE_ADD": "ADD",
-                "vBLEND_MODE_ADD_FIXED": "ADD",
-                "vBLEND_MODE_SUBTRACT": "SUBTRACT",
-                "vBLEND_MODE_SUB_FIXED": "SUBTRACT",
-                "vBLEND_MODE_BRIGHTEN": "LIGHTEN",
-                "vBLEND_MODE_BRIGHTEN_FIXED": "LIGHTEN",
-            }.get(pps.blend_mode, "MIX")
-
             pps.u_addressing = "Repeat" if p("    pass u addressing: {}", r.u32()) == 0 else "Clamp"
             pps.v_addressing = "Repeat" if p("    pass v addressing: {}", r.u32()) == 0 else "Clamp"
-
-            if blender_tex.image:
-                blender_tex.image.use_clamp_x = pps.u_addressing == "Clamp"
-                blender_tex.image.use_clamp_y = pps.v_addressing == "Clamp"
 
             pps.filtering_mode = r.u32()
             p("    pass filtering mode: {}", pps.filtering_mode)
@@ -196,7 +168,7 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
         blender_object = bpy.data.objects.new("scn_" + str(sec_checksum), blender_mesh)
         blender_object.thug_export_collision = False
         to_group(blender_object, "SceneMesh")
-        context.scene.objects.link(blender_object)
+        #context.scene.collection.objects.link(blender_object)
 
         bone_index = p("  bone index: {}", r.i32())
         sec_flags = p("  sector flags: {}", r.u32())
@@ -400,8 +372,8 @@ def read_sectors_th4(is_desa, reader, printer, num_sectors, context, operator=No
                             loop[uv_layer].uv = pvd["uvs"][l]
                             if sec_flags & SECFLAGS_HAS_VERTEX_COLORS:
                                 cb, cg, cr, ca = pvd["color"]
-                                loop[color_layer] = (cr / 255.0, cg / 255.0, cb / 255.0)
-                                loop[alpha_layer] = (ca / 128.0, ca / 128.0, ca / 128.0)
+                                loop[color_layer] = (cr / 255.0, cg / 255.0, cb / 255.0, ca / 128.0)
+                                #loop[alpha_layer] = (ca / 128.0, ca / 128.0, ca / 128.0)
                                 
         bm.verts.index_update()
         bm.to_mesh(blender_mesh)
@@ -549,7 +521,7 @@ def import_col_thps4(filename, directory):
         bm.to_mesh(blender_mesh)
         blender_object.thug_export_scene = False
         to_group(blender_object, "CollisionMesh")
-        bpy.context.scene.objects.link(blender_object)
+        #bpy.context.scene.objects.link(blender_object)
 
         output_vert_offset += obj_num_verts
         r.offset = old_offset
@@ -651,7 +623,7 @@ def import_col_thps4_old(filename, directory):
         bm.to_mesh(object['mesh'])
         object['object'].thug_export_scene = False
         to_group(object['object'], "CollisionMesh")
-        bpy.context.scene.objects.link(object['object'])
+        #bpy.context.scene.objects.link(object['object'])
 
 
 # OPERATORS
