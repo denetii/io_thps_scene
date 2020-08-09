@@ -99,8 +99,8 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                         need_vertex_normals = True
                         has_new_shaders = True
                     
-                    if not hasattr(env_test, 'texture_slots'): continue
-                    _tmp_passes = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
+                    if not hasattr(env_test, 'th_texture_slots'): continue
+                    _tmp_passes = [tex_slot for tex_slot in env_test.th_texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
                     for _tmp_tex in _tmp_passes:
                         _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
                         if _pprops and (_pprops.pf_environment or _pprops.pf_bump or _pprops.pf_water or _pprops.blend_mode == 'vBLEND_MODE_GLOSS_MAP'):

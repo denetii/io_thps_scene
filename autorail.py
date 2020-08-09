@@ -58,7 +58,7 @@ def get_autorail_material():
             rail_tex = bpy.data.textures.new("Autorail_Metal", "IMAGE")
         rail_tex.image = get_autorail_image()
         rail_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_DIFFUSE'
-        tex_slot = blender_mat.texture_slots.add()
+        tex_slot = blender_mat.th_texture_slots.add()
         tex_slot.texture = rail_tex
         tex_slot.uv_layer = str('Rail')
         tex_slot.blend_type = 'MIX'

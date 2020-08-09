@@ -497,7 +497,7 @@ def export_tex(filename, directory, target_game, operator=None):
                     
         else:
             # denetii - only include texture slots that affect the diffuse color in the Blender material
-            passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and (tex_slot.use_map_color_diffuse or tex_slot.use_map_normal)]
+            passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot and tex_slot.use and (tex_slot.use_map_color_diffuse or tex_slot.use_map_normal)]
             if len(passes) > 4:
                 if operator:
                     passes = passes[:4]

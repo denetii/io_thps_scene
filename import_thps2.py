@@ -153,7 +153,7 @@ def import_psx_th2(filename, directory, context, operator, texlib_data, debug_na
             blender_object.thug_export_collision = True
             blender_object.thug_export_scene = True
             to_group(blender_object, "SceneMesh")
-            context.scene.objects.link(blender_object)
+            #context.scene.objects.link(blender_object)
             blender_object.location = obj["position"]
     
 
@@ -333,9 +333,9 @@ def read_meshes_thps2(reader, printer, num_objects, directory, operator, psx_dat
                         mat_index = len(blender_mesh.materials) -1
                 
                     
-                if mat_index != None and mat_index >= 0 and hasattr(blender_mesh.materials[mat_index].texture_slots[0].texture, 'image'):
-                    tex_size_x = float(blender_mesh.materials[mat_index].texture_slots[0].texture.image.size[0])
-                    tex_size_y = float(blender_mesh.materials[mat_index].texture_slots[0].texture.image.size[1])
+                if mat_index != None and mat_index >= 0 and hasattr(blender_mesh.materials[mat_index].th_texture_slots[0].texture, 'image'):
+                    tex_size_x = float(blender_mesh.materials[mat_index].th_texture_slots[0].texture.image.size[0])
+                    tex_size_y = float(blender_mesh.materials[mat_index].th_texture_slots[0].texture.image.size[1])
                 else:
                     tex_size_x = 64.0
                     tex_size_y = 64.0
@@ -454,7 +454,7 @@ def read_meshes_thps2(reader, printer, num_objects, directory, operator, psx_dat
                     vc = [128.0, 128.0, 128.0, 128.0]
                 else:
                     vc = m_vcs[loop.vert.index]
-                loop[color_layer] = (vc[0] / 128.0, vc[1] / 128.0, vc[2] / 128.0)
+                loop[color_layer] = (vc[0] / 128.0, vc[1] / 128.0, vc[2] / 128.0, 1.0)
         
         bm.verts.index_update()
         bm.normal_update()
@@ -602,7 +602,7 @@ def import_texlib_th2(filename, directory, context, operator):
                         new_mat = bpy.data.materials.new("THPSMat_{}".format(hex(tex_hash)))
                         blender_tex = bpy.data.textures.new("THPSTex_{}".format(hex(tex_hash)), "IMAGE")
                         blender_tex.image = blend_img
-                        tex_slot = new_mat.texture_slots.add()
+                        tex_slot = new_mat.th_texture_slots.add()
                         tex_slot.texture = blender_tex 
                         if is_trans:
                             new_mat.thug_material_props.draw_order = 1501.0
@@ -635,7 +635,7 @@ def import_texlib_th2(filename, directory, context, operator):
                         new_mat = bpy.data.materials.new("THPSMat_{}".format(hex(tex_hash)))
                         blender_tex = bpy.data.textures.new("THPSTex_{}".format(hex(tex_hash)), "IMAGE")
                         blender_tex.image = blend_img
-                        tex_slot = new_mat.texture_slots.add()
+                        tex_slot = new_mat.th_texture_slots.add()
                         tex_slot.texture = blender_tex
                         if is_trans:
                             new_mat.thug_material_props.draw_order = 1501.0
@@ -663,7 +663,7 @@ def import_texlib_th2(filename, directory, context, operator):
                     print("Found image: {}".format(full_path2))
                     blender_tex.image = bpy.data.images.load(full_path2)
                     
-                tex_slot = new_mat.texture_slots.add()
+                tex_slot = new_mat.th_texture_slots.add()
                 tex_slot.texture = blender_tex
                 
     return TEXPSX_DATA

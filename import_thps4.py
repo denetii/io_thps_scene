@@ -58,22 +58,26 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
             p("  grass layers: {}", r.i32())
 
         for j in range(num_passes):
-            pps = blender_mat.thug_texture_slots.add()
+            blender_tex = get_texture("{}/{}".format(mat_checksum, j))
+            tex_slot = blender_mat.th_texture_slots.add()
+            tex_slot.texture = blender_tex
+            pps = blender_tex.thug_material_pass_props
             p("  pass #{}", j)
             tex_checksum = p("    pass texture checksum: {}", r.u32())
             actual_tex_checksum = to_hex_string(tex_checksum)
             image_name = str(actual_tex_checksum) #+ ".png"
-            pps.tex_image = bpy.data.images.get(image_name)
+            blender_tex.image = bpy.data.images.get(image_name)
+            pps.uv_layer = str(j)
             full_path = os.path.join(directory, image_name)
             full_path2 = os.path.join(directory, str("tex\\{:08x}.tga".format(tex_checksum)))
             full_path3 = os.path.join(directory, str("tex\\{:08x}.png".format(tex_checksum)))
-            if not pps.tex_image:
+            if not blender_tex.image:
                 if os.path.exists(full_path):
-                    pps.tex_image = bpy.data.images.load(full_path)
+                    blender_tex.image = bpy.data.images.load(full_path)
                 elif os.path.exists(full_path2):
-                    pps.tex_image = bpy.data.images.load(full_path2)
+                    blender_tex.image = bpy.data.images.load(full_path2)
                 elif os.path.exists(full_path3):
-                    pps.tex_image = bpy.data.images.load(full_path3)
+                    blender_tex.image = bpy.data.images.load(full_path3)
                     
             pass_flags = p("    pass material flags: {}", r.u32())
             p("    pass has color: {}", r.bool())

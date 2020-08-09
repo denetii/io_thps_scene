@@ -174,7 +174,7 @@ def restore_mat_assignments(obj, orig_polys):
     
             
 def mat_get_pass(blender_mat, type):
-    for p in blender_mat.texture_slots:
+    for p in blender_mat.th_texture_slots:
         if p is None:
             continue
         if type == 'Diffuse' and p.use_map_color_diffuse:
@@ -794,10 +794,10 @@ def bake_hl2_lightmaps(meshes, context):
             mat_slot.material.thug_material_props.ugplus_matslot_lightmap3.tex_image = maybe_get_image(lightmap_name_z)
             
             # Also add the image to the legacy material system
-            if not mat_slot.material.texture_slots.get(blender_tex.name):
-                slot = mat_slot.material.texture_slots.add()
+            if not mat_slot.material.th_texture_slots.get(blender_tex.name):
+                slot = mat_slot.material.th_texture_slots.add()
             else:
-                slot = mat_slot.material.texture_slots.get(blender_tex.name)
+                slot = mat_slot.material.th_texture_slots.get(blender_tex.name)
             slot.texture = blender_tex
             slot.uv_layer = str('Lightmap')
             slot.blend_type = 'MULTIPLY'
@@ -1132,10 +1132,10 @@ def bake_ugplus_lightmaps(meshes, context):
                 mat_slot.material.thug_material_props.ugplus_matslot_lightmap4.tex_image = lightmap_img
             
             # Also add the image to the legacy material system
-            if not mat_slot.material.texture_slots.get(blender_tex.name):
-                slot = mat_slot.material.texture_slots.add()
+            if not mat_slot.material.th_texture_slots.get(blender_tex.name):
+                slot = mat_slot.material.th_texture_slots.add()
             else:
-                slot = mat_slot.material.texture_slots.get(blender_tex.name)
+                slot = mat_slot.material.th_texture_slots.get(blender_tex.name)
             slot.texture = blender_tex
             slot.uv_layer = str('Lightmap')
             slot.blend_type = 'MULTIPLY'
@@ -1430,10 +1430,10 @@ def bake_thug_lightmaps(meshes, context):
             blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_MODULATE'
             blender_tex.thug_material_pass_props.blend_fixed_alpha = 108
             blender_mat = get_material("Lightmap_" + ob.name)
-            if not blender_mat.texture_slots.get(blender_tex.name):
-                tex_slot = blender_mat.texture_slots.add()
+            if not blender_mat.th_texture_slots.get(blender_tex.name):
+                tex_slot = blender_mat.th_texture_slots.add()
             else:
-                tex_slot = blender_mat.texture_slots.get(blender_tex.name)
+                tex_slot = blender_mat.th_texture_slots.get(blender_tex.name)
             tex_slot.texture = blender_tex
             tex_slot.uv_layer = str('Lightmap')
             tex_slot.blend_type = 'MIX'
@@ -1459,7 +1459,7 @@ def bake_thug_lightmaps(meshes, context):
             else:
                 blender_mat.use_textures[0] = False
                 if tx_n != None:
-                    normal_slot = blender_mat.texture_slots.add()
+                    normal_slot = blender_mat.th_texture_slots.add()
                     normal_slot.texture = tx_n
                     normal_slot.uv_layer = orig_uv
                     normal_slot.blend_type = 'MIX'
@@ -1582,10 +1582,10 @@ def bake_thug_lightmaps(meshes, context):
                 mat_slot.material.thug_material_props.ugplus_matslot_lightmap4.tex_image = blender_tex.image
             
             # Also add the image to the legacy material system
-            if not mat_slot.material.texture_slots.get(blender_tex.name):
-                slot = mat_slot.material.texture_slots.add()
+            if not mat_slot.material.th_texture_slots.get(blender_tex.name):
+                slot = mat_slot.material.th_texture_slots.add()
             else:
-                slot = mat_slot.material.texture_slots.get(blender_tex.name)
+                slot = mat_slot.material.th_texture_slots.get(blender_tex.name)
             slot.texture = blender_tex
             slot.uv_layer = str('Lightmap')
             if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI':
@@ -1619,8 +1619,8 @@ def fill_bake_materials():
     for ob in meshes:
         for mat in ob.data.materials:
             #if mat.name in processed_mats: continue
-            if not hasattr(mat, 'texture_slots'): continue
-            passes = [tex_slot for tex_slot in mat.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
+            if not hasattr(mat, 'th_texture_slots'): continue
+            passes = [tex_slot for tex_slot in mat.th_texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
             pass_number = -1
             passes_to_add = 0
             baked_slot = None
@@ -1634,15 +1634,15 @@ def fill_bake_materials():
                         print("Lightmap tex {} (pass #{}) doesn't match lightmap UV index {}!".format(slot.name, pass_number, uv_pass))
                         passes_to_add = uv_pass - pass_number
                         baked_slot = slot.texture
-                        mat.texture_slots.clear(pass_number)
+                        mat.th_texture_slots.clear(pass_number)
                         break
             if passes_to_add != 0:
                 filler_slot = get_empty_tex()
                 for i in range(0, passes_to_add):
-                    _slot = mat.texture_slots.add()
+                    _slot = mat.th_texture_slots.add()
                     _slot.texture = filler_slot
             if baked_slot:
-                _slot = mat.texture_slots.add()
+                _slot = mat.th_texture_slots.add()
                 _slot.texture = baked_slot
                 _slot.uv_layer = "Lightmap"
                 _slot.blend_type = "MIX"
@@ -1842,8 +1842,8 @@ def change_bake_slot(self, context):
         search_for = 'LM_MORNING_'
         
     for mat in bpy.data.materials:
-        if not hasattr(mat, 'texture_slots'): continue
-        passes = [tex_slot for tex_slot in mat.texture_slots]
+        if not hasattr(mat, 'th_texture_slots'): continue
+        passes = [tex_slot for tex_slot in mat.th_texture_slots]
         for slot in passes:
             if hasattr(slot, 'texture') and slot.texture.name.startswith("Baked_"):
                 ob_name = slot.texture.name[6:]

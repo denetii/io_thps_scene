@@ -101,7 +101,7 @@ class THUGSceneSettings(bpy.types.Panel):
             box.row().prop(scene.thug_level_props.export_props, "speed_hack", toggle=True, icon='FF')
             box.row().prop(scene.thug_level_props.export_props, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
             if scene.thug_level_props.export_props.autosplit_everything:
-                box2 = box.box().column(True)
+                box2 = box.box().column(align=True)
                 box2.row().prop(scene.thug_level_props.export_props, "autosplit_faces_per_subobject")
                 box2.row().prop(scene.thug_level_props.export_props, "autosplit_max_radius")
                 
@@ -112,13 +112,13 @@ class THUGSceneSettings(bpy.types.Panel):
             box.row().prop(scene.thug_level_props.export_props, "generate_col_file", toggle=True, icon='OBJECT_DATA')
             box.row().prop(scene.thug_level_props.export_props, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
             box.row().prop(scene.thug_level_props.export_props, "export_scale")
-            box2 = box.box().column(True)
+            box2 = box.box().column(align=True)
             box2.row().prop(scene.thug_level_props.export_props, "max_texture_size")
             row2 = box2.row()
             row2.column().prop(scene.thug_level_props.export_props, "max_texture_base_tex", toggle=True)
             row2.column().prop(scene.thug_level_props.export_props, "max_texture_lightmap_tex", toggle=True)
             
-        self.layout.row().label(text="Level Lighting", icon='LAMP_DATA')
+        self.layout.row().label(text="Level Lighting", icon='LIGHT_DATA')
         if scene.thug_level_props.export_props.target_game == 'THUG1':
             # Underground+ TOD/lighting settings here
             self.layout.prop(scene.thug_level_props, "customize_tod")
@@ -162,7 +162,7 @@ class THUGSceneSettings(bpy.types.Panel):
             
         else:
             # Legacy lighting settings!
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(scene.thug_level_props, "level_ambient_rgba")
             
             tmp_row = box.row().split()
@@ -178,7 +178,7 @@ class THUGSceneSettings(bpy.types.Panel):
             col.prop(scene.thug_level_props, "level_light1_headpitch")
         
         self.layout.row().label(text="Level Flags", icon='INFO')
-        box = self.layout.box().column(True)
+        box = self.layout.box().column(align=True)
         box.row().prop(scene.thug_level_props, "level_flag_offline")
         box.row().prop(scene.thug_level_props, "level_flag_biglevel")
         box.row().prop(scene.thug_level_props, "level_flag_noprx")

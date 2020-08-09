@@ -53,7 +53,7 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
         blender_object = bpy.data.objects.new("scn_" + str(sec_checksum), blender_mesh)
         blender_object.thug_export_collision = False
         to_group(blender_object, "SceneMesh")
-        context.scene.objects.link(blender_object)
+        #context.scene.objects.link(blender_object)
         # context.scene.objects.active = blender_object
 
         bone_index = p("  bone index: {}", r.i32())
@@ -273,8 +273,8 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
                             loop[uv_layer].uv = pvd["uvs"][l]
                             if sec_flags & SECFLAGS_HAS_VERTEX_COLORS:
                                 cb, cg, cr, ca = pvd["color"]
-                                loop[color_layer] = (cr / 128.0, cg / 128.0, cb / 128.0)
-                                loop[alpha_layer] = (ca / 128.0, ca / 128.0, ca / 128.0)
+                                loop[color_layer] = (cr / 128.0, cg / 128.0, cb / 128.0, ca / 128.0)
+                                #loop[alpha_layer] = (ca / 128.0, ca / 128.0, ca / 128.0)
                                 
         bm.verts.index_update()
         bm.to_mesh(blender_mesh)

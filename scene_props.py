@@ -1170,9 +1170,10 @@ def register_props():
     
     bpy.types.Image.thug_image_props = PointerProperty(type=THUGImageProps)
 
-    #bpy.types.ImageTexture.thug_material_pass_props = PointerProperty(type=THUGMaterialPassProps)
+    bpy.types.Texture.thug_material_pass_props = PointerProperty(type=THUGMaterialPassProps)
     bpy.types.Material.thug_material_props = PointerProperty(type=THUGMaterialProps)
-    bpy.types.Material.thug_texture_slots = CollectionProperty(type=THUGMaterialPassProps)
+    bpy.types.Material.th_texture_slots = CollectionProperty(type=LegacyTextureSlot)
+    bpy.types.Material.th_texture_slot_index = IntProperty(default=-1)
 
     bpy.types.WindowManager.thug_all_nodes = PointerProperty(type=THUGNodeListProps)
     bpy.types.WindowManager.thug_game_assets = PointerProperty(type=THUGAssetListProps)
@@ -1184,7 +1185,6 @@ def register_props():
     
     bake.register_props_bake()
 
-    print("TEST!")
     global draw_handle
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
     # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)

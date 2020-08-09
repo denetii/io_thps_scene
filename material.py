@@ -39,7 +39,7 @@ def _ensure_default_material_exists():
         texture = bpy.data.textures.new("_THUG_DEFAULT_MATERIAL_TEXTURE_", "NONE")
         texture.thug_material_pass_props.color = (0.5, 0.5, 0.5)
 
-    tex_slot = default_mat.texture_slots.add()
+    tex_slot = default_mat.th_texture_slots.add()
     tex_slot.texture = bpy.data.textures["_THUG_DEFAULT_MATERIAL_TEXTURE_"]
 
 
@@ -82,18 +82,18 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
         if ps.specular_power > 0.0:
             ps.specular_color = p("  specular color: {}", r.read("3f"))
 
-        blender_mat.use_transparency = True
-        blender_mat.diffuse_color = (1, 1, 1)
-        blender_mat.diffuse_intensity = 1
-        blender_mat.specular_intensity = 0
-        blender_mat.alpha = 0
+        #blender_mat.use_transparency = True
+        #blender_mat.diffuse_color = (1, 1, 1)
+        #blender_mat.diffuse_intensity = 1
+        #blender_mat.specular_intensity = 0
+        #blender_mat.alpha = 0
             
         for j in range(num_passes):
             blender_tex = get_texture("{}/{}".format(mat_name_checksum, j))
-            if blender_mat.texture_slots[j]:
-                tex_slot = blender_mat.texture_slots[j]
+            if j < len(blender_mat.th_texture_slots):
+                tex_slot = blender_mat.th_texture_slots[j]
             else:
-                tex_slot = blender_mat.texture_slots.add()
+                tex_slot = blender_mat.th_texture_slots.add()
             tex_slot.texture = blender_tex
             pps = blender_tex.thug_material_pass_props
             p("  pass #{}", j)
@@ -141,10 +141,6 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
             if pps.u_addressing == 'Border' or pps.v_addressing == 'Border':
                 raise Exception("This is actually used!")
                 
-            if blender_tex.image:
-                    blender_tex.image.use_clamp_x = pps.u_addressing == "Clamp"
-                    blender_tex.image.use_clamp_y = pps.v_addressing == "Clamp"
-
             pps.envmap_multiples = p("    pass envmap uv tiling multiples: {}", r.read("2f"))
             pps.filtering_mode = r.u32()
             p("    pass filtering mode: {}", pps.filtering_mode)
@@ -508,16 +504,16 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
                 new_mat = source_material.copy()
                 new_mat.thug_material_props.grass_props.grassify = False
                 if not new_mat.thug_material_props.use_new_mats:
-                    if not new_mat.texture_slots[0] or not new_mat.texture_slots[0].texture:
+                    if not new_mat.th_texture_slots[0] or not new_mat.th_texture_slots[0].texture:
                         raise Exception('Source material for grass effect must have at least one texture pass!')
-                    texture = new_mat.texture_slots[0].texture
+                    texture = new_mat.th_texture_slots[0].texture
                     new_texture = texture.copy()
                     if not hasattr(texture, 'image') or not texture.image:
                         raise Exception('Source material for grass effect must have at least one image texture!')
                         
                     new_texture.image = m.thug_material_props.grass_props.grass_textures[layer].tex_image
                     new_texture.image.thug_image_props.compression_type = 'DXT5'
-                    new_texture.image.thug_image_props.mip_levels = source_material.texture_slots[0].texture.image.thug_image_props.mip_levels
+                    new_texture.image.thug_image_props.mip_levels = source_material.th_texture_slots[0].texture.image.thug_image_props.mip_levels
                     new_texture.name = "Grass-Tx_Grass_Layer{}_{}".format(layer, grass_counter)
                     pprops = new_texture.thug_material_pass_props
                     pprops.pf_textured = True
@@ -536,7 +532,7 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
                         pprops.uv_wibbles.uv_amplitude[1] *= wibble_multi2
                         pprops.uv_wibbles.uv_phase[0] = 0.0
                         pprops.uv_wibbles.uv_phase[1] = 0.0
-                    new_mat.texture_slots[0].texture = new_texture
+                    new_mat.th_texture_slots[0].texture = new_texture
                         
                 else:
                     new_mat.thug_material_props.ugplus_matslot_diffuse.tex_image = m.thug_material_props.grass_props.grass_textures[layer].tex_image
@@ -576,7 +572,7 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
             continue 
             
         #denetii - only include texture slots that affect the diffuse color in the Blender material
-        passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and (tex_slot.use_map_color_diffuse or tex_slot.use_map_normal)]
+        passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot and tex_slot.use and (tex_slot.use_map_color_diffuse or tex_slot.use_map_normal)]
         if len(passes) > 4:
             if operator:
                 operator.report(
@@ -715,11 +711,10 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
 
 #----------------------------------------------------------------------------------
 def _material_pass_settings_draw(self, context):
-    if not context.object:
-        return
     ob = context.object
-    if not ob.active_material or not ob.active_material.active_texture:
+    if not ob.active_material.th_texture_slots[ob.active_material.th_texture_slot_index]:
         return
+        
     attrs = [
         "color",
         "blend_mode",
@@ -727,9 +722,12 @@ def _material_pass_settings_draw(self, context):
         "lod_bias",
         "u_addressing",
         "v_addressing"]
-        #"filtering_mode",
-        #"test_passes"]
-    pass_props = ob.active_material.active_texture.thug_material_pass_props
+        
+    active_texture = ob.active_material.th_texture_slots[ob.active_material.th_texture_slot_index].texture
+    pass_props = active_texture.thug_material_pass_props
+    
+    self.layout.row().column().template_ID_preview(active_texture, "image", open="image.open", rows=4, cols=6)
+    
     for attr in attrs:
         self.layout.prop(
             pass_props,
@@ -737,7 +735,7 @@ def _material_pass_settings_draw(self, context):
             
     box = self.layout.box().column()
     box.row().prop(pass_props, "pf_textured")
-    img = getattr(ob.active_material.active_texture, 'image', None)
+    img = getattr(active_texture, 'image', None)
     if img and pass_props.pf_textured:
         box.row().prop(img.thug_image_props, 'compression_type')
         box.row().prop(img.thug_image_props, 'img_flags')
@@ -957,6 +955,12 @@ class THUGImageProps(bpy.types.PropertyGroup):
         options={'ENUM_FLAG'} )
         
 #----------------------------------------------------------------------------------
+class LegacyTextureSlot(bpy.types.PropertyGroup):
+    texture: PointerProperty(type=bpy.types.Texture)
+    name: StringProperty(name="Name", description="Name for this texture slot")
+    uv_layer: StringProperty(name="UV Slot")
+        
+#----------------------------------------------------------------------------------
 class AddTextureKeyframe(bpy.types.Operator):
     bl_idname = "object.thug_add_texture_keyframe"
     bl_label = "Add THUG Texture Keyframe"
@@ -1166,6 +1170,40 @@ class THUGMaterialSettings(bpy.types.Panel):
     def draw(self, context):
         _material_settings_draw(self, context)
 #----------------------------------------------------------------------------------
+class THUGMaterialPassUIList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        split = layout.split(factor=0.1)
+        split.template_icon(item.texture.image.preview.icon_id)
+        split.label(text=item.texture.name)
+        #box = layout.row().column(align=True)
+        #box.column().template_icon(item.tex_image.preview.icon_id)
+        #box.column().label(text=item.tex_image.name)
+        
+class THUGMaterialPassSettings(bpy.types.Panel):
+    bl_label = "TH Material Pass Settings"
+    bl_region_type = "WINDOW"
+    bl_space_type = "PROPERTIES"
+    bl_context = "material"
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+        
+    def draw(self, context):
+        ob = context.object
+        mat = ob.active_material
+        mps = mat.thug_material_props
+        
+        row = self.layout.row()
+        row.template_list("THUGMaterialPassUIList", "", mat,
+                          "th_texture_slots", mat, "th_texture_slot_index", rows=4, maxrows=4)
+        col = row.column(align=True)
+        col.operator("scene.thug_bake_add_lightmap_group", icon='ADD', text="")
+        col.operator("scene.thug_bake_del_lightmap_group", icon='REMOVE', text="")
+        
+        if mat.th_texture_slot_index > -1:
+            _material_pass_settings_draw(self, context)
+#----------------------------------------------------------------------------------
 
 def set_ugplus_materialslot(self, context):
     if self.tex_image:
@@ -1357,9 +1395,6 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
         default=(0.5, 0.5, 0.5),
         min=0.0, max=1.0)
         
-    tex_image: PointerProperty(type=bpy.types.Image)
-    tex_image_name: StringProperty(name="ImageName")
-    
     blend_mode: EnumProperty(items=(
      ("vBLEND_MODE_DIFFUSE", "DIFFUSE", "( 0 - 0 ) * 0 + Src"),
      ("vBLEND_MODE_ADD", "ADD", "( Src - 0 ) * Src + Dst"),

@@ -26,7 +26,7 @@ def _ensure_default_material_exists():
         texture = bpy.data.textures.new("_THUG_DEFAULT_MATERIAL_TEXTURE_", "NONE")
         texture.thug_material_pass_props.color = (0.5, 0.5, 0.5)
 
-    tex_slot = default_mat.texture_slots.add()
+    tex_slot = default_mat.th_texture_slots.add()
     tex_slot.texture = bpy.data.textures["_THUG_DEFAULT_MATERIAL_TEXTURE_"]
     
 def export_scn_sectors_th4(output_file, operator=None, is_model=False):
@@ -112,8 +112,8 @@ def export_scn_sectors_th4(output_file, operator=None, is_model=False):
                     if hasattr(env_test, 'thug_material_props') and env_test.thug_material_props.use_new_mats:
                         need_vertex_normals = True
                     
-                    if not hasattr(env_test, 'texture_slots'): continue
-                    _tmp_passes = [tex_slot for tex_slot in env_test.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
+                    if not hasattr(env_test, 'th_texture_slots'): continue
+                    _tmp_passes = [tex_slot for tex_slot in env_test.th_texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
                     for _tmp_tex in _tmp_passes:
                         _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
                         if _pprops and (_pprops.pf_environment or _pprops.pf_bump or _pprops.pf_water or _pprops.blend_mode == 'vBLEND_MODE_GLOSS_MAP'):
@@ -297,7 +297,7 @@ def export_materials_th4(output_file, target_game, operator=None, is_model=False
         mprops = m.thug_material_props
         
         #denetii - only include texture slots that affect the diffuse color in the Blender material
-        passes = [tex_slot.texture for tex_slot in m.texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
+        passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
         if len(passes) > 4:
             if operator:
                 operator.report(
