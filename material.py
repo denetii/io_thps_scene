@@ -66,29 +66,12 @@ def update_node_tree(self, context, material = None):
     node_vc = get_cycles_node(nodes, 'Vertex Color', 'ShaderNodeVertexColor', -850, 128)
     node_vc.layer_name = 'color'
     
-    # Add the diffuse/transparent/mix shader nodes - position and inputs determined later
-    node_trans = get_cycles_node(nodes, 'Transparent BDSF', 'ShaderNodeBsdfTransparent', 200, -100)
-    node_sd = get_cycles_node(nodes, 'Diffuse BSDF', 'ShaderNodeBsdfDiffuse', 200, 40)
-    node_sm = get_cycles_node(nodes, 'Mix Shader', 'ShaderNodeMixShader', 450, 20)
-    
-    # Material output (if that somehow doesn't exist already)
-    node_mo = get_cycles_node(nodes, 'Material Output', 'ShaderNodeOutputMaterial', 650, 0)
-    node_mo.location = (650,0)
-    
-    # Node to multiply result by vertex color
-    node_m_vc = get_cycles_node(nodes, "Multiply VertexColor", 'ShaderNodeMixRGB', 20, 0)
-    node_m_vc.blend_type = 'MULTIPLY'
-    node_m_vc.inputs[0].default_value = 1.0
-    
-    node_tree.links.new(node_mo.inputs[0], node_sm.outputs[0]) # Mix Shader -> Material Output
-    
     i = -1
     for slot in mat.th_texture_slots:
-        if not slot.texture: continue
-        if not slot.texture.image: continue
+        if not slot.texture: 
+            print("Material missing texture in texture slot: {} {}".format(mat.name, i))
+            continue
         i += 1
-        
-        img = slot.texture.image
         pps = slot.texture.thug_material_pass_props
         blend_modes.append(pps.blend_mode)
         use_vertex_alpha = (pps.ignore_vertex_alpha == False)
@@ -97,8 +80,9 @@ def update_node_tree(self, context, material = None):
         # Create image texture node
         nodes_tex.append(get_cycles_node(nodes, "Texture Pass {}".format(i), 'ShaderNodeTexImage', -950, 0-400*i))
         if hasattr(slot.texture, 'image'):
-            nodes_tex[i].image = slot.texture.image
-        if pps.u_addressing != 'Repeat' or pps.v_addressing != 'Repeat':
+            if slot.texture.image:
+                nodes_tex[i].image = slot.texture.image
+        if pps.u_addressing != 'Repeat' and pps.v_addressing != 'Repeat':
             nodes_tex[i].extension = 'CLIP'
         else:
             nodes_tex[i].extension = 'REPEAT'
@@ -130,7 +114,7 @@ def update_node_tree(self, context, material = None):
             if use_vertex_alpha:
                 node_tree.links.new(nodes_alpha[i].inputs[1], node_vc.outputs[1]) # Vertex Color.a -> Pass Alpha[1]
         else:
-            nodes_alpha[i].inputs[0].default_value = 1.0 if not blend_modes[i].endswith('FIXED') else pps.blend_fixed_alpha / 255.0
+            nodes_alpha[i].inputs[0].default_value = 1.0 if not blend_modes[i].endswith('FIXED') else pps.blend_fixed_alpha / 100.0
             if use_vertex_alpha:
                 node_tree.links.new(nodes_alpha[i].inputs[1], node_vc.outputs[1]) # Vertex Color.a -> Pass Alpha[1]
             
@@ -148,30 +132,71 @@ def update_node_tree(self, context, material = None):
             else:
                 node_tree.links.new(nodes_blend[i].inputs[1], nodes_blend[i-1].outputs[0]) # Blend i-1 -> Mix[i]
             
-        # Multiply the final color by the vertex color
-        if i > 0:
-            node_tree.links.new(node_m_vc.inputs[1], nodes_blend[i].outputs[0]) # Diffuse BSDF -> Multiply VertexColor[0]
-        else:
-            node_tree.links.new(node_m_vc.inputs[1], nodes_col[0].outputs[0])
-        node_tree.links.new(node_m_vc.inputs[2], node_vc.outputs[0]) # Vertex Color -> Multiply VertexColor[1]
+    if i == -1:
+        print("Material has no passes: {}".format(mat.name))
+        return
+        
+    is_additive = False
+    is_subtractive = False
+    if blend_modes[0] in [ 'vBLEND_MODE_ADD', 'vBLEND_MODE_ADD_FIXED', 'vBLEND_MODE_BRIGHTEN', 'vBLEND_MODE_BRIGHTEN_FIXED' ]:
+        is_additive = True
+    elif blend_modes[0] in [ 'vBLEND_MODE_SUBTRACT', 'vBLEND_MODE_SUB_FIXED' ]:
+        is_subtractive = True
+        
+    # Node to multiply final color by vertex color
+    node_m_vc = get_cycles_node(nodes, "Multiply VertexColor", 'ShaderNodeMixRGB', 20, 0)
+    node_m_vc.blend_type = 'MULTIPLY'
+    node_m_vc.inputs[0].default_value = 1.0
     
-        # Take the final blended result and attach it to the Diffuse shader
-        node_tree.links.new(node_sd.inputs[0], node_m_vc.outputs[0]) # Mix i -> Diffuse BSDF
-        # Mix in Transparent BSDF using pass 0 alpha, vertex alpha, or fixed alpha
+    # Create final connection nodes
+    node_trans = get_cycles_node(nodes, 'Transparent BDSF', 'ShaderNodeBsdfTransparent', 200, -100)
+    if is_additive:
+        node_sd = get_cycles_node(nodes, 'Emission', 'ShaderNodeEmission', 200, 40)
+        node_sm = get_cycles_node(nodes, 'Add Shader', 'ShaderNodeAddShader', 450, 20)
+        node_tree.links.new(node_sm.inputs[0], node_sd.outputs[0]) # Emission -> Add Shader [1]
+        node_tree.links.new(node_sm.inputs[1], node_trans.outputs[0]) # Transparent BSDF -> Add Shader [2]
+        node_tree.links.new(node_sd.inputs[1], nodes_alpha[0].outputs[0]) # Pass Alpha 0 -> Emission strength
+    #elif is_subtractive:
+    #    node_inv = get_cycles_node(nodes, 'Invert', 'ShaderNodeInvert', 0, -150)
+    #    #node_tree.links.new(node_inv.inputs[0], nodes_alpha[0].outputs[0]) # Final Alpha -> Invert fac
+    #    node_tree.links.new(node_inv.inputs[1], node_m_vc.outputs[0]) # Mix 0 -> Invert
+    #    node_tree.links.new(node_trans.inputs[0], node_inv.outputs[0]) # Invert col -> Transparent BSDF
+    else:
+        node_sd = get_cycles_node(nodes, 'Diffuse BSDF', 'ShaderNodeBsdfDiffuse', 200, 40)
+        node_sm = get_cycles_node(nodes, 'Mix Shader', 'ShaderNodeMixShader', 450, 20)
         node_tree.links.new(node_sm.inputs[2], node_sd.outputs[0]) # Diffuse BSDF -> Mix Shader [1]
         node_tree.links.new(node_sm.inputs[1], node_trans.outputs[0]) # Transparent BSDF -> Mix Shader [2]
-        if blend_modes[0] not in [ 'vBLEND_MODE_DIFFUSE' ]: 
-            mat.blend_method = 'BLEND' #'HASHED'
-            # Bit of a hack, but ADD/SUBTRACT/BRIGHTEN will look bad in the viewport otherwise
-            #if blend_modes[0] not in [ 'vBLEND_MODE_BLEND', 'vBLEND_MODE_BLEND_FIXED' ]:
-            #    node_tree.links.new(node_sm.inputs[0], nodes_col[0].outputs[0]) # Final Alpha -> Mix Shader [fac]
-            #else:
-            node_tree.links.new(node_sm.inputs[0], nodes_alpha[0].outputs[0]) # Final Alpha -> Mix Shader [fac]
-                
-        else:
-            mat.blend_method = 'OPAQUE'
+    
+    # Material output (if that somehow doesn't exist already)
+    node_mo = get_cycles_node(nodes, 'Material Output', 'ShaderNodeOutputMaterial', 650, 0)
+    node_mo.location = (650,0)
+    #if is_subtractive:
+    #    node_tree.links.new(node_mo.inputs[0], node_trans.outputs[0]) # Mix Shader -> Material Output
+    #else:
+    node_tree.links.new(node_mo.inputs[0], node_sm.outputs[0]) # Mix Shader -> Material Output
+    
+    if i > 0:
+        node_tree.links.new(node_m_vc.inputs[1], nodes_blend[i].outputs[0]) # Diffuse BSDF -> Multiply VertexColor[0]
+    else:
+        node_tree.links.new(node_m_vc.inputs[1], nodes_col[0].outputs[0])
+    node_tree.links.new(node_m_vc.inputs[2], node_vc.outputs[0]) # Vertex Color -> Multiply VertexColor[1]
+    #if not is_subtractive:
+    node_tree.links.new(node_sd.inputs[0], node_m_vc.outputs[0]) # Mix i -> Diffuse BSDF
         
-        #mat.use_backface_culling = (mat.thug_material_props.no_backface_culling == False or mat.thug_material_props.single_sided == True)
+    # Take the final blended result and attach it to the Diffuse shader
+    # Mix in Transparent BSDF using pass 0 alpha, vertex alpha, or fixed alpha
+    if blend_modes[0] not in [ 'vBLEND_MODE_DIFFUSE' ]: 
+        mat.blend_method = 'BLEND' #'HASHED'
+        if not is_additive: #and not is_subtractive:
+            node_tree.links.new(node_sm.inputs[0], nodes_alpha[0].outputs[0]) # Final Alpha -> Mix Shader [fac]
+    else:
+        mat.blend_method = 'OPAQUE'
+    
+    if ((mat.thug_material_props.no_backface_culling == True) or (blend_modes[0] in [ 'vBLEND_MODE_BLEND', 'vBLEND_MODE_BLEND_FIXED' ])) and not mat.thug_material_props.single_sided:
+        mat.use_backface_culling = False
+    else:
+        mat.use_backface_culling = True
+        
         
             
     
@@ -883,9 +908,11 @@ def _material_pass_settings_draw(self, context):
         "u_addressing",
         "v_addressing"]
         
-    active_texture = ob.active_material.th_texture_slots[ob.active_material.th_texture_slot_index].texture
+    tex_slot = ob.active_material.th_texture_slots[ob.active_material.th_texture_slot_index]
+    active_texture = tex_slot.texture
     pass_props = active_texture.thug_material_pass_props
     
+    self.layout.row().column().template_ID(tex_slot, "texture", live_icon=True)
     self.layout.row().column().template_ID_preview(active_texture, "image", open="image.open", rows=4, cols=6)
     
     for attr in attrs:
@@ -1334,7 +1361,9 @@ class THUGMaterialPassUIList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.1)
         split.template_icon(item.texture.image.preview.icon_id)
-        split.label(text=item.texture.name)
+        split.prop(item.texture, 'name', text='', emboss=False, translate=False)
+        #split.label(text=item.texture.name)
+        
         #box = layout.row().column(align=True)
         #box.column().template_icon(item.tex_image.preview.icon_id)
         #box.column().label(text=item.tex_image.name)
