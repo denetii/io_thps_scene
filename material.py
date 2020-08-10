@@ -14,9 +14,158 @@ from . tex import *
 # METHODS
 #############################################
 
-# Convert an Underground+ material to BI texture passes, so that it can be visualized in the viewport
-def ugplus_material_update(mat, context):
-    return
+def translate_blend_mode(blend_mode):
+    return {
+        "vBLEND_MODE_ADD": "ADD",
+        "vBLEND_MODE_ADD_FIXED": "ADD",
+        "vBLEND_MODE_SUBTRACT": "SUBTRACT",
+        "vBLEND_MODE_SUB_FIXED": "SUBTRACT",
+        "vBLEND_MODE_BRIGHTEN": "LIGHTEN",
+        "vBLEND_MODE_BRIGHTEN_FIXED": "LIGHTEN",
+        "vBLEND_MODE_MODULATE": "MULTIPLY",
+        "vBLEND_MODE_MODULATE_FIXED": "MULTIPLY",
+        "vBLEND_MODE_MODULATE_COLOR": "MULTIPLY"
+    }.get(blend_mode, "MIX")
+    
+def get_cycles_node(nodes, name, type, loc_x, loc_y, create_if_none=True):
+    if nodes.get(name):
+        return nodes.get(name)
+    if create_if_none:
+        new_node = nodes.new(type)
+        new_node.name = name
+        new_node.location = (loc_x, loc_y)
+        return new_node
+    return None
+    
+# Update the TH material shader nodes
+def update_node_tree(self, context, material = None):
+    if material:
+        mat = material
+    else:
+        if not context.object: return
+        mat = context.object.active_material
+    mat.use_nodes = True
+    node_tree = mat.node_tree
+    nodes = node_tree.nodes
+    
+    nodes_uv = []
+    nodes_tex = []
+    nodes_col = []
+    nodes_alpha = []
+    nodes_blend = []
+    
+    blend_modes = []
+    use_va = []
+    
+    # Move Principled node out of the way, if it exists
+    node_p = get_cycles_node(nodes, 'Principled BSDF', 'ShaderNodeBsdfPrincipled', 0, 0, create_if_none=False)
+    if node_p:
+        node_p.location = (1000, 0)
+    
+    # Add a vertex color node
+    node_vc = get_cycles_node(nodes, 'Vertex Color', 'ShaderNodeVertexColor', -850, 128)
+    node_vc.layer_name = 'color'
+    
+    # Add the diffuse/transparent/mix shader nodes - position and inputs determined later
+    node_trans = get_cycles_node(nodes, 'Transparent BDSF', 'ShaderNodeBsdfTransparent', 200, -100)
+    node_sd = get_cycles_node(nodes, 'Diffuse BSDF', 'ShaderNodeBsdfDiffuse', 200, 40)
+    node_sm = get_cycles_node(nodes, 'Mix Shader', 'ShaderNodeMixShader', 450, 20)
+    
+    # Material output (if that somehow doesn't exist already)
+    node_mo = get_cycles_node(nodes, 'Material Output', 'ShaderNodeOutputMaterial', 650, 0)
+    node_mo.location = (650,0)
+    
+    # Node to multiply result by vertex color
+    node_m_vc = get_cycles_node(nodes, "Multiply VertexColor", 'ShaderNodeMixRGB', 20, 0)
+    node_m_vc.blend_type = 'MULTIPLY'
+    node_m_vc.inputs[0].default_value = 1.0
+    
+    node_tree.links.new(node_mo.inputs[0], node_sm.outputs[0]) # Mix Shader -> Material Output
+    
+    i = -1
+    for slot in mat.th_texture_slots:
+        if not slot.texture: continue
+        if not slot.texture.image: continue
+        i += 1
+        
+        img = slot.texture.image
+        pps = slot.texture.thug_material_pass_props
+        blend_modes.append(pps.blend_mode)
+        use_vertex_alpha = (pps.ignore_vertex_alpha == False)
+        use_va.append(use_vertex_alpha)
+        
+        # Create image texture node
+        nodes_tex.append(get_cycles_node(nodes, "Texture Pass {}".format(i), 'ShaderNodeTexImage', -950, 0-400*i))
+        if hasattr(slot.texture, 'image'):
+            nodes_tex[i].image = slot.texture.image
+            
+        # Create UV map node (or env map node)
+        if pps.pf_environment:
+            nodes_uv.append(get_cycles_node(nodes, "Env Map {}".format(i), 'ShaderNodeTexCoord', -1200, 0-400*i))
+            node_tree.links.new(nodes_tex[i].inputs[0], nodes_uv[i].outputs[6]) # Env Map i -> Texture i
+        else:
+            nodes_uv.append(get_cycles_node(nodes, "UV Map {}".format(i), 'ShaderNodeUVMap', -1200, 0-400*i))
+            nodes_uv[i].uv_map = slot.uv_layer
+            node_tree.links.new(nodes_tex[i].inputs[0], nodes_uv[i].outputs[0]) # UV Map i -> Texture i
+        
+        # Create texture pass color node
+        nodes_col.append(get_cycles_node(nodes, "Pass Color {}".format(i), 'ShaderNodeMixRGB', -650, -150-400*i))
+        nodes_col[i].blend_type = 'MULTIPLY'
+        nodes_col[i].inputs[0].default_value = 1.0
+        nodes_col[i].inputs[2].default_value = (pps.color.r*2.0,pps.color.g*2.0,pps.color.b*2.0,1.0)
+        node_tree.links.new(nodes_col[i].inputs[1], nodes_tex[i].outputs[0]) # Tex Color i -> Pass Color i
+        
+        # Create texture pass alpha node
+        nodes_alpha.append(get_cycles_node(nodes, "Pass Alpha {}".format(i), 'ShaderNodeMath', -650, 10-400*i))
+        nodes_alpha[i].operation = 'MULTIPLY'
+        nodes_alpha[i].inputs[1].default_value = 1.0
+        
+        # Blend with tex alpha/vertex alpha if using BLEND, otherwise use fixed alpha if a fixed blend mode
+        if blend_modes[i] in [ 'vBLEND_MODE_BLEND' ]:
+            node_tree.links.new(nodes_alpha[i].inputs[0], nodes_tex[i].outputs[1]) # Tex Color i.a -> Pass Alpha[0]
+            if use_vertex_alpha:
+                node_tree.links.new(nodes_alpha[i].inputs[1], node_vc.outputs[1]) # Vertex Color.a -> Pass Alpha[1]
+        else:
+            nodes_alpha[i].inputs[0].default_value = 1.0 if not blend_modes[i].endswith('FIXED') else pps.blend_fixed_alpha / 255.0
+            if use_vertex_alpha:
+                node_tree.links.new(nodes_alpha[i].inputs[1], node_vc.outputs[1]) # Vertex Color.a -> Pass Alpha[1]
+            
+        # Create a node to mix a texture pass with the previous one
+        if i == 0:
+            nodes_blend.append(None)
+        else:
+            nodes_blend.append(get_cycles_node(nodes, "Mix {}".format(i), 'ShaderNodeMixRGB', -450+200*i, 0-400*i))
+            nodes_blend[i].blend_type = translate_blend_mode(pps.blend_mode)
+            
+            node_tree.links.new(nodes_blend[i].inputs[0], nodes_alpha[i].outputs[0]) # Pass Alpha i-1 -> Mix[fac]
+            node_tree.links.new(nodes_blend[i].inputs[2], nodes_col[i].outputs[0]) # Blend i-1 -> Mix[i]
+            if i == 1:
+                node_tree.links.new(nodes_blend[i].inputs[1], nodes_col[i-1].outputs[0]) # Blend i-1 -> Mix[i]
+            else:
+                node_tree.links.new(nodes_blend[i].inputs[1], nodes_blend[i-1].outputs[0]) # Blend i-1 -> Mix[i]
+            
+        # Multiply the final color by the vertex color
+        if i > 0:
+            node_tree.links.new(node_m_vc.inputs[1], nodes_blend[i].outputs[0]) # Diffuse BSDF -> Multiply VertexColor[0]
+        else:
+            node_tree.links.new(node_m_vc.inputs[1], nodes_col[0].outputs[0])
+        node_tree.links.new(node_m_vc.inputs[2], node_vc.outputs[0]) # Vertex Color -> Multiply VertexColor[1]
+    
+        # Take the final blended result and attach it to the Diffuse shader
+        node_tree.links.new(node_sd.inputs[0], node_m_vc.outputs[0]) # Mix i -> Diffuse BSDF
+        # Mix in Transparent BSDF using pass 0 alpha, vertex alpha, or fixed alpha
+        node_tree.links.new(node_sm.inputs[2], node_sd.outputs[0]) # Diffuse BSDF -> Mix Shader [1]
+        node_tree.links.new(node_sm.inputs[1], node_trans.outputs[0]) # Transparent BSDF -> Mix Shader [2]
+        if blend_modes[0] not in [ 'vBLEND_MODE_DIFFUSE' ]:
+            node_tree.links.new(node_sm.inputs[0], nodes_alpha[0].outputs[0]) # Final Alpha -> Mix Shader [fac]
+            mat.blend_method = 'HASHED' #'BLEND'
+        else:
+            mat.blend_method = 'OPAQUE'
+        
+        #mat.use_backface_culling = (mat.thug_material_props.no_backface_culling == False or mat.thug_material_props.single_sided == True)
+        
+            
+    
 
 # Checks if our PBR material is completely diffuse (non-metallic, 0 reflectance), 
 # so we can use the less expensive Diffuse BRDF rather than the full PBR shader
@@ -201,7 +350,8 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 p("    l: {}", r.f32())
             else:
                 r.read("4I")
-
+        
+        
 def get_ugplus_shader_flags(mprops):
     SHADERFLAG_DEFAULT_LIT = 0x01
     SHADERFLAG_LIGHTMAPPED = 0x02
@@ -1388,12 +1538,15 @@ class THUGMaterialProps(bpy.types.PropertyGroup):
     ugplus_matslot_cloud: PointerProperty(type=UGPlusMaterialSlotProps, name="Cloud", description="Texture used when weather effects (rain, snow) are active")
     ###############################################################
     
-#----------------------------------------------------------------------------------        
+#----------------------------------------------------------------------------------   
+def th_materialpass_updated(self, context):
+    update_node_tree(self, context)
+    
 class THUGMaterialPassProps(bpy.types.PropertyGroup):
     color: FloatVectorProperty(
         name="Color", subtype="COLOR",
         default=(0.5, 0.5, 0.5),
-        min=0.0, max=1.0)
+        min=0.0, max=1.0, update=th_materialpass_updated)
         
     blend_mode: EnumProperty(items=(
      ("vBLEND_MODE_DIFFUSE", "DIFFUSE", "( 0 - 0 ) * 0 + Src"),
@@ -1417,20 +1570,20 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
      ("vBLEND_MODE_LIGHTMAP", "LIGHTMAP", ""),
      ("vBLEND_MODE_NORMAL_ROUGH", "NORMAL_ROUGHNESS", ""),
      ("vBLEND_MODE_MASK", "MASK", ""),
-    ), name="Blend Mode", default="vBLEND_MODE_DIFFUSE")
-    blend_fixed_alpha: IntProperty(name="Fixed Alpha", min=0, max=255)
+    ), name="Blend Mode", default="vBLEND_MODE_DIFFUSE", update=th_materialpass_updated)
+    blend_fixed_alpha: IntProperty(name="Fixed Alpha", min=0, max=255, update=th_materialpass_updated)
     u_addressing: EnumProperty(items=(
         ("Repeat", "Repeat", ""),
         ("Clamp", "Clamp", ""),
         ("Border", "Border", ""),
-    ), name="U Addressing", default="Repeat")
+    ), name="U Addressing", default="Repeat", update=th_materialpass_updated)
     v_addressing: EnumProperty(items=(
         ("Repeat", "Repeat", ""),
         ("Clamp", "Clamp", ""),
         ("Border", "Border", ""),
-    ), name="V Addressing", default="Repeat")
+    ), name="V Addressing", default="Repeat", update=th_materialpass_updated)
     
-    pf_textured: BoolProperty(name="Textured", default=True)
+    pf_textured: BoolProperty(name="Textured", default=True, update=th_materialpass_updated)
     pf_environment: BoolProperty(name="Environment texture", default=False)
     pf_bump: BoolProperty(name="Bump texture", default=False)
     pf_water: BoolProperty(name="Water texture", default=False)
@@ -1438,7 +1591,7 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
     pf_smooth: BoolProperty(name="Smooth", default=True)
     pf_transparent: BoolProperty(name="Use Transparency", default=False)
     pf_static: BoolProperty(name="Static", default=False)
-    ignore_vertex_alpha: BoolProperty(name="Ignore Vertex Alpha", default=True)
+    ignore_vertex_alpha: BoolProperty(name="Ignore Vertex Alpha", default=True, update=th_materialpass_updated)
     envmap_multiples: FloatVectorProperty(name="Envmap Multiples", size=2, default=(3.0, 3.0), min=0.1, max=10.0)
     filtering_mode: IntProperty(name="Filtering Mode", min=0, max=100000)
 
