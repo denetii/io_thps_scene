@@ -98,6 +98,10 @@ def update_node_tree(self, context, material = None):
         nodes_tex.append(get_cycles_node(nodes, "Texture Pass {}".format(i), 'ShaderNodeTexImage', -950, 0-400*i))
         if hasattr(slot.texture, 'image'):
             nodes_tex[i].image = slot.texture.image
+        if pps.u_addressing != 'Repeat' or pps.v_addressing != 'Repeat':
+            nodes_tex[i].extension = 'CLIP'
+        else:
+            nodes_tex[i].extension = 'REPEAT'
             
         # Create UV map node (or env map node)
         if pps.pf_environment:
@@ -156,9 +160,14 @@ def update_node_tree(self, context, material = None):
         # Mix in Transparent BSDF using pass 0 alpha, vertex alpha, or fixed alpha
         node_tree.links.new(node_sm.inputs[2], node_sd.outputs[0]) # Diffuse BSDF -> Mix Shader [1]
         node_tree.links.new(node_sm.inputs[1], node_trans.outputs[0]) # Transparent BSDF -> Mix Shader [2]
-        if blend_modes[0] not in [ 'vBLEND_MODE_DIFFUSE' ]:
+        if blend_modes[0] not in [ 'vBLEND_MODE_DIFFUSE' ]: 
+            mat.blend_method = 'BLEND' #'HASHED'
+            # Bit of a hack, but ADD/SUBTRACT/BRIGHTEN will look bad in the viewport otherwise
+            #if blend_modes[0] not in [ 'vBLEND_MODE_BLEND', 'vBLEND_MODE_BLEND_FIXED' ]:
+            #    node_tree.links.new(node_sm.inputs[0], nodes_col[0].outputs[0]) # Final Alpha -> Mix Shader [fac]
+            #else:
             node_tree.links.new(node_sm.inputs[0], nodes_alpha[0].outputs[0]) # Final Alpha -> Mix Shader [fac]
-            mat.blend_method = 'HASHED' #'BLEND'
+                
         else:
             mat.blend_method = 'OPAQUE'
         
@@ -350,7 +359,8 @@ def read_materials(reader, printer, num_materials, directory, operator, output_f
                 p("    l: {}", r.f32())
             else:
                 r.read("4I")
-        
+                
+        update_node_tree(None, None, blender_mat)
         
 def get_ugplus_shader_flags(mprops):
     SHADERFLAG_DEFAULT_LIT = 0x01
