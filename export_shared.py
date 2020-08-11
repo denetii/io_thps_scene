@@ -585,25 +585,10 @@ def export_col(filename, directory, target_game, operator=None):
             bm.clear()
             bm.from_mesh(final_mesh)
         else:
-            final_mesh = o.to_mesh(bpy.context.scene, True, 'PREVIEW')
-            if helpers._need_to_flip_normals(o):
-                temporary_object = helpers._make_temp_obj(final_mesh)
-                try:
-                    bpy.context.scene.collection.objects.link(temporary_object)
-                    # temporary_object.matrix_world = o.matrix_world
-                    helpers._flip_normals(temporary_object)
-                finally:
-                    if bpy.context.mode != "OBJECT":
-                        bpy.ops.object.mode_set(mode="OBJECT")
-                    bpy.context.scene.objects.unlink(temporary_object)
-                    bpy.data.objects.remove(temporary_object)
-            
+            final_mesh = o.to_mesh(preserve_all_data_layers=True)
             bm.clear()
             bm.from_mesh(final_mesh)
             bmesh.ops.triangulate(bm, faces=bm.faces)
-            bm.faces.ensure_lookup_table()
-            bm.faces.index_update()
-            bpy.data.meshes.remove(final_mesh)
         return
 
     out_objects = [o for o in bpy.data.objects
@@ -654,7 +639,7 @@ def export_col(filename, directory, target_game, operator=None):
             def w(fmt, *args):
                 outp.write(struct.pack(fmt, *args))
 
-            LOG.debug("Exporting object: {}".format(o.name))
+            LOG.debug("Exporting collision object: {}".format(o.name))
             triang(o)
             total_verts += len(bm.verts)
             total_faces += len(bm.faces)
@@ -819,6 +804,9 @@ def export_col(filename, directory, target_game, operator=None):
                         )
                     w("i", split_axis_and_point)
                     w("I", (bsp_nodes_start + node_indices[id(node.left)] * SIZEOF_BSP_NODE))
+                    
+            if not operator.speed_hack:
+                o.to_mesh_clear()
 
         def w(fmt, *args):
             outp.write(struct.pack(fmt, *args))
