@@ -283,7 +283,7 @@ def _alt_split_obj(ob, context, max_radius=500, faces_per_subobject=250, preserv
             new_object = ob.copy()
             new_object.matrix_world = mathutils.Matrix.Identity(4)
             new_object.data = new_mesh
-            context.scene.objects.link(new_object)
+            context.scene.collection.objects.link(new_object)
             new_objs.append(new_object)
 
         return new_objs
@@ -368,14 +368,14 @@ def _prepare_autosplit_objects(operator, context, target_game):
 
         LOG.debug("with {} polys".format(len(final_mesh.polygons)))
 
-        bpy.context.scene.objects.link(temporary_object)
+        bpy.context.scene.collection.objects.link(temporary_object)
         # temporary_object.matrix_world = ob.matrix_world
 
         if helpers._need_to_flip_normals(ob):
             helpers._flip_normals(temporary_object)
 
         temporary_object.select_set(True)
-        bpy.context.scene.objects.active = temporary_object
+        bpy.context.view_layer.objects.active = temporary_object
         # bpy.ops.object.thug_split_object(
         final_objs = _alt_split_obj(
             temporary_object, context,

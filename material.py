@@ -909,11 +909,15 @@ def _material_pass_settings_draw(self, context):
         "v_addressing"]
         
     tex_slot = ob.active_material.th_texture_slots[ob.active_material.th_texture_slot_index]
+    
+    self.layout.row().column().template_ID(tex_slot, "texture", new="texture.new", live_icon=True)
+    if tex_slot.texture == None:
+        return
+    
     active_texture = tex_slot.texture
     pass_props = active_texture.thug_material_pass_props
-    
-    self.layout.row().column().template_ID(tex_slot, "texture", live_icon=True)
     self.layout.row().column().template_ID_preview(active_texture, "image", open="image.open", rows=4, cols=6)
+    self.layout.row().column().prop_search(tex_slot, "uv_layer", ob.data, "uv_layers")
     
     for attr in attrs:
         self.layout.prop(
@@ -958,7 +962,7 @@ def _material_pass_settings_draw(self, context):
         row = box.row(True)
         row.operator("object.thug_add_texture_keyframe", text="Add")
         row.operator("object.thug_remove_texture_keyframe", text="Remove")
-        box.row().template_list("THUGAnimatedTextureKeyframesUIList", "", at, "keyframes", at, "keyframes_index", rows=1)
+        box.row().template_list("THUG_UL_AnimatedTextureKeyframesUIList", "", at, "keyframes", at, "keyframes_index", rows=1)
         # box.row().operator(at, "keyframes")
 
 #----------------------------------------------------------------------------------
@@ -1002,7 +1006,7 @@ def _material_settings_draw(self, context):
         row.operator("object.thug_remove_grass_texture", text="Remove")
         row = box.row()
         col = row.column(align=True)
-        col.template_list("THUGGrassTextureUIList", "", gps, "grass_textures", gps, "texture_index", rows=1)
+        col.template_list("THUG_UL_GrassTextureUIList", "", gps, "grass_textures", gps, "texture_index", rows=1)
         
         row = box.row(True)
         col = row.column(align=True)
@@ -1208,7 +1212,7 @@ class RemoveTextureKeyframe(bpy.types.Operator):
         return {"FINISHED"}
 
 #----------------------------------------------------------------------------------
-class THUGAnimatedTextureKeyframesUIList(bpy.types.UIList):
+class THUG_UL_AnimatedTextureKeyframesUIList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(0.33)
         split.prop(item, "time")
@@ -1253,7 +1257,7 @@ class THUGGrassEffect(bpy.types.PropertyGroup):
     #uv_phase: FloatVectorProperty(name="Wind Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
     
 #----------------------------------------------------------------------------------
-class THUGGrassTextureUIList(bpy.types.UIList):
+class THUG_UL_GrassTextureUIList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         box = layout.row().column(align=True)
         box.template_ID(item, "tex_image", open="image.open")
@@ -1333,7 +1337,7 @@ class THUGUVWibbles(bpy.types.PropertyGroup):
     uv_amplitude: FloatVectorProperty(name="Amplitude", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
     uv_phase: FloatVectorProperty(name="Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
 #----------------------------------------------------------------------------------
-class THUGMaterialSettingsTools(bpy.types.Panel):
+class THUG_PT_MaterialSettingsTools(bpy.types.Panel):
     bl_label = "TH Material Settings"
     bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
@@ -1348,7 +1352,7 @@ class THUGMaterialSettingsTools(bpy.types.Panel):
         _material_settings_draw(self, context)
 
 #----------------------------------------------------------------------------------
-class THUGMaterialSettings(bpy.types.Panel):
+class THUG_PT_MaterialSettings(bpy.types.Panel):
     bl_label = "TH Material Settings"
     bl_region_type = "WINDOW"
     bl_space_type = "PROPERTIES"
@@ -1357,18 +1361,22 @@ class THUGMaterialSettings(bpy.types.Panel):
     def draw(self, context):
         _material_settings_draw(self, context)
 #----------------------------------------------------------------------------------
-class THUGMaterialPassUIList(bpy.types.UIList):
+class THUG_UL_MaterialPassUIList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.1)
-        split.template_icon(item.texture.image.preview.icon_id)
-        split.prop(item.texture, 'name', text='', emboss=False, translate=False)
+        if item.texture != None:
+            split.template_icon(item.texture.preview.icon_id)
+            split.prop(item.texture, 'name', text='', emboss=False, translate=False)
+        else:
+            split.template_icon(0)
+            split.label(text='(No Texture)')
         #split.label(text=item.texture.name)
         
         #box = layout.row().column(align=True)
         #box.column().template_icon(item.tex_image.preview.icon_id)
         #box.column().label(text=item.tex_image.name)
         
-class THUGMaterialPassSettings(bpy.types.Panel):
+class THUG_PT_MaterialPassSettings(bpy.types.Panel):
     bl_label = "TH Material Pass Settings"
     bl_region_type = "WINDOW"
     bl_space_type = "PROPERTIES"
@@ -1384,7 +1392,7 @@ class THUGMaterialPassSettings(bpy.types.Panel):
         mps = mat.thug_material_props
         
         row = self.layout.row()
-        row.template_list("THUGMaterialPassUIList", "", mat,
+        row.template_list("THUG_UL_MaterialPassUIList", "", mat,
                           "th_texture_slots", mat, "th_texture_slot_index", rows=4, maxrows=4)
         col = row.column(align=True)
         col.operator("scene.thug_bake_add_lightmap_group", icon='ADD', text="")

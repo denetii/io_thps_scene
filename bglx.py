@@ -117,6 +117,10 @@ def _get_transparency_shader():
 def glEnd():
     inst = InternalData.get_instance()
 
+    # No lines/geometry was actually buffered
+    if inst.get_dims() == None:
+        return
+        
     color = inst.get_color()
     coords = inst.get_verts()
     tex_coords = inst.get_tex_coords()

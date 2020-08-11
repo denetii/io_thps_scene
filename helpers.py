@@ -122,11 +122,11 @@ def get_material(name, copy_from = None):
             blender_mat.name = name
         else:
             blender_mat = bpy.data.materials.new(str(name)) 
-            blender_mat.use_transparency = True
-            blender_mat.diffuse_color = (1, 1, 1)
-            blender_mat.diffuse_intensity = 1
-            blender_mat.specular_intensity = 0.25
-            blender_mat.alpha = 1
+            #blender_mat.use_transparency = True
+            blender_mat.diffuse_color = (1, 1, 1, 1)
+            #blender_mat.diffuse_intensity = 1
+            #blender_mat.specular_intensity = 0.25
+            #blender_mat.alpha = 1
     else:
         blender_mat = bpy.data.materials.get(str(name)) 
     return blender_mat
@@ -224,7 +224,7 @@ def _need_to_flip_normals(ob):
     return negatives % 2 == 1
 
 def _flip_normals(ob):
-    bpy.context.scene.objects.active = ob
+    bpy.context.view_layer.objects.active = ob
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.mesh.flip_normals()
@@ -441,7 +441,7 @@ def _generate_lambert_shading(ob):
     LOG.debug("making shading for {}".format(ob))
     # bpy.ops.object.mode_set(mode='EDIT')
     if False:
-        bpy.context.scene.objects.active = ob
+        bpy.context.view_layer.objects.active = ob
         ob.select_set(True)
         bpy.context.scene.render.bake_type = "SHADOW"
         bpy.context.scene.render.bake_normal_space = "WORLD"

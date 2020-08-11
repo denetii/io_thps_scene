@@ -395,8 +395,8 @@ def import_prk(filename, directory, context, operator):
         #for i, coord in enumerate(rail_nodes[0]):
         #    curveOB.data.thug_pathnode_triggers.add()
         # attach to scene and validate context
-        bpy.context.scene.objects.link(curveOB)
-        bpy.context.scene.objects.active = curveOB
+        bpy.context.scene.collection.objects.link(curveOB)
+        bpy.context.view_layer.objects.active = curveOB
         build_rail_mesh(curveOB)
     #read_prk_sections(r, p, num_sectors, context, operator)
     

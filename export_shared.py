@@ -533,8 +533,8 @@ def generate_shadowcasters():
             mat_slot.material.thug_material_props.specular_power = -0.23
             mat_slot.material.name = "GEN_Mat_ShadowCaster_" + str(sc_mat_count)
         
-        scene.objects.link(new_ob)
-        scene.objects.link(new_col_ob)
+        scene.collection.objects.link(new_ob)
+        scene.collection.objects.link(new_col_ob)
         
         #helpers._flip_normals(new_ob)
         
@@ -589,7 +589,7 @@ def export_col(filename, directory, target_game, operator=None):
             if helpers._need_to_flip_normals(o):
                 temporary_object = helpers._make_temp_obj(final_mesh)
                 try:
-                    bpy.context.scene.objects.link(temporary_object)
+                    bpy.context.scene.collection.objects.link(temporary_object)
                     # temporary_object.matrix_world = o.matrix_world
                     helpers._flip_normals(temporary_object)
                 finally:
@@ -1448,7 +1448,7 @@ class THUGQuickExport(bpy.types.Operator):
 # PANELS
 #############################################
 #----------------------------------------------------------------------------------
-class THUGExportTools(bpy.types.Panel):
+class THUG_PT_ExportTools(bpy.types.Panel):
     bl_label = "TH Export Tools"
     bl_region_type = "UI"
     bl_space_type = "VIEW_3D"

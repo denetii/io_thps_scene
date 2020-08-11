@@ -402,7 +402,7 @@ def _update_restart_collection(self, context):
 
 # PROPERTIES
 #############################################
-class THUGObjectSettingsTools(bpy.types.Panel):
+class THUG_PT_ObjectSettingsTools(bpy.types.Panel):
     bl_label = "TH Object Settings"
     bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
@@ -416,7 +416,7 @@ class THUGObjectSettingsTools(bpy.types.Panel):
         _thug_object_settings_draw(self, context)
 
 #----------------------------------------------------------------------------------
-class THUGObjectSettings(bpy.types.Panel):
+class THUG_PT_ObjectSettings(bpy.types.Panel):
     bl_label = "TH Object Settings"
     bl_region_type = "WINDOW"
     bl_space_type = "PROPERTIES"

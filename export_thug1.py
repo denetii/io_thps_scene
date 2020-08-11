@@ -65,7 +65,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                     bm.from_mesh(final_mesh)
                     final_mesh.calc_normals_split()
                 else:
-                    bpy.context.scene.objects.link(temporary_object)
+                    bpy.context.scene.collection.objects.link(temporary_object)
                     temporary_object.matrix_world = ob.matrix_world
                     
                     if helpers._need_to_flip_normals(ob):

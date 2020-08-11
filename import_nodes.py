@@ -416,14 +416,14 @@ def import_nodearray(gamemode):
                 else:
                     ob.location[1] = node["Position"][2]
                 ob.location[2] = node["Position"][1]
-                bpy.context.scene.objects.link( ob )
+                #bpy.context.scene.objects.link( ob )
                 to_group(ob, "LevelLights")
                 continue
             
             # Create object if it doesn't exist (should be vehicles, pedestrians, restarts etc)
             if not bpy.data.objects.get(node_name):
                 ob = bpy.data.objects.new( "empty", None )
-                bpy.context.scene.objects.link( ob )
+                #bpy.context.scene.objects.link( ob )
                 if node["Class"] == "GameObject":
                     ob.empty_draw_type = 'CUBE'
                     ob.empty_draw_size = 64
@@ -995,7 +995,7 @@ class THUGImportTriggerScripts(bpy.types.Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=500, height=200)
+        return wm.invoke_props_dialog(self, width=500)
     
     def draw(self, context):
         layout = self.layout
@@ -1101,7 +1101,7 @@ class THUGMergeObjects(bpy.types.Operator):
                 print("Scene mesh does NOT match, skipping!")
                 continue
                 
-            context.scene.objects.active = ob
+            context.view_layer.objects.active = ob
             
             # At this point, we've confirmed the meshes are duplicated, so copy the collision flags 
             # and other attributes from the COL mesh

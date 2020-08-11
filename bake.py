@@ -434,7 +434,7 @@ def bake_thug_vcs(meshes, context):
             print("Object {} not marked for export to scene, skipping bake!".format(ob.name))
             continue
         # Set it to active and go into edit mode
-        scene.objects.active = ob
+        context.view_layer.objects.active = ob
         ob.select_set(True)
         
         # Add the 'color' vertex color channel (used by THUG) and make sure we are baking onto it
@@ -535,7 +535,7 @@ def bake_hl2_lightmaps(meshes, context):
             group_name = scene.thug_lightmap_groups[ob.thug_lightmap_group_id].name
             
         # Set it to active and go into edit mode
-        scene.objects.active = ob
+        context.view_layer.objects.active = ob
         ob.select_set(True)
         
         # Set the desired resolution, both for the UV map and the lightmap texture
@@ -892,7 +892,7 @@ def bake_ugplus_lightmaps(meshes, context):
             continue
             
         # Set it to active and go into edit mode
-        scene.objects.active = ob
+        context.view_layer.objects.active = ob
         ob.select_set(True)
         
         # Set the desired resolution, both for the UV map and the lightmap texture
@@ -1251,7 +1251,7 @@ def bake_thug_lightmaps(meshes, context):
             group_name = scene.thug_lightmap_groups[ob.thug_lightmap_group_id].name
             
         # Set it to active and go into edit mode
-        scene.objects.active = ob
+        context.view_layer.objects.active = ob
         ob.select_set(True)
         
         # Set the desired resolution, both for the UV map and the lightmap texture
@@ -2108,7 +2108,7 @@ class THUG_RemoveFromGroup(bpy.types.Operator):
             group_name = group.name
             obj_group = bpy.data.groups[group_name]
             for object in context.selected_objects:
-                scene.objects.active = object
+                context.view_layer.objects.active = object
                 if object.type == 'MESH' and object.name in obj_group.objects:
                     # Remove UV channel
                     tex = object.data.uv_textures.get('Lightmap')
@@ -2126,7 +2126,7 @@ class THUG_RemoveFromGroup(bpy.types.Operator):
                         for f in object.data.polygons:
                             orig_polys[f.index] = f.material_index
                         unbake(object)
-                        bpy.context.scene.objects.active = object
+                        bpy.context.view_layer.objects.active = object
                         object.select_set(True)
                         restore_mat_assignments(object, orig_polys)
                         object.select_set(False)
@@ -2259,13 +2259,13 @@ class THUG_MergeObjects(bpy.types.Operator):
         ob_merged_old = bpy.data.objects.get(self.group_name + "_mergedObject")
         if ob_merged_old is not None:
             ob_merged_old.select_set(True)
-            scene.objects.active = ob_merged_old
+            context.view_layer.objects.active = ob_merged_old
             bpy.ops.object.delete(use_global=True)
 
         me = bpy.data.meshes.new(self.group_name + '_mergedObject')
         ob_merge = bpy.data.objects.new(self.group_name + '_mergedObject', me)
         ob_merge.location = scene.cursor_location   # position object at 3d-cursor
-        scene.objects.link(ob_merge)                # Link object to scene
+        scene.collection.objects.link(ob_merge)                # Link object to scene
         me.update()
         ob_merge.select_set(False)
 
@@ -2289,14 +2289,14 @@ class THUG_MergeObjects(bpy.types.Operator):
             for uv in object.data.uv_textures:
                 if uv.name == 'Lightmap':
                     uv.active = True
-                    scene.objects.active = object
+                    context.view_layer.objects.active = object
 
             # Duplicate temp object
             bpy.ops.object.select_all(action='DESELECT')
             object.select_set(True)
-            scene.objects.active = object
+            context.view_layer.objects.active = object
             bpy.ops.object.duplicate(linked=False, mode='TRANSLATION')
-            activeNowObject = scene.objects.active
+            activeNowObject = context.view_layer.objects.active
             activeNowObject.select_set(True)
 
             # Hide render of original mesh
@@ -2318,7 +2318,7 @@ class THUG_MergeObjects(bpy.types.Operator):
             UVLIST.clear()
 
             # Create vertex groups for each selected object
-            scene.objects.active = activeNowObject
+            context.view_layer.objects.active = activeNowObject
             vgroup = activeNowObject.vertex_groups.new(name=object.name)
             vgroup.add(list(range(len(activeNowObject.data.vertices))), weight=1.0, type='ADD')
 
@@ -2335,14 +2335,14 @@ class THUG_MergeObjects(bpy.types.Operator):
             bpy.ops.object.select_all(action='DESELECT')
             activeNowObject.select_set(True)
             ob_merge.select_set(True)
-            scene.objects.active = ob_merge
+            context.view_layer.objects.active = ob_merge
             bpy.ops.object.join()
 
         mergeList.clear()
 
         bpy.ops.object.select_all(action='DESELECT')
         ob_merge.select_set(True)
-        scene.objects.active = ob_merge
+        context.view_layer.objects.active = ob_merge
 
         # Unhide all faces
         bpy.ops.object.mode_set(mode='EDIT')
@@ -2392,7 +2392,7 @@ class THUG_SeparateObjects(bpy.types.Operator):
                 # Select vertex groups and separate group from merged object
                 bpy.ops.object.select_all(action='DESELECT')
                 ob_merged.select_set(True)
-                scene.objects.active = ob_merged
+                context.view_layer.objects.active = ob_merged
 
                 bpy.ops.object.mode_set(mode='EDIT')
                 if doUnhidePolygons is False:
@@ -2422,7 +2422,7 @@ class THUG_SeparateObjects(bpy.types.Operator):
                     ob_original.hide_select = False
                     ob_original.hide = False
                     ob_original.select_set(True)
-                    scene.objects.active = ob_separeted
+                    context.view_layer.objects.active = ob_separeted
                     bpy.ops.object.join_uvs()
                     ob_original.hide_render = False
                     ob_original.select_set(False)
@@ -2658,7 +2658,7 @@ class UnBakeLightmaps(bpy.types.Operator):
                 
             unbake(ob)
             
-            bpy.context.scene.objects.active = ob
+            context.view_layer.objects.active = ob
             ob.select_set(True)
             restore_mat_assignments(ob, orig_polys)
             ob.select_set(False)
@@ -2680,7 +2680,7 @@ class UnBakeLightmaps(bpy.types.Operator):
         
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=700, height=350)
+        return wm.invoke_props_dialog(self, width=700)
     
     def draw(self, context):
         layout = self.layout
@@ -2864,7 +2864,7 @@ class RenderCubemaps(bpy.types.Operator):
 # PANELS
 #############################################
 #----------------------------------------------------------------------------------
-class THUGLightingTools(bpy.types.Panel):
+class THUG_PT_LightingTools(bpy.types.Panel):
     bl_label = "TH Lighting Tools"
     bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
@@ -2899,7 +2899,7 @@ class THUGLightingTools(bpy.types.Panel):
         #if context.space_data.viewport_shade == 'TEXTURED':
         #    self.layout.row().prop(context.scene, "lightmap_view", expand=False)
             
-class THUGSceneLightingTools(bpy.types.Panel):
+class THUG_PT_SceneLightingTools(bpy.types.Panel):
     bl_label = "TH Lighting Settings"
     bl_region_type = "WINDOW"
     bl_space_type = "PROPERTIES"

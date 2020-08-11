@@ -41,8 +41,8 @@ def preset_place_node(node_type, position):
     
     if node_type == 'RESTART':
         ob.name = get_unique_name('TRG_Restart')
-        scene.objects.link( ob )
-        scene.objects.active = ob 
+        #scene.objects.link( ob )
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         ob.thug_empty_props.empty_type = 'Restart'
         ob.thug_restart_props.restart_type = "Player1"
@@ -51,8 +51,8 @@ def preset_place_node(node_type, position):
         
     elif node_type == 'KOTH_CROWN':
         ob.name = get_unique_name('TRG_KOTH')
-        scene.objects.link( ob )
-        scene.objects.active = ob 
+        #scene.objects.link( ob )
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         ob.thug_empty_props.empty_type = "GenericNode"
         ob.thug_generic_props.generic_type = "Crown"
@@ -60,8 +60,8 @@ def preset_place_node(node_type, position):
         
     elif node_type == 'PEDESTRIAN':
         ob.name = get_unique_name('TRG_Pedestrian')
-        scene.objects.link( ob )
-        scene.objects.active = ob 
+        #scene.objects.link( ob )
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         ob.thug_empty_props.empty_type = 'Pedestrian'
         ob.thug_ped_props.ped_type = "Ped_From_Profile"
@@ -73,8 +73,8 @@ def preset_place_node(node_type, position):
         
     elif node_type == 'VEHICLE':
         ob.name = get_unique_name('TRG_Vehicle')
-        scene.objects.link( ob )
-        scene.objects.active = ob 
+        #scene.objects.link( ob )
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         ob.thug_empty_props.empty_type = 'Vehicle'
         ob.thug_veh_props.veh_type = "Generic"
@@ -83,7 +83,7 @@ def preset_place_node(node_type, position):
     elif node_type == 'CUBEMAP_PROBE':
         ob.name = get_unique_name('ReflectionProbe')
         ob.rotation_euler = [math.radians(90), 0, math.radians(-90)]
-        scene.objects.link( ob )
+        #scene.objects.link( ob )
         ob.thug_empty_props.empty_type = 'CubemapProbe'
         ob.empty_draw_type = 'SPHERE'
         ob.empty_draw_size = 64
@@ -100,13 +100,13 @@ def preset_place_node(node_type, position):
         camera_ob.parent = ob
         camera_ob.data.draw_size = 48.0
         
-        scene.objects.active = ob 
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         
     elif node_type == 'LIGHT_PROBE':
         ob.name = get_unique_name('LightProbe')
         ob.rotation_euler = [math.radians(90), 0, math.radians(-90)]
-        scene.objects.link( ob )
+        #scene.objects.link( ob )
         ob.thug_empty_props.empty_type = 'LightProbe'
         ob.empty_draw_type = 'SPHERE'
         ob.empty_draw_size = 64
@@ -123,13 +123,13 @@ def preset_place_node(node_type, position):
         camera_ob.parent = ob
         camera_ob.data.draw_size = 48.0
         
-        scene.objects.active = ob 
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         
     elif node_type == 'LIGHT_VOLUME':
         ob.name = get_unique_name('LightVolume')
-        scene.objects.link( ob )
-        scene.objects.active = ob 
+        #scene.objects.link( ob )
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         ob.thug_empty_props.empty_type = 'LightVolume'
         
@@ -139,8 +139,8 @@ def preset_place_node(node_type, position):
             ob.name = get_unique_name('TRG_CTF')
         else:
             ob.name = get_unique_name('TRG_GO')
-        scene.objects.link( ob )
-        scene.objects.active = ob 
+        #scene.objects.link( ob )
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         ob.thug_empty_props.empty_type = 'GameObject'
         if node_type == 'CTF_FLAG':
@@ -153,8 +153,8 @@ def preset_place_node(node_type, position):
         
     elif node_type == 'PARTICLEOBJECT':
         ob.name = get_unique_name('Particle')
-        scene.objects.link( ob )
-        scene.objects.active = ob 
+        #scene.objects.link( ob )
+        bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
         ob.thug_empty_props.empty_type = 'ParticleObject'
         ob.thug_particle_props.particle_boxdimsstart = [0, 0, 24]
@@ -207,8 +207,8 @@ def preset_place_node(node_type, position):
             curveOB.data.materials.append(rail_mat)
             
         # attach to scene and validate context
-        scene.objects.link(curveOB)
-        scene.objects.active = curveOB
+        #scene.objects.link(curveOB)
+        bpy.context.view_layer.objects.active = curveOB
         curveOB.select_set(True)
         to_group(curveOB, "RailNodes")
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
@@ -249,8 +249,8 @@ def preset_place_node(node_type, position):
             meshOB.scale = [actual_scale, actual_scale, actual_scale]
         
         # attach to scene and validate context
-        scene.objects.link(curveOB)
-        scene.objects.active = curveOB
+        #scene.objects.link(curveOB)
+        bpy.context.view_layer.objects.active = curveOB
         if node_type == 'RAIL_POINT_PREMADE':
             curveOB.parent = meshOB
         curveOB.select_set(True)
@@ -292,8 +292,8 @@ def preset_place_node(node_type, position):
             curveOB.data.materials.append(rail_mat)
             
         # attach to scene and validate context
-        scene.objects.link(curveOB)
-        scene.objects.active = curveOB
+        #scene.objects.link(curveOB)
+        bpy.context.view_layer.objects.active = curveOB
         curveOB.select_set(True)
         if node_type == 'WAYPOINT':
             to_group(curveOB, 'Waypoints')
@@ -454,7 +454,7 @@ def preset_place_mesh(dictionary_name, piece_name, position):
     #new_piece.thug_export_scene = True
     #new_piece.thug_export_collision = True
     #scene.objects.link(new_piece)
-    scene.objects.active = new_piece
+    bpy.context.view_layer.objects.active = new_piece
     new_piece.select_set(True)
     return new_piece
     
@@ -648,18 +648,18 @@ class AddTHUGMesh(bpy.types.Operator):
 
 # MENUS
 #############################################
-class THUGNodesMenu(bpy.types.Menu):
+class THUG_MT_NodesMenu(bpy.types.Menu):
     bl_label = 'Nodes'
-    bl_idname = 'mesh.thug_preset_nodes'
+    bl_idname = 'THUG_MT_preset_nodes'
 
     def draw(self, context):
         layout = self.layout
         for o in preset_nodes:
             layout.operator(o.bl_idname)
             
-class THUGMeshSubSubMenu(bpy.types.Menu):
+class THUG_MT_MeshSubSubMenu(bpy.types.Menu):
     bl_label = 'Objects'
-    bl_idname = 'mesh.thug_presetsubmenu'
+    bl_idname = 'THUG_MT_presetsubmenu'
     template_name: bpy.props.StringProperty()
     category_name: bpy.props.StringProperty()
     
@@ -672,9 +672,9 @@ class THUGMeshSubSubMenu(bpy.types.Menu):
                     layout.operator(o.bl_idname, icon='OBJECT_DATAMODE')
                     
                     
-class THUGMeshSubMenu(bpy.types.Menu):
+class THUG_MT_MeshSubMenu(bpy.types.Menu):
     bl_label = 'Objects'
-    bl_idname = 'mesh.thug_presetmenu'
+    bl_idname = 'THUG_MT_presetmenu'
     template_name: bpy.props.StringProperty()
     
     def draw(self, context):
@@ -686,9 +686,9 @@ class THUGMeshSubMenu(bpy.types.Menu):
                 icon='GROUP')
                     
 
-class THUGMeshMenu(bpy.types.Menu):
+class THUG_MT_MeshMenu(bpy.types.Menu):
     bl_label = 'Objects'
-    bl_idname = 'mesh.thug_preset_pieces'
+    bl_idname = 'THUG_MT_preset_pieces'
 
     def draw(self, context):
         print("drawing mesh menu")
@@ -699,9 +699,9 @@ class THUGMeshMenu(bpy.types.Menu):
                 
 
 
-class THUGPresetsMenu(bpy.types.Menu):
+class THUG_MT_PresetsMenu(bpy.types.Menu):
     bl_label = 'my materials'
-    bl_idname = 'mesh.thug_presets'
+    bl_idname = 'THUG_MT_presets'
 
     def draw(self, context):
         layout = self.layout

@@ -186,7 +186,7 @@ def draw_particle_preview(ob, context):
             new_ob.rotation_euler = [ 1.570796, 0, 0 ]
             new_ob.empty_draw_type = 'IMAGE'
             new_ob.parent = ob
-            scene.objects.link(new_ob)
+            scene.collection.objects.link(new_ob)
         
     ob_start = bpy.data.objects.get(expected_obs[0])
     ob_mid = bpy.data.objects.get(expected_obs[1])
@@ -1189,12 +1189,12 @@ def register_props():
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
     # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)
     #bpy.app.handlers.scene_update_post.append(draw_stuff_post_update)
-    #bpy.app.handlers.scene_update_post.append(update_collision_flag_ui_properties)
-    #bpy.app.handlers.scene_update_post.append(update_pathnode_ui_properties)
+    bpy.app.handlers.depsgraph_update_post.append(update_collision_flag_ui_properties)
+    bpy.app.handlers.depsgraph_update_post.append(update_pathnode_ui_properties)
 
     #bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
-    #bpy.app.handlers.load_post.append(update_node_collection)
-    #bpy.app.handlers.load_post.append(update_game_files_collections)
+    bpy.app.handlers.load_post.append(update_node_collection)
+    bpy.app.handlers.load_post.append(update_game_files_collections)
     
     
 #----------------------------------------------------------------------------------
@@ -1206,12 +1206,12 @@ def unregister_props():
         bpy.types.SpaceView3D.draw_handler_remove(draw_handle, 'WINDOW')
         draw_handle = None
 
-    if update_collision_flag_ui_properties in bpy.app.handlers.scene_update_post:
-        bpy.app.handlers.scene_update_post.remove(update_collision_flag_ui_properties)
+    if update_collision_flag_ui_properties in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(update_collision_flag_ui_properties)
     if draw_stuff_post_update in bpy.app.handlers.scene_update_post:
         bpy.app.handlers.scene_update_post.remove(draw_stuff_post_update)
-    if update_pathnode_ui_properties in bpy.app.handlers.scene_update_post:
-        bpy.app.handlers.scene_update_post.remove(update_pathnode_ui_properties)
+    if update_pathnode_ui_properties in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(update_pathnode_ui_properties)
 
     if draw_stuff_pre_load_cleanup in bpy.app.handlers.load_pre:
         bpy.app.handlers.load_pre.remove(draw_stuff_pre_load_cleanup)

@@ -19,6 +19,8 @@ from . autorail import *
 update_triggered_by_ui_updater = False
 BSPNode = collections.namedtuple("BSPNode", "split_point split_axis left right")
 BSPLeaf = collections.namedtuple("BSPLeaf", "faces")
+AUTORAIL_NONE = 0 # -2
+AUTORAIL_AUTO = -1
 
 
 # METHODS
@@ -200,7 +202,7 @@ def update_collision_flag_ui_properties(scene):
     global update_triggered_by_ui_updater
     update_triggered_by_ui_updater = True
     try:
-        ob = scene.objects.active
+        ob = bpy.context.object #scene.objects.active
         if not ob or ob.mode != "EDIT" or ob.type != "MESH":
             return
         bm = bmesh.from_edit_mesh(ob.data)
@@ -250,7 +252,7 @@ def update_collision_flag_ui_properties(scene):
 
 # PROPERTIES
 #############################################
-class THUGCollisionMeshTools(bpy.types.Panel):
+class THUG_PT_CollisionMeshTools(bpy.types.Panel):
     bl_label = "TH Collision Mesh Tools"
     bl_region_type = "UI"
     bl_space_type = "VIEW_3D"

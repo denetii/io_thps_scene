@@ -65,7 +65,7 @@ def export_level_manifest_json(filename, directory, operator, level_info):
 # PANELS
 #############################################
 #----------------------------------------------------------------------------------
-class THUGSceneSettings(bpy.types.Panel):
+class THUG_PT_SceneSettings(bpy.types.Panel):
     bl_label = "TH Level Settings"
     bl_region_type = "WINDOW"
     bl_space_type = "PROPERTIES"

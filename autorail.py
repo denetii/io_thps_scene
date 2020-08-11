@@ -125,8 +125,8 @@ def build_rail_mesh(ob_rail, thickness = 2):
     # Now we have the path for the rail mesh, let's convert to mesh and assign materials!
     rail_mesh = curveOB.to_mesh(bpy.context.scene, True, 'PREVIEW')
     actual_ob = bpy.data.objects.new('Rail' + mesh_name, rail_mesh)
-    bpy.context.scene.objects.link(actual_ob)
-    bpy.context.scene.objects.active = actual_ob
+    bpy.context.scene.collection.objects.link(actual_ob)
+    bpy.context.view_layer.objects.active = actual_ob
     
     # Fill the gaps in the ends and assign mats
     if is_cyclic == False:
@@ -228,7 +228,7 @@ def update_pathnode_ui_properties(scene):
         return
     update_triggered_by_ui_updater = True
     try:
-        ob = scene.objects.active
+        ob = bpy.context.object #scene.objects.active
         if not ob or ob.mode != "EDIT" or ob.type != "CURVE" or not ob.thug_path_type in ("Rail", "Ladder", "Waypoint", "Custom"):
             return
         wm = bpy.context.window_manager
@@ -879,7 +879,7 @@ class ExtractRail(bpy.types.Operator):
         bpy.ops.object.mode_set(mode="OBJECT")
         bpy.ops.object.select_all()
         new_object.select_set(True)
-        context.scene.objects.active = new_object
+        context.view_layer.objects.active = new_object
         bpy.ops.object.convert(target='CURVE')
         new_object.parent = old_object
         new_object.matrix_parent_inverse = old_object.matrix_basis.inverted()

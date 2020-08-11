@@ -85,7 +85,7 @@ class THUGUtilFillPedestrians(bpy.types.Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=600, height=350)
+        return wm.invoke_props_dialog(self, width=600)
     
     def draw(self, context):
         layout = self.layout
@@ -142,7 +142,7 @@ class THUGUtilFillVehicles(bpy.types.Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=600, height=350)
+        return wm.invoke_props_dialog(self, width=600)
     
     def draw(self, context):
         layout = self.layout
@@ -194,7 +194,7 @@ class THUGUtilAutoWall(bpy.types.Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=600, height=350)
+        return wm.invoke_props_dialog(self, width=600)
     
     def draw(self, context):
         layout = self.layout
@@ -221,7 +221,7 @@ class THUGUtilBatchTerrain(bpy.types.Operator):
         meshes = [o for o in context.selected_objects if o.type == 'MESH']
         curves = [o for o in context.selected_objects if o.type == 'CURVE' and o.thug_path_type != ""]
         for ob in meshes:
-            bpy.context.scene.objects.active = ob
+            bpy.context.view_layer.objects.active = ob
             bpy.ops.object.select_all(action='DESELECT')
             ob.select_set(True)
             bpy.ops.object.editmode_toggle()
@@ -264,7 +264,7 @@ class THUGUtilBatchTerrain(bpy.types.Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=600, height=250)
+        return wm.invoke_props_dialog(self, width=600)
     
     def draw(self, context):
         layout = self.layout
@@ -355,7 +355,7 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=800, height=350)
+        return wm.invoke_props_dialog(self, width=800)
     
     def draw(self, context):
         layout = self.layout
@@ -444,7 +444,7 @@ class THUGUtilBatchImport(bpy.types.Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=800, height=350)
+        return wm.invoke_props_dialog(self, width=800)
     
     def draw(self, context):
         layout = self.layout
@@ -460,7 +460,7 @@ class THUGUtilBatchImport(bpy.types.Operator):
 # PANELS
 #############################################
 #----------------------------------------------------------------------------------
-class THUGObjectUtils(bpy.types.Panel):
+class THUG_PT_ObjectUtils(bpy.types.Panel):
     bl_label = "TH Object Utilities"
     bl_region_type = "UI"
     bl_space_type = "VIEW_3D"
