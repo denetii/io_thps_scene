@@ -757,7 +757,7 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
             continue 
             
         #denetii - only include texture slots that affect the diffuse color in the Blender material
-        passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot and tex_slot.use and (tex_slot.use_map_color_diffuse or tex_slot.use_map_normal)]
+        passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot]
         if len(passes) > 4:
             if operator:
                 operator.report(
@@ -851,7 +851,8 @@ def export_materials(output_file, target_game, operator=None, is_model=False):
                 
             w("I", pass_flags)  # flags # 4132
             w("?", True)  # has color flag; seems to be ignored
-            w("3f",  *(pprops.color if pprops else m.diffuse_color / 2.0))  # color
+            pass_color = [pprops.color[0],pprops.color[1],pprops.color[2]] if pprops else [m.diffuse_color[0],m.diffuse_color[1],m.diffuse_color[2]]
+            w("3f",  *(pass_color))  # color
 
             # alpha register values, first u32 - a BLEND_MODE, second u32 - fixed alpha (clipped to u8)
             # w("Q", 5)

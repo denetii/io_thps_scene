@@ -149,7 +149,7 @@ def get_all_mipmaps(image, mm_offset = 0):
     images = []
 
     image.gl_load()
-    image_id = image.bindcode[0]
+    image_id = image.bindcode
     if image_id == 0:
         return images
     level = mm_offset # denetii - change this to shift the largest exported size down
@@ -497,7 +497,7 @@ def export_tex(filename, directory, target_game, operator=None):
                     
         else:
             # denetii - only include texture slots that affect the diffuse color in the Blender material
-            passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot and tex_slot.use and (tex_slot.use_map_color_diffuse or tex_slot.use_map_normal)]
+            passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot]
             if len(passes) > 4:
                 if operator:
                     passes = passes[:4]

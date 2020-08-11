@@ -718,7 +718,7 @@ def export_col(filename, directory, target_game, operator=None):
                 verts_out.write(struct.pack(fmt, *args))
 
             for v in bm.verts:
-                w("3f", *to_thug_coords(obj_matrix * v.co))
+                w("3f", *to_thug_coords(obj_matrix @ v.co))
                 if target_game == 'THPS4':
                     w("B", 0xFF) # Intensity data(?)
                     w("B", 0xFF) # Intensity data(?)
@@ -739,7 +739,7 @@ def export_col(filename, directory, target_game, operator=None):
                     intensities_list = {}
                     for face in bm.faces:
                         for loop in face.loops:
-                            tmp_intensity = int((( loop[intensity_layer].r + loop[intensity_layer].g + loop[intensity_layer].b ) / 3.0) * 255)
+                            tmp_intensity = int((( loop[intensity_layer][0] + loop[intensity_layer][1] + loop[intensity_layer][2] ) / 3.0) * 255)
                             intensities_list[loop.vert] = tmp_intensity
                     
                     for vert in bm.verts:

@@ -55,7 +55,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
             if operator.speed_hack:
                 final_mesh = ob.data
             else:
-                final_mesh = ob.to_mesh(bpy.context.scene, False, 'PREVIEW')
+                final_mesh = ob.to_mesh(preserve_all_data_layers=True)
                 temporary_object = helpers._make_temp_obj(final_mesh)
                 temporary_object.name = original_object_name
             try:
@@ -100,7 +100,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                         has_new_shaders = True
                     
                     if not hasattr(env_test, 'th_texture_slots'): continue
-                    _tmp_passes = [tex_slot for tex_slot in env_test.th_texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
+                    _tmp_passes = [tex_slot for tex_slot in env_test.th_texture_slots if tex_slot][:4]
                     for _tmp_tex in _tmp_passes:
                         _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
                         if _pprops and (_pprops.pf_environment or _pprops.pf_bump or _pprops.pf_water or _pprops.blend_mode == 'vBLEND_MODE_GLOSS_MAP'):
@@ -189,9 +189,9 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
 
                 for v in split_verts.keys():
                     if is_levelobject:
-                        w("3f", *to_thug_coords(lo_matrix * v.co))
+                        w("3f", *to_thug_coords(lo_matrix @ v.co))
                     else:
-                        w("3f", *to_thug_coords(ob.matrix_world * v.co))
+                        w("3f", *to_thug_coords(ob.matrix_world @ v.co))
 
                 if flags & SECFLAGS_HAS_VERTEX_NORMALS:
                     if flags & SECFLAGS_HAS_VERTEX_WEIGHTS:

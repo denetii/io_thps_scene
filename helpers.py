@@ -264,7 +264,7 @@ def get_bbox_from_node(ob):
             Vector((tmp_bbox_size[0], tmp_bbox_size[1], -tmp_bbox_size[2])),
             ]
             
-    bbox = [ob.matrix_world * b for b in tmp_bbox]
+    bbox = [ob.matrix_world @ b for b in tmp_bbox]
     
     min_x = float("inf")
     min_y = float("inf")
@@ -306,7 +306,7 @@ def get_bbox2(vertices, matrix=mathutils.Matrix.Identity(4), is_park_editor=Fals
     max_y = -float("inf")
     max_z = -float("inf")
     for v in vertices:
-        v = to_thug_coords(matrix * v.co)
+        v = to_thug_coords(matrix @ v.co)
         # v = v.co
         min_x = min(v[0], min_x)
         min_y = min(v[1], min_y)
@@ -453,7 +453,7 @@ def _generate_lambert_shading(ob):
 
         sun = bpy.data.objects.get("Sun")
         if sun:
-            sun_dir = (sun.matrix_world * mathutils.Vector((0.0, 0.0, -1.0, 0.0))).to_3d()
+            sun_dir = (sun.matrix_world @ mathutils.Vector((0.0, 0.0, -1.0, 0.0))).to_3d()
             sun_dir.x *= -1
         else:
             sun_dir = mathutils.Vector((0.5, 0.5, -0.5)).normalized()
@@ -475,7 +475,7 @@ def _generate_lambert_shading(ob):
     else:
         sun = bpy.data.objects.get("Sun")
         if sun and sun.type == "LAMP":
-            sun_dir = -(sun.matrix_world * mathutils.Vector((0.0, 0.0, -1, 0.0))).to_3d()
+            sun_dir = -(sun.matrix_world @ mathutils.Vector((0.0, 0.0, -1, 0.0))).to_3d()
             sun_color = sun.data.color * sun.data.energy
         else:
             sun_dir = mathutils.Vector((0.5, 0.5, 0.5)).normalized()

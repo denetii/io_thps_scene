@@ -39,7 +39,7 @@ def _resolve_face_terrain_type(ob, bm, face):
 
 def make_bsp_tree(ob, faces, matrix):
     def vv(vert, matrix):
-        return to_thug_coords(matrix * vert.co)
+        return to_thug_coords(matrix @ vert.co)
 
     def inner(faces, split_axis, level, cant_split=set()):
         # print(level)
