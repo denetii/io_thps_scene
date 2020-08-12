@@ -79,7 +79,7 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         default="D:\\thug_tools\\",
         )
 
-    line_width: FloatProperty(name="Line Width", min=0, max=15, default=10, description="Size of autorail lines displayed in the viewport.")
+    line_width: FloatProperty(name="Line Width", min=0, max=15, default=10, description="Size of autorail lines displayed in the viewport")
 
     autorail_edge_color: FloatVectorProperty(
         name="Mesh Rail Edge Color",
@@ -139,14 +139,14 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
 
     mix_face_colors: BoolProperty(name="Mix Face Colors", default=False)
     show_bad_face_colors: BoolProperty(name="Highlight Bad Faces", default=True,
-        description="Colorize faces with bad collision flag combinations using Bad Face Color.")
+        description="Colorize faces with bad collision flag combinations using Bad Face Color")
 
     object_settings_tools: BoolProperty(name="Show Object Settings in the Tools Tab", default=True)
     material_settings_tools: BoolProperty(name="Show Material Settings in the Tools Tab", default=True)
     material_pass_settings_tools: BoolProperty(name="Show Material Pass Settings in the Tools Tab", default=True)
 
     # New settings as of io_thps_scene v1.2
-    path_bevel_size: FloatProperty(name="Rail/Waypoint path size", min=0.1, max=128, default=1, description="Default size displayed in the viewport for all rail, ladder, and waypoint paths.")
+    path_bevel_size: FloatProperty(name="Rail/Waypoint path size", min=0.1, max=128, default=1, description="Default size displayed in the viewport for all rail, ladder, and waypoint paths")
     game_data_dir_thug1: StringProperty(
         name="Game directory - THUG1",
         subtype='DIR_PATH',

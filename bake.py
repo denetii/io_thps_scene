@@ -330,7 +330,7 @@ def convert_bake_to_vcs(scene, meshes, layer_name, smooth=True):
         print('Flattening bake for {} into vertex colors from texture {}...'.format(obj.name, lightmap_img.name))
         for p in obdata.polygons:
             for loop in p.loop_indices:
-                obdata.uv_textures['Lightmap'].data[p.index].image = get_filler_image([1.0, 1.0, 1.0, 1.0], "_tmp_white", 16, True)
+                obdata.uv_layers['Lightmap'].data[p.index].image = get_filler_image([1.0, 1.0, 1.0, 1.0], "_tmp_white", 16, True)
                 co = obdata.uv_layers['Lightmap'].data[loop].uv
                 x_co = round(co[0] * (image_size_x - 1))
                 y_co = round(co[1] * (image_size_y - 1))
@@ -498,7 +498,7 @@ def bake_hl2_lightmaps(meshes, context):
     _folder = bpy.path.abspath("//Tx_DirLightmap/{}".format(_lightmap_folder))
     os.makedirs(_folder, 0o777, True)
     
-    setup_cycles_scene(scene.thug_lightmap_uglymode)
+    setup_cycles_scene(False)
     
     total_meshes = len(meshes)
     mesh_num = 0
@@ -605,7 +605,7 @@ def bake_hl2_lightmaps(meshes, context):
             or scene.thug_bake_force_remake == True:
                 print("Removing existing images/UV maps.")
                 if ob.data.uv_layers.get('Lightmap'):
-                    ob.data.uv_textures.remove(ob.data.uv_textures['Lightmap'])
+                    ob.data.uv_layers.remove(ob.data.uv_layers['Lightmap'])
                 
         # Create the Lightmap UV layer 
         if not ob.data.uv_layers.get('Lightmap'):
@@ -617,7 +617,7 @@ def bake_hl2_lightmaps(meshes, context):
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.uv_texture_add({"object": ob})
             ob.data.uv_layers[len(ob.data.uv_layers)-1].name = 'Lightmap'
-            ob.data.uv_textures['Lightmap'].active = True
+            ob.data.uv_layers['Lightmap'].active = True
             
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
             bpy.ops.object.mode_set(mode='EDIT')
@@ -634,7 +634,7 @@ def bake_hl2_lightmaps(meshes, context):
                 raise Exception("Unknown lightmap type specified on object {}".format(ob.name))
                 
         else:
-            ob.data.uv_textures['Lightmap'].active = True
+            ob.data.uv_layers['Lightmap'].active = True
             
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         
@@ -761,8 +761,8 @@ def bake_hl2_lightmaps(meshes, context):
         bpy.ops.object.mode_set(mode='OBJECT')
         
         ob.active_material_index = orig_index
-        ob.data.uv_textures[orig_uv].active = True
-        ob.data.uv_textures[orig_uv].active_render = True
+        ob.data.uv_layers[orig_uv].active = True
+        ob.data.uv_layers[orig_uv].active_render = True
         
         # If there is more than one material, restore the per-face material assignment
         if len(ob.data.materials) > 1:
@@ -862,7 +862,7 @@ def bake_ugplus_lightmaps(meshes, context):
     _folder = bpy.path.abspath("//Tx_Lightmap_PBR/{}".format(_lightmap_folder))
     os.makedirs(_folder, 0o777, True)
     
-    setup_cycles_scene(scene.thug_lightmap_uglymode)
+    setup_cycles_scene(False)
     
     total_meshes = len(meshes)
     mesh_num = 0
@@ -956,7 +956,7 @@ def bake_ugplus_lightmaps(meshes, context):
             or scene.thug_bake_force_remake == True:
                 print("Removing existing images/UV maps.")
                 if ob.data.uv_layers.get('Lightmap'):
-                    ob.data.uv_textures.remove(ob.data.uv_textures['Lightmap'])
+                    ob.data.uv_layers.remove(ob.data.uv_layers['Lightmap'])
                 if lightmap_img:
                     lightmap_img.source = 'GENERATED'
                 if shadowmap_img:
@@ -969,7 +969,7 @@ def bake_ugplus_lightmaps(meshes, context):
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.uv_texture_add({"object": ob})
             ob.data.uv_layers[len(ob.data.uv_layers)-1].name = 'Lightmap'
-            ob.data.uv_textures['Lightmap'].active = True
+            ob.data.uv_layers['Lightmap'].active = True
             
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
             bpy.ops.object.mode_set(mode='EDIT')
@@ -986,7 +986,7 @@ def bake_ugplus_lightmaps(meshes, context):
                 raise Exception("Unknown lightmap type specified on object {}".format(ob.name))
                 
         else:
-            ob.data.uv_textures['Lightmap'].active = True
+            ob.data.uv_layers['Lightmap'].active = True
             
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         
@@ -1095,8 +1095,8 @@ def bake_ugplus_lightmaps(meshes, context):
         save_baked_texture(destination_img, _folder)
         if shadowmap_img:
             save_baked_texture(shadowmap_img, _folder)
-        ob.data.uv_textures[orig_uv].active = True
-        ob.data.uv_textures[orig_uv].active_render = True
+        ob.data.uv_layers[orig_uv].active = True
+        ob.data.uv_layers[orig_uv].active_render = True
         
         # If there is more than one material, restore the per-face material assignment
         if len(ob.data.materials) > 1:
@@ -1217,7 +1217,7 @@ def bake_thug_lightmaps(meshes, context):
     
     # Setup nodes for Cycles materials
     if is_cycles:
-        setup_cycles_scene(scene.thug_lightmap_uglymode)
+        setup_cycles_scene(False)
     
     mesh_num = 0
     baked_obs = []
@@ -1308,7 +1308,7 @@ def bake_thug_lightmaps(meshes, context):
             if group_name == '':
                 print("Removing existing images/UV maps.")
                 if ob.data.uv_layers.get('Lightmap'):
-                    ob.data.uv_textures.remove(ob.data.uv_textures['Lightmap'])
+                    ob.data.uv_layers.remove(ob.data.uv_layers['Lightmap'])
                 if bpy.data.images.get(lightmap_name):
                     _img = bpy.data.images.get(lightmap_name)
                     _img.user_clear()
@@ -1324,8 +1324,8 @@ def bake_thug_lightmaps(meshes, context):
             # Create a new UV layer for the ambient occlusion map
             bpy.ops.mesh.uv_texture_add({"object": ob})
             ob.data.uv_layers[len(ob.data.uv_layers)-1].name = 'Lightmap'
-            ob.data.uv_textures['Lightmap'].active = True
-            #ob.data.uv_textures['Lightmap'].active_render = True
+            ob.data.uv_layers['Lightmap'].active = True
+            #ob.data.uv_layers['Lightmap'].active_render = True
             
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
             bpy.ops.object.mode_set(mode='EDIT')
@@ -1343,8 +1343,8 @@ def bake_thug_lightmaps(meshes, context):
                 
             
         else:
-            ob.data.uv_textures['Lightmap'].active = True
-            #ob.data.uv_textures['Lightmap'].active_render = True
+            ob.data.uv_layers['Lightmap'].active = True
+            #ob.data.uv_layers['Lightmap'].active_render = True
             
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         
@@ -1392,7 +1392,7 @@ def bake_thug_lightmaps(meshes, context):
                     node_uv.uv_map = "Lightmap"
                     mat.node_tree.links.new(node_d.inputs[0], node_uv.outputs[0]) # Bake Texture UV
             else:
-                for d in ob.data.uv_textures['Lightmap'].data:
+                for d in ob.data.uv_layers['Lightmap'].data:
                     d.image = image
                     
         #-----------------------------------------------------------------------------------------
@@ -1418,7 +1418,7 @@ def bake_thug_lightmaps(meshes, context):
             image.use_fake_user = True
             
             if not is_cycles:
-                for d in ob.data.uv_textures['Lightmap'].data:
+                for d in ob.data.uv_layers['Lightmap'].data:
                     d.image = image
                     
             # Create or retrieve the lightmap material
@@ -1534,11 +1534,11 @@ def bake_thug_lightmaps(meshes, context):
         save_baked_texture(blender_tex.image, _folder)
         
         if scene.lightmap_view != 'LIGHTMAP':
-            ob.data.uv_textures[orig_uv_actual].active = True
-            ob.data.uv_textures[orig_uv_actual].active_render = True
+            ob.data.uv_layers[orig_uv_actual].active = True
+            ob.data.uv_layers[orig_uv_actual].active_render = True
         
-        for p in ob.data.polygons:
-            ob.data.uv_textures['Lightmap'].data[p.index].image = blender_tex.image
+        #for p in ob.data.polygons:
+        #    ob.data.uv_layers['Lightmap'].data[p.index].image = blender_tex.image
             
         if scene.thug_bake_type == 'FULL' or scene.thug_bake_type == 'FULL_BI':
             ob.select_set(False)
@@ -1860,14 +1860,14 @@ def change_lightmap_view(self, context):
             obdata = obj.data
             if not obdata.uv_layers.get('Lightmap'):
                 continue
-            obdata.uv_textures['Lightmap'].active = True
+            obdata.uv_layers['Lightmap'].active = True
             
     elif scene.lightmap_view == 'DEFAULT':
         for obj in meshes:
             obdata = obj.data
             if not obdata.uv_layers.get('Lightmap'):
                 continue
-            obdata.uv_textures[0].active = True
+            obdata.uv_layers[0].active = True
     
     
 
@@ -1916,14 +1916,6 @@ def register_props_bake():
             ("8", "8", "")],
         default="1", 
         description="Scales the resolution of all lightmaps by the specified factor")
-    bpy.types.Scene.thug_lightmap_uglymode = BoolProperty(
-        name="Performance Mode",
-        default=False, 
-        description="Disable all Cycles materials when baking. Bakes faster, but with much less accuracy")
-    bpy.types.Scene.thug_lightmap_clamp = FloatProperty(
-        name="Shadow Intensity",
-        description="Controls the maximum intensity of shadowed areas. Reduce in low-light scenes if you need to improve visibility",
-        min=0, max=1.0, default=1.0)
     bpy.types.Scene.thug_lightmap_color = FloatVectorProperty(name="Ambient Color",
                        subtype='COLOR',
                        default=(1.0, 1.0, 1.0, 1.0),
@@ -1952,7 +1944,7 @@ def register_props_bake():
             ("NIGHT", "Night", "Bakes lighting into the Night TOD slot"),
             ("MORNING", "Morning", "Bakes lighting into the Morning TOD slot")],
         default="DAY", 
-        description="(Underground+ 1.5+ only) TOD slot to bake lighting into. Multiple TOD bakes are only supported by the new material system", update=change_bake_slot)
+        description="TOD slot to bake lighting into", update=change_bake_slot)
         
     bpy.types.Scene.thug_bake_automargin = BoolProperty(name="Calculate Margins", default=True, description="Automatically determine the ideal bake margin. If unchecked, uses the margin specified in the Blender bake settings")                       
     bpy.types.Scene.thug_bake_force_remake = BoolProperty(name="Force new UVs", default=False, description="Always discards and recreates the lightmap UVs. Slower, use only as a shortcut if you are making changes to meshes or need to fix UV issues")                       
@@ -1983,14 +1975,14 @@ def register_props_bake():
             ("Ultra", "Ultra", ""),
             ("Custom", "Custom", "Uses existing Cycles render settings")],
         default="Preview", 
-        description="Preset controls for the bake quality.")
+        description="Preset controls for the bake quality")
     bpy.types.Object.thug_lightmap_type = EnumProperty(
         name="UV Type",
         items=[
             ("Lightmap", "Lightmap", "Lightmap pack with preset margins"),
             ("Smart", "Smart", "Smart UV projection with default settings")],
         default="Lightmap", 
-        description="Determines the type of UV unwrapping done on the object for the bake.")
+        description="Determines the type of UV unwrapping done on the object for the bake")
     
     bpy.types.Object.thug_lightmap_merged_objects = CollectionProperty(type=THUGMergedObjects)
     bpy.types.Object.thug_lightmap_group_id = IntProperty(default=-1)
@@ -2111,9 +2103,9 @@ class THUG_RemoveFromGroup(bpy.types.Operator):
                 context.view_layer.objects.active = object
                 if object.type == 'MESH' and object.name in obj_group.objects:
                     # Remove UV channel
-                    tex = object.data.uv_textures.get('Lightmap')
+                    tex = object.data.uv_layers.get('Lightmap')
                     if tex is not None:
-                        object.data.uv_textures.remove(tex)
+                        object.data.uv_layers.remove(tex)
 
                     # Remove from group
                     obj_group.objects.unlink(object)
@@ -2219,17 +2211,17 @@ class THUG_CreateLightmap(bpy.types.Operator):
                 NON_MESH_LIST.append(object)
             else:
                 # Add Image to faces
-                if object.data.uv_textures.active is None:
-                    tex = object.data.uv_textures.new()
+                if object.data.uv_layers.active is None:
+                    tex = object.data.uv_layers.new()
                     tex.name = uv_layer_name
                 else:
-                    if uv_layer_name not in object.data.uv_textures:
-                        tex = object.data.uv_textures.new()
+                    if uv_layer_name not in object.data.uv_layers:
+                        tex = object.data.uv_layers.new()
                         tex.name = uv_layer_name
                         tex.active = True
                         tex.active_render = True
                     else:
-                        tex = object.data.uv_textures[uv_layer_name]
+                        tex = object.data.uv_layers[uv_layer_name]
                         tex.active = True
                         tex.active_render = True
 
@@ -2286,7 +2278,7 @@ class THUG_MergeObjects(bpy.types.Operator):
             object.select_set(True)
 
             # Activate lightmap UVs
-            for uv in object.data.uv_textures:
+            for uv in object.data.uv_layers:
                 if uv.name == 'Lightmap':
                     uv.active = True
                     context.view_layer.objects.active = object
@@ -2307,13 +2299,13 @@ class THUG_MergeObjects(bpy.types.Operator):
 
             # Remove UVs
             UVLIST = []
-            for uv in activeNowObject.data.uv_textures:
+            for uv in activeNowObject.data.uv_layers:
                 if uv.name != 'Lightmap':
                     UVLIST.append(uv.name)
 
             for uvName in UVLIST:
-                tex = activeNowObject.data.uv_textures[uvName]
-                activeNowObject.data.uv_textures.remove(tex)
+                tex = activeNowObject.data.uv_layers[uvName]
+                activeNowObject.data.uv_layers.remove(tex)
 
             UVLIST.clear()
 
@@ -2643,7 +2635,7 @@ class UnBakeLightmaps(bpy.types.Operator):
             clear_bake_vcs(scene, meshes)
             for ob in meshes: # Also remove lightmap UVs
                 if ob.data.uv_layers.get('Lightmap'):
-                    ob.data.uv_textures.remove(ob.data.uv_textures['Lightmap'])
+                    ob.data.uv_layers.remove(ob.data.uv_layers['Lightmap'])
         
         bpy.ops.object.select_all(action='DESELECT')
         for ob in meshes:

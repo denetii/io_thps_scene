@@ -942,7 +942,7 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
         description="Use this option when exporting a park editor dictionary.", default=False)
     generate_tex_file: BoolProperty(name="Generate a .tex file", default=True)
     generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
-    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene")
     generate_col_file: BoolProperty(name="Generate a .col file", default=True)
     generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
 
@@ -961,7 +961,7 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
 
     def execute(self, context):
         return do_export(self, context, "THPS4")
@@ -1032,8 +1032,8 @@ class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
     model_type: EnumProperty(items = (
-        ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
-        ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
+        ("skin", ".skin", "Character skin, used for playable characters and pedestrians"),
+        ("mdl", ".mdl", "Model used for vehicles and other static mesh"),
     ), name="Model Type", default="skin")
     generate_scripts_files: BoolProperty(
         name="Generate scripts",
@@ -1051,7 +1051,7 @@ class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
         
     def execute(self, context):
         return do_export_model(self, context, "THPS4")
@@ -1115,7 +1115,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         description="Use this option when exporting a park editor dictionary.", default=False)
     generate_tex_file: BoolProperty(name="Generate a .tex file", default=True)
     generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
-    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene")
     generate_col_file: BoolProperty(name="Generate a .col file", default=True)
     generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
 
@@ -1134,7 +1134,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
 
     def execute(self, context):
         return do_export(self, context, "THUG1")
@@ -1205,8 +1205,8 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         default=2000, min=100, max=5000)
     # /AUTOSPLIT SETTINGS
     model_type: EnumProperty(items = (
-        ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
-        ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
+        ("skin", ".skin", "Character skin, used for playable characters and pedestrians"),
+        ("mdl", ".mdl", "Model used for vehicles and other static mesh"),
     ), name="Model Type", default="skin")
     generate_scripts_files: BoolProperty(
         name="Generate scripts",
@@ -1222,9 +1222,9 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
     
     mipmap_offset: IntProperty(
         name="Mipmap offset",
-        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
+        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures",
         min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
         
     def execute(self, context):
         return do_export_model(self, context, "THUG1")
@@ -1292,7 +1292,7 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
         description="If you have already generated a .tex file, and didn't change/add any new images in meantime, you can uncheck this.", default=True)
     generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
     generate_col_file: BoolProperty(name="Generate a .col file", default=True)
-    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene")
     generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
 
     skybox_name: StringProperty(name="Skybox name", default="THUG2_Sky")
@@ -1308,7 +1308,7 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
     mipmap_offset: IntProperty(name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
 
     def execute(self, context):
         return do_export(self, context, "THUG2")
@@ -1376,8 +1376,8 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
     # /AUTOSPLIT SETTINGS
     is_park_editor: BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
     model_type: EnumProperty(items = (
-        ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
-        ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
+        ("skin", ".skin", "Character skin, used for playable characters and pedestrians"),
+        ("mdl", ".mdl", "Model used for vehicles and other static mesh"),
     ), name="Model Type", default="skin")
     generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
     export_scale: FloatProperty(name="Export scale", default=1)
@@ -1392,7 +1392,7 @@ class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
     mipmap_offset: IntProperty(name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
         
     def execute(self, context):
         return do_export_model(self, context, "THUG2")

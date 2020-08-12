@@ -1417,7 +1417,7 @@ class UGPlusMaterialSlotProps(bpy.types.PropertyGroup):
                            default=(1.0, 1.0, 1.0, 1.0),
                            size=4,
                            min=0.0, max=1.0,
-                           description="Color used if no texture provided.")
+                           description="Color used if no texture provided")
                            
     has_uv_wibbles: BoolProperty(name="Animate UVs", default=False, description='Animate UVs for this slot.')
     uv_wibbles: PointerProperty(type=THUGUVWibbles)
@@ -1487,20 +1487,20 @@ def ugplus_matslot_draw(self, layout, title, allow_uv_wibbles=True, allow_blendi
 class THUGMaterialProps(bpy.types.PropertyGroup):
     alpha_cutoff: IntProperty(
         name="Alpha Cutoff", min=0, max=255, default=1,
-        description="The pixels will alpha lower than this will be discarded.")
+        description="The pixels will alpha lower than this will be discarded")
     sorted: BoolProperty(name="Sorted", default=False)
     draw_order: FloatProperty(
         name="Draw Order",
         default=0.0,
-        description="The lesser the draw order the earlier the texture will be drawn. Used for sorting transparent textures.")
+        description="The lesser the draw order the earlier the texture will be drawn. Used for sorting transparent textures")
     single_sided: BoolProperty(name="Single Sided", default=False,
-        description="If the material is not using the Diffuse blend mode this can be toggled to force it to be single sided.")
+        description="If the material is not using the Diffuse blend mode this can be toggled to force it to be single sided")
     no_backface_culling: BoolProperty(name="No Backface Culling", default=False,
         description="Makes material with Diffuse blend mode double sided")
     no_skater_shadow: BoolProperty(name="No Skater Shadow", default=False,
-        description="Any mesh using this material will not render dynamic shadows.")
+        description="Any mesh using this material will not render dynamic shadows")
     z_bias: IntProperty(name="Z-Bias", default=0,
-        description="Adjust this value to prevent Z-fighting on overlapping meshes.")
+        description="Adjust this value to prevent Z-fighting on overlapping meshes")
     specular_power: FloatProperty(name="Specular Power", default=0.0)
     specular_color: FloatVectorProperty(name="Specular Color", subtype="COLOR", min=0, max=1)
     

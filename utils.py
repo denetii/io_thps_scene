@@ -158,8 +158,8 @@ class THUGUtilAutoWall(bpy.types.Operator):
     bl_description = "Detects walls in your scene and marks them wallrideable."
     
     pass_options: EnumProperty(items=(
-        ("ClearInvalid", "Clear Invalid", "Unsets the wallride flag on faces that are not considered walls."),
-        ("MarkValid", "Mark Valid", "Sets the wallride flag on faces considered walls."),
+        ("ClearInvalid", "Clear Invalid", "Unsets the wallride flag on faces that are not considered walls"),
+        ("MarkValid", "Mark Valid", "Sets the wallride flag on faces considered walls"),
         ), name="Options", default={"MarkValid"}, options={'ENUM_FLAG'})
     tolerance: FloatProperty(name="Tolerance", min=0.001, max=0.99, default=0.15, description="How much slope is allowed when detecting walls")
 
@@ -215,7 +215,7 @@ class THUGUtilBatchTerrain(bpy.types.Operator):
     terrain_type: EnumProperty(
         name="Terrain Type",
         items=[(t, t, t) for t in ["Auto"] + TERRAIN_TYPES], 
-        description="Terrain type to set.")
+        description="Terrain type to set")
 
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH']
@@ -282,35 +282,35 @@ class THUGUtilBatchObjectProps(bpy.types.Operator):
     
     # Basic object properties
     thug_created_at_start: EnumProperty(name="Created At Start", items=[
-        ("NULL", " --- ", "This property will not be modified."),
+        ("NULL", " --- ", "This property will not be modified"),
         ("True", "Yes", ""),
         ("False", "No", "")
     ], default="NULL")
     thug_network_option: EnumProperty(name="Network Options", items=[
-            ("NULL", " --- ", "This property will not be modified."),
-            ("Default", "Default", "Appears in network games."),
-            ("AbsentInNetGames", "Offline Only", "Only appears in single-player."),
-            ("NetEnabled", "Online (Broadcast)", "Appears in network games, events/scripts appear on all clients.")],
+            ("NULL", " --- ", "This property will not be modified"),
+            ("Default", "Default", "Appears in network games"),
+            ("AbsentInNetGames", "Offline Only", "Only appears in single-player"),
+            ("NetEnabled", "Online (Broadcast)", "Appears in network games, events/scripts appear on all clients")],
         default="NULL")
     thug_export_collision: EnumProperty(name="Export to Collisions", items=[
-        ("NULL", " --- ", "This property will not be modified."),
+        ("NULL", " --- ", "This property will not be modified"),
         ("True", "Yes", ""),
         ("False", "No", "")
     ], default="NULL")
     thug_export_scene: EnumProperty(name="Export to Scene", items=[
-        ("NULL", " --- ", "This property will not be modified."),
+        ("NULL", " --- ", "This property will not be modified"),
         ("True", "Yes", ""),
         ("False", "No", "")
     ], default="NULL")
     thug_lightgroup: EnumProperty(name="Light Group", items=[
-            ("NULL", " --- ", "This property will not be modified."),
+            ("NULL", " --- ", "This property will not be modified"),
             ("None", "None", ""),
             ("Outdoor", "Outdoor", ""),
             ("NoLevelLights", "NoLevelLights", ""),
             ("Indoor", "Indoor", "")],
         default="NULL")
     thug_is_trickobject: EnumProperty(name="Is a TrickObject", items=[
-        ("NULL", " --- ", "This property will not be modified."),
+        ("NULL", " --- ", "This property will not be modified"),
         ("True", "Yes", ""),
         ("False", "No", "")
     ], default="NULL")
@@ -378,9 +378,9 @@ class THUGUtilBatchImport(bpy.types.Operator):
     # Basic object properties
     game_mode: EnumProperty(name="Game Engine", items=[
         ("NULL", " --- ", ""),
-        ("THPS4", "THPS4", "Note: THPS4 collision importing not yet supported."),
+        ("THPS4", "THPS4", "Note: THPS4 collision importing not yet supported"),
         ("THUG1", "THUG1", ""),
-        ("THUG2", "THUG2", "THUG2/THUG PRO."),
+        ("THUG2", "THUG2", "THUG2/THUG PRO"),
     ], default="NULL")
     
     scn_file_path: StringProperty(name="Scene/skin file", default="", description="Path to the .scn/.skin/.mdl file.", subtype="FILE_PATH")
@@ -396,7 +396,7 @@ class THUGUtilBatchImport(bpy.types.Operator):
                 print("Running tex import on: {}{}".format(head, tail))
                 bpy.ops.io.thug2_tex("EXEC_DEFAULT", filename=tail, directory=head)
             else:
-                raise Exception("Unable to parse TEX file path.")
+                raise Exception("Unable to parse TEX file path")
         # END IMPORT TEX FILE
         
         # IMPORT SCN FILE
@@ -413,7 +413,7 @@ class THUGUtilBatchImport(bpy.types.Operator):
                     print("Running THUG2 scn import on: {}{}".format(head, tail))
                     bpy.ops.io.thug2_xbx_scn_to_scene("EXEC_DEFAULT", filename=tail, directory=head, load_tex=False, import_custom_normals=True)
             else:
-                raise Exception("Unable to parse SCN file path.")
+                raise Exception("Unable to parse SCN file path")
         # END IMPORT SCN FILE
         
         # IMPORT COL FILE
@@ -423,7 +423,7 @@ class THUGUtilBatchImport(bpy.types.Operator):
                 print("Running col import on: {}{}".format(head, tail))
                 bpy.ops.io.thug_xbx_col_to_scene("EXEC_DEFAULT", filename=tail, directory=head)
             else:
-                raise Exception("Unable to parse COL file path.")
+                raise Exception("Unable to parse COL file path")
         # END IMPORT SCN FILE
         
         # IMPORT SKE FILE
@@ -433,7 +433,7 @@ class THUGUtilBatchImport(bpy.types.Operator):
                 print("Running ske import on: {}{}".format(head, tail))
                 bpy.ops.io.import_thug_skeleton("EXEC_DEFAULT", filename=tail, directory=head, set_rotation=False)
             else:
-                raise Exception("Unable to parse SKE file path.")
+                raise Exception("Unable to parse SKE file path")
         # END IMPORT SKE FILE
                 
         return {'FINISHED'}

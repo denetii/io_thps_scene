@@ -25,9 +25,8 @@ def thug_empty_update(self, context):
     ob = context.object
     for mdl_ob in ob.children:
         if mdl_ob.type == 'MESH':
-            context.scene.collection.objects.unlink(mdl_ob)
             #context.scene.objects.unlink(mdl_ob)
-            bpy.data.objects.remove(mdl_ob)
+            bpy.data.objects.remove(mdl_ob, do_unlink=True)
     mdl_mesh = ''
     mdl_preview = ''
     preset_scale = get_actual_preset_size() / 2.0
@@ -341,16 +340,16 @@ def update_game_files_collections(*args):
 class THUGEmptyProps(bpy.types.PropertyGroup):
     empty_type: EnumProperty(items=(
         ("None", "None", ""),
-        ("Restart", "Restart", "Player restarts."),
-        ("GenericNode", "Generic Node", "KOTH crown and other objects."),
+        ("Restart", "Restart", "Player restarts"),
+        ("GenericNode", "Generic Node", "KOTH crown and other objects"),
         ("Pedestrian", "Pedestrian", ""),
         ("Vehicle", "Vehicle", ""),
-        ("CubemapProbe", "Reflection Probe", "(Underground+ 1.5+ only) Point used to generate a reflection cubemap. Used by nearby objects"),
-        ("ProximNode", "Proximity Node", "Node that can fire events when objects are inside its radius."),
-        ("EmitterObject", "Emitter Object", "Node used to play audio streams (typically, ambient sounds in a level)."),
-        ("GameObject", "Game Object", "CTF Flags, COMBO letters, etc."),
-        ("BouncyObject", "Bouncy Object", "Legacy node type, not used, only for identification in imported levels."),
-        ("ParticleObject", "Particle Object", "Used to preserve particle systems in imported levels."),
+        ("CubemapProbe", "Reflection Probe", "Point used to generate a reflection cubemap. Used by nearby objects"),
+        ("ProximNode", "Proximity Node", "Node that can fire events when objects are inside its radius"),
+        ("EmitterObject", "Emitter Object", "Node used to play audio streams (typically, ambient sounds in a level)"),
+        ("GameObject", "Game Object", "CTF Flags, COMBO letters, etc"),
+        ("BouncyObject", "Bouncy Object", "Legacy node type, not used, only for identification in imported levels"),
+        ("ParticleObject", "Particle Object", "Used to preserve particle systems in imported levels"),
         ("Custom", "Custom", ""),
         ("LightProbe", "Light Probe", "Approximates nearby ambient lighting for moving objects"),
         ("LightVolume", "Light Volume", "Bounding box used to mark the boundaries of area lights"),
@@ -364,10 +363,10 @@ class THUGObjectTriggerScriptProps(bpy.types.PropertyGroup):
     # using the new template properties below
     triggerscript_type: EnumProperty(items=(
         ("None", "None", ""),
-        ("Killskater", "Killskater", "Bail the skater and restart them at the given node."),
-        ("Killskater_Water", "Killskater (Water)", "Bail the skater and restart them at the given node."),
-        ("Teleport", "Teleport", "Teleport the skater to a given node without breaking their combo."),
-        ("Custom", "Custom", "Runs a custom script."),
+        ("Killskater", "Killskater", "Bail the skater and restart them at the given node"),
+        ("Killskater_Water", "Killskater (Water)", "Bail the skater and restart them at the given node"),
+        ("Teleport", "Teleport", "Teleport the skater to a given node without breaking their combo"),
+        ("Custom", "Custom", "Runs a custom script"),
         ), name="TriggerScript Type", default="None")
     target_node: StringProperty(name="Target Node")
     custom_name: StringProperty(name="Custom Script Name")
@@ -473,37 +472,37 @@ class THUGGenericNodeProps(bpy.types.PropertyGroup):
 #----------------------------------------------------------------------------------
 class THUGGameObjectProps(bpy.types.PropertyGroup):
     go_type: EnumProperty(items=(
-        ("Ghost", "Ghost", "No model, used for game logic."), 
-        ("Flag_Red", "CTF Flag - Red", "Red team flag for CTF."), 
-        ("Flag_Blue", "CTF Flag - Blue", "Blue team flag for CTF."), 
-        ("Flag_Green", "CTF Flag - Green", "Green team flag for CTF."), 
-        ("Flag_Yellow", "CTF Flag - Yellow", "Yellow team flag for CTF."), 
-        ("Flag_Red_Base", "CTF Base - Red", "Red team base for CTF."), 
-        ("Flag_Blue_Base", "CTF Base - Blue", "Blue team base for CTF."), 
-        ("Flag_Green_Base", "CTF Base - Green", "Green team base for CTF."), 
-        ("Flag_Yellow_Base", "CTF Base - Yellow", "Yellow team base for CTF."), 
-        ("Team_Red", "Team Flag - Red", "Red team selection flag."), 
-        ("Team_Blue", "Team Flag - Blue", "Blue team selection flag."), 
-        ("Team_Green", "Team Flag - Green", "Green team selection flag."), 
-        ("Team_Yellow", "Team Flag - Yellow", "Yellow team selection flag."), 
-        ("Team_Red_Base", "Team Base - Red", "Base for Red team selection flag."), 
-        ("Team_Blue_Base", "Team Base - Blue", "Base for Blue team selection flag."), 
-        ("Team_Green_Base", "Team Base - Green", "Base for Green team selection flag."), 
-        ("Team_Yellow_Base", "Team Base - Yellow", "Base for Yellow team selection flag."), 
+        ("Ghost", "Ghost", "No model, used for game logic"), 
+        ("Flag_Red", "CTF Flag - Red", "Red team flag for CTF"), 
+        ("Flag_Blue", "CTF Flag - Blue", "Blue team flag for CTF"), 
+        ("Flag_Green", "CTF Flag - Green", "Green team flag for CTF"), 
+        ("Flag_Yellow", "CTF Flag - Yellow", "Yellow team flag for CTF"), 
+        ("Flag_Red_Base", "CTF Base - Red", "Red team base for CTF"), 
+        ("Flag_Blue_Base", "CTF Base - Blue", "Blue team base for CTF"), 
+        ("Flag_Green_Base", "CTF Base - Green", "Green team base for CTF"), 
+        ("Flag_Yellow_Base", "CTF Base - Yellow", "Yellow team base for CTF"), 
+        ("Team_Red", "Team Flag - Red", "Red team selection flag"), 
+        ("Team_Blue", "Team Flag - Blue", "Blue team selection flag"), 
+        ("Team_Green", "Team Flag - Green", "Green team selection flag"), 
+        ("Team_Yellow", "Team Flag - Yellow", "Yellow team selection flag"), 
+        ("Team_Red_Base", "Team Base - Red", "Base for Red team selection flag"), 
+        ("Team_Blue_Base", "Team Base - Blue", "Base for Blue team selection flag"), 
+        ("Team_Green_Base", "Team Base - Green", "Base for Green team selection flag"), 
+        ("Team_Yellow_Base", "Team Base - Yellow", "Base for Yellow team selection flag"), 
         ("Secret_Tape", "Secret Tape", ""), 
         ("Combo_C", "Combo Letter C", ""), 
         ("Combo_O", "Combo Letter O", ""), 
         ("Combo_M", "Combo Letter M", ""), 
         ("Combo_B", "Combo Letter B", ""), 
-        ("Custom", "Custom", "Specify a custom type and model.")), 
+        ("Custom", "Custom", "Specify a custom type and model")), 
     name="Type", default="Ghost", update=thug_empty_update)
-    go_type_other: StringProperty(name="Type", description="Custom type.")
+    go_type_other: StringProperty(name="Type", description="Custom type")
     go_model: StringProperty(name="Model path", default="none", description="Path to the model, relative to Data/Models/.", update=thug_empty_update)
     go_suspend: IntProperty(name="Suspend Distance", description="Distance at which the logic/motion of the object pauses.", min=0, max=1000000, default=0)
     
     
 class THUGBouncyProps(bpy.types.PropertyGroup):
-    contact: FloatVectorProperty(name="Contact", description="A point used for collision detection.")
+    contact: FloatVectorProperty(name="Contact", description="A point used for collision detection")
     
 #----------------------------------------------------------------------------------
 #- A list of node names by type, used by the WindowManager to fill
@@ -530,8 +529,8 @@ class THUGAssetListProps(bpy.types.PropertyGroup):
 #- Level obj properties! There's a lot of them!
 #----------------------------------------------------------------------------------
 class THUGLevelObjectProps(bpy.types.PropertyGroup):
-    obj_type: StringProperty(name="Type", description="Type of level object.")
-    obj_bouncy: BoolProperty(name="Bouncy", description="Enable collision physics on this object.")
+    obj_type: StringProperty(name="Type", description="Type of level object")
+    obj_bouncy: BoolProperty(name="Bouncy", description="Enable collision physics on this object")
     center_of_mass: FloatVectorProperty(name="Center Of Mass")
     contacts: CollectionProperty(type=THUGBouncyProps, name="Contacts")
     coeff_restitution: FloatProperty(name="coeff_restitution", min=0, max=1024, default=0.25)
@@ -540,9 +539,9 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
     skater_collision_rotation_factor: FloatProperty(name="skater_collision_rotation_factor", min=0, max=1024, default=1)
     skater_collision_assent: IntProperty(name="skater_collision_assent", min=0, max=1024, default=0)
     skater_collision_radius: IntProperty(name="skater_collision_radius", min=0, max=1024, default=0)
-    mass_over_moment: FloatProperty(name="mass_over_moment", min=-1, max=1024, default=-1, description="Use value of -1 to not export this property to the QB.")
+    mass_over_moment: FloatProperty(name="mass_over_moment", min=-1, max=1024, default=-1, description="Use value of -1 to not export this property to the QB")
     stuckscript: StringProperty(name="stuckscript")
-    SoundType: StringProperty(name="Sound", description="Sound used when colliding with the object.")
+    SoundType: StringProperty(name="Sound", description="Sound used when colliding with the object")
     
 #----------------------------------------------------------------------------------
 #- Properties for waypoints curves (applies to all points)
@@ -550,17 +549,17 @@ class THUGLevelObjectProps(bpy.types.PropertyGroup):
 class THUGWaypointProps(bpy.types.PropertyGroup):
     waypt_type: EnumProperty(items=(
         ("None", "None", ""), 
-        ("PedAI", "Ped AI", "This path is used for pedestrian navigation."), 
-        ("Accel", "Accel", "(THUG2+) Used for vehicle motion/acceleration."), 
-        ("Default", "Default", "(THUG2+) Default waypoint, not needed for THUG1."), 
+        ("PedAI", "Ped AI", "This path is used for pedestrian navigation"), 
+        ("Accel", "Accel", "(THUG2+) Used for vehicle motion/acceleration"), 
+        ("Default", "Default", "(THUG2+) Default waypoint, not needed for THUG1"), 
         ), 
-    name="Waypoint Type", default="None", description="Type of waypoint. Use PedAI for detailed pedestrian movement and AI skaters.")
+    name="Waypoint Type", default="None", description="Type of waypoint. Use PedAI for detailed pedestrian movement and AI skaters")
     
     PedType: EnumProperty(items=(
-        ("Walk", "Walk", "Movement logic for pedestrians."), 
-        ("Skate", "Skate", "Movement/trick logic for AI skaters."), 
+        ("Walk", "Walk", "Movement logic for pedestrians"), 
+        ("Skate", "Skate", "Movement/trick logic for AI skaters"), 
         ), 
-    name="PedType", default="Walk", description="The kind of navigation logic to use. 'Skate' is for AI skaters.")
+    name="PedType", default="Walk", description="The kind of navigation logic to use. 'Skate' is for AI skaters")
     
 #----------------------------------------------------------------------------------
 #- Properties for individual nodes along a path (rail, ladder, waypoints)
@@ -633,7 +632,7 @@ class THUGPathNodeUIProps(bpy.types.PropertyGroup):
     SpinDirection: EnumProperty(items=(
         ("BS", "BS", ""),
         ("FS", "FS", ""),
-        ("Rand", "Random", "Random direction."),
+        ("Rand", "Random", "Random direction"),
         ), 
     name="Spin Direction", default="Rand", description="Direction in which the AI skater spins.", update=update_pathnode)
         
@@ -657,7 +656,7 @@ class THUGRestartProps(bpy.types.PropertyGroup):
         ("Horse", "Horse", ""),
         ("CTF", "CTF", "")),
     name="Primary Type", default="Player1", update=thug_empty_update)
-    restart_name: StringProperty(name="Restart Name", description="Name that appears in restart menu.")
+    restart_name: StringProperty(name="Restart Name", description="Name that appears in restart menu")
     primary_restart: BoolProperty(name="Primary Restart", default=False)
     
 
@@ -670,26 +669,26 @@ class THUGPedestrianProps(bpy.types.PropertyGroup):
         ( 'Profile', 'Profile', 'Pedestrian model is defined in a profile.'),
         ( 'Model', 'Model', 'Use an explicit path to the mdl file.')
     ), default="Profile", update=thug_empty_update)
-    ped_profile: StringProperty(name="Profile", default="random_male_profile", description="Pedestrian profile name.")
+    ped_profile: StringProperty(name="Profile", default="random_male_profile", description="Pedestrian profile name")
     ped_skeleton: StringProperty(name="Skeleton", default="THPS5_human")
-    ped_animset: StringProperty(name="Anim Set", default="animload_THPS5_human", description="Anim set to load for this pedestrian.")
-    ped_extra_anims: StringProperty(name="Extra Anims", description="Additional anim sets to load.")
+    ped_animset: StringProperty(name="Anim Set", default="animload_THPS5_human", description="Anim set to load for this pedestrian")
+    ped_extra_anims: StringProperty(name="Extra Anims", description="Additional anim sets to load")
     ped_suspend: IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
     ped_model: StringProperty(name="Model", default="", description="Relative path to mdl file.", update=thug_empty_update)
-    ped_nologic: BoolProperty(name="No Logic", default=False, description="Pedestrian will not have any logic, only animations.")
+    ped_nologic: BoolProperty(name="No Logic", default=False, description="Pedestrian will not have any logic, only animations")
     
 #----------------------------------------------------------------------------------
 #- Vehicle properties
 #----------------------------------------------------------------------------------
 class THUGVehicleProps(bpy.types.PropertyGroup):
-    veh_type: StringProperty(name="Type", default="Generic", description="Type of vehicle.")
+    veh_type: StringProperty(name="Type", default="Generic", description="Type of vehicle")
     veh_model: StringProperty(name="Model", default="", description="Relative path to mdl file.", update=thug_empty_update)
-    veh_skeleton: StringProperty(name="Skeleton", default="car", description="Name of skeleton.")
+    veh_skeleton: StringProperty(name="Skeleton", default="car", description="Name of skeleton")
     veh_suspend: IntProperty(name="Suspend Distance", description="Distance at which the logic/motion pauses.", min=0, max=1000000, default=0)
-    veh_norail: BoolProperty(name="No Rails", default=False, description="Vehicle will not have any rails (even if the model does).")
-    veh_noskitch: BoolProperty(name="No Skitch", default=False, description="Vehicle cannot be skitched.")
+    veh_norail: BoolProperty(name="No Rails", default=False, description="Vehicle will not have any rails (even if the model does)")
+    veh_noskitch: BoolProperty(name="No Skitch", default=False, description="Vehicle cannot be skitched")
     veh_usemodellights: BoolProperty(name="Use Model Lights", default=False)
-    veh_allowreplacetex: BoolProperty(name="Texture Replacement", default=False, description="Allow model textures to be changed by scripts.")
+    veh_allowreplacetex: BoolProperty(name="Texture Replacement", default=False, description="Allow model textures to be changed by scripts")
     
 def thug_light_update(self, context):
     if context.object.type == "LAMP":
@@ -800,7 +799,7 @@ class THUGParticleProps(bpy.types.PropertyGroup):
                            default=(1.0, 1.0, 1.0, 1.0),
                            size=4,
                            min=0.0, max=1.0,
-                           description="Start Color (with alpha).")
+                           description="Start Color (with alpha)")
     particle_usecolormidtime: BoolProperty(name="Use Color Mid Time", default=False)
     particle_colormidtime: FloatProperty(name="Color Mid Time", min=0, max=128000, default=50)
     particle_midcolor: FloatVectorProperty(name="Mid Color",
@@ -808,13 +807,13 @@ class THUGParticleProps(bpy.types.PropertyGroup):
                            default=(1.0, 1.0, 1.0, 1.0),
                            size=4,
                            min=0.0, max=1.0,
-                           description="Mid Color (with alpha).")
+                           description="Mid Color (with alpha)")
     particle_endcolor: FloatVectorProperty(name="End Color",
                            subtype='COLOR',
                            default=(1.0, 1.0, 1.0, 1.0),
                            size=4,
                            min=0.0, max=1.0,
-                           description="End Color (with alpha).")
+                           description="End Color (with alpha)")
     particle_suspend: IntProperty(name="Suspend Distance", description="Distance at which the system pauses.", min=0, max=1000000, default=0)
     
     # Even more particle properties that I missed the first time!
@@ -881,7 +880,7 @@ class THUGLevelExportProps(bpy.types.PropertyGroup):
         description="Use this option when exporting a park editor dictionary.", default=False)
     generate_tex_file: BoolProperty(name="Generate a .tex file", default=True)
     generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
-    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
+    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene")
     generate_col_file: BoolProperty(name="Generate a .col file", default=True)
     generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
     skybox_name: StringProperty(name="Skybox name", default="THUG_Sky")
@@ -897,12 +896,12 @@ class THUGLevelExportProps(bpy.types.PropertyGroup):
         name="Mipmap offset",
         description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
         min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures.")
+    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
 
     # The following props are specific to models
     model_type: EnumProperty(items = (
-        ("skin", ".skin", "Character skin, used for playable characters and pedestrians."),
-        ("mdl", ".mdl", "Model used for vehicles and other static mesh."),
+        ("skin", ".skin", "Character skin, used for playable characters and pedestrians"),
+        ("mdl", ".mdl", "Model used for vehicles and other static mesh"),
     ), name="Model Type", default="skin")
         
         
@@ -1008,12 +1007,12 @@ def __init_wm_props():
         return lambda wm, ctx: update_collision_flag_mesh(wm, ctx, flag)
 
     FLAG_NAMES = {
-        "mFD_VERT": ("Vert", "Vert. This face is a vert (used for ramps)."),
+        "mFD_VERT": ("Vert", "Vert. This face is a vert (used for ramps)"),
         "mFD_WALL_RIDABLE": ("Wallridable", "Wallridable. This face is wallridable"),
-        "mFD_NON_COLLIDABLE": ("Non-Collidable", "Non-Collidable. The skater won't collide with this face. Used for triggers."),
+        "mFD_NON_COLLIDABLE": ("Non-Collidable", "Non-Collidable. The skater won't collide with this face. Used for triggers"),
         "mFD_NO_SKATER_SHADOW": ("No Skater Shadow", "No Skater Shadow"),
         "mFD_NO_SKATER_SHADOW_WALL": ("No Skater Shadow Wall", "No Skater Shadow Wall"),
-        "mFD_TRIGGER": ("Trigger", "Trigger. The object's TriggerScript will be called when a skater goes through this face."),
+        "mFD_TRIGGER": ("Trigger", "Trigger. The object's TriggerScript will be called when a skater goes through this face"),
         
         # Newly added flags!
         "mFD_SKATABLE": ( "Skatable", "Explicitly marks the surface skatable." ),
@@ -1070,8 +1069,8 @@ def register_props():
         name="Object Class",
         description="Object Class.",
         items=[
-            ("LevelGeometry", "LevelGeometry", "LevelGeometry. Use for static geometry."),
-            ("LevelObject", "LevelObject", "LevelObject. Use for dynamic objects.")],
+            ("LevelGeometry", "LevelGeometry", "LevelGeometry. Use for static geometry"),
+            ("LevelObject", "LevelObject", "LevelObject. Use for dynamic objects")],
         default="LevelGeometry")
     bpy.types.Object.thug_do_autosplit = BoolProperty(
         name="Autosplit Object on Export",
@@ -1095,9 +1094,9 @@ def register_props():
     bpy.types.Object.thug_network_option = EnumProperty(
         name="Network Options",
         items=[
-            ("Default", "Default", "Appears in network games."),
-            ("AbsentInNetGames", "Offline Only", "Only appears in single-player."),
-            ("NetEnabled", "Online (Broadcast)", "Appears in network games, events/scripts appear on all clients.")],
+            ("Default", "Default", "Appears in network games"),
+            ("AbsentInNetGames", "Offline Only", "Only appears in single-player"),
+            ("NetEnabled", "Online (Broadcast)", "Appears in network games, events/scripts appear on all clients")],
         default="Default")
     bpy.types.Object.thug_export_collision = BoolProperty(name="Export to Collisions", default=True, description='This object will be exported to the collision (.col) file.')
     bpy.types.Object.thug_export_scene = BoolProperty(name="Export to Scene", default=True, description='This object will be exported to the scene (.scn) file.')
@@ -1112,24 +1111,24 @@ def register_props():
     bpy.types.Object.thug_is_trickobject = BoolProperty(
         name="Is a TrickObject",
         default=False,
-        description="This must be checked if you want this object to be taggable in Graffiti.")
+        description="This must be checked if you want this object to be taggable in Graffiti")
     bpy.types.Object.thug_cluster_name = StringProperty(
         name="Cluster",
-        description="The name of the graffiti group this object belongs to. If this is empty and this is a rail with a mesh object parent this will be set to the parent's name. Otherwise it will be set to this object's name.")
+        description="The name of the graffiti group this object belongs to. If this is empty and this is a rail with a mesh object parent this will be set to the parent's name. Otherwise it will be set to this object's name")
     bpy.types.Object.thug_path_type = EnumProperty(
         name="Path Type",
         items=[
             ("None", "None", "None"),
             ("Rail", "Rail", "Rail"),
             ("Ladder", "Ladder", "Ladder"),
-            ("Waypoint", "Waypoint", "Navigation path for pedestrians/vehicles/AI skaters."),
+            ("Waypoint", "Waypoint", "Navigation path for pedestrians/vehicles/AI skaters"),
             ("Custom", "Custom", "Custom")],
         default="None")
     bpy.types.Object.thug_rail_terrain_type = EnumProperty(
         name="Rail Terrain Type",
         items=[(t, t, t) for t in ["Auto"] + TERRAIN_TYPES],
         default="Auto")
-    bpy.types.Object.thug_rail_connects_to = StringProperty(name="Linked To", description="Path this object links to (must be a rail/ladder/waypoint).")
+    bpy.types.Object.thug_rail_connects_to = StringProperty(name="Linked To", description="Path this object links to (must be a rail/ladder/waypoint)")
     
     bpy.types.Object.thug_tod_controlled = BoolProperty(name="TOD Controlled", default=False, description="This object's state is controlled by the TOD system")
     bpy.types.Object.thug_tod_values = FloatVectorProperty(name="TOD Range", size=2, default=[1.25,2.85], description="Start/End TOD range where the object is active")
