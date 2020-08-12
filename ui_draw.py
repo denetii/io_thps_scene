@@ -28,15 +28,40 @@ from . script_template import *
 #############################################
 draw_stuff_objects = set()
 draw_handle = None
+draw_stuff_dirty = True
+draw_batches = []
 
 # METHODS
 #############################################
+@bpy.app.handlers.persistent
+def draw_stuff_post_update(scene):
+    global draw_stuff_dirty, draw_stuff_objects
+    if draw_stuff_dirty: return
 
+    if not draw_stuff_objects:
+        draw_stuff_dirty = True
+        return
+
+    dep = bpy.context.evaluated_depsgraph_get()
+    for update in dep.updates:
+        if update.id.original not in draw_stuff_objects:
+            draw_stuff_dirty = True
+            return
+    
+    
+#----------------------------------------------------------------------------------
+@bpy.app.handlers.persistent
+def draw_stuff_pre_load_cleanup(*args):
+    global draw_stuff_dirty, draw_stuff_objects, draw_batches
+    draw_stuff_dirty = True
+    draw_stuff_objects = set()
+    draw_batches = []
+    
 #----------------------------------------------------------------------------------
 @bpy.app.handlers.persistent
 def draw_stuff():
     from . bglx import glColor4f, glVertex3f, glBegin, glEnd, GL_LINES, GL_TRIANGLES #, GL_POLYGON
-    global draw_stuff_dirty, draw_stuff_objects
+    global draw_stuff_dirty, draw_stuff_objects, draw_batches
     ctx = bpy.context
     if not len(ctx.selected_objects) and not ctx.object:
         return
@@ -56,8 +81,34 @@ def draw_stuff():
     del _tmp_buf
 
     objects = set([ob.name for ob in ctx.selected_objects] if ctx.mode == "OBJECT" else [ctx.object.name])
+    if draw_stuff_objects != objects:
+        draw_stuff_dirty = True
+        
+    if not draw_stuff_dirty:
+        bgl.glCullFace(bgl.GL_BACK)
+        bgl.glEnable(bgl.GL_CULL_FACE)
+        bgl.glEnable(bgl.GL_POLYGON_OFFSET_FILL)
+        bgl.glPolygonOffset(-2, -2)
+
+        bgl.glEnable(bgl.GL_BLEND)
+        bgl.glBlendFunc(bgl.GL_SRC_ALPHA, bgl.GL_ONE_MINUS_SRC_ALPHA);
+
+        prefs = ctx.preferences.addons[ADDON_NAME].preferences
+        bgl.glLineWidth(prefs.line_width)
+        
+        for bi in draw_batches:
+            if bi == None: continue
+            bi[1].bind()
+            bi[1].uniform_float("color", bi[2])
+            bi[0].draw(bi[1])
+            
+        bgl.glPolygonOffset(old_offset_factor, old_offset_units)
+        bgl.glDisable(bgl.GL_POLYGON_OFFSET_FILL)
+        bgl.glDisable(bgl.GL_CULL_FACE)
+        return
+        
+    draw_batches = []
     bm = None
-    #bgl.glNewList(draw_stuff_display_list_id, bgl.GL_COMPILE_AND_EXECUTE)
     try:
         bgl.glCullFace(bgl.GL_BACK)
         bgl.glEnable(bgl.GL_CULL_FACE)
@@ -93,7 +144,7 @@ def draw_stuff():
                     glVertex3f(v[0], v[1], v[2])
                     v = connects_to.matrix_world @ connects_to.data.splines[0].points[0].co.to_3d()
                     glVertex3f(v[0], v[1], v[2])
-                    glEnd()
+                    draw_batches.append(glEnd())
 
             # Draw previews for area lights - tube/sphere lights and area lights
             if (ob and ob.type == 'LAMP'):
@@ -103,7 +154,7 @@ def draw_stuff():
                         glColor4f(1.0, 0.75, 0.25, 1.0)
                         glVertex3f(ob.location[0], ob.location[1], ob.location[2])
                         glVertex3f(ob.location[0] + ob.data.thug_light_props.light_end_pos[0], ob.location[1] + ob.data.thug_light_props.light_end_pos[1], ob.location[2] + ob.data.thug_light_props.light_end_pos[2])
-                        glEnd()
+                        draw_batches.append(glEnd())
                     continue
                 elif ob.data.thug_light_props.light_type == 'SPHERE':
                     continue
@@ -132,7 +183,7 @@ def draw_stuff():
                     glVertex3f(*bbox[6])
                     glVertex3f(*bbox[7])
                     glVertex3f(*bbox[4])
-                    glEnd()
+                    draw_batches.append(glEnd())
 
                     glBegin(bgl.GL_LINES)
                     glVertex3f(*bbox[1])
@@ -141,7 +192,7 @@ def draw_stuff():
                     glVertex3f(*bbox[6])
                     glVertex3f(*bbox[3])
                     glVertex3f(*bbox[7])
-                    glEnd()
+                    draw_batches.append(glEnd())
                     
             if not ob or ob.type != "MESH":
                 continue
@@ -171,7 +222,7 @@ def draw_stuff():
                     for vert in edge.verts:
                         v = ob.matrix_world @ vert.co
                         glVertex3f(v[0], v[1], v[2])
-                glEnd()
+                draw_batches.append(glEnd())
 
             cfl = bm.faces.layers.int.get("collision_flags")
             flag_stuff = ((VERT_FLAG, prefs.vert_face_color),
@@ -191,7 +242,7 @@ def draw_stuff():
                             for vert in face.verts:
                                 v = ob.matrix_world @ vert.co
                                 glVertex3f(v[0], v[1], v[2])
-                            glEnd()
+                            draw_batches.append(glEnd())
                             continue
 
                     for face_flag, face_color in flag_stuff:
@@ -203,10 +254,9 @@ def draw_stuff():
                             for vert in face.verts:
                                 v = ob.matrix_world @ vert.co
                                 glVertex3f(v[0], v[1], v[2])
-                            glEnd()
+                            draw_batches.append(glEnd())
     finally:
         draw_stuff_dirty = False
-        #glEndList()
         if bm: bm.free()
         bgl.glPolygonOffset(old_offset_factor, old_offset_units)
         bgl.glDisable(bgl.GL_POLYGON_OFFSET_FILL)

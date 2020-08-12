@@ -181,9 +181,10 @@ def glEnd():
         shader.uniform_float("projectionMatrix", gpu.matrix.get_projection_matrix())
         shader.uniform_int("image", 0)
     shader.uniform_float("color", color)
+    result = (batch, shader, color)
     batch.draw(shader)
-
     inst.clear()
+    return result
 
 
 def glVertex2f(x, y):

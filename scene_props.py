@@ -1187,12 +1187,12 @@ def register_props():
 
     global draw_handle
     draw_handle = bpy.types.SpaceView3D.draw_handler_add(draw_stuff, (), 'WINDOW', 'POST_VIEW')
-    # bpy.app.handlers.scene_update_pre.append(draw_stuff_pre_update)
-    #bpy.app.handlers.scene_update_post.append(draw_stuff_post_update)
+    
+    bpy.app.handlers.depsgraph_update_post.append(draw_stuff_post_update)
     bpy.app.handlers.depsgraph_update_post.append(update_collision_flag_ui_properties)
     bpy.app.handlers.depsgraph_update_post.append(update_pathnode_ui_properties)
 
-    #bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
+    bpy.app.handlers.load_pre.append(draw_stuff_pre_load_cleanup)
     bpy.app.handlers.load_post.append(update_node_collection)
     bpy.app.handlers.load_post.append(update_game_files_collections)
     
