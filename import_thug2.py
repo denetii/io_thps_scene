@@ -217,7 +217,6 @@ def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, outpu
         if sec_flags & SECFLAGS_HAS_VERTEX_COLORS:
             p("  sector has vertex colors!", None)
             color_layer = bm.loops.layers.color.new("color")
-            alpha_layer = bm.loops.layers.color.new("alpha")
 
         if sec_flags & SECFLAGS_HAS_VERTEX_COLOR_WIBBLES:
             p("  sector has vertex color wibbles!", None)
@@ -391,7 +390,6 @@ def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, outpu
                                     if sec_flags & SECFLAGS_HAS_VERTEX_COLORS:
                                         cb, cg, cr, ca = pvd["color"]
                                         loop[color_layer] = (cr / 128.0, cg / 128.0, cb / 128.0, ca / 128.0)
-                                        #loop[alpha_layer] = (ca / 128.0, ca / 128.0, ca / 128.0)
 
                 p("    offset difference: {}", r.offset - old_offset)
 
@@ -420,7 +418,7 @@ def read_sectors_ug2(reader, printer, num_sectors, context, operator=None, outpu
             vgs = blender_object.vertex_groups
             for vert, (weights, bone_indices) in vertex_weights.items():
                 for weight, bone_index in zip(weights, bone_indices):
-                    vert_group = vgs.get(str(bone_index//3)) or vgs.new(str(bone_index//3))
+                    vert_group = vgs.get(str(bone_index//3)) or vgs.new(name=str(bone_index//3))
                     print("{:2s} {:3f}".format(vert_group.name, weight), end='; ')
                     vert_group.add([vert.index], weight, "ADD")
                 print()

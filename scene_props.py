@@ -25,7 +25,8 @@ def thug_empty_update(self, context):
     ob = context.object
     for mdl_ob in ob.children:
         if mdl_ob.type == 'MESH':
-            context.scene.objects.unlink(mdl_ob)
+            context.scene.collection.objects.unlink(mdl_ob)
+            #context.scene.objects.unlink(mdl_ob)
             bpy.data.objects.remove(mdl_ob)
     mdl_mesh = ''
     mdl_preview = ''
@@ -41,8 +42,8 @@ def thug_empty_update(self, context):
             mdl_mesh = 'Sk3Ed_RS_Ho'
         elif ob.thug_restart_props.restart_type == 'CTF':
             mdl_mesh = 'Sk3Ed_RS_Ho'
-        ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 36 * preset_scale
+        ob.empty_display_type = 'CUBE'
+        ob.empty_display_size = 36 * preset_scale
         
     if ob.thug_empty_props.empty_type == 'GameObject':
         mdl_mesh = ''
@@ -69,43 +70,43 @@ def thug_empty_update(self, context):
         elif ob.thug_go_props.go_model != '':
             mdl_preview = ob.thug_go_props.go_model 
             
-        ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 36 * preset_scale
+        ob.empty_display_type = 'CUBE'
+        ob.empty_display_size = 36 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'CubemapProbe' or ob.thug_empty_props.empty_type == 'LightProbe':
         mdl_mesh = ''
-        ob.empty_draw_type = 'SPHERE'
-        ob.empty_draw_size = 64 * preset_scale
+        ob.empty_display_type = 'SPHERE'
+        ob.empty_display_size = 64 * preset_scale
         ob.show_name = True
         ob.show_x_ray = True
         
     elif ob.thug_empty_props.empty_type == 'LightVolume':
         mdl_mesh = ''
-        ob.empty_draw_type = 'ARROWS'
-        ob.empty_draw_size = 64 * preset_scale
+        ob.empty_display_type = 'ARROWS'
+        ob.empty_display_size = 64 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'GenericNode' and ob.thug_generic_props.generic_type == 'Crown':
         mdl_mesh = 'Sk3Ed_RS_KOTH'
-        ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 42 * preset_scale
+        ob.empty_display_type = 'CUBE'
+        ob.empty_display_size = 42 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'Pedestrian':
         if ob.thug_ped_props.ped_source == 'Model' and ob.thug_ped_props.ped_model != '':
             mdl_preview = ob.thug_ped_props.ped_model
         mdl_mesh = 'Ped01'
-        ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 42 * preset_scale
+        ob.empty_display_type = 'CUBE'
+        ob.empty_display_size = 42 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'Vehicle':
         if ob.thug_veh_props.veh_model != '':
             mdl_preview = ob.thug_veh_props.veh_model 
         mdl_mesh = 'Veh_Taxi'
-        ob.empty_draw_type = 'CUBE'
-        ob.empty_draw_size = 42 * preset_scale
+        ob.empty_display_type = 'CUBE'
+        ob.empty_display_size = 42 * preset_scale
         
     elif ob.thug_empty_props.empty_type == 'ParticleObject':
-        ob.empty_draw_type = 'PLAIN_AXES'
-        ob.empty_draw_size = 64 * preset_scale
+        ob.empty_display_type = 'PLAIN_AXES'
+        ob.empty_display_size = 64 * preset_scale
         draw_particle_preview(ob, context)
         return
         
@@ -184,7 +185,7 @@ def draw_particle_preview(ob, context):
         if name not in found_obs:
             new_ob = bpy.data.objects.new(name, None)
             new_ob.rotation_euler = [ 1.570796, 0, 0 ]
-            new_ob.empty_draw_type = 'IMAGE'
+            new_ob.empty_display_type = 'IMAGE'
             new_ob.parent = ob
             scene.collection.objects.link(new_ob)
         
@@ -199,9 +200,9 @@ def draw_particle_preview(ob, context):
     ob_start.location = ob.thug_particle_props.particle_startposition
     ob_mid.location = ob.thug_particle_props.particle_midposition
     ob_end.location = ob.thug_particle_props.particle_endposition
-    ob_start.empty_draw_size = ob.thug_particle_props.particle_boxdimsstart[2]
-    ob_mid.empty_draw_size = ob.thug_particle_props.particle_boxdimsmid[2]
-    ob_end.empty_draw_size = ob.thug_particle_props.particle_boxdimsend[2]
+    ob_start.empty_display_size = ob.thug_particle_props.particle_boxdimsstart[2]
+    ob_mid.empty_display_size = ob.thug_particle_props.particle_boxdimsmid[2]
+    ob_end.empty_display_size = ob.thug_particle_props.particle_boxdimsend[2]
                 
             
                     

@@ -236,21 +236,21 @@ def export_menu_func(self, context):
     self.layout.operator(SceneToTHUG2Model.bl_idname, text="Scene to THUG2 model", icon='PLUGIN')
 #----------------------------------------------------------------------------------
 def add_menu_func(self, context):
-    self.layout.menu(THUGPresetsMenu.bl_idname, text="THUG", icon='PLUGIN')
+    self.layout.menu(THUG_MT_PresetsMenu.bl_idname, text="THUG", icon='PLUGIN')
 #----------------------------------------------------------------------------------
 def register_menus():
     bpy.types.TOPBAR_MT_file_import.append(import_menu_func)
     bpy.types.TOPBAR_MT_file_export.append(export_menu_func)
-    #addPresetNodes()
-    #addPresetMesh()
-    bpy.types.VIEW3D_MT_mesh_add.append(add_menu_func)
+    addPresetNodes()
+    addPresetMesh()
+    bpy.types.VIEW3D_MT_add.append(add_menu_func)
     script_template.init_templates()
 #----------------------------------------------------------------------------------
 def unregister_menus():
     bpy.types.TOPBAR_MT_file_import.remove(import_menu_func)
     bpy.types.TOPBAR_MT_file_export.remove(export_menu_func)
-    bpy.types.VIEW3D_MT_mesh_add.remove(add_menu_func)
-    #clearPresetNodes()
-    #clearPresetMesh()
+    bpy.types.VIEW3D_MT_add.remove(add_menu_func)
+    clearPresetNodes()
+    clearPresetMesh()
 
 

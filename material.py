@@ -39,10 +39,10 @@ def get_cycles_node(nodes, name, type, loc_x, loc_y, create_if_none=True):
     
 # Update the TH material shader nodes
 def update_node_tree(self, context, material = None):
-    if material:
+    if material != None:
         mat = material
     else:
-        if not context.object: return
+        if not context.object or context.object.active_material == None: return
         mat = context.object.active_material
     mat.use_nodes = True
     node_tree = mat.node_tree

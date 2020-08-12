@@ -425,46 +425,46 @@ def import_nodearray(gamemode):
                 ob = bpy.data.objects.new( "empty", None )
                 #bpy.context.scene.objects.link( ob )
                 if node["Class"] == "GameObject":
-                    ob.empty_draw_type = 'CUBE'
-                    ob.empty_draw_size = 64
+                    ob.empty_display_type = 'CUBE'
+                    ob.empty_display_size = 64
                     to_group(ob, "GameObjects")
                 elif node["Class"] == "Pedestrian" or node["Class"] == "Vehicle":
-                    ob.empty_draw_type = 'PLAIN_AXES'
-                    ob.empty_draw_size = 108
+                    ob.empty_display_type = 'PLAIN_AXES'
+                    ob.empty_display_size = 108
                 elif node["Class"] == "EnvironmentObject" or node["Class"] == "LevelGeometry" or node["Class"] == "LevelObject":
-                    ob.empty_draw_type = 'CONE'
-                    ob.empty_draw_size = 32
+                    ob.empty_display_type = 'CONE'
+                    ob.empty_display_size = 32
                     to_group(ob, "Missing Scene Mesh")
                 elif node["Class"] == "BouncyObject":
-                    ob.empty_draw_type = 'CUBE'
-                    ob.empty_draw_size = 32
+                    ob.empty_display_type = 'CUBE'
+                    ob.empty_display_size = 32
                     to_group(ob, "BouncyObjects")
                 elif node["Class"] == "ParticleObject":
-                    ob.empty_draw_type = 'IMAGE'
-                    ob.empty_draw_size = 108
+                    ob.empty_display_type = 'IMAGE'
+                    ob.empty_display_size = 108
                     to_group(ob, "ParticleObjects")
                 elif node["Class"] == "ProximNode":
-                    ob.empty_draw_type = 'SPHERE'
+                    ob.empty_display_type = 'SPHERE'
                     if "radius" in node:
-                        ob.empty_draw_size = node["radius"]
+                        ob.empty_display_size = node["radius"]
                     else:
-                        ob.empty_draw_size = 150
+                        ob.empty_display_size = 150
                     to_group(ob, "ProximNodes")
                 elif node["Class"] == "EmitterObject":
-                    ob.empty_draw_type = 'SPHERE'
+                    ob.empty_display_type = 'SPHERE'
                     if "radius" in node:
-                        ob.empty_draw_size = node["radius"]
+                        ob.empty_display_size = node["radius"]
                     else:
-                        ob.empty_draw_size = 300
+                        ob.empty_display_size = 300
                     to_group(ob, "EmitterObjects")
                     
                 elif node["Class"] == "GenericNode":
-                    ob.empty_draw_type = 'CIRCLE'
-                    ob.empty_draw_size = 32
+                    ob.empty_display_type = 'CIRCLE'
+                    ob.empty_display_size = 32
                     to_group(ob, "GenericNodes")
                 else:
-                    ob.empty_draw_type = 'ARROWS'
-                    ob.empty_draw_size = 108
+                    ob.empty_display_type = 'ARROWS'
+                    ob.empty_display_size = 108
                 ob.location[0] = node["Position"][0]
                 if gamemode == 'THUG':
                     ob.location[1] = -node["Position"][2]
