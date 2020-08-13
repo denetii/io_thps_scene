@@ -44,13 +44,10 @@ def get_autorail_image():
     
 #----------------------------------------------------------------------------------
 def get_autorail_material():
+    from . import material
     if not bpy.data.materials.get('Autorail_Metal'):
         blender_mat = bpy.data.materials.new('Autorail_Metal') 
-        blender_mat.use_transparency = True
-        blender_mat.diffuse_color = (1, 1, 1)
-        blender_mat.diffuse_intensity = 1
-        blender_mat.specular_intensity = 0.25
-        blender_mat.alpha = 1
+        blender_mat.diffuse_color = (1, 1, 1, 1)
         
         if bpy.data.textures.get("Autorail_Metal"):
             rail_tex = bpy.data.textures.get("Autorail_Metal")
@@ -60,9 +57,9 @@ def get_autorail_material():
         rail_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_DIFFUSE'
         tex_slot = blender_mat.th_texture_slots.add()
         tex_slot.texture = rail_tex
-        tex_slot.uv_layer = str('Rail')
+        tex_slot.uv_layer = 'Rail'
         tex_slot.blend_type = 'MIX'
-        
+        material.update_node_tree(None, None, material=blender_mat)
     else:
         blender_mat = bpy.data.materials.get('Autorail_Metal') 
     return blender_mat
@@ -99,14 +96,14 @@ def build_rail_mesh(ob_rail, thickness = 2):
     for pnt in rail_path.points:
         point_index += 1
         if point_index > 0:
-            polyline.points.add()
+            polyline.points.add(count=1)
         # Make the rail mesh slightly lower so we don't interfere with grinds
-        point_world = ob_rail.matrix_world * pnt.co
+        point_world = ob_rail.matrix_world @ pnt.co
         polyline.points[point_index].co = pnt.co - mathutils.Vector( [0, 0, curveData.bevel_depth, 0] )
         #print("Adding point {}".format(point_index))
         # Add post
         post_line = curveData.splines.new('POLY')
-        post_line.points.add()
+        post_line.points.add(count=1)
         post_line.points[0].co = ( pnt.co[0], pnt.co[1], 0, 0)
         post_line.points[1].co = pnt.co - mathutils.Vector( [0, 0, curveData.bevel_depth * 16, 0] )
         
@@ -123,10 +120,12 @@ def build_rail_mesh(ob_rail, thickness = 2):
     # attach to scene and validate context
     
     # Now we have the path for the rail mesh, let's convert to mesh and assign materials!
-    rail_mesh = curveOB.to_mesh(bpy.context.scene, True, 'PREVIEW')
+    rail_mesh = bpy.data.meshes.new_from_object(curveOB)
     actual_ob = bpy.data.objects.new('Rail' + mesh_name, rail_mesh)
     bpy.context.scene.collection.objects.link(actual_ob)
     bpy.context.view_layer.objects.active = actual_ob
+    bpy.ops.object.select_all(action="DESELECT")
+    actual_ob.select_set(True)
     
     # Fill the gaps in the ends and assign mats
     if is_cyclic == False:
@@ -135,11 +134,12 @@ def build_rail_mesh(ob_rail, thickness = 2):
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.edge_face_add()
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-    # Add UV map
+    # Add UV map/vetex color
+    actual_ob.data.vertex_colors.new(name="color")
     bpy.ops.mesh.uv_texture_add({"object": actual_ob})
     actual_ob.data.uv_layers[len(actual_ob.data.uv_layers)-1].name = 'Rail'
-    actual_ob.data.uv_textures['Rail'].active = True
-    actual_ob.data.uv_textures['Rail'].active_render = True
+    actual_ob.data.uv_layers['Rail'].active = True
+    actual_ob.data.uv_layers['Rail'].active_render = True
     
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
@@ -319,7 +319,7 @@ def _get_autorails(mesh_object, operator=None):
 
     with ExitStack() as exit_stack:
         if mesh_object.modifiers:
-            final_mesh = mesh_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
+            final_mesh = mesh_object.to_mesh()
             exit_stack.callback(bpy.data.meshes.remove, final_mesh)
         else:
             final_mesh = mesh_object.data

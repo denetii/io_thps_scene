@@ -387,17 +387,17 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, inc
         if piece_search:
             source_piece = piece_search[0]
             new_piece = source_piece.copy()
-            new_piece.data = source_piece.data.copy()
+            new_piece.data = source_piece.data#.copy()
             parent_piece = new_piece
             # If this piece is a child of a SCN mesh, copy that as well
             if new_piece.parent:
                 parent_piece = new_piece.parent.copy()
-                parent_piece.data = new_piece.parent.data.copy()
+                parent_piece.data = new_piece.parent.data#.copy()
                 new_piece.parent = parent_piece
-                scn.objects.link(parent_piece)
-                scn.objects.link(new_piece)
+                scn.collection.objects.link(parent_piece)
+                scn.collection.objects.link(new_piece)
             else:
-                scn.objects.link(new_piece)
+                scn.collection.objects.link(new_piece)
             
             # Also search for a rail path, if desired
             if include_rails and bpy.data.objects.get(piece_name + '_RAIL'):
@@ -429,8 +429,8 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, inc
             
     parent_ob = None
     for ob_name in linked_obs:
-        if bpy.data.objects.get(ob_name).type == 'MESH' and bpy.data.objects.get(ob_name).thug_export_scene:
-            parent_ob = bpy.data.objects.get(ob_name)
+        if scn.collection.objects.get(ob_name).type == 'MESH' and scn.collection.objects.get(ob_name).thug_export_scene:
+            parent_ob = scn.collection.objects.get(ob_name)
     if parent_ob:
         for ob_name in linked_obs:
             if ob_name != parent_ob.name:
@@ -438,8 +438,8 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, inc
                 # Use the relative position to the parent object
                 child_ob.location = child_ob.location - parent_ob.location
                 child_ob.parent = parent_ob
-    elif len(linked_obs) == 1 and bpy.data.objects.get(linked_obs[0]):
-        parent_ob = bpy.data.objects.get(linked_obs[0])
+    elif len(linked_obs) == 1 and scn.collection.objects.get(linked_obs[0]):
+        parent_ob = scn.collection.objects.get(linked_obs[0])
                 
     parent_ob.scale = [actual_scale, actual_scale, actual_scale]
     return parent_ob

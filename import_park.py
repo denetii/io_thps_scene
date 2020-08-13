@@ -38,10 +38,7 @@ def parked_place_piece(version, piece_name, loc_x, loc_y, loc_z, angle, add_rail
     new_piece.location[0] = loc_y * 120
     new_piece.location[1] = loc_x * 120
     new_piece.location[2] = loc_z * 48
-    new_piece.hide = False
-    new_piece.hide_render = False
-    #new_piece.thug_export_scene = True
-    #new_piece.thug_export_collision = True
+    new_piece.hide_viewport = False
     
     final_angle = (angle + 4) & 3
     dimensions = [ new_piece.dimensions.x, new_piece.dimensions.y ]
