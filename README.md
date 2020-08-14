@@ -1,69 +1,25 @@
 # io_thps_scene
-An extension of the last public release of the THPS/THUG scene import/export tools for Blender. 
-This version fixes tons of bugs and adds a whole host of new features to make level creation easier for THUG1, THUG2 and THUG PRO.
+This Blender addon allows you to export a scene as a custom level for some of the classic THPS games. Also includes a variety of import tools to load existing levels/assets, as well as a fully integrated lightmap baking tool.
 
-## Working with previous scenes
-Your .blend scenes that were built for the previous plugin, `io_thug_tools`, will need a little converting before they'll export correctly here. The plugin can detect old scenes, and automatically converts what it can, but there will be a few things that need to be done manually.
-1. Player restarts, CTF Flags, and KOTH nodes need to be reconfigured, as the interface has been revamped a little bit and the options lists changed.
-2. Restarts and other nodes may need to be rotated, as the exporter no longer auto-rotates these elements. This was changed so that THUG1/2/PRO scenes would export the same way, as well as imported levels.
-3. `THUG_SCRIPTS` is no longer used - your custom TriggerScripts should be auto-converted to the new format, but don't keep writing scripts in here, as they will not be exported!
-4. `THUG_FUNCS` is also no longer used, but your startup scripts will not be converted automatically. See the full documentation below to find out where you'll need to move them to.
+## Migrating from Blender 2.79
+Unfortunately, due to various breaking changes introduced with Blender 2.8x, there is no way to seamlessly convert old .blend files. However, I have written a pair of scripts that will take care of it for you. You'll still need Blender 2.79 installed on your system, and you need to know how to run scripts in the text editor. Grab these two scripts here: https://gist.github.com/denetii/6e66891505b32fc7c64c22031288d7f4
+
+'Step 1' is a script that needs to be run on your .blend file from within Blender **2.79**. Once that's done, save a copy of your scene, then open the new copy in **2.8x** and run the 'Step 2' script in there. Your scene should now be fully migrated and exportable from within 2.8x. The addon has been tested on **2.83.4**, but should be compatible with most of the 2.8x versions.
+
+While support for the 2.79 addon isn't stopping yet, eventually the development will move fully to the 2.8x addon.
 
 ## Installation/Documentation
-The full installation and documentation can be found at http://tharchive.net/misc/io_thps_scene.html
-Don't install the plugin by pulling the source off GitHub (at least until I add Releases on here) - the plugin won't work correctly that way. You'll need the full installation from THArchive which has the assets for presets, script templates, and more.
+The complete documentation and changelog can be found at: http://tharchive.net/misc/io_thps_scene.html
+You can either download the addon from there, or grab one of the Releases on GitHub.
 
-## Change list
-Here's the full list of changes and bug fixes since the previous public release of `io_thug_tools`:
+## Changes from the 2.79 version
+Since the addon was just migrated, most of the functionality will appear virtually the same as in the 2.79 releases. However, there are a few things to note:
+ * The removal of Blender Internal from 2.8 means that I had to implement a way to translate the 'legacy' THPS material/material pass settings into shader nodes for Cycles/Eevee. The result is a much more accurate viewport representation of your materials, including proper handling of vertex colors, vertex alpha, and most blending modes. This will be particularly noticeable when working with imported scenes from the base THPS games.
+ * To simplify installation/first time setup, there is no secondary `thug_tools` package required for setup. All necessary assets are bundled in with the addon code. 
+ * Because Blender 2.8 finally uses `RGBA` instead of RGB for vertex color channels, there is no need for a second 'alpha' channel to represent vertex alpha on your meshes. The conversion script moves the R value from the 'alpha' RGB into the 'color' channel's alpha value. 
+ * Exporting scenes is now much faster without using the 'Speed Hack' export option. The difference in performance is now much lower, perhaps negating the need for the speed hack. But it will remain there for now. This ultimately means you don't have to completely triangulate the scene if you want faster exporting. (This update will come to the 2.79 addon as well)
+ * Viewport rendering performance is lower than in 2.79 when a large number of objects that use the addon's color codes (collision flags, auto-rails, etc) are selected at once. This is partly due to the updated OpenGL version in 2.8 removing display lists, but the viewport drawing code needs to be rewritten anyway. 
 
- - Added tons of missing object properties and node types - the vast majority of object/nodes are fully handled directly in the plugin, without the need for 'node expansion' blocks. Some examples include:
-     * Network Options, which lets you control whether appear in online play
-     * LightGroup setting for scene meshes
-     * Pedestrian/AI skater paths can now be fully set up directly in the plugin
-     * Occluders can now be configured directly in the editor    
-     * Added the missing 'no skater shadow' option
-     * Restarts have been revamped and allow you to set multiple restart types per node as well as naming them
- - Added presets! Most nodes can be inserted through the new presets menu
-     - Park editor pieces from THPS3, THPS4, THUG1, and THUG2/PRO are also part of the presets menu
- - Fully automated lightmap baking! Easily bake lighting or ambient occlusion to your level/model/skin 
- - Even more import options:
-     - Added THPS1/2/3/4 first-gen (.psx) scene importing!
-     - Added THUG1 and THPS4 scene/model importing!
-     - QB importing has been added, allowing you to set original object names on imported scenes
-     - Added import support for node arrays from existing levels!
-        * Rails, waypoints, object settings and more are parsed and placed into the scene
-     - Trigger scripts from existing levels can now be imported!
-     - Import your custom parks (.PRK) from THUG1/2/PRO and the plugin will generate the scene for you! (Experimental feature)
- - Totally revamped object/node scripting, using an all-new template system that gives you more built-in TriggerScripts
-     - Custom scripting is now easier and more foolproof, using separate text blocks rather than `THUG_SCRIPTS`
- - Greatly expanded/improved export options:
-     - Revamped export file structure to match what the game engines expect - it is now possible to export models/skins/levels directly into the game
-     - Added separate export option for models, which generates them in the correct file formats, uncompressed, in a Models directory
-     - Tons of new crash prevention fixes, handling the most common errors which were allowed in previous releases
-     - New 'auto-split everything' option, applies the autosplit modifier to each object in the scene
-     - New skybox option when exporting scenes
-     - New mipmap offset export option, to quickly size down textures
-     - 'No modifiers' speed hack greatly speeds up COL/SCN exporting, especially on large levels
-     - Park editor dictionaries can now be exported with full compatibility
-     - All-new 'Quick Export' option lets you save your export settings and re-export with one click!
-     - Levels can now be exported in the new custom level format (used on THUG PRO)
- - New settings when working with materials/textures:
-     - Added support for environment mapped texture passes
-     - Support for the new material/shader system used in Underground+ 1.5+ (more details coming soon!)
-     - Revamped material pass settings to checkbox flags that better represent how they're stored/used in game
-        * Flag-specific settings appear when the option is checked off
- - Added support for using separate scene/collision mesh
- - Rail, waypoint and ladder paths now render larger and are assigned materials - allowing you to customize how they're displayed in the editor
- - Added new utility functions, allowing you to:
-     - Auto-merge scene/collision mesh
-     - Automatically assign the wallride flag to objects in your scene, based on the face normal
-     - Auto-fill vehicle/pedestrian properties
-     - Batch apply object properties on a selection
-     - Set terrain type on a selection of objects
-     - Select the first point on a rail/waypoint path
- - Tons of bug fixes!
-     - Imported levels/models/skins now retain their object name checksums on export, fixing a long-standing issue that prevented you from making custom CAS/board models
-     - Fixed bug with collision importing that would cause some collision meshes to have the wrong name and flags settings
-     - Fixed export issue with vertex colours in THUG1 levels where the scene would appear extremely bright
-     - Fixed huge THUG1 export bug that would not save all UV maps referenced by materials, thus resulting in very warped/stretched textures
-     - Fixed incorrect collision generation for LevelObjects 
+## Examples 
+I host a selection of custom levels built with this addon on the Tony Hawk Archive: http://tharchive.net/misc/custom_levels.html
+You can also find a larger collection of custom levels at THPSX: http://thpsx.com/community-upload-list/
