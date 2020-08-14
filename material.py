@@ -1029,7 +1029,7 @@ def _material_settings_draw(self, context):
     self.layout.row().prop(mps, "use_new_mats", toggle=True, icon="MATERIAL")
     if mps.use_new_mats:
         box = self.layout.box().column()
-        row = box.row(True).column()
+        row = box.row(align=True).column()
         row.prop(mps, "ugplus_shader")
         row.prop(mps, "ugplus_lighting_mode")
         
@@ -1469,7 +1469,7 @@ def ugplus_matslot_draw(self, layout, title, allow_uv_wibbles=True, allow_blendi
     if allow_uv_wibbles:
         row.column().prop(self, 'has_uv_wibbles', toggle=True, icon='PLAY', text='')
         if (self.has_uv_wibbles):
-            row = layout.row(True)
+            row = layout.row(align=True)
             col = row.column(align=True)
             col.scale_x = 0.5
             row = col.row()
