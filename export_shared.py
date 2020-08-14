@@ -127,13 +127,6 @@ def do_export(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
 
-    addon_prefs = context.preferences.addons[ADDON_NAME].preferences
-    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
-    if base_files_dir_error:
-        self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Aborting export.".format(base_files_dir_error))
-        return {"CANCELLED"}
-    base_files_dir = addon_prefs.base_files_dir
-
     if target_game == "THPS4":
         DEFAULT_SKY_SCN = self.skybox_name + "scn.dat"
         DEFAULT_SKY_TEX = self.skybox_name + "tex.dat"
@@ -221,10 +214,10 @@ def do_export(operator, context, target_game):
             skypath = j(directory, "Levels", filename + "_sky")
             md(skypath)
             shutil.copy(
-                j(base_files_dir, 'default_sky', DEFAULT_SKY_SCN),
+                get_asset_path("default_sky", DEFAULT_SKY_SCN),
                 j(skypath, filename + "_sky" + ext_scn))
             shutil.copy(
-                j(base_files_dir, 'default_sky', DEFAULT_SKY_TEX),
+                get_asset_path("default_sky", DEFAULT_SKY_TEX),
                 j(skypath, filename + "_sky" + ext_tex))
 
         compilation_successful = None
@@ -244,7 +237,7 @@ def do_export(operator, context, target_game):
             try:
                 print("Compiling {}.txt to QB...".format(filename))
                 roq_output = subprocess.run(wine + [
-                    j(base_files_dir, "roq.exe"),
+                    get_asset_path("roq.exe"),
                     "-c",
                     filename + ".txt"
                     ], stdout=subprocess.PIPE)
@@ -269,7 +262,7 @@ def do_export(operator, context, target_game):
                 os.chdir(path)
                 try:
                     roq_output = subprocess.run(wine + [
-                        j(base_files_dir, "roq.exe"),
+                        get_asset_path("roq.exe"),
                         "-c",
                         filename + "_scripts.txt"
                         ], stdout=subprocess.PIPE)
@@ -378,13 +371,6 @@ def do_export_model(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
 
-    addon_prefs = context.preferences.addons[ADDON_NAME].preferences
-    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
-    if base_files_dir_error:
-        self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Aborting export.".format(base_files_dir_error))
-        return {"CANCELLED"}
-    base_files_dir = addon_prefs.base_files_dir
-
     if not target_game == "THUG1" and not target_game == "THUG2" and not target_game == "THPS4":
         raise Exception("Unknown target game: {}".format(target_game))
 
@@ -458,7 +444,7 @@ def do_export_model(operator, context, target_game):
 
             try:
                 roq_output = subprocess.run(wine + [
-                    j(base_files_dir, "roq.exe"),
+                    get_asset_path("roq.exe"),
                     "-c",
                     filename + ".txt"
                     ], stdout=subprocess.PIPE)

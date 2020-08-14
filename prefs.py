@@ -7,19 +7,6 @@ __reload_order_index__ = -20
 
 # METHODS
 #############################################
-def _get_base_files_dir_error(prefs):
-    self = prefs
-    base_files_dir_error = None
-    if not os.path.exists(self.base_files_dir):
-        base_files_dir_error = "The path doesn't exist."
-    elif not os.path.exists(os.path.join(self.base_files_dir, "roq.exe")):
-        base_files_dir_error = "The folder doesn't contain the roq compiler."
-    elif not all(os.path.exists(os.path.join(self.base_files_dir, "default_sky", sky_file))
-                 for sky_file in
-                 ["THUG_sky.scn.xbx", "THUG_sky.tex.xbx", "THUG2_sky.scn.xbx", "THUG2_sky.tex.xbx"]):
-        base_files_dir_error = "The folder doesn't contain the default sky files."
-    return base_files_dir_error
-
 def is_valid_game_path(path):
     # We need at least these folders to be available to consider it a valid game path
     if not os.path.exists(os.path.join(path, "images")):
@@ -72,12 +59,6 @@ def get_game_asset_paths(context):
 #############################################
 class THUGAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = ADDON_NAME
-
-    base_files_dir: StringProperty(
-        name="Base files directory",
-        subtype='DIR_PATH',
-        default="D:\\thug_tools\\",
-        )
 
     line_width: FloatProperty(name="Line Width", min=0, max=15, default=10, description="Size of autorail lines displayed in the viewport")
 
@@ -168,16 +149,10 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, "base_files_dir")
         layout.prop(self, "game_data_dir_thug1")
         layout.prop(self, "game_data_dir_thug2")
         layout.prop(self, "game_data_dir_thugpro")
-        base_files_dir_error = _get_base_files_dir_error(self)
-        if base_files_dir_error:
-            layout.label(
-                text="Incorrect path: {}".format(base_files_dir_error),
-                icon="ERROR")
-
+        
         for prop in ["autorail_edge_color",
                      "rail_end_connection_color",
                      "bad_face_color",
