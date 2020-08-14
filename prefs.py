@@ -132,19 +132,19 @@ class THUGAddonPreferences(bpy.types.AddonPreferences):
         name="Game directory - THUG1",
         subtype='DIR_PATH',
         default="C:\\",
-        description="Path to your game files for THUG1 - select the 'Data' folder."
+        description="Path to your game files for THUG1 - select the 'Data' folder"
         )
     game_data_dir_thug2: StringProperty(
         name="Game directory - THUG2",
         subtype='DIR_PATH',
         default="C:\\",
-        description="Path to your game files for THUG2 (Base game, NOT the THUG PRO files) - select the 'Data' folder."
+        description="Path to your game files for THUG2 (Base game, NOT the THUG PRO files) - select the 'Data' folder"
         )
     game_data_dir_thugpro: StringProperty(
         name="Game directory - THUG PRO",
         subtype='DIR_PATH',
         default="C:\\",
-        description="Path to your game files for THUG PRO (NOT the base game files) - select the 'Data' folder."
+        description="Path to your game files for THUG PRO (NOT the base game files) - select the 'Data' folder"
         )
         
     def draw(self, context):

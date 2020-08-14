@@ -22,10 +22,6 @@ SCRIPT_TEMPLATES = []
 #############################################
 def init_templates():
     global SCRIPT_TEMPLATES
-    
-    def draw_firstrun(self, context):
-        self.layout.label(text="Please configure the base files directory before working on any THPS scenes.")
-        self.layout.label(text="Once you've set the path to the base files, save your configuration and then restart Blender!")
         
     template_files = glob.glob(get_asset_path("scripts", "*.ini"))
     for temp_path in template_files:

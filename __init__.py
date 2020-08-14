@@ -2,7 +2,7 @@ bl_info = {
     "name": "THPS Scene Export/Import",
     "description": "Enables the importing and exporting of scene files for the Tony Hawk game engines (THPS4, THUG1, THUG2, THAW)",
     "author": "denetii",
-    "version": (2, 0, 0),
+    "version": (1, 9, 28),
     "blender": (2, 83, 4),
     "location": "View3D",
     "wiki_url": "http://tharchive.net/misc/io_thps_scene.html",
