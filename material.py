@@ -64,7 +64,7 @@ def update_node_tree(self, context, material = None):
     
     # Add a vertex color node
     node_vc = get_cycles_node(nodes, 'Vertex Color', 'ShaderNodeVertexColor', -850, 128)
-    node_vc.layer_name = 'color'
+    node_vc.layer_name = ''
     
     i = -1
     for slot in mat.th_texture_slots:

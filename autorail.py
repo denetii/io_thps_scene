@@ -136,17 +136,12 @@ def build_rail_mesh(ob_rail, thickness = 2):
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
     # Add UV map/vetex color
     actual_ob.data.vertex_colors.new(name="color")
-    bpy.ops.mesh.uv_texture_add({"object": actual_ob})
-    actual_ob.data.uv_layers[len(actual_ob.data.uv_layers)-1].name = 'Rail'
-    actual_ob.data.uv_layers['Rail'].active = True
-    actual_ob.data.uv_layers['Rail'].active_render = True
+    actual_ob.data.uv_layers['UVMap'].active = True
+    actual_ob.data.uv_layers['UVMap'].active_render = True
     
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
-    #bpy.ops.uv.follow_active_quads()
     bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
-    #bpy.ops.uv.smart_project()
-    bpy.ops.mesh.quads_convert_to_tris(quad_method='BEAUTY', ngon_method='BEAUTY')
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
     
     # Add Material

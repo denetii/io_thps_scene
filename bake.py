@@ -1925,16 +1925,16 @@ def register_props_bake():
     bpy.types.Scene.thug_bake_type = EnumProperty(
         name="Bake Type",
         items=[
-            ("LIGHT", "Lighting Only (Cycles)", "(Uses the Cycles render engine) Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting"),
-            ("FULL", "Full Diffuse (Cycles)", "(Uses the Cycles render engine) Bake everything onto a single texture. The most accurate results, but lowers base texture resolution"),
-            ("VERTEX_COLORS", "Vertex Colors (BR)", "Bake lighting to vertex colors. Fast and cheap, accuracy depends on mesh density"),
-            ("LIGHT_BI", "Lighting Only (BR)", "Bake lighting to texture and mix with original textures"),
-            ("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture"),
-            ("AO", "Ambient Occlusion (BR)", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting"),
-            ("SHADOW", "Shadow (Cycles)", "Bakes only shadow contributions. Faster, not photorealistic"),
-            ("INDIRECT", "PBR Lightmap (Cycles)", "Bakes indirect lighting and shadows for PBR shaders (UG+/Classic)")
+            ("LIGHT", "Lighting Only", "Bake lighting and mix with original textures. Preserves texture resolution, but less accurate lighting"),
+            ("FULL", "Full Diffuse", "Bake everything onto a single texture. The most accurate results, but lowers base texture resolution"),
+            #("VERTEX_COLORS", "Vertex Colors (BR)", "Bake lighting to vertex colors. Fast and cheap, accuracy depends on mesh density"),
+            #("LIGHT_BI", "Lighting Only (BR)", "Bake lighting to texture and mix with original textures"),
+            #("FULL_BI", "Full Diffuse (BR)", "Bake everything to a single texture"),
+            #("AO", "Ambient Occlusion (BR)", "Bakes only ambient occlusion. Useful for models/skins, or scenes where you intend to have dynamic lighting"),
+            ("SHADOW", "Shadow", "Bakes only shadow contributions. Faster, not photorealistic"),
+            #("INDIRECT", "PBR Lightmap (Cycles)", "Bakes indirect lighting and shadows for PBR shaders (UG+/Classic)")
             ],
-        default="LIGHT_BI", 
+        default="LIGHT", 
         description="Type of bakes to use for this scene")
     bpy.types.Scene.thug_bake_slot = EnumProperty(
         name="Bake Slot",

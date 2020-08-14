@@ -60,7 +60,7 @@ def draw_stuff_pre_load_cleanup(*args):
 #----------------------------------------------------------------------------------
 @bpy.app.handlers.persistent
 def draw_stuff():
-    from . bglx import glColor4f, glVertex3f, glBegin, glEnd, GL_LINES, GL_TRIANGLES #, GL_POLYGON
+    from . bglx import glColor4f, glVertex3f, glBegin, glEnd, GL_LINES, GL_TRIANGLES, GL_LINE_STRIP #, GL_POLYGON
     global draw_stuff_dirty, draw_stuff_objects, draw_batches
     ctx = bpy.context
     if not len(ctx.selected_objects) and not ctx.object:
@@ -168,11 +168,11 @@ def draw_stuff():
                     bbox, bbox_min, bbox_max, bbox_mid = get_bbox_from_node(ob)
                     
                     # 50% alpha, 2 pixel width line
-                    glEnable(bgl.GL_BLEND)
+                    bgl.glEnable(bgl.GL_BLEND)
                     glColor4f(1.0, 0.0, 0.0, 0.5)
-                    glLineWidth(4)
+                    bgl.glLineWidth(4)
                     
-                    glBegin(bgl.GL_LINE_STRIP)
+                    glBegin(GL_LINE_STRIP)
                     glVertex3f(*bbox[0])
                     glVertex3f(*bbox[1])
                     glVertex3f(*bbox[2])

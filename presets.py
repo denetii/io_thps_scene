@@ -88,17 +88,15 @@ def preset_place_node(node_type, position):
         ob.empty_display_type = 'SPHERE'
         ob.empty_display_size = 64
         ob.show_name = True
-        ob.show_x_ray = True
         to_group(ob, "Reflection Probes")
         
         # Also add a camera used in cubemap rendering, with the correct settings filled in
-        bpy.ops.object.camera_add(view_align=False,
-                          location=[0, 0, 0],
+        bpy.ops.object.camera_add(location=[0, 0, 0],
                           rotation=[0, 0, 0])
         camera_ob = bpy.context.object
         camera_ob.name = get_unique_name('CAM_ReflectionProbe')
         camera_ob.parent = ob
-        camera_ob.data.draw_size = 48.0
+        camera_ob.data.display_size = 48.0
         
         bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
@@ -111,17 +109,15 @@ def preset_place_node(node_type, position):
         ob.empty_display_type = 'SPHERE'
         ob.empty_display_size = 64
         ob.show_name = True
-        ob.show_x_ray = True
         to_group(ob, "Light Probes")
         
         # Also add a camera used in cubemap rendering, with the correct settings filled in
-        bpy.ops.object.camera_add(view_align=False,
-                          location=[0, 0, 0],
+        bpy.ops.object.camera_add(location=[0, 0, 0],
                           rotation=[0, 0, 0])
         camera_ob = bpy.context.object
         camera_ob.name = get_unique_name('CAM_LightProbe')
         camera_ob.parent = ob
-        camera_ob.data.draw_size = 48.0
+        camera_ob.data.display_size = 48.0
         
         bpy.context.view_layer.objects.active = ob 
         ob.select_set(True)
@@ -233,6 +229,7 @@ def preset_place_node(node_type, position):
         
         curveOB = bpy.data.objects.new(rail_path_name, curveData)
         curveOB.location = [ 0, 0, 0 ]
+        to_group(curveOB, "RailNodes")
         if node_type == 'RAIL_POINT':
             curveOB.location = position
         curveOB.thug_path_type = "Rail"
@@ -257,7 +254,6 @@ def preset_place_node(node_type, position):
         curveOB.select_set(True)
         curveOB.show_texture_space = True
         curveOB.show_name = True
-        to_group(curveOB, "RailNodes")
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
         
     
@@ -283,6 +279,10 @@ def preset_place_node(node_type, position):
         curveOB.thug_path_type = 'Waypoint' if node_type == 'WAYPOINT' else 'Ladder'
         curveOB.data.thug_pathnode_triggers.add()
         curveOB.data.thug_pathnode_triggers.add()
+        if node_type == 'WAYPOINT':
+            to_group(curveOB, 'Waypoints')
+        else:
+            to_group(curveOB, 'ClimbingNodes')
         
         # Add shared rail material to curve (lets the user customize rail/path colors)
         if node_type == 'LADDER':
@@ -296,10 +296,6 @@ def preset_place_node(node_type, position):
         #scene.objects.link(curveOB)
         bpy.context.view_layer.objects.active = curveOB
         curveOB.select_set(True)
-        if node_type == 'WAYPOINT':
-            to_group(curveOB, 'Waypoints')
-        else:
-            to_group(curveOB, 'ClimbingNodes')
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
     
 def append_from_assets(asset_path, target_game, context):
@@ -376,7 +372,7 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, inc
     if base_files_dir_error:
         self.report({"WARNING"}, "Base files directory error: {} - Unable to find path to template .blend files.".format(base_files_dir_error))
         raise Exception("Unable to find template .blend file.")
-    base_files_dir = addon_prefs.base_files_dir
+    base_files_dir = os.path.dirname(os.path.realpath(__file__)) + "\\assets\\" #addon_prefs.base_files_dir
     actual_scale = get_actual_preset_size()
     
     # This flag tells us to try using an object of the same name from the scene first, then

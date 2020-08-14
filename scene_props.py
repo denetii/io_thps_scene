@@ -20,7 +20,7 @@ from . import bake
 # This just makes it easier to see presets like restarts, CTF flags etc
 #----------------------------------------------------------------------------------
 def thug_empty_update(self, context):
-    if context.object.type != "EMPTY":
+    if not context.object or context.object.type != "EMPTY":
         return
     ob = context.object
     for mdl_ob in ob.children:
@@ -77,7 +77,6 @@ def thug_empty_update(self, context):
         ob.empty_display_type = 'SPHERE'
         ob.empty_display_size = 64 * preset_scale
         ob.show_name = True
-        ob.show_x_ray = True
         
     elif ob.thug_empty_props.empty_type == 'LightVolume':
         mdl_mesh = ''
@@ -176,7 +175,7 @@ def draw_particle_preview(ob, context):
             for game_path in game_paths:
                 if os.path.exists(os.path.join(game_path, img_path)):
                     particle_img = import_img( os.path.join(game_path, img_path), ob.thug_particle_props.particle_texture + ".img" )
-                    particle_img.pack(as_png=True)
+                    particle_img.pack()
         else:
             particle_img = bpy.data.images.get(ob.thug_particle_props.particle_texture + ".img")
                 

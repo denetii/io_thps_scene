@@ -73,7 +73,7 @@ def _thug_object_settings_draw(self, context):
         # * REFLECTION PROBE 
         # ********************************************************
         if ob.thug_empty_props.empty_type == 'CubemapProbe':
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(ob.thug_cubemap_props, "resolution")
             box.row().prop(ob.thug_cubemap_props, "box_size")
             
@@ -81,14 +81,14 @@ def _thug_object_settings_draw(self, context):
         # * LIGHT PROBE 
         # ********************************************************
         if ob.thug_empty_props.empty_type == 'LightProbe':
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(ob.thug_cubemap_props, "resolution")
             
         # ********************************************************
         # * LIGHT VOLUME 
         # ********************************************************
         if ob.thug_empty_props.empty_type == 'LightVolume':
-            box = self.layout.box().column(True)
+            box = self.layout.box().column(align=True)
             box.row().prop(ob.thug_lightvolume_props, "box_size")
             
         # ********************************************************
