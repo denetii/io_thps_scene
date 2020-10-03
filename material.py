@@ -47,6 +47,7 @@ def update_node_tree(self, context, material = None):
     mat.use_nodes = True
     node_tree = mat.node_tree
     nodes = node_tree.nodes
+    node_tree.links.clear()
     
     nodes_uv = []
     nodes_tex = []
@@ -1337,6 +1338,43 @@ class THUGUVWibbles(bpy.types.PropertyGroup):
     uv_frequency: FloatVectorProperty(name="Frequency", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
     uv_amplitude: FloatVectorProperty(name="Amplitude", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
     uv_phase: FloatVectorProperty(name="Phase", size=2, default=(0.0, 0.0), soft_min=-100, soft_max=100)
+    
+#----------------------------------------------------------------------------------
+class THUG_OP_AddMaterialPass(bpy.types.Operator):
+    bl_idname = "object.thug_add_material_pass"
+    bl_label = "Add Material Pass"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    @classmethod
+    def poll(cls, context):
+        return (context and context.object and context.object.active_material \
+            and context.object.active_material.thug_material_props)
+
+    def execute(self, context):
+        mt = context.object.active_material
+        mt.th_texture_slots.add()
+        mt.th_texture_slot_index = len(mt.th_texture_slots) - 1
+        return {"FINISHED"}
+
+#----------------------------------------------------------------------------------
+class THUG_OP_RemoveMaterialPass(bpy.types.Operator):
+    bl_idname = "object.thug_remove_material_pass"
+    bl_label = "Remove Material Pass"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    @classmethod
+    def poll(cls, context):
+        return (context and context.object and context.object.active_material \
+            and context.object.active_material.thug_material_props)
+
+    def execute(self, context):
+        mt = context.object.active_material
+        if mt.th_texture_slot_index > -1:
+            mt.th_texture_slots.remove(mt.th_texture_slot_index)
+            mt.th_texture_slot_index = max(0, min(mt.th_texture_slot_index, len(mt.th_texture_slots) - 1))
+            update_node_tree(None, None, material=mt)
+        return {"FINISHED"}
+
 #----------------------------------------------------------------------------------
 class THUG_PT_MaterialSettingsTools(bpy.types.Panel):
     bl_label = "TH Material Settings"
@@ -1371,11 +1409,6 @@ class THUG_UL_MaterialPassUIList(bpy.types.UIList):
         else:
             split.template_icon(0)
             split.label(text='(No Texture)')
-        #split.label(text=item.texture.name)
-        
-        #box = layout.row().column(align=True)
-        #box.column().template_icon(item.tex_image.preview.icon_id)
-        #box.column().label(text=item.tex_image.name)
         
 class THUG_PT_MaterialPassSettings(bpy.types.Panel):
     bl_label = "TH Material Pass Settings"
@@ -1396,8 +1429,8 @@ class THUG_PT_MaterialPassSettings(bpy.types.Panel):
         row.template_list("THUG_UL_MaterialPassUIList", "", mat,
                           "th_texture_slots", mat, "th_texture_slot_index", rows=4, maxrows=4)
         col = row.column(align=True)
-        col.operator("scene.thug_bake_add_lightmap_group", icon='ADD', text="")
-        col.operator("scene.thug_bake_del_lightmap_group", icon='REMOVE', text="")
+        col.operator("object.thug_add_material_pass", icon='ADD', text="")
+        col.operator("object.thug_remove_material_pass", icon='REMOVE', text="")
         
         if mat.th_texture_slot_index > -1:
             _material_pass_settings_draw(self, context)
@@ -1632,9 +1665,9 @@ class THUGMaterialPassProps(bpy.types.PropertyGroup):
     ), name="V Addressing", default="Repeat", update=th_materialpass_updated)
     
     pf_textured: BoolProperty(name="Textured", default=True, update=th_materialpass_updated)
-    pf_environment: BoolProperty(name="Environment texture", default=False)
+    pf_environment: BoolProperty(name="Environment texture", default=False, update=th_materialpass_updated)
     pf_bump: BoolProperty(name="Bump texture", default=False)
-    pf_water: BoolProperty(name="Water texture", default=False)
+    pf_water: BoolProperty(name="Water texture", default=False, update=th_materialpass_updated)
     pf_decal: BoolProperty(name="Decal", default=False)
     pf_smooth: BoolProperty(name="Smooth", default=True)
     pf_transparent: BoolProperty(name="Use Transparency", default=False)
