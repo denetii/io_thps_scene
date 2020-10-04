@@ -62,7 +62,7 @@ def get_split_vert_for_loop(mesh, bm, l, flags):
             vcs = [ l[vc_layer][0], l[vc_layer][1], l[vc_layer][2], l[vc_layer][3] ]
         else:
             #print("No vertex color layer, using white!")
-            vcs = [1.0, 1.0, 1.0]
+            vcs = [1.0, 1.0, 1.0, 1.0]
         alpha_layer = bm.loops.layers.color.get("alpha")
         vcs = (vcs[0], vcs[1], vcs[2], l[alpha_layer][0] if alpha_layer else vcs[3])
     else:
