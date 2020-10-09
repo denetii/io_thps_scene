@@ -146,6 +146,9 @@ def do_export(operator, context, target_game):
     else:
         raise Exception("Unknown target game: {}".format(target_game))
 
+    global PROPNAME_POSITION
+    PROPNAME_POSITION = "Position" if target_game in [ "THPS3", "THPS4" ] else "Pos"
+    
     start_time = datetime.datetime.now()
 
     filename = self.filename
@@ -385,9 +388,12 @@ def do_export_model(operator, context, target_game):
         return {"CANCELLED"}
     base_files_dir = addon_prefs.base_files_dir
 
-    if not target_game == "THUG1" and not target_game == "THUG2" and not target_game == "THPS4":
+    if not target_game in [ "THPS3", "THPS4", "THUG1", "THUG2" ]:
         raise Exception("Unknown target game: {}".format(target_game))
 
+    global PROPNAME_POSITION
+    PROPNAME_POSITION = "Position" if target_game in [ "THPS3", "THPS4" ] else "Pos"
+    
     start_time = datetime.datetime.now()
 
     filename = self.filename
@@ -647,6 +653,8 @@ def export_col(filename, directory, target_game, operator=None):
         bsp_nodes_size = 0
         node_face_index_offset = 0
         node_faces = []
+        
+        face_index = 0 #used for thps4
 
         DBG = lambda *args: LOG.debug(" ".join(str(arg) for arg in args))
 
@@ -704,8 +712,11 @@ def export_col(filename, directory, target_game, operator=None):
             else:
                 obj_vert_offset += SIZEOF_FLOAT_VERT * len(bm.verts)
             w("I", obj_bsp_offset)
-            obj_bsp_tree = make_bsp_tree(o, bm.faces[:], obj_matrix)
-            obj_bsp_offset += len(list(iter_tree(obj_bsp_tree))) * SIZEOF_BSP_NODE
+            if target_game != 'THPS4':
+                obj_bsp_tree = make_bsp_tree(o, bm.faces[:], obj_matrix)
+                obj_bsp_offset += len(list(iter_tree(obj_bsp_tree))) * SIZEOF_BSP_NODE
+            else:
+                obj_bsp_offset += SIZEOF_BSP_NODE_THPS4
             # THPS4: Intensity list does not exist, intensity is appended to each vert
             if target_game == 'THPS4':
                 w("I", 0)
@@ -789,37 +800,50 @@ def export_col(filename, directory, target_game, operator=None):
 
             def w(fmt, *args):
                 nodes_out.write(struct.pack(fmt, *args))
-
-            bsp_nodes_start = bsp_nodes_size
-            node_list, node_indices = tree_to_list(obj_bsp_tree)
-            for idx, node in enumerate(node_list):
-                # assert idx == node_indices[id(node)]
-                # DBG(node_indices[id(node)])
-                bsp_nodes_size += SIZEOF_BSP_NODE
-                if isinstance(node, BSPLeaf):
-                    w("B", 0xFF if target_game == 'THPS4' else 3)  # the axis it is split on (0 = X, 1 = Y, 2 = Z, 3 = Leaf)
-                    w("B", 0)  # padding
-                    w("H", len(node.faces) * (3 if False and target_game == "THUG2" else 1))
-                    w("I", node_face_index_offset)
-                    # exported |= set(node.faces)
-                    for face in node.faces:
-                        # assert bm.faces[face.index] == face
-                        node_faces.append(face.index)
-                    node_face_index_offset += len(node.faces) * (3 if False and target_game == "THUG2" else 1)
-                    #if target_game == 'THPS4':
-                    #    # Padding?
-                    #    w("I", 0xFFFFFFFF)
-                    #    w("I", 0xFFFFFFFF)
+            
+            if target_game != 'THPS4':
+                bsp_nodes_start = bsp_nodes_size
+                node_list, node_indices = tree_to_list(obj_bsp_tree)
+                for idx, node in enumerate(node_list):
+                    # assert idx == node_indices[id(node)]
+                    # DBG(node_indices[id(node)])
+                    bsp_nodes_size += SIZEOF_BSP_NODE
+                    if isinstance(node, BSPLeaf):
+                        w("B", 0xFF if target_game == 'THPS4' else 3)  # the axis it is split on (0 = X, 1 = Y, 2 = Z, 3 = Leaf)
+                        w("B", 0)  # padding
+                        w("H", len(node.faces) * (3 if False and target_game == "THUG2" else 1))
+                        w("I", node_face_index_offset)
+                        # exported |= set(node.faces)
+                        for face in node.faces:
+                            # assert bm.faces[face.index] == face
+                            node_faces.append(face.index)
+                        node_face_index_offset += len(node.faces) * (3 if False and target_game == "THUG2" else 1)
+                        #if target_game == 'THPS4':
+                        #    # Padding?
+                        #    w("I", 0xFFFFFFFF)
+                        #    w("I", 0xFFFFFFFF)
                         
-                else:
-                    split_axis_and_point = (
-                        (node.split_axis & 0x3) |
-                        # 1 |
-                        (int(node.split_point * 16.0) << 2)
-                        )
-                    w("i", split_axis_and_point)
-                    w("I", (bsp_nodes_start + node_indices[id(node.left)] * SIZEOF_BSP_NODE))
-
+                    else:
+                        split_axis_and_point = (
+                            (node.split_axis & 0x3) |
+                            # 1 |
+                            (int(node.split_point * 16.0) << 2)
+                            )
+                        w("i", split_axis_and_point)
+                        w("I", (bsp_nodes_start + node_indices[id(node.left)] * SIZEOF_BSP_NODE))
+            else:
+                num_faces = len(bm.faces)
+                w("B", 0xFF) #Leaf?
+                w("B", 0x00)
+                w("H", num_faces)
+                w("I", 0x00000000)
+                w("I", 0xFFFFFFFF)
+                w("I", 0xFFFFFFFF)
+                w("I", face_index)
+                face_index += num_faces
+                bsp_nodes_size += SIZEOF_BSP_NODE_THPS4
+                
+        
         def w(fmt, *args):
             outp.write(struct.pack(fmt, *args))
 
@@ -876,8 +900,16 @@ def export_col(filename, directory, target_game, operator=None):
         w("I", bsp_nodes_size)
         outp.write(nodes_out.getbuffer())
 
-        for face in node_faces:
-            w("H", face)
+        if target_game == 'THPS4':
+            for o in out_objects:
+                index = 0
+                triang(o)
+                for f in bm.faces:
+                    w("H", index)
+                    index += 1
+        else:
+            for face in node_faces:
+                w("H", face)
 
     bm.free()
 

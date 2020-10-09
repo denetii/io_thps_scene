@@ -131,6 +131,9 @@ def export_qb(filename, directory, target_game, operator=None):
     custom_node_props = get_custom_node_props()
     custom_func_code = get_custom_func_code()
 
+    str_node_pos = "Pos" if target_game in [ "THUG1", "THUG2" ] else "Position"
+    func_thug_coords = to_thug_coords if target_game in [ "THUG1", "THUG2" ] else to_thug_coords_scalar
+    
     with open(os.path.join(directory, filename + ".txt"), "w") as outp:
         from io import StringIO
         string_output = StringIO()
@@ -161,7 +164,7 @@ def export_qb(filename, directory, target_game, operator=None):
 
         print("Exporting level QB...")
         
-        rail_custom_triggerscript_names, rail_generated_scripts, rail_node_offsets = autorail._export_rails(p, c, operator)
+        rail_custom_triggerscript_names, rail_generated_scripts, rail_node_offsets = autorail._export_rails(p, c, target_game, operator)
         custom_triggerscript_names += rail_custom_triggerscript_names
         generated_scripts.update(rail_generated_scripts)
             
@@ -198,7 +201,7 @@ def export_qb(filename, directory, target_game, operator=None):
             if not ob.thug_export_scene:
                 continue
             p("\t:i :s{")
-            p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
+            p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.location))))
             p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
             p("\t\t:i {} = {}".format(c("Name"), c(get_clean_name(ob))))
             p("\t\t:i {} = {}".format(c("Class"), c("Restart")))
@@ -318,9 +321,9 @@ def export_qb(filename, directory, target_game, operator=None):
                     
                 p("\t:i :s{")
                 if ob.parent:
-                    p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.parent.location + ob.location)))) # v3(get_sphere(ob))))
+                    p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.parent.location + ob.location)))) # v3(get_sphere(ob))))
                 else:
-                    p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
+                    p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.location)))) # v3(get_sphere(ob))))
                 if is_levelobject:
                     p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 else:
@@ -439,7 +442,7 @@ def export_qb(filename, directory, target_game, operator=None):
                 clean_name = get_clean_name(ob)
                     
                 p("\t:i :s{")
-                p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
+                p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.location))))
                 p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 p("\t\t:i {} = {}".format(c("Class"), c("LevelLight")))
@@ -584,7 +587,7 @@ def export_qb(filename, directory, target_game, operator=None):
                         has_team_yellow_base = True
                 
                 p("\t:i :s{")
-                p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
+                p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.location))))
                 p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))
                 # RESTART NODE
@@ -1000,7 +1003,7 @@ def export_qb(filename, directory, target_game, operator=None):
             
         for (name, loc, rot) in single_restarts:
             p("""\t:i :s{{
-\t\t:i $Pos$ = %vec3({:.6f},{:.6f},{:.6f})
+\t\t:i ${}$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Angles$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Name$ = {}
 \t\t:i $Class$ = $Restart$
@@ -1008,11 +1011,11 @@ def export_qb(filename, directory, target_game, operator=None):
 \t\t:i $RestartName$ = %s(11,"P1: Restart")
 \t\t:i $CreatedAtStart$
 \t\t:i $restart_types$ = :a{{$Player1$:a}}
-\t:i :s}}""".format(loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], c(name)))
+\t:i :s}}""".format(str_node_pos, loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], c(name)))
 
         for (name, loc, rot) in multi_restarts:
             p("""\t:i :s{{
-\t\t:i $Pos$ = %vec3({:.6f},{:.6f},{:.6f})
+\t\t:i ${}$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Angles$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Name$ = {}
 \t\t:i $Class$ = $Restart$
@@ -1021,11 +1024,11 @@ def export_qb(filename, directory, target_game, operator=None):
 \t\t:i $RestartName$ = %s(14,"Multi: Restart")
 \t\t:i $restart_types$ = :a{{call $Multiplayer$ arguments
 \t\t\t\t$Horse$:a}}
-\t:i :s}}""".format(loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], c(name)))
+\t:i :s}}""".format(str_node_pos, loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], c(name)))
 
         for (name, loc, rot) in team_restarts:
             p("""\t:i :s{{
-\t\t:i $Pos$ = %vec3({:.6f},{:.6f},{:.6f})
+\t\t:i ${}$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Angles$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Name$ = {}
 \t\t:i $Class$ = $Restart$
@@ -1033,23 +1036,23 @@ def export_qb(filename, directory, target_game, operator=None):
 \t\t:i $CreatedAtStart$
 \t\t:i $RestartName$ = %s(13,"Team: Restart")
 \t\t:i $restart_types$ = :a{{$Team$:a}}
-\t:i :s}}""".format(loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], c(name)))
+\t:i :s}}""".format(str_node_pos, loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], c(name)))
 
         for (name, loc, rot) in koth_nodes:
             p("""
 \t:i :s{{
-\t\t:i $Pos$ = %vec3{}
+\t\t:i ${}$ = %vec3{}
 \t\t:i $Angles$ = %vec3{}
 \t\t:i $Name$ = {}
 \t\t:i $Class$ = $GenericNode$
 \t\t:i $Type$ = $Crown$
 \t:i :s}}
-""".format(loc, rot, c(name)))
+""".format(str_node_pos, loc, rot, c(name)))
 
         for (name, ctf_type, loc, rot) in ctf_nodes:
             model_path = THUG_DefaultGameObjects[ctf_type]
             p("""\t:i :s{{
-\t\t:i $Pos$ = %vec3({:.6f},{:.6f},{:.6f})
+\t\t:i ${}$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Angles$ = %vec3({:.6f},{:.6f},{:.6f})
 \t\t:i $Name$ = ${}$
 \t\t:i $Class$ = $GameObject$
@@ -1059,7 +1062,7 @@ def export_qb(filename, directory, target_game, operator=None):
 \t\t:i $lod_dist1$ = %i(800,00000320)
 \t\t:i $lod_dist2$ = %i(801,00000321)
 \t\t:i $TriggerScript$ = ${}Script$
-\t:i :s}}""".format(loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], name, ctf_type, blub_str(model_path), name))
+\t:i :s}}""".format(str_node_pos, loc[0], loc[1], loc[2], rot[0], rot[1], rot[2], name, ctf_type, blub_str(model_path), name))
 
         p(":i :a}") # end node array =======================
 
@@ -1113,7 +1116,7 @@ def export_qb(filename, directory, target_game, operator=None):
         p("")
         # -------------------------------------
             
-        if target_game == "THUG1": # not sure if this is needed?
+        if target_game == "THUG1" or target_game == "THPS4": # not sure if this is needed?
             p("""\n:i $TriggerScripts$ =
 :i :a{
 \t:i $LoadTerrain$
@@ -1396,6 +1399,8 @@ def export_qb(filename, directory, target_game, operator=None):
                     if target_game == "THUG2":
                         p("\t:i $LoadTerrainSounds$$terrain$ = $TERRAIN_{}$\n".format(terrain_type))
                     else:
+                        if target_game == "THPS4" and terrain_type.startswith("GRIND"):
+                            continue
                         p("\t:i $SetTerrain{}$\n".format(terrain_type))
 
             if target_game == "THUG1":
@@ -1410,7 +1415,12 @@ def export_qb(filename, directory, target_game, operator=None):
 
         # Export generic load_level_anims script, if there isn't a script defined for it already
         if not script_exists("load_level_anims"):
-            p(""":i function $load_level_anims$
+            if target_game == "THPS4":
+                p(""":i function $load_level_anims$
+    :i $animload_human$
+:i endfunction""")
+            else:
+                p(""":i function $load_level_anims$
 #/    :i $animload_THPS5_human$
 :i endfunction""")
 
@@ -1511,10 +1521,13 @@ def export_model_qb(filename, directory, target_game, operator=None):
         p("$" + filename + "_NodeArray$ =")
         p(":i :a{")
 
-        rail_custom_triggerscript_names, rail_generated_scripts, rail_node_offsets = autorail._export_rails(p, c, operator)
+        rail_custom_triggerscript_names, rail_generated_scripts, rail_node_offsets = autorail._export_rails(p, c, target_game, operator)
         custom_triggerscript_names += rail_custom_triggerscript_names
         generated_scripts.update(rail_generated_scripts)
 
+        str_node_pos = "Pos" if target_game in [ "THUG1", "THUG2" ] else "Position"
+        func_thug_coords = to_thug_coords if target_game in [ "THUG1", "THUG2" ] else to_thug_coords_scalar
+        
         for ob in bpy.data.objects:
             if ob.type == "MESH" and not ob.get("thug_autosplit_object_no_export_hack"):
                 is_levelobject = ob.thug_object_class == "LevelObject"
@@ -1533,7 +1546,7 @@ def export_model_qb(filename, directory, target_game, operator=None):
                          getattr(ob, "thug_export_scene", True)):
                         continue
                 p("\t:i :s{")
-                p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location)))) # v3(get_sphere(ob))))
+                p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.location)))) # v3(get_sphere(ob))))
                 if is_levelobject:
                     p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                     # p("\t\t:i {} = {}".format(c("Scale"), v3(to_thug_coords(ob.scale))))
@@ -1575,7 +1588,7 @@ def export_model_qb(filename, directory, target_game, operator=None):
                 clean_name = get_clean_name(ob)
 
                 p("\t:i :s{")
-                p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.location))))
+                p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.location))))
                 p("\t\t:i {} = {}".format(c("Angles"), v3(to_thug_coords_ns(ob.rotation_euler))))
                 # p("\t\t:i {} = {}".format(c("Scale"), v3(to_thug_coords_ns(ob.scale))))
                 p("\t\t:i {} = {}".format(c("Name"), c(clean_name)))

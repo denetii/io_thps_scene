@@ -310,6 +310,15 @@ def _resolve_autorail_terrain_type(ob, bm, edge, arl):
 
 
 #----------------------------------------------------------------------------------
+def translate_rail_terrain(terrain_type):
+    type_name = terrain_type
+    if type_name.startswith("TERRAIN_"):
+        type_name = type_name[8:]
+        
+    translated_type = TERRAIN_TYPE_FROM_GRIND.get(type_name, "CONCSMOOTH")
+    return "TERRAIN_{}".format(translated_type)
+
+#----------------------------------------------------------------------------------
 def _get_autorails(mesh_object, operator=None):
     from contextlib import ExitStack
     assert mesh_object.type == "MESH"
@@ -433,9 +442,12 @@ def _try_merge_autorails(autorail, other_autorail):
             return True
 
 #----------------------------------------------------------------------------------
-def _export_autorails(p, c, i, v3, operator):
+def _export_autorails(p, c, i, v3, target_game, operator):
     import mathutils
 
+    str_node_pos = "Pos" if target_game in [ "THUG1", "THUG2" ] else "Position"
+    func_thug_coords = to_thug_coords if target_game in [ "THUG1", "THUG2" ] else to_thug_coords_scalar
+    
     rail_node_counter = 0
     all_autorails = []
     for ob in bpy.data.objects:
@@ -484,8 +496,8 @@ def _export_autorails(p, c, i, v3, operator):
                 autorail_point = autorail.points[autorail_point_index]
                 obj_clean_name = get_clean_name(autorail.object)
                 p("\t:i :s{")
-                p("\t\t:i {} = {}".format(c("Pos"),
-                    v3(mathutils.Vector(to_thug_coords(autorail_point.position)) + mathutils.Vector((0, 1, 0)))))
+                p("\t\t:i {} = {}".format(c(str_node_pos),
+                    v3(mathutils.Vector(func_thug_coords(autorail_point.position)) + mathutils.Vector((0, 1, 0)))))
                 p("\t\t:i {} = {}".format(c("Angles"), v3((0, 0, 0))))
                 # name = "{}_AutoRailNode__{}".format(obj_clean_name, autorail_point_index) # rail_node_counter)
                 name = "{}__AutoRailNode_{}".format(obj_clean_name, rail_node_counter)
@@ -498,6 +510,9 @@ def _export_autorails(p, c, i, v3, operator):
                     autorail_type = "TERRAIN_GRINDCONC"
                 else:
                     autorail_type = "TERRAIN_" + TERRAIN_TYPES[autorail_type]
+                    
+                if target_game in [ "THPS3", "THPS4" ]:
+                    autorail_type = translate_rail_terrain(autorail_type)
                 p("\t\t:i {} = {}".format(c("TerrainType"), c(autorail_type)))
 
                 if getattr(autorail.object, "thug_is_trickobject", False):
@@ -540,7 +555,7 @@ def _export_autorails(p, c, i, v3, operator):
 
 
 #----------------------------------------------------------------------------------
-def _export_rails(p, c, operator=None):
+def _export_rails(p, c, target_game, operator=None):
     def v3(v):
         return "%vec3({:6f},{:6f},{:6f})".format(*v)
 
@@ -549,8 +564,11 @@ def _export_rails(p, c, operator=None):
     def f(value):
         return "%f({})".format(value)
 
-    rail_node_counter = _export_autorails(p, c, i, v3, operator)
+    rail_node_counter = _export_autorails(p, c, i, v3, target_game, operator)
 
+    str_node_pos = "Pos" if target_game in [ "THUG1", "THUG2" ] else "Position"
+    func_thug_coords = to_thug_coords if target_game in [ "THUG1", "THUG2" ] else to_thug_coords_scalar
+    
     generated_scripts = {}
     custom_triggerscript_names = []
 
@@ -589,7 +607,7 @@ def _export_rails(p, c, operator=None):
             for point in points:
                 p_num += 1
                 p("\t:i :s{")
-                p("\t\t:i {} = {}".format(c("Pos"), v3(to_thug_coords(ob.matrix_world * point.co.to_3d()))))
+                p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.matrix_world * point.co.to_3d()))))
 
                 if ob.thug_path_type == "Rail":
                     p("\t\t:i {} = {}".format(c("Class"), c("RailNode")))
@@ -637,6 +655,10 @@ def _export_rails(p, c, operator=None):
                             rail_type = "TERRAIN_GRINDCONC"
                         else:
                             rail_type = "TERRAIN_" + rail_type
+                            
+                        if target_game in [ "THPS3", "THPS4" ]:
+                            rail_type = translate_rail_terrain(rail_type)
+                            
                         p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
                         
                     # Output waypoint-specific data below!
@@ -698,6 +720,9 @@ def _export_rails(p, c, operator=None):
                             rail_type = "TERRAIN_GRINDCONC"
                         else:
                             rail_type = "TERRAIN_" + rail_type
+                            
+                        if target_game in [ "THPS3", "THPS4" ]:
+                            rail_type = translate_rail_terrain(rail_type)
                         p("\t\t:i {} = {}".format(c("TerrainType"), c(rail_type)))
 
                 # Other object-level properties defined here!
