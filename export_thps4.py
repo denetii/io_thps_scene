@@ -133,8 +133,8 @@ def export_scn_sectors_th4(output_file, operator=None, is_model=False):
                 if original_object.thug_is_shadow_volume:
                     print("EXPORTING SHADOW VOLUME!")
                     flags |= SECFLAGS_SHADOW_VOLUME
-                if original_object.thug_is_billboard:
-                    flags |= SECFLAGS_BILLBOARD_PRESENT
+                #if original_object.thug_is_billboard:
+                #    flags |= SECFLAGS_BILLBOARD_PRESENT
 
                 mats_to_faces = {}
                 for face in bm.faces:
@@ -169,12 +169,12 @@ def export_scn_sectors_th4(output_file, operator=None, is_model=False):
                 w("4f", *bsphere)  # bounding sphere
 
                 # Export billboard data - testing
-                if flags & SECFLAGS_BILLBOARD_PRESENT:
-                    print("EXPORTING BILLBOARD DATA!")
-                    w("i", 1) # billboard type
-                    w("3f", *to_thug_coords(mathutils.Vector([0, 0, 0]))) # billboard origin
-                    w("3f", *to_thug_coords(mathutils.Vector([0, 0, 20]))) # billboard pivot pos
-                    w("3f", *to_thug_coords(mathutils.Vector([0, 1, 0]))) # billboard pivot axis
+                #if flags & SECFLAGS_BILLBOARD_PRESENT:
+                #    print("EXPORTING BILLBOARD DATA!")
+                #    w("i", 1) # billboard type
+                #    w("3f", *to_thug_coords(mathutils.Vector([0, 0, 0]))) # billboard origin
+                #    w("3f", *to_thug_coords(mathutils.Vector([0, 0, 20]))) # billboard pivot pos
+                #    w("3f", *to_thug_coords(mathutils.Vector([0, 1, 0]))) # billboard pivot axis
                     
                 w("i", len(split_verts))
                 w("i", 0) # vertex data stride, this seems to be ignored
@@ -326,8 +326,8 @@ def export_materials_th4(output_file, target_game, operator=None, is_model=False
         #w("i", mprops.z_bias)  # z-bias
 
         #grassify = False
-        w("?", mprops.grassify)  # grassify
-        if mprops.grassify:  # if grassify
+        w("?", False)  # grassify
+        if False:  # if grassify
             print("EXPORTING GRASS MATERIAL!")
             w("f", mprops.grass_height)  # grass height
             w("i", mprops.grass_layers)  # grass layers
