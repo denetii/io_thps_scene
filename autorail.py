@@ -26,18 +26,7 @@ def get_autorail_image():
     if bpy.data.images.get("Autorail_Metal"):
         return bpy.data.images.get("Autorail_Metal")
         
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
-    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
-    if base_files_dir_error:
-        self.report({"WARNING"}, "Base files directory error: {} - Unable to find autorail texture, using color instead.".format(base_files_dir_error))
-        size = 32, 32
-        img = bpy.data.images.new(name="Autorail_Metal", width=size[0], height=size[1])
-        img.generated_color = ( 0.1, 0.1, 0.1, 1.0 )
-        img.use_fake_user = True
-        return
-    base_files_dir = addon_prefs.base_files_dir
-    
-    img = bpy.data.images.load(base_files_dir + "textures\\autorail_cap.png")
+    img = bpy.data.images.load(get_asset_path("textures", "autorail_cap.png"))
     img.name = "Autorail_Metal"
     img.use_fake_user = True
     return img

@@ -1752,15 +1752,8 @@ def render_cubemap(probe):
     # Attempt to auto-generate the DX9 DDS cubemap!
     print("Done. Attempting to generate DDS file {}.dds...".format(probe.name))
     
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
-    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
-    if base_files_dir_error:
-        self.report({"ERROR"}, "Base files directory error: {} Check the base files directory addon preference. Unable to generate DDS file.".format(base_files_dir_error))
-        return False
-    base_files_dir = addon_prefs.base_files_dir
-    
     texassemble_args = [
-        j(base_files_dir, "texassemble.exe"),
+        get_asset_path("texassemble.exe"),
         "cube",
         "-w",
         "{}".format(src_resolution),
@@ -1778,7 +1771,7 @@ def render_cubemap(probe):
     ]
     
     cmft_args_irradiance = [
-        j(base_files_dir, "cmft.exe"),
+        get_asset_path("cmft.exe"),
         "--input \"{}\\{}.dds\"".format(_folder, probe.name),
         
         "--filter irradiance",
@@ -1789,7 +1782,7 @@ def render_cubemap(probe):
         "--output0params dds,bgra8,cubemap"
     ]
     cmft_args_radiance = [
-        j(base_files_dir, "cmft.exe"),
+        get_asset_path("cmft.exe"),
         "--input \"{}\\{}.dds\"".format(_folder, probe.name),
         
         "--filter radiance",

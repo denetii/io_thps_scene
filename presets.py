@@ -370,12 +370,6 @@ def append_from_assets(asset_path, target_game, context):
 def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, include_rails = True):
     # Get the path to the dictionary .blend file - it should always be within the
     # base files as defined in the plugin configuration
-    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
-    base_files_dir_error = prefs._get_base_files_dir_error(addon_prefs)
-    if base_files_dir_error:
-        self.report({"WARNING"}, "Base files directory error: {} - Unable to find path to template .blend files.".format(base_files_dir_error))
-        raise Exception("Unable to find template .blend file.")
-    base_files_dir = addon_prefs.base_files_dir
     actual_scale = get_actual_preset_size()
     
     # This flag tells us to try using an object of the same name from the scene first, then
@@ -409,7 +403,7 @@ def append_from_dictionary(dict_name, piece_name, scn, use_existing = False, inc
             
             
     # This is where we append the object and determine the name when it is added to the scene
-    filepath = base_files_dir + "scenes\\" + dict_name + ".blend"
+    filepath = get_asset_path("scenes", dict_name + ".blend")
     linked_obs = []
     with bpy.data.libraries.load(filepath, link=False) as (data_from, data_to):
         if include_rails:
