@@ -67,7 +67,7 @@ def export_scn_sectors_th4(output_file, operator=None, is_model=False):
             if operator.speed_hack:
                 final_mesh = ob.data
             else:
-                final_mesh = ob.to_mesh(bpy.context.scene, False, 'PREVIEW')
+                final_mesh = ob.to_mesh(preserve_all_data_layers=True)
                 temporary_object = helpers._make_temp_obj(final_mesh)
                 temporary_object.name = original_object_name
             try:
@@ -113,7 +113,7 @@ def export_scn_sectors_th4(output_file, operator=None, is_model=False):
                         need_vertex_normals = True
                     
                     if not hasattr(env_test, 'th_texture_slots'): continue
-                    _tmp_passes = [tex_slot for tex_slot in env_test.th_texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse][:4]
+                    _tmp_passes = [tex_slot for tex_slot in env_test.th_texture_slots if tex_slot][:4]
                     for _tmp_tex in _tmp_passes:
                         _pprops = _tmp_tex.texture and _tmp_tex.texture.thug_material_pass_props
                         if _pprops and (_pprops.pf_environment or _pprops.pf_bump or _pprops.pf_water or _pprops.blend_mode == 'vBLEND_MODE_GLOSS_MAP'):
@@ -297,7 +297,7 @@ def export_materials_th4(output_file, target_game, operator=None, is_model=False
         mprops = m.thug_material_props
         
         #denetii - only include texture slots that affect the diffuse color in the Blender material
-        passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot and tex_slot.use and tex_slot.use_map_color_diffuse]
+        passes = [tex_slot.texture for tex_slot in m.th_texture_slots if tex_slot]
         if len(passes) > 4:
             if operator:
                 operator.report(
@@ -378,7 +378,8 @@ def export_materials_th4(output_file, target_game, operator=None, is_model=False
                 
             w("I", pass_flags)  # flags # 4132
             w("?", True)  # has color flag; seems to be ignored
-            w("3f",  *(pprops.color if pprops else m.diffuse_color / 2.0))  # color
+            pass_color = [pprops.color[0],pprops.color[1],pprops.color[2]] if pprops else [m.diffuse_color[0],m.diffuse_color[1],m.diffuse_color[2]]
+            w("3f",  *(pass_color))  # color
 
             # alpha register values, first u32 - a BLEND_MODE, second u32 - fixed alpha (clipped to u8)
             # w("Q", 5)

@@ -336,7 +336,7 @@ def _get_autorails(mesh_object, operator=None):
             edge_beginning = root_edge.verts[0]
             edge_end = root_edge.verts[1]
             autorail_points = [AutorailPoint(
-                ob.matrix_world * edge_beginning.co.copy(),
+                ob.matrix_world @ edge_beginning.co.copy(),
                 _resolve_autorail_terrain_type(mesh_object, bm, root_edge, arl)
                 )]
 
@@ -357,11 +357,11 @@ def _get_autorails(mesh_object, operator=None):
                         edge_end = forward_edge.verts[0]
 
                     autorail_points.append(AutorailPoint(
-                        ob.matrix_world * edge_beginning.co.copy(),
+                        ob.matrix_world @ edge_beginning.co.copy(),
                         _resolve_autorail_terrain_type(mesh_object, bm, forward_edge, arl)))
                 else:
                     autorail_points.append(AutorailPoint(
-                        ob.matrix_world * edge_end.co.copy(),
+                        ob.matrix_world @ edge_end.co.copy(),
                         AUTORAIL_AUTO))
                     break
             forward_edge = None
@@ -386,7 +386,7 @@ def _get_autorails(mesh_object, operator=None):
                         edge_end = backward_edge.verts[0]
 
                     autorail_points = [(AutorailPoint(
-                        ob.matrix_world * edge_beginning.co.copy(),
+                        ob.matrix_world @ edge_beginning.co.copy(),
                         _resolve_autorail_terrain_type(mesh_object, bm, backward_edge, arl))),
                         *autorail_points]
                 else:
@@ -591,7 +591,7 @@ def _export_rails(p, c, target_game, operator=None):
             for point in points:
                 p_num += 1
                 p("\t:i :s{")
-                p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.matrix_world * point.co.to_3d()))))
+                p("\t\t:i {} = {}".format(c(str_node_pos), v3(func_thug_coords(ob.matrix_world @ point.co.to_3d()))))
 
                 if ob.thug_path_type == "Rail":
                     p("\t\t:i {} = {}".format(c("Class"), c("RailNode")))
