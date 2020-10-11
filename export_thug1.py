@@ -164,9 +164,9 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
 
             for v in split_verts.keys():
                 if is_levelobject:
-                    w("3f", *to_thug_coords(lo_matrix @ v.co))
+                    w("3f", *to_thug_coords(lo_matrix * v.co))
                 else:
-                    w("3f", *to_thug_coords(ob.matrix_world @ v.co))
+                    w("3f", *to_thug_coords(ob.matrix_world * v.co))
 
             if flags & SECFLAGS_HAS_VERTEX_NORMALS:
                 if flags & SECFLAGS_HAS_VERTEX_WEIGHTS:
@@ -255,9 +255,6 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
         finally:
             if bpy.context.mode != "OBJECT":
                 bpy.ops.object.mode_set(mode="OBJECT")
-                
-            if not operator.speed_hack:
-                ob.to_mesh_clear()
                 
         
     _saved_offset = output_file.tell()
