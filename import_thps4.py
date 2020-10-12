@@ -10,6 +10,7 @@ import os, sys
 from bpy.props import *
 from . constants import *
 from . helpers import *
+from . import material
 
 # METHODS
 #############################################
@@ -78,6 +79,7 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
                     blender_tex.image = bpy.data.images.load(full_path2)
                 elif os.path.exists(full_path3):
                     blender_tex.image = bpy.data.images.load(full_path3)
+            tex_slot.uv_layer = str(j)
                     
             pass_flags = p("    pass material flags: {}", r.u32())
             p("    pass has color: {}", r.bool())
@@ -111,6 +113,8 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
                 
             if pass_flags & MATFLAG_PASS_IGNORE_VERTEX_ALPHA:
                 pps.ignore_vertex_alpha = True
+            else:
+                pps.ignore_vertex_alpha = False
 
             if pass_flags & MATFLAG_UV_WIBBLE:
                 p("    pass has uv wibble!", None)
@@ -149,6 +153,8 @@ def read_materials_th4(reader, printer, num_materials, directory, operator, outp
                 p("    l: {}", r.f32())
             else:
                 r.read("4I")
+
+        material.update_node_tree(None, None, blender_mat)
 
 
 #----------------------------------------------------------------------------------
