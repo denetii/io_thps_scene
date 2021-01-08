@@ -2,7 +2,7 @@
 This Blender addon allows you to export a scene as a custom level for some of the classic THPS games. Also includes a variety of import tools to load existing levels/assets, as well as a fully integrated lightmap baking tool.
 
 ## Migrating from Blender 2.79
-Unfortunately, due to various breaking changes introduced with Blender 2.8x, there is no way to seamlessly convert old .blend files. However, I have written a pair of scripts that will take care of it for you. You'll still need Blender 2.79 installed on your system, and you need to know how to run scripts in the text editor. Grab these two scripts here: https://gist.github.com/denetii/6e66891505b32fc7c64c22031288d7f4
+Unfortunately, due to various breaking changes introduced with Blender 2.8x, there is no way to seamlessly convert old .blend files that were developed on Blender 2.79. However, I have written a pair of scripts that will take care of it for you. You'll still need Blender 2.79 installed on your system, and you need to know how to run scripts in the text editor. Grab these two scripts here: https://gist.github.com/denetii/6e66891505b32fc7c64c22031288d7f4
 
 'Step 1' is a script that needs to be run on your .blend file from within Blender **2.79**. Once that's done, save a copy of your scene, then open the new copy in **2.8x** and run the 'Step 2' script in there. Your scene should now be fully migrated and exportable from within 2.8x. The addon has been tested on **2.83.4**, but should be compatible with most of the 2.8x versions.
 
@@ -10,7 +10,13 @@ While support for the 2.79 addon isn't stopping yet, eventually the development 
 
 ## Installation/Documentation
 The complete documentation and changelog can be found at: http://tharchive.net/misc/io_thps_scene.html
-You can either download the addon from there, or grab one of the Releases on GitHub.
+You can download the addon from there, or grab the newest release on GitHub. It should be a zip file containing two other zip files. Extract the one that corresponds to your Blender version:
+ - `io_thps_scene_blender2.79.zip` is for Blender 2.79
+ - `io_thps_scene_blender2.8.zip` is for Blender 2.8+. Has been developed on 2.83 LTS, but should be compatible with 2.9
+
+Ensure the zip file you extract is renamed to `io_thps_scene.zip`, or the installation may not work correctly. Once done, go to Blender's addon manager, click 'Install add-on from file', then choose the zip file you just created. The addon should then appear in the list - click the checkbox to activate it.
+
+There are a few options you can configure, such as viewport colors and menu options. If you wish to use game asset integration, then configure the path to your THPS game installation(s) here. 
 
 ## Changes from the 2.79 version
 Since the addon was just migrated, most of the functionality will appear virtually the same as in the 2.79 releases. However, there are a few things to note:
