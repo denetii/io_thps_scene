@@ -807,13 +807,6 @@ def bake_hl2_lightmaps(meshes, context):
     # Switch back to the original engine, if it wasn't Cycles
     if previous_engine != scene.render.engine:
         scene.render.engine = previous_engine
-    # Toggle use_nodes on the whole scene materials, if desired (depending on the engine we are on)
-    if previous_engine == 'BLENDER_RENDER':
-        for mat in bpy.data.materials:
-            mat.use_nodes = False
-    elif previous_engine == 'CYCLES':
-        for mat in bpy.data.materials:
-            mat.use_nodes = True
         
         
         
@@ -823,7 +816,7 @@ def bake_hl2_lightmaps(meshes, context):
 #- objects are merged, unwrapped, baked, then separated
 #----------------------------------------------------------------------------------
 def bake_to_group(objects, group_name, context):
-    bake_group = bpy.data.groups.get(group_name)
+    bake_group = bpy.data.collections.get(group_name)
     if not bake_group:
         raise Exception('Group {} not found.'.format(group_name))
         
@@ -1380,20 +1373,16 @@ def bake_thug_lightmaps(meshes, context):
             if scene.thug_bake_type == 'LIGHT' or scene.thug_bake_type == 'INDIRECT' or scene.thug_bake_type == 'SHADOW':
                 blender_tex.thug_material_pass_props.blend_mode = 'vBLEND_MODE_MODULATE'
             
-            if is_cycles:
-                for mat in ob.data.materials:
-                    node_d = get_cycles_node(mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
-                    node_d.image = blender_tex.image
-                    node_d.location = (-880,40)
-                    mat.node_tree.nodes.active = node_d
-                    # Add a UV map node 
-                    node_uv = get_cycles_node(mat.node_tree.nodes, 'Bake Result UV', 'ShaderNodeUVMap')
-                    node_uv.location = (-1060,60)
-                    node_uv.uv_map = "Lightmap"
-                    mat.node_tree.links.new(node_d.inputs[0], node_uv.outputs[0]) # Bake Texture UV
-            else:
-                for d in ob.data.uv_layers['Lightmap'].data:
-                    d.image = image
+            for mat in ob.data.materials:
+                node_d = get_cycles_node(mat.node_tree.nodes, 'Bake Result', 'ShaderNodeTexImage')
+                node_d.image = blender_tex.image
+                node_d.location = (-880,40)
+                mat.node_tree.nodes.active = node_d
+                # Add a UV map node 
+                node_uv = get_cycles_node(mat.node_tree.nodes, 'Bake Result UV', 'ShaderNodeUVMap')
+                node_uv.location = (-1060,60)
+                node_uv.uv_map = "Lightmap"
+                mat.node_tree.links.new(node_d.inputs[0], node_uv.outputs[0]) # Bake Texture UV
                     
         #-----------------------------------------------------------------------------------------
         # For BI lighting/AO bakes, it's more complicated! We clear out the materials, add a temp material
@@ -1416,10 +1405,6 @@ def bake_thug_lightmaps(meshes, context):
             image.generated_width = img_res
             image.generated_height = img_res
             image.use_fake_user = True
-            
-            if not is_cycles:
-                for d in ob.data.uv_layers['Lightmap'].data:
-                    d.image = image
                     
             # Create or retrieve the lightmap material
             if not bpy.data.textures.get("Baked_{}".format(ob.name)):
@@ -1869,13 +1854,8 @@ def all_objects_visible(self, context):
     group = scene.thug_lightmap_groups[scene.thug_lightmap_groups_index]
     isAllObjectsVisible = True
     bpy.ops.object.select_all(action='DESELECT')
-    for thisObject in bpy.data.groups[group.name].objects:
-        isThisObjectVisible = False
-        # scene.objects.active = thisObject
-        for thisLayerNumb in range(20):
-            if thisObject.layers[thisLayerNumb] is True and scene.layers[thisLayerNumb] is True:
-                isThisObjectVisible = True
-                break
+    for thisObject in bpy.data.collections[group.name].objects:
+        isThisObjectVisible = thisObject.visible_get()
         # If object is on an invisible Layer
         if isThisObjectVisible is False:
             isAllObjectsVisible = False
@@ -1886,7 +1866,7 @@ def lightmap_group_exists(self, context, use_report=True):
     scene = context.scene
     group = scene.thug_lightmap_groups[scene.thug_lightmap_groups_index]
 
-    if group.name in bpy.data.groups:
+    if group.name in bpy.data.collections:
         return True
     else:
         if use_report:
@@ -2035,9 +2015,10 @@ class THUG_AddSelectedToGroup(bpy.types.Operator):
         group_name = scene.thug_lightmap_groups[scene.thug_lightmap_groups_index].name
 
         # Create a new group if it was deleted
-        obj_group = bpy.data.groups.get(group_name)
+        obj_group = bpy.data.collections.get(group_name)
         if obj_group is None:
-            obj_group = bpy.data.groups.new(group_name)
+            obj_group = bpy.data.collections.new(group_name)
+            bpy.context.scene.collection.children.link(obj_group)
 
         # Add objects to a group
         if bpy.ops.object.mode_set.poll():
@@ -2068,7 +2049,7 @@ class THUG_SelectGroup(bpy.types.Operator):
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
         bpy.ops.object.select_all(action='DESELECT')
-        obj_group = bpy.data.groups[group_name]
+        obj_group = bpy.data.collections[group_name]
         for object in obj_group.objects:
             object.select_set(True)
         return {'FINISHED'}
@@ -2091,7 +2072,7 @@ class THUG_RemoveFromGroup(bpy.types.Operator):
 
         for group in scene.thug_lightmap_groups:
             group_name = group.name
-            obj_group = bpy.data.groups[group_name]
+            obj_group = bpy.data.collections[group_name]
             for object in context.selected_objects:
                 context.view_layer.objects.active = object
                 if object.type == 'MESH' and object.name in obj_group.objects:
@@ -2102,7 +2083,7 @@ class THUG_RemoveFromGroup(bpy.types.Operator):
 
                     # Remove from group
                     obj_group.objects.unlink(object)
-                    object.hide_render = False
+                    object.hide_set(False)
                     object.thug_lightmap_group_id = -1
                     
                     # If this object is marked as baked, unbake it
@@ -2129,7 +2110,8 @@ class THUG_AddLightmapGroup(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        obj_group = bpy.data.groups.new(self.name)
+        obj_group = bpy.data.collections.new(self.name)
+        bpy.context.scene.collection.children.link(obj_group)
 
         item = scene.thug_lightmap_groups.add()
         item.name = obj_group.name
@@ -2160,13 +2142,12 @@ class THUG_DelLightmapGroup(bpy.types.Operator):
             group_name = scene.thug_lightmap_groups[idx].name
 
             # Remove group
-            group = bpy.data.groups.get(group_name)
+            group = bpy.data.collections.get(group_name)
             if group is not None:
                 # Unhide objects if they are hidden
                 for obj in group.objects:
-                    obj.hide_render = False
-                    obj.hide = False
-                bpy.data.groups.remove(group, do_unlink=True)
+                    obj.hide_set(False)
+                bpy.data.collections.remove(group, do_unlink=True)
 
             # Remove lightmap group
             scene.thug_lightmap_groups.remove(scene.thug_lightmap_groups_index)
@@ -2190,7 +2171,7 @@ class THUG_CreateLightmap(bpy.types.Operator):
 
         # Create/Update Image
         image = get_image(self.group_name, self.resolution, self.resolution)
-        obj_group = bpy.data.groups[self.group_name]
+        obj_group = bpy.data.collections[self.group_name]
 
         # non MESH objects for removal list
         NON_MESH_LIST = []
@@ -2218,219 +2199,21 @@ class THUG_CreateLightmap(bpy.types.Operator):
                         tex.active = True
                         tex.active_render = True
 
-                for face_tex in tex.data:
-                    face_tex.image = image
-
         # remove non MESH objects
         for object in NON_MESH_LIST:
             obj_group.objects.unlink(object)
 
         NON_MESH_LIST.clear()  # clear array
 
-        return{'FINISHED'}
-
-class THUG_MergeObjects(bpy.types.Operator):
-    bl_idname = "object.thug_lightmap_merge_objects"
-    bl_label = "Merge Objects"
-    bl_description = "Merges objects and stores origins"
-
-    group_name: StringProperty(default='')
-    unwrap: BoolProperty(default=False)
-
-    def execute(self, context):
-        scene = context.scene
-
-        bpy.ops.object.select_all(action='DESELECT')
-        ob_merged_old = bpy.data.objects.get(self.group_name + "_mergedObject")
-        if ob_merged_old is not None:
-            ob_merged_old.select_set(True)
-            context.view_layer.objects.active = ob_merged_old
-            bpy.ops.object.delete(use_global=True)
-
-        me = bpy.data.meshes.new(self.group_name + '_mergedObject')
-        ob_merge = bpy.data.objects.new(self.group_name + '_mergedObject', me)
-        ob_merge.location = scene.cursor_location   # position object at 3d-cursor
-        scene.collection.objects.link(ob_merge)                # Link object to scene
-        me.update()
-        ob_merge.select_set(False)
-
-        bpy.ops.object.select_all(action='DESELECT')
-
-        # We do the MergeList beacuse we will duplicate grouped objects
-        mergeList = []
-        for object in bpy.data.groups[self.group_name].objects:
-            mergeList.append(object)
-
-        for object in mergeList:
-            # Make object temporary visible
-            isObjHideSelect = object.hide_select
-            object.hide = False
-            object.hide_select = False
-
-            bpy.ops.object.select_all(action='DESELECT')
-            object.select_set(True)
-
-            # Activate lightmap UVs
-            for uv in object.data.uv_layers:
-                if uv.name == 'Lightmap':
-                    uv.active = True
-                    context.view_layer.objects.active = object
-
-            # Duplicate temp object
-            bpy.ops.object.select_all(action='DESELECT')
-            object.select_set(True)
-            context.view_layer.objects.active = object
-            bpy.ops.object.duplicate(linked=False, mode='TRANSLATION')
-            activeNowObject = context.view_layer.objects.active
-            activeNowObject.select_set(True)
-
-            # Hide render of original mesh
-            object.hide_render = True
-            object.hide = True
-            object.select_set(False)
-            object.hide_select = isObjHideSelect
-
-            # Remove UVs
-            UVLIST = []
-            for uv in activeNowObject.data.uv_layers:
-                if uv.name != 'Lightmap':
-                    UVLIST.append(uv.name)
-
-            for uvName in UVLIST:
-                tex = activeNowObject.data.uv_layers[uvName]
-                activeNowObject.data.uv_layers.remove(tex)
-
-            UVLIST.clear()
-
-            # Create vertex groups for each selected object
-            context.view_layer.objects.active = activeNowObject
-            vgroup = activeNowObject.vertex_groups.new(name=object.name)
-            vgroup.add(list(range(len(activeNowObject.data.vertices))), weight=1.0, type='ADD')
-
-            # Save object name in merged object
-            item = ob_merge.thug_lightmap_merged_objects.add()
-            item.name = object.name
-
-            # Add temp material if there are no material slots
-            if not activeNowObject.data.materials:
-                mat = get_material("_THUG_TEMP_MATERIAL_")
-                activeNowObject.data.materials.append(mat)
-
-            # Merge objects together
-            bpy.ops.object.select_all(action='DESELECT')
-            activeNowObject.select_set(True)
-            ob_merge.select_set(True)
-            context.view_layer.objects.active = ob_merge
-            bpy.ops.object.join()
-
-        mergeList.clear()
-
-        bpy.ops.object.select_all(action='DESELECT')
-        ob_merge.select_set(True)
-        context.view_layer.objects.active = ob_merge
-
-        # Unhide all faces
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.reveal()
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-
-        if self.unwrap is True:
-            groupProps = scene.thug_lightmap_groups[self.group_name]
-            unwrapType = groupProps.unwrap_type
-
-            bpy.ops.object.mode_set(mode='EDIT')
-            if unwrapType == 'Smart':
-                bpy.ops.uv.smart_project(
-                    angle_limit=72.0, island_margin=0.1, user_area_weight=0.0)
-            elif unwrapType == 'Lightmap':
-                bpy.ops.uv.lightmap_pack(
-                    PREF_CONTEXT='ALL_FACES', PREF_PACK_IN_ONE=True, PREF_NEW_UVLAYER=False,
-                    PREF_APPLY_IMAGE=False, PREF_IMG_PX_SIZE=int(groupProps.resolution), PREF_BOX_DIV=48, PREF_MARGIN_DIV=0.1)
-            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-
-        return{'FINISHED'}
+        return {'FINISHED'}
 
         
-        
-class THUG_SeparateObjects(bpy.types.Operator):
-    bl_idname = "object.thug_lightmap_separate_objects"
-    bl_label = "Separate Objects"
-    bl_description = "Separates objects and restores origins"
-
-    group_name: StringProperty(default='')
-
-    def execute(self, context):
-        scene = context.scene
-
-        ob_merged = bpy.data.objects.get(self.group_name + "_mergedObject")
-        if ob_merged is not None:
-            bpy.ops.object.select_all(action='DESELECT')
-            ob_merged.hide = False
-            ob_merged.select_set(True)
-            groupSeparate = bpy.data.groups.new(ob_merged.name)
-            groupSeparate.objects.link(ob_merged)
-            ob_merged.select_set(False)
-
-            doUnhidePolygons = False
-            for ms_obj in ob_merged.thug_lightmap_merged_objects:
-                # Select vertex groups and separate group from merged object
-                bpy.ops.object.select_all(action='DESELECT')
-                ob_merged.select_set(True)
-                context.view_layer.objects.active = ob_merged
-
-                bpy.ops.object.mode_set(mode='EDIT')
-                if doUnhidePolygons is False:
-                    bpy.ops.mesh.reveal()
-                    doUnhidePolygons = True
-
-                bpy.ops.mesh.select_all(action='DESELECT')
-                ob_merged.vertex_groups.active_index = ob_merged.vertex_groups[
-                    ms_obj.name].index
-                bpy.ops.object.vertex_group_select()
-                bpy.ops.mesh.separate(type='SELECTED')
-                bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-                # scene.objects.active.select_set(False)
-
-                # Find separated object
-                ob_separeted = None
-                for obj in groupSeparate.objects:
-                    if obj != ob_merged:
-                        ob_separeted = obj
-                        break
-
-                # Copy UV coordinates to the original mesh
-                if ms_obj.name in scene.objects:
-                    ob_merged.select_set(False)
-                    ob_original = scene.objects[ms_obj.name]
-                    isOriginalToSelect = ob_original.hide_select
-                    ob_original.hide_select = False
-                    ob_original.hide = False
-                    ob_original.select_set(True)
-                    context.view_layer.objects.active = ob_separeted
-                    bpy.ops.object.join_uvs()
-                    ob_original.hide_render = False
-                    ob_original.select_set(False)
-                    ob_original.hide_select = isOriginalToSelect
-                    ob_original.data.update()
-
-                # Delete separated object
-                bpy.ops.object.select_all(action='DESELECT')
-                ob_separeted.select_set(True)
-                bpy.ops.object.delete(use_global=False)
-
-            # Delete duplicated object
-            bpy.ops.object.select_all(action='DESELECT')
-            ob_merged.select_set(True)
-            bpy.ops.object.delete(use_global=False)
-
-        return{'FINISHED'}
-
-        
-class THUG_AutoUnwrap(bpy.types.Operator):
-    bl_idname = "object.thug_lightmap_autounwrap"
+class THUG_GenerateLightmapGroupUVs(bpy.types.Operator):
+    bl_idname = "object.thug_lightmap_group_generate_uvs"
     bl_label = "Auto Unwrapping"
     bl_description = "Automatically generate lightmap UVs"
+
+    auto_unwrap: BoolProperty(default=True)
 
     def execute(self, context):
         scene = context.scene
@@ -2451,16 +2234,40 @@ class THUG_AutoUnwrap(bpy.types.Operator):
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
-        if group.bake is True and bpy.data.groups[group.name].objects:
+        if group.bake is True and bpy.data.collections[group.name].objects:
             # Check if objects are all on the visible layers
             isAllObjVisible = all_objects_visible(self, context)
 
             if isAllObjVisible is True:
                 bpy.ops.object.thug_bake_create_lightmap(
                     group_name=group.name, resolution=int(group.resolution))
-                bpy.ops.object.thug_lightmap_merge_objects(
-                    group_name=group.name, unwrap=True)
-                bpy.ops.object.thug_lightmap_separate_objects(group_name=group.name)
+
+                bpy.ops.object.select_all(action='DESELECT')
+
+                for obj in bpy.data.collections[group.name].objects:
+                    obj.select_set(True)
+                    context.view_layer.objects.active = obj
+
+                # Generate the UVs automatically, if desired
+                if self.auto_unwrap:
+                    bpy.ops.object.mode_set(mode='EDIT')
+                    bpy.ops.mesh.reveal()
+                    bpy.ops.mesh.select_all(action='SELECT')
+                    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
+                    groupProps = scene.thug_lightmap_groups[group.name]
+                    unwrapType = groupProps.unwrap_type
+
+                    bpy.ops.object.mode_set(mode='EDIT')
+                    if unwrapType == 'Smart':
+                        bpy.ops.uv.smart_project(
+                            angle_limit=72.0, island_margin=0.1, user_area_weight=0.0)
+                    elif unwrapType == 'Lightmap':
+                        bpy.ops.uv.lightmap_pack(
+                            PREF_CONTEXT='ALL_FACES', PREF_PACK_IN_ONE=True, PREF_NEW_UVLAYER=False,
+                            PREF_APPLY_IMAGE=False, PREF_IMG_PX_SIZE=int(groupProps.resolution), PREF_BOX_DIV=48, PREF_MARGIN_DIV=0.1)
+                    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+
             else:
                 self.report({'INFO'}, "Not all objects are visible!")
 
@@ -2468,90 +2275,24 @@ class THUG_AutoUnwrap(bpy.types.Operator):
         if context.area:
             context.area.type = old_context
 
-        return{'FINISHED'}
+        return {'FINISHED'}
 
 
-class THUG_ManualUnwrapStart(bpy.types.Operator):
-    bl_idname = "object.thug_lightmap_manualunwrap"
+class THUG_ManualLightmapGroupUVs(bpy.types.Operator):
+    bl_idname = "object.thug_lightmap_group_manualunwrap"
     bl_label = "Manual Unwrap"
     bl_description = "Generate lightmap UVs for this group manually"
 
     def execute(self, context):
         scene = context.scene
 
-        # Store old context
-        old_context = None
-        if context.area:
-            old_context = context.area.type
-
-        # Check if group exists
-        if lightmap_group_exists(self, context) is False:
-            return {'CANCELLED'}
-
-        if context.area:
-            context.area.type = 'VIEW_3D'
-        group = scene.thug_lightmap_groups[scene.thug_lightmap_groups_index]
-
-        if bpy.ops.object.mode_set.poll():
-            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-
-        if group.bake is True and bpy.data.groups[group.name].objects:
-            # Check if objects are all on the visible layers
-            isAllObjVisible = all_objects_visible(self, context)
-
-            if bpy.data.objects.get(group.name + "_mergedObject") is not None:
-                self.report({'INFO'}, "Old merged object exists!")
-            elif isAllObjVisible is False:
-                self.report({'INFO'}, "Not all objects are visible!")
-            else:
-                bpy.ops.object.thug_bake_create_lightmap(
-                    group_name=group.name, resolution=int(group.resolution))
-                bpy.ops.object.thug_lightmap_merge_objects(
-                    group_name=group.name, unwrap=False)
-
-        # Set old context back
-        if context.area:
-            context.area.type = old_context
-
-        return{'FINISHED'}
-
-
-class THUG_ManualUnwrapFinish(bpy.types.Operator):
-    bl_idname = "object.thug_lightmap_manualunwrap_end"
-    bl_label = "Finish Manual Unwrap"
-    bl_description = "Finish manual setup of lightmap UVs and restore original objects"
-
-    def execute(self, context):
-        scene = context.scene
-
-        # Store old context
-        old_context = None
-        if context.area:
-            old_context = context.area.type
-
         # Check if group exists
         if lightmap_group_exists(self, context) is False:
             return {'CANCELLED'}
 
         group = scene.thug_lightmap_groups[scene.thug_lightmap_groups_index]
-        if context.area:
-            context.area.type = 'VIEW_3D'
 
-        if bpy.ops.object.mode_set.poll():
-            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-
-        if group.bake is True and bpy.data.groups[group.name].objects:
-            # Check if objects are all on the visible layers
-            isAllObjVisible = all_objects_visible(self, context)
-
-            if isAllObjVisible is True:
-                bpy.ops.object.thug_lightmap_separate_objects(group_name=group.name)
-            else:
-                self.report({'INFO'}, "Not all objects are visible!")
-
-        # Set old context back
-        if context.area:
-            context.area.type = old_context
+        bpy.ops.object.thug_lightmap_group_generate_uvs(auto_unwrap=False)
 
         return{'FINISHED'}
 
@@ -2652,7 +2393,7 @@ class UnBakeLightmaps(bpy.types.Operator):
             if ob.thug_lightmap_group_id > -1:
                 if scene.thug_lightmap_groups[ob.thug_lightmap_group_id]:
                     group_name = scene.thug_lightmap_groups[ob.thug_lightmap_group_id].name
-                    obj_group = bpy.data.groups[group_name]
+                    obj_group = bpy.data.collections[group_name]
                     obj_group.objects.unlink(ob)
                     ob.thug_lightmap_group_id = -1
                     print("Removed from lightmap group {}".format(group_name))
@@ -2949,11 +2690,6 @@ class THUG_PT_SceneLightingTools(bpy.types.Panel):
             row.prop(group, 'unwrap_type', expand=True)
             
             row = self.layout.row()
-            row.operator("object.thug_lightmap_autounwrap", text="Generate UVs", icon="GROUP_UVS")
-            #row.prop(group, 'autoUnwrapPrecision', text='')
-
-            if context.selected_objects and context.selected_objects[0].name.endswith("_mergedObject"):
-                row.operator("object.thug_lightmap_manualunwrap_end", text="Finish Unwrap", icon="MESH_UVSPHERE")
-            else:
-                row.operator("object.thug_lightmap_manualunwrap", text="Manual Unwrap", icon="UV_VERTEXSEL")
+            row.operator("object.thug_lightmap_group_generate_uvs", text="Generate UVs", icon="GROUP_UVS")
+            row.operator("object.thug_lightmap_group_manualunwrap", text="Manual UVs", icon="UV_VERTEXSEL")
 
