@@ -569,6 +569,7 @@ def export_col(filename, directory, target_game, operator=None):
     p = Printer()
     output_file = os.path.join(directory, filename)
 
+    depsgraph = bpy.context.evaluated_depsgraph_get()
     bm = bmesh.new()
     # Applies modifiers and triangulates mesh - unless the 'speed hack' export option is on
     def triang(o):
@@ -577,9 +578,8 @@ def export_col(filename, directory, target_game, operator=None):
             bm.clear()
             bm.from_mesh(final_mesh)
         else:
-            final_mesh = o.to_mesh(preserve_all_data_layers=True)
             bm.clear()
-            bm.from_mesh(final_mesh)
+            bm.from_object(o, depsgraph)
             bmesh.ops.triangulate(bm, faces=bm.faces)
         return
 

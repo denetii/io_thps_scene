@@ -21,6 +21,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
     def w(fmt, *args):
         output_file.write(struct.pack(fmt, *args))
 
+    depsgraph = bpy.context.evaluated_depsgraph_get()
     bm = bmesh.new()
     p = Printer()
     out_objects = [o for o in bpy.data.objects
@@ -57,7 +58,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
                 final_mesh.calc_normals_split()
             else:
                 bm.clear()
-                bm.from_mesh(final_mesh)
+                bm.from_object(ob, depsgraph)
                 bmesh.ops.triangulate(bm, faces=bm.faces)
                 bm.to_mesh(final_mesh)
                 final_mesh.calc_normals_split()

@@ -119,6 +119,7 @@ def draw_stuff():
         bgl.glBlendFunc(bgl.GL_SRC_ALPHA, bgl.GL_ONE_MINUS_SRC_ALPHA);
 
         prefs = ctx.preferences.addons[ADDON_NAME].preferences
+        depsgraph = bpy.context.evaluated_depsgraph_get()
 
         bgl.glLineWidth(prefs.line_width)
 
@@ -202,14 +203,7 @@ def draw_stuff():
                 bm = bmesh.from_edit_mesh(ob.data).copy()
             else:
                 bm.clear()
-                if ob.modifiers:
-                    final_mesh = ob.to_mesh(bpy.context.scene, True, "PREVIEW")
-                    try:
-                        bm.from_mesh(final_mesh)
-                    finally:
-                        bpy.data.meshes.remove(final_mesh)
-                else:
-                    bm.from_mesh(ob.data)
+                bm.from_object(ob, depsgraph)
 
             arl = bm.edges.layers.int.get("thug_autorail")
             if arl:

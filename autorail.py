@@ -313,7 +313,7 @@ def _get_autorails(mesh_object, operator=None):
     with ExitStack() as exit_stack:
         if mesh_object.modifiers:
             final_mesh = mesh_object.to_mesh()
-            exit_stack.callback(bpy.data.meshes.remove, final_mesh)
+            exit_stack.callback(mesh_object.to_mesh_clear)
         else:
             final_mesh = mesh_object.data
 
