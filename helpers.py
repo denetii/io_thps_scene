@@ -13,9 +13,18 @@ __reload_order_index__ = -42
 th_export_scale = 1
 LOG = logging.getLogger(ADDON_NAME)
 
+class ExportError(Exception):
+    pass
 
 # METHODS
 #############################################
+def show_message_box(message, title = '', icon = 'INFO'):
+    def draw(self, context):
+        lines = message.split("\n")
+        for ln in lines:
+            self.layout.label(text = ln)
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+
 #----------------------------------------------------------------------------------
 #- Returns a numbered, unique version of the desired name
 #----------------------------------------------------------------------------------

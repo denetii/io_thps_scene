@@ -6,6 +6,9 @@ import bmesh
 import struct
 import mathutils
 import math
+import threading
+import traceback
+
 from . import helpers, collision, prefs, material, autosplit
 from bpy.props import *
 from . prefs import *
@@ -20,9 +23,19 @@ from . export_thug1 import export_scn_sectors
 from . export_thug2 import export_scn_sectors_ug2
 from . export_thps4 import *
 
-class ExportError(Exception):
-    pass
+class ExportThread(threading.Thread):
+    def run(self):
+        self.exc = None
+        try:
+            self.ret = self._target(*self._args, **self._kwargs)
+        except BaseException as e:
+            self.exc = e
 
+    def join(self):
+        super(ExportThread, self).join()
+        if self.exc:
+            raise self.exc
+        return self.ret
 
 # METHODS
 #############################################
@@ -175,29 +188,47 @@ def do_export(operator, context, target_game):
     logging_ch.setFormatter(logging.Formatter("{asctime} [{levelname}]  {message}", style='{', datefmt="%H:%M:%S"))
     
     set_export_scale(operator.export_scale)
+
+    threads = list()
+    compilation_successful = True
     
     try:
         LOG.addHandler(logging_fh)
         LOG.addHandler(logging_ch)
         LOG.setLevel(logging.DEBUG)
 
-        # Create shadow caster objects (hacky!)
-        generate_shadowcasters()
-        
         if self.generate_col_file or self.generate_scn_file or self.generate_scripts_files:
             orig_objects, temporary_objects = autosplit._prepare_autosplit_objects(operator, context,target_game)
 
         path = j(directory, "Levels", filename)
         md(path)
+
         if self.generate_col_file:
-            export_col(filename + ext_col, path, target_game, self)
+            t = ExportThread(target=export_col, args=(filename + ext_col, path, target_game, self))
+            t.setDaemon(True)
+            t.setName("export_col")
+            threads.append(t)
+            t.start()
             
         if self.generate_scn_file:
             self.report({'OPERATOR'}, "Generating scene file... ")
-            export_scn(filename + ext_scn, path, target_game, self, is_model)
+            
+            t = ExportThread(target=export_scn, args=(filename + ext_scn, path, target_game, self, is_model))
+            t.setDaemon(True)
+            t.setName("export_scn")
+            threads.append(t)
+            t.start()
+    
+        if self.generate_scripts_files:
+            self.report({'OPERATOR'}, "Generating QB files... ")
+            t = ExportThread(target=export_qb, args=(filename, path, target_game, self))
+            t.setDaemon(True)
+            t.setName("export_qb")
+            threads.append(t)
+            t.start()
 
+        # Tex export must be run on the main thread, not sure why
         if self.generate_tex_file:
-            md(path)
             self.report({'OPERATOR'}, "Generating tex file... ")
             export_tex(filename + ext_tex, path, target_game, self)
             
@@ -212,7 +243,11 @@ def do_export(operator, context, target_game):
                         shutil.copy("{}/{}.dds".format(_folder, ob.name),
                             j(path, "{}.dds".format(ob.name)))
             # ********************************************************
-                
+            
+        # If any threads haven't finished yet, wait before continuing
+        for index, thread in enumerate(threads):
+            thread.join()
+            
         if self.generate_scn_file and self.generate_sky:
             skypath = j(directory, "Levels", filename + "_sky")
             md(skypath)
@@ -223,14 +258,9 @@ def do_export(operator, context, target_game):
                 get_asset_path("default_sky", DEFAULT_SKY_TEX),
                 j(skypath, filename + "_sky" + ext_tex))
 
-        compilation_successful = None
         if self.generate_scripts_files:
-            self.report({'OPERATOR'}, "Generating QB files... ")
-            export_qb(filename, path, target_game, self)
-
             old_cwd = os.getcwd()
             os.chdir(path)
-            compilation_successful = True
 
             import platform
             wine = [] if platform.system() == "Windows" else ["wine"]
@@ -238,7 +268,7 @@ def do_export(operator, context, target_game):
             # #########################
             # Build NODEARRAY qb file
             try:
-                print("Compiling {}.txt to QB...".format(filename))
+                LOG.debug("Compiling {}.txt to QB...".format(filename))
                 roq_output = subprocess.run(wine + [
                     get_asset_path("roq.exe"),
                     "-c",
@@ -261,7 +291,7 @@ def do_export(operator, context, target_game):
             # #########################
             # Build _SCRIPTS qb file
             if os.path.exists(j(path, filename + "_scripts.txt")):
-                print("Compiling {}_scripts.txt to QB...".format(filename))
+                LOG.debug("Compiling {}_scripts.txt to QB...".format(filename))
                 os.chdir(path)
                 try:
                     roq_output = subprocess.run(wine + [
@@ -282,7 +312,7 @@ def do_export(operator, context, target_game):
                     os.chdir(old_cwd)
             # /Build _SCRIPTS qb file
             # #########################
-            
+
 
         # #########################
         # Build PRE files
@@ -339,32 +369,35 @@ def do_export(operator, context, target_game):
         # /Build PRE files
         # #########################
         
-        # Remove shadow caster objects (so hacky!)
-        cleanup_shadowcasters()    
         # Make sure our generated grass materials/textures are removed after export
         cleanup_grass_materials()  
         
-        end_time = datetime.datetime.now()
-        if (compilation_successful is None) or compilation_successful:
-            print("EXPORT COMPLETE! Thank you for waiting :)")
-            self.report({'INFO'}, "Exported level {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
-        else:
-            print("EXPORT FAILED! Uh oh :(")
-            self.report({'WARNING'}, "Failed exporting level {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
-            
-        # -------------------------------------------------
         # Final step: generate level manifest .json file!
-        # -------------------------------------------------
         export_level_manifest_json(filename, directory, self, context.scene.thug_level_props)
         
     except ExportError as e:
-        self.report({'ERROR'}, "Export failed.\nExport error: {}".format(str(e)))
-    except Exception as e:
+        compilation_successful = False
         LOG.debug(e)
-        raise
+        LOG.debug("".join(traceback.format_tb(e.__traceback__)))
+        show_message_box("Export failed.\nError message:\n\n {}".format(str(e)), 'Export Error', 'ERROR')
+    except Exception as e:
+        compilation_successful = False
+        LOG.debug(e)
+        LOG.debug("".join(traceback.format_tb(e.__traceback__)))
+        show_message_box("Export failed.\nError message:\n\n {}".format(str(e)), 'Export Error', 'ERROR')
     finally:
+
+        end_time = datetime.datetime.now()
+        if compilation_successful:
+            export_message = "Exported level {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time)
+            self.report({'INFO'}, export_message)
+            show_message_box(export_message, 'Export Complete')
+        else:
+            self.report({'WARNING'}, "Failed exporting level {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
+            
         LOG.removeHandler(logging_fh)
         LOG.removeHandler(logging_ch)
+
         autosplit._cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)
     return {'FINISHED'}
 
@@ -436,14 +469,12 @@ def do_export_model(operator, context, target_game):
         export_tex(filename + ext_tex, path, target_game, self)
             
         # Maybe generate QB file
-        compilation_successful = None
         if self.generate_scripts_files:
             self.report({'OPERATOR'}, "Generating QB files... ")
             export_model_qb(filename, path, target_game, self)
 
             old_cwd = os.getcwd()
             os.chdir(path)
-            compilation_successful = True
 
             import platform
             wine = [] if platform.system() == "Windows" else ["wine"]
@@ -467,7 +498,7 @@ def do_export_model(operator, context, target_game):
                 os.chdir(old_cwd)
 
         end_time = datetime.datetime.now()
-        if (compilation_successful is None) or compilation_successful:
+        if compilation_successful:
             self.report({'INFO'}, "Exported model {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
         else:
             self.report({'WARNING'}, "Failed exporting model {} at {} (time taken: {})".format(filename, end_time.time(), end_time - start_time))
@@ -481,63 +512,9 @@ def do_export_model(operator, context, target_game):
         LOG.removeHandler(logging_fh)
         LOG.removeHandler(logging_ch)
         autosplit._cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects)
+
     return {'FINISHED'}
 
-#----------------------------------------------------------------------------------
-def generate_shadowcasters():
-    print("Creating shadow casters...")
-    out_objects = [o for o in bpy.data.objects
-                   if (o.type == "MESH"
-                    and getattr(o, 'thug_export_scene', True)
-                    and not o.get("thug_autosplit_object_no_export_hack", False))]
-    scene = bpy.context.scene
-    sc_count = -1
-    sc_mat_count = -1
-    
-    for ob in out_objects:
-        if not ob.thug_cast_shadow:
-            continue
-        ob_name = ob.name
-        if ob.name.endswith("_SCN"):
-            ob_name = ob.name[:-4]
-        print("Creating shadow caster object(s) for mesh: {}".format(ob_name))
-        sc_count += 1
-        new_ob = ob.copy()
-        new_ob.data = ob.data.copy()
-        # Create empty collision mesh, and an SCN mesh
-        new_col_mesh = bpy.data.meshes.new(name="GEN_ShadowCaster_" + str(sc_count) + "_MESH")
-        new_col_ob = bpy.data.objects.new(name="GEN_ShadowCaster_" + str(sc_count), object_data=new_col_mesh)
-        new_ob.name = "GEN_ShadowCaster_" + str(sc_count) + "_SCN"
-        new_col_ob.thug_object_class = "LevelObject"
-        new_ob.thug_object_class = "LevelGeometry"
-        new_ob.thug_export_scene = True
-        new_ob.thug_export_collision = False
-        #new_ob.scale[0] = 1.1
-        #new_ob.scale[1] = 1.1
-        #new_ob.scale[2] = 1.1
-        new_col_ob.thug_export_scene = False
-        new_col_ob.thug_export_collision = True
-        for mat_slot in new_ob.material_slots:
-            sc_mat_count += 1
-            orig_mat = mat_slot.material
-            mat_slot.material = mat_slot.material.copy()
-            mat_slot.material.thug_material_props.use_new_mats = False
-            mat_slot.material.thug_material_props.specular_power = -0.23
-            mat_slot.material.name = "GEN_Mat_ShadowCaster_" + str(sc_mat_count)
-        
-        scene.collection.objects.link(new_ob)
-        scene.collection.objects.link(new_col_ob)
-        
-        #helpers._flip_normals(new_ob)
-        
-def cleanup_shadowcasters():
-    print("Removing shadow casters...")
-    for ob in bpy.data.objects:
-        if ob.name.startswith("GEN_ShadowCaster_"):
-            bpy.data.objects.remove(ob)
-    for mat in bpy.data.materials:
-        if mat.name.startswith("GEN_Mat_ShadowCaster_"):
-            bpy.data.materials.remove(mat)
             
 #----------------------------------------------------------------------------------
 def export_scn(filename, directory, target_game, operator=None, is_model=False):
@@ -904,12 +881,10 @@ def maybe_export_scene(operator, scene):
             
     if not hasattr(scene, 'thug_level_props') or not hasattr(scene.thug_level_props, 'export_props'):
         operator.report({'ERROR'}, "Unable to run quick export - scene settings were not found!")
-        #raise Exception('Unable to run quick export - scene settings were not found!')
         return False
         
     if not scene_settings_are_valid(scene.thug_level_props):
         operator.report({'ERROR'}, "Invalid scene settings. Enter a scene name and select the game/export dir/export type first!")
-        #raise Exception('Unable to run quick export - scene settings are not valid. Make sure you enter a scene name and select the game/export dir/export type first!')
         return False
         
     scene.thug_level_props.export_props.filename = scene.thug_level_props.scene_name
@@ -1444,8 +1419,7 @@ class THUGQuickExport(bpy.types.Operator):
     bl_label = "Quick Export"
 
     def execute(self, context):
-        if maybe_export_scene(self, context.scene):
-            self.report({'INFO'}, "Quick export successfully completed!")
+        maybe_export_scene(self, context.scene)
         return {'FINISHED'}
 
 # PANELS

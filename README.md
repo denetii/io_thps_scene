@@ -12,7 +12,7 @@ While support for the 2.79 addon isn't stopping yet, eventually the development 
 The complete documentation and changelog can be found at: http://tharchive.net/misc/io_thps_scene.html
 You can download the addon from there, or grab the newest release on GitHub. It should be a zip file containing two other zip files. Extract the one that corresponds to your Blender version:
  - `io_thps_scene_blender2.79.zip` is for Blender 2.79
- - `io_thps_scene_blender2.8.zip` is for Blender 2.8+. Has been developed on 2.83 LTS, but should be compatible with 2.9
+ - `io_thps_scene_blender2.8.zip` is for Blender 2.8 and newer. Has been developed on 2.83 LTS, but is also compatible with 2.9x
 
 Ensure the zip file you extract is renamed to `io_thps_scene.zip`, or the installation may not work correctly. Once done, go to Blender's addon manager, click 'Install add-on from file', then choose the zip file you just created. The addon should then appear in the list - click the checkbox to activate it.
 
