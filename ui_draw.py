@@ -272,12 +272,8 @@ def import_menu_func(self, context):
     self.layout.operator(THUGImgToImages.bl_idname, text=THUGImgToImages.bl_label, icon='PLUGIN')
 #----------------------------------------------------------------------------------    
 def export_menu_func(self, context):
-    self.layout.operator(SceneToTHPS4Files.bl_idname, text="Scene to THPS4 level files", icon='PLUGIN')
-    self.layout.operator(SceneToTHPS4Model.bl_idname, text=SceneToTHPS4Model.bl_label, icon='PLUGIN')
-    self.layout.operator(SceneToTHUGFiles.bl_idname, text="Scene to THUG1 level files", icon='PLUGIN')
-    self.layout.operator(SceneToTHUGModel.bl_idname, text="Scene to THUG1 model", icon='PLUGIN')
-    self.layout.operator(SceneToTHUG2Files.bl_idname, text="Scene to THUG2 level files", icon='PLUGIN')
-    self.layout.operator(SceneToTHUG2Model.bl_idname, text="Scene to THUG2 model", icon='PLUGIN')
+    self.layout.operator(SceneToTHPSLevel.bl_idname, text=SceneToTHPSLevel.bl_label, icon='PLUGIN')
+    self.layout.operator(SceneToTHPSModel.bl_idname, text=SceneToTHPSModel.bl_label, icon='PLUGIN')
 #----------------------------------------------------------------------------------
 def add_menu_func(self, context):
     self.layout.menu(THUG_MT_PresetsMenu.bl_idname, text="THUG", icon='PLUGIN')

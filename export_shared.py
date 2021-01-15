@@ -897,16 +897,22 @@ def maybe_export_scene(operator, scene):
     
     return True
 
+#############################################
 # OPERATORS
 #############################################
-class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
-    bl_idname = "export.scene_to_th4_xbx"
-    bl_label = "Scene to THPS4 level files"
-    # bl_options = {'REGISTER', 'UNDO'}
+class SceneToTHPSLevel(bpy.types.Operator):
+    bl_idname = "export.scene_to_thps_level"
+    bl_label = "Scene to THPS level"
 
     def report(self, category, message):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
+
+    engine: EnumProperty(items = (
+        ("THPS4", "THPS4", ""),
+        ("THUG1", "THUG1", ""),
+        ("THUG2", "THUG2", ""),
+    ), name="Game Engine", default="THUG2")
 
     filename: StringProperty(name="File Name")
     directory: StringProperty(name="Directory")
@@ -915,8 +921,6 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
     use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack: BoolProperty(name="No modifiers (speed hack)",
-        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
     autosplit_everything: BoolProperty(name="Autosplit All",
         description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
@@ -936,7 +940,6 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
     generate_col_file: BoolProperty(name="Generate a .col file", default=True)
     generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
 
-#    filepath: StringProperty()
     skybox_name: StringProperty(name="Skybox name", default="THUG_Sky")
     export_scale: FloatProperty(name="Export scale", default=1)
     
@@ -954,7 +957,7 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
     only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
 
     def execute(self, context):
-        return do_export(self, context, "THPS4")
+        return do_export(self, context, self.engine)
 
     def invoke(self, context, event):
         wm = bpy.context.window_manager
@@ -963,13 +966,13 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
         
     def draw(self, context):
+        self.layout.row().prop(self, "engine", icon='FF')
         self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
         if self.generate_sky:
             box = self.layout.box().column(align=True)
             box.row().prop(self, "skybox_name")
         self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
-        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
             box = self.layout.box().column(align=True)
@@ -987,17 +990,21 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
         row2 = box.row()
         row2.column().prop(self, "max_texture_base_tex", toggle=True)
         row2.column().prop(self, "max_texture_lightmap_tex", toggle=True)
-        #box.row().prop(self, "only_offset_lightmap")
         
 #----------------------------------------------------------------------------------
-class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
-    bl_idname = "export.scene_to_th4_model"
-    bl_label = "Scene to THPS4 model"
-    # bl_options = {'REGISTER', 'UNDO'}
+class SceneToTHPSModel(bpy.types.Operator):
+    bl_idname = "export.scene_to_thps_model"
+    bl_label = "Scene to THPS model"
 
     def report(self, category, message):
         LOG.debug("OP: {}: {}".format(category, message))
         super().report(category, message)
+
+    engine: EnumProperty(items = (
+        ("THPS4", "THPS4", ""),
+        ("THUG1", "THUG1", ""),
+        ("THUG2", "THUG2", ""),
+    ), name="Game Engine", default="THUG2")
 
     filename: StringProperty(name="File Name")
     directory: StringProperty(name="Directory")
@@ -1007,181 +1014,6 @@ class SceneToTHPS4Model(bpy.types.Operator): #, ExportHelper):
     use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack: BoolProperty(name="No modifiers (speed hack)",
-        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
-    
-    # AUTOSPLIT SETTINGS
-    autosplit_everything: BoolProperty(name="Autosplit All"
-        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
-        , default=False)
-    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
-        description="The max amount of faces for every created subobject.",
-        default=800, min=50, max=6000)
-    autosplit_max_radius: FloatProperty(name="Max Radius",
-        description="The max radius of for every created subobject.",
-        default=2000, min=100, max=5000)
-    # /AUTOSPLIT SETTINGS
-    model_type: EnumProperty(items = (
-        ("skin", ".skin", "Character skin, used for playable characters and pedestrians"),
-        ("mdl", ".mdl", "Model used for vehicles and other static mesh"),
-    ), name="Model Type", default="skin")
-    generate_scripts_files: BoolProperty(
-        name="Generate scripts",
-        default=True)
-    export_scale: FloatProperty(name="Export scale", default=1)
-    
-    max_texture_size: IntProperty(name="Max Texture Size"
-        , min=0,max=8192,default=0
-        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
-    )
-    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
-    
-    mipmap_offset: IntProperty(
-        name="Mipmap offset",
-        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
-        min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
-        
-    def execute(self, context):
-        return do_export_model(self, context, "THPS4")
-
-    def invoke(self, context, event):
-        wm = bpy.context.window_manager
-        wm.fileselect_add(self)
-
-        return {'RUNNING_MODAL'}
-        
-    def draw(self, context):
-        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
-        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
-        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
-        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
-        if self.autosplit_everything:
-            box = self.layout.box().column(align=True)
-            box.row().prop(self, "autosplit_faces_per_subobject")
-            box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "model_type", expand=True)
-        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
-        self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(align=True)
-        box.row().prop(self, "max_texture_size")
-        row2 = box.row()
-        row2.column().prop(self, "max_texture_base_tex", toggle=True)
-        row2.column().prop(self, "max_texture_lightmap_tex", toggle=True)
-        #box.row().prop(self, "only_offset_lightmap")
-
-#----------------------------------------------------------------------------------
-class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
-    bl_idname = "export.scene_to_thug_xbx"
-    bl_label = "Scene to THUG1 level files"
-    # bl_options = {'REGISTER', 'UNDO'}
-
-    def report(self, category, message):
-        LOG.debug("OP: {}: {}".format(category, message))
-        super().report(category, message)
-
-    filename: StringProperty(name="File Name")
-    directory: StringProperty(name="Directory")
-
-    always_export_normals: BoolProperty(name="Export normals", default=False)
-    use_vc_hack: BoolProperty(name="Vertex color hack",
-        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
-        , default=False)
-    speed_hack: BoolProperty(name="No modifiers (speed hack)",
-        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
-    # AUTOSPLIT SETTINGS
-    autosplit_everything: BoolProperty(name="Autosplit All",
-        description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
-    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
-        description="The max amount of faces for every created subobject.",
-        default=800, min=50, max=6000)
-    autosplit_max_radius: FloatProperty(name="Max Radius",
-        description="The max radius of for every created subobject.",
-        default=2000, min=100, max=5000)
-    # /AUTOSPLIT SETTINGS
-    pack_pre: BoolProperty(name="Pack files into .prx", default=True)
-    is_park_editor: BoolProperty(name="Is Park Editor",
-        description="Use this option when exporting a park editor dictionary.", default=False)
-    generate_tex_file: BoolProperty(name="Generate a .tex file", default=True)
-    generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
-    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene")
-    generate_col_file: BoolProperty(name="Generate a .col file", default=True)
-    generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
-
-#    filepath: StringProperty()
-    skybox_name: StringProperty(name="Skybox name", default="THUG_Sky")
-    export_scale: FloatProperty(name="Export scale", default=1)
-    
-    max_texture_size: IntProperty(name="Max Texture Size"
-        , min=0,max=8192,default=0
-        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
-    )
-    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
-    
-    mipmap_offset: IntProperty(
-        name="Mipmap offset",
-        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
-        min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
-
-    def execute(self, context):
-        return do_export(self, context, "THUG1")
-
-    def invoke(self, context, event):
-        wm = bpy.context.window_manager
-        wm.fileselect_add(self)
-
-        return {'RUNNING_MODAL'}
-        
-    def draw(self, context):
-        self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
-        if self.generate_sky:
-            box = self.layout.box().column(align=True)
-            box.row().prop(self, "skybox_name")
-        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
-        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
-        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
-        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
-        if self.autosplit_everything:
-            box = self.layout.box().column(align=True)
-            box.row().prop(self, "autosplit_faces_per_subobject")
-            box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
-        self.layout.row().prop(self, "is_park_editor", toggle=True, icon='PACKAGE')
-        self.layout.row().prop(self, "generate_tex_file", toggle=True, icon='TEXTURE_DATA')
-        self.layout.row().prop(self, "generate_scn_file", toggle=True, icon='SCENE_DATA')
-        self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')
-        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
-        self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(align=True)
-        box.row().prop(self, "max_texture_size")
-        row2 = box.row()
-        row2.column().prop(self, "max_texture_base_tex", toggle=True)
-        row2.column().prop(self, "max_texture_lightmap_tex", toggle=True)
-        #box.row().prop(self, "only_offset_lightmap")
-        
-#----------------------------------------------------------------------------------
-class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
-    bl_idname = "export.scene_to_thug_model"
-    bl_label = "Scene to THUG1 model"
-    # bl_options = {'REGISTER', 'UNDO'}
-
-    def report(self, category, message):
-        LOG.debug("OP: {}: {}".format(category, message))
-        super().report(category, message)
-
-    filename: StringProperty(name="File Name")
-    directory: StringProperty(name="Directory")
-
-    always_export_normals: BoolProperty(name="Export normals", default=False)
-    is_park_editor: BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    use_vc_hack: BoolProperty(name="Vertex color hack",
-        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
-        , default=False)
-    speed_hack: BoolProperty(name="No modifiers (speed hack)",
-        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     
     # AUTOSPLIT SETTINGS
     autosplit_everything: BoolProperty(name="Autosplit All"
@@ -1217,7 +1049,7 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
     only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
         
     def execute(self, context):
-        return do_export_model(self, context, "THUG1")
+        return do_export_model(self, context, self.engine)
 
     def invoke(self, context, event):
         wm = bpy.context.window_manager
@@ -1226,9 +1058,9 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         return {'RUNNING_MODAL'}
         
     def draw(self, context):
+        self.layout.row().prop(self, "engine", icon='FF')
         self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
         self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
-        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
         self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
         if self.autosplit_everything:
             box = self.layout.box().column(align=True)
@@ -1244,175 +1076,6 @@ class SceneToTHUGModel(bpy.types.Operator): #, ExportHelper):
         row2.column().prop(self, "max_texture_lightmap_tex", toggle=True)
         #box.row().prop(self, "only_offset_lightmap")
 
-# OPERATORS
-#############################################
-class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
-    bl_idname = "export.scene_to_thug2_xbx"
-    bl_label = "Scene to THUG2/PRO level files"
-
-    def report(self, category, message):
-        LOG.debug("OP: {}: {}".format(category, message))
-        super().report(category, message)
-
-    filename: StringProperty(name="File Name")
-    directory: StringProperty(name="Directory")
-
-    always_export_normals: BoolProperty(name="Export normals", default=False)
-    use_vc_hack: BoolProperty(name="Vertex color hack",
-        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
-        , default=False)
-    speed_hack: BoolProperty(name="No modifiers (speed hack)",
-        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
-    # AUTOSPLIT SETTINGS
-    autosplit_everything: BoolProperty(name="Autosplit All"
-        , description = "Applies the autosplit setting to all objects in the scene, with default settings."
-        , default=False)
-    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
-        description="The max amount of faces for every created subobject.",
-        default=800, min=50, max=6000)
-    autosplit_max_radius: FloatProperty(name="Max Radius",
-        description="The max radius of for every created subobject.",
-        default=2000, min=100, max=5000)
-    # /AUTOSPLIT SETTINGS
-    is_park_editor: BoolProperty(name="Is Park Editor",
-        description="Use this option when exporting a park editor dictionary.", default=False)
-    pack_pre: BoolProperty(name="Pack files into .prx", default=True)
-    generate_tex_file: BoolProperty(
-        name="Generate a .tex file",
-        description="If you have already generated a .tex file, and didn't change/add any new images in meantime, you can uncheck this.", default=True)
-    generate_scn_file: BoolProperty(name="Generate a .scn file", default=True)
-    generate_col_file: BoolProperty(name="Generate a .col file", default=True)
-    generate_sky: BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene")
-    generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
-
-    skybox_name: StringProperty(name="Skybox name", default="THUG2_Sky")
-    export_scale: FloatProperty(name="Export scale", default=1)
-    
-    max_texture_size: IntProperty(name="Max Texture Size"
-        , min=0,max=8192,default=0
-        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
-    )
-    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
-    
-    mipmap_offset: IntProperty(name="Mipmap offset",
-        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
-        min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
-
-    def execute(self, context):
-        return do_export(self, context, "THUG2")
-
-    def invoke(self, context, event):
-        wm = bpy.context.window_manager
-        wm.fileselect_add(self)
-
-        return {'RUNNING_MODAL'}
-
-    def draw(self, context):
-        self.layout.row().prop(self, "generate_sky", toggle=True, icon='MAT_SPHERE_SKY')
-        if self.generate_sky:
-            box = self.layout.box().column(align=True)
-            box.row().prop(self, "skybox_name")
-        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
-        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
-        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
-        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
-        if self.autosplit_everything:
-            box = self.layout.box().column(align=True)
-            box.row().prop(self, "autosplit_faces_per_subobject")
-            box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "pack_pre", toggle=True, icon='PACKAGE')
-        self.layout.row().prop(self, "generate_tex_file", toggle=True, icon='TEXTURE_DATA')
-        self.layout.row().prop(self, "generate_scn_file", toggle=True, icon='SCENE_DATA')
-        self.layout.row().prop(self, "generate_col_file", toggle=True, icon='OBJECT_DATA')
-        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
-        self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(align=True)
-        box.row().prop(self, "max_texture_size")
-        row2 = box.row()
-        row2.column().prop(self, "max_texture_base_tex", toggle=True)
-        row2.column().prop(self, "max_texture_lightmap_tex", toggle=True)
-        #box.row().prop(self, "only_offset_lightmap")
-
-#----------------------------------------------------------------------------------
-class SceneToTHUG2Model(bpy.types.Operator): #, ExportHelper):
-    bl_idname = "export.scene_to_thug2_model"
-    bl_label = "Scene to THUG2 model"
-    # bl_options = {'REGISTER', 'UNDO'}
-
-    def report(self, category, message):
-        LOG.debug("OP: {}: {}".format(category, message))
-        super().report(category, message)
-
-    filename: StringProperty(name="File Name")
-    directory: StringProperty(name="Directory")
-
-    always_export_normals: BoolProperty(name="Export normals", default=False)
-    use_vc_hack: BoolProperty(name="Vertex color hack",
-        description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
-        , default=False)
-    speed_hack: BoolProperty(name="No modifiers (speed hack)",
-        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
-    # AUTOSPLIT SETTINGS
-    autosplit_everything: BoolProperty(name="Autosplit All",
-        description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)
-    autosplit_faces_per_subobject: IntProperty(name="Faces Per Subobject",
-        description="The max amount of faces for every created subobject.",
-        default=800, min=50, max=6000)
-    autosplit_max_radius: FloatProperty(name="Max Radius",
-        description="The max radius of for every created subobject.",
-        default=2000, min=100, max=5000)
-    # /AUTOSPLIT SETTINGS
-    is_park_editor: BoolProperty(name="Is Park Editor", default=False, options={'HIDDEN'})
-    model_type: EnumProperty(items = (
-        ("skin", ".skin", "Character skin, used for playable characters and pedestrians"),
-        ("mdl", ".mdl", "Model used for vehicles and other static mesh"),
-    ), name="Model Type", default="skin")
-    generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
-    export_scale: FloatProperty(name="Export scale", default=1)
-    
-    max_texture_size: IntProperty(name="Max Texture Size"
-        , min=0,max=8192,default=0
-        , description="Clamp texture dimensions to no larger than the specified size - should be a power of 2"
-    )
-    max_texture_base_tex: BoolProperty(name="Base Textures", default=False, description="Max texture size applies to base material textures")
-    max_texture_lightmap_tex: BoolProperty(name="Lightmaps", default=False, description="Max texture size applies to lightmap textures")
-    
-    mipmap_offset: IntProperty(name="Mipmap offset",
-        description="Offsets generation of mipmaps (default is 0). For example, setting this to 1 will make the base texture 1/4 the size. Use when working with very large textures.",
-        min=0, max=4, default=0)
-    only_offset_lightmap: BoolProperty(name="Only Lightmaps", default=False, description="Mipmap offset only applies to lightmap textures")
-        
-    def execute(self, context):
-        return do_export_model(self, context, "THUG2")
-
-    def invoke(self, context, event):
-        wm = bpy.context.window_manager
-        wm.fileselect_add(self)
-
-        return {'RUNNING_MODAL'}
-    
-    def draw(self, context):
-        self.layout.row().prop(self, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
-        self.layout.row().prop(self, "use_vc_hack", toggle=True, icon='COLOR')
-        self.layout.row().prop(self, "speed_hack", toggle=True, icon='FF')
-        self.layout.row().prop(self, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
-        if self.autosplit_everything:
-            box = self.layout.box().column(align=True)
-            box.row().prop(self, "autosplit_faces_per_subobject")
-            box.row().prop(self, "autosplit_max_radius")
-        self.layout.row().prop(self, "model_type", expand=True)
-        self.layout.row().prop(self, "generate_scripts_files", toggle=True, icon='FILE_SCRIPT')
-        self.layout.row().prop(self, "export_scale")
-        box = self.layout.box().column(align=True)
-        box.row().prop(self, "max_texture_size")
-        row2 = box.row()
-        row2.column().prop(self, "max_texture_base_tex", toggle=True)
-        row2.column().prop(self, "max_texture_lightmap_tex", toggle=True)
-        #box.row().prop(self, "only_offset_lightmap")
-        
-        
 
 class THUGQuickExport(bpy.types.Operator):
     bl_idname = "export.thug_quick_export"
@@ -1421,10 +1084,10 @@ class THUGQuickExport(bpy.types.Operator):
     def execute(self, context):
         maybe_export_scene(self, context.scene)
         return {'FINISHED'}
-
+    
+#############################################
 # PANELS
 #############################################
-#----------------------------------------------------------------------------------
 class THUG_PT_ExportTools(bpy.types.Panel):
     bl_label = "TH Export Tools"
     bl_region_type = "UI"
