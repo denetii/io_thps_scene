@@ -140,6 +140,8 @@ def do_export(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
 
+    addon_prefs = bpy.context.preferences.addons[ADDON_NAME].preferences
+
     if target_game == "THPS4":
         DEFAULT_SKY_SCN = self.skybox_name + "scn.dat"
         DEFAULT_SKY_TEX = self.skybox_name + "tex.dat"
@@ -252,10 +254,10 @@ def do_export(operator, context, target_game):
             skypath = j(directory, "Levels", filename + "_sky")
             md(skypath)
             shutil.copy(
-                get_asset_path("default_sky", DEFAULT_SKY_SCN),
+                get_asset_path("sky", DEFAULT_SKY_SCN),
                 j(skypath, filename + "_sky" + ext_scn))
             shutil.copy(
-                get_asset_path("default_sky", DEFAULT_SKY_TEX),
+                get_asset_path("sky", DEFAULT_SKY_TEX),
                 j(skypath, filename + "_sky" + ext_tex))
 
         if self.generate_scripts_files:
