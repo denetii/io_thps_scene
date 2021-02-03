@@ -314,12 +314,15 @@ def _prepare_autosplit_objects(operator, context, target_game):
                     (getattr(o, 'thug_export_scene', True) or
                      getattr(o, 'thug_export_collision', True)))]
 
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    bm = bmesh.new()
+
     safe_mode_set("OBJECT")
     bpy.ops.object.select_all(action="DESELECT")
     orig_objects = []
     temporary_objects = []
     for ob in out_objects:
-        final_mesh = None
+        final_mesh = ob.data
         
         # Use either the object settings or the export setting, depending on whether
         # 'Auto-split everything' is enabled!
@@ -328,26 +331,21 @@ def _prepare_autosplit_objects(operator, context, target_game):
         if operator.autosplit_everything == True:
             as_faces_per_obj = operator.autosplit_faces_per_subobject
             as_max_radius = operator.autosplit_max_radius
-            
-        
+
         if _is_levelobject(ob):
             LOG.debug("Skipping {}, it is a LevelObject!".format(ob.name))
             continue
-            
-        if ob.modifiers:
-            final_mesh = ob.to_mesh(bpy.context.scene, True, 'PREVIEW')
+
+        bm.clear()
+        bm.from_object(ob, depsgraph)
+        bm.to_mesh(final_mesh)
 
         small_enough = False
-        if final_mesh:
-            if len(final_mesh.polygons) <= as_faces_per_obj:
-                small_enough = True
-        elif len(ob.data.polygons) <= as_faces_per_obj:
+        if len(final_mesh.polygons) <= as_faces_per_obj:
             small_enough = True
 
         if small_enough:
             LOG.debug("Skipping {}, it has {} polys".format(ob.name, len(ob.data.polygons)))
-            if final_mesh:
-                bpy.data.meshes.remove(final_mesh)
             continue
         else:
             LOG.debug("Splitting {}".format(ob.name))
@@ -357,8 +355,6 @@ def _prepare_autosplit_objects(operator, context, target_game):
         orig_objects.append((original_object, original_object_name))
         ob.name = "TEMP_OBJECT___"
 
-        final_mesh = final_mesh or ob.to_mesh(bpy.context.scene, True, 'PREVIEW')
-        # temporary_object = _make_temp_obj(final_mesh)
         temporary_object = original_object.copy()
         temporary_object.modifiers.clear()
         temporary_object.data = final_mesh
@@ -389,8 +385,8 @@ def _prepare_autosplit_objects(operator, context, target_game):
 
         for fob in final_objs: fob.select_set(False)
         temporary_objects += final_objs
-        # LOG.debug("Object {} split into {} objects".format(temporary_object.name, len(final_objs)))
 
+    bm.free()
     # bpy.context.scene.update()
 
     for ob in temporary_objects:
