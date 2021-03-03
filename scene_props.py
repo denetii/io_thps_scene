@@ -862,8 +862,6 @@ class THUGLevelExportProps(bpy.types.PropertyGroup):
     use_vc_hack: BoolProperty(name="Vertex color hack",
         description = "Doubles intensity of vertex colours. Enable if working with an imported scene that appears too dark in game."
         , default=False)
-    speed_hack: BoolProperty(name="No modifiers (speed hack)",
-        description = "Don't apply any modifiers to objects. Much faster with large scenes, but all mesh must be triangles prior to export.", default=False)
     # AUTOSPLIT SETTINGS
     autosplit_everything: BoolProperty(name="Autosplit All",
         description = "Applies the autosplit setting to all objects in the scene, with default settings.", default=False)

@@ -98,7 +98,6 @@ class THUG_PT_SceneSettings(bpy.types.Panel):
                 box.row().prop(scene.thug_level_props.export_props, "skybox_name")
                 
             box.row().prop(scene.thug_level_props.export_props, "always_export_normals", toggle=True, icon='SNAP_NORMAL')
-            box.row().prop(scene.thug_level_props.export_props, "speed_hack", toggle=True, icon='FF')
             box.row().prop(scene.thug_level_props.export_props, "autosplit_everything", toggle=True, icon='MOD_EDGESPLIT')
             if scene.thug_level_props.export_props.autosplit_everything:
                 box2 = box.box().column(align=True)

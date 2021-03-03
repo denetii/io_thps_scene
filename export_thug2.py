@@ -24,6 +24,7 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
 
     exported_checksums = {}
 
+    depsgraph = bpy.context.evaluated_depsgraph_get()
     bm = bmesh.new()
     p = Printer()
     out_objects = [o for o in bpy.data.objects
@@ -36,35 +37,29 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
     w("i", 0)
     for ob in out_objects:
         LOG.debug("Exporting scene object: {}".format(ob.name))
-        
-        is_levelobject = ob.thug_object_class == "LevelObject"
-        if is_levelobject == False and ob.name.endswith("_SCN"):
-            # If using separate collision/scene mesh, check the collision mesh
-            if bpy.data.objects.get(ob.name[:-4]) and bpy.data.objects.get(ob.name[:-4]).thug_object_class == "LevelObject":
-                is_levelobject = True
-                    
-        if is_levelobject:
-            lo_matrix = mathutils.Matrix.Identity(4)
-            lo_matrix[0][0] = ob.scale[0]
-            lo_matrix[1][1] = ob.scale[1]
-            lo_matrix[2][2] = ob.scale[2]
-            
-        if operator.speed_hack:
-            final_mesh = ob.data
-        else:
-            final_mesh = ob.to_mesh(preserve_all_data_layers=True)
+
         try:
+            is_levelobject = ob.thug_object_class == "LevelObject"
+            if is_levelobject == False and ob.name.endswith("_SCN"):
+                # If using separate collision/scene mesh, check the collision mesh
+                if bpy.data.objects.get(ob.name[:-4]) and bpy.data.objects.get(ob.name[:-4]).thug_object_class == "LevelObject":
+                    is_levelobject = True
+
+            if is_levelobject:
+                lo_matrix = mathutils.Matrix.Identity(4)
+                lo_matrix[0][0] = ob.scale[0]
+                lo_matrix[1][1] = ob.scale[1]
+                lo_matrix[2][2] = ob.scale[2]
+
+            final_mesh = ob.data
+
             object_counter += 1
-            if operator.speed_hack:
-                bm.clear()
-                bm.from_mesh(final_mesh)
-                final_mesh.calc_normals_split()
-            else:
-                bm.clear()
-                bm.from_mesh(final_mesh)
-                bmesh.ops.triangulate(bm, faces=bm.faces)
-                bm.to_mesh(final_mesh)
-                final_mesh.calc_normals_split()
+
+            bm.clear()
+            bm.from_object(ob, depsgraph)
+            bmesh.ops.triangulate(bm, faces=bm.faces)
+            bm.to_mesh(final_mesh)
+            final_mesh.calc_normals_split()
 
             flags = 0 if not is_levelobject else SECFLAGS_HAS_VERTEX_NORMALS
             
@@ -303,10 +298,9 @@ def export_scn_sectors_ug2(output_file, operator=None, is_model=False):
                 if pixel_shader == 1:
                     w("I", 0)
                     w("I", 0)
-        finally:
-            safe_mode_set("OBJECT")
-            if not operator.speed_hack:
-                ob.to_mesh_clear()
+
+        except Exception as ex:
+            raise ExportError("Failed to export scene object {}: {}".format(ob.name, str(ex))).with_traceback(ex.__traceback__)
                 
     _saved_offset = output_file.tell()
     output_file.seek(object_amount_offset)

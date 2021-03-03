@@ -253,8 +253,7 @@ def export_scn_sectors(output_file, operator=None, is_model=False):
         
         except Exception as ex:
             raise ExportError("Failed to export scene object {}: {}".format(ob.name, str(ex))).with_traceback(ex.__traceback__)
-                
-        
+
     _saved_offset = output_file.tell()
     output_file.seek(object_amount_offset)
     w("i", object_counter)
