@@ -379,7 +379,7 @@ def _prepare_autosplit_objects(operator, context, target_game):
             max_radius=as_max_radius)
         # final_objs = context.selected_objects[:]
 
-        bpy.context.scene.objects.unlink(temporary_object)
+        bpy.context.scene.collection.objects.unlink(temporary_object)
         bpy.data.objects.remove(temporary_object)
         bpy.data.meshes.remove(final_mesh)
 
@@ -398,7 +398,7 @@ def _prepare_autosplit_objects(operator, context, target_game):
 def _cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects):
     for ob in temporary_objects:
         ob_data = ob.data
-        bpy.context.scene.objects.unlink(ob)
+        bpy.context.scene.collection.objects.unlink(ob)
         bpy.data.objects.remove(ob)
         bpy.data.meshes.remove(ob_data)
 

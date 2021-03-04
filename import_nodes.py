@@ -1172,7 +1172,7 @@ class THUGMergeObjects(bpy.types.Operator):
             
             # Now, let's remove the collision object and rename the scene mesh to match
             mesh_name = col_ob.name
-            context.scene.objects.unlink(col_ob)
+            context.scene.collection.objects.unlink(col_ob)
             bpy.data.objects.remove(col_ob)
             ob.name = mesh_name
             
