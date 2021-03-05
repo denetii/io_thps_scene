@@ -127,6 +127,8 @@ def do_export(operator, context, target_game):
     self = operator
     import subprocess, shutil, datetime
 
+    addon_prefs = bpy.context.user_preferences.addons[ADDON_NAME].preferences
+
     if target_game == "THPS4":
         DEFAULT_SKY_SCN = self.skybox_name + "scn.dat"
         DEFAULT_SKY_TEX = self.skybox_name + "tex.dat"
