@@ -283,7 +283,7 @@ def _alt_split_obj(ob, context, max_radius=500, faces_per_subobject=250, preserv
             new_object = ob.copy()
             new_object.matrix_world = mathutils.Matrix.Identity(4)
             new_object.data = new_mesh
-            context.scene.collection.objects.link(new_object)
+            # context.scene.collection.objects.link(new_object)
             new_objs.append(new_object)
 
         return new_objs
@@ -346,6 +346,7 @@ def _prepare_autosplit_objects(operator, context, target_game):
 
         if small_enough:
             LOG.debug("Skipping {}, it has {} polys".format(ob.name, len(ob.data.polygons)))
+            bm.clear()
             continue
         else:
             LOG.debug("Splitting {}".format(ob.name))
@@ -364,30 +365,21 @@ def _prepare_autosplit_objects(operator, context, target_game):
 
         LOG.debug("with {} polys".format(len(final_mesh.polygons)))
 
-        bpy.context.scene.collection.objects.link(temporary_object)
-        # temporary_object.matrix_world = ob.matrix_world
-
         if helpers._need_to_flip_normals(ob):
             helpers._flip_normals(temporary_object)
 
-        temporary_object.select_set(True)
-        bpy.context.view_layer.objects.active = temporary_object
-        # bpy.ops.object.thug_split_object(
         final_objs = _alt_split_obj(
             temporary_object, context,
             faces_per_subobject=as_faces_per_obj,
             max_radius=as_max_radius)
-        # final_objs = context.selected_objects[:]
 
-        bpy.context.scene.collection.objects.unlink(temporary_object)
         bpy.data.objects.remove(temporary_object)
-        bpy.data.meshes.remove(final_mesh)
 
-        for fob in final_objs: fob.select_set(False)
+        for fob in final_objs:
+            fob.select_set(False)
         temporary_objects += final_objs
 
     bm.free()
-    # bpy.context.scene.update()
 
     for ob in temporary_objects:
         ob["thug_this_is_autosplit_temp_object"] = True
@@ -398,7 +390,6 @@ def _prepare_autosplit_objects(operator, context, target_game):
 def _cleanup_autosplit_objects(operator, context, target_game, orig_objects, temporary_objects):
     for ob in temporary_objects:
         ob_data = ob.data
-        bpy.context.scene.collection.objects.unlink(ob)
         bpy.data.objects.remove(ob)
         bpy.data.meshes.remove(ob_data)
 
