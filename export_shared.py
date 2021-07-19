@@ -964,7 +964,7 @@ class SceneToTHPS4Files(bpy.types.Operator): #, ExportHelper):
     generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
 
 #    filepath = StringProperty()
-    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
+    skybox_name = StringProperty(name="Skybox name", default="THUG_sky")
     export_scale = FloatProperty(name="Export scale", default=1)
     
     max_texture_size = IntProperty(name="Max Texture Size"
@@ -1137,7 +1137,7 @@ class SceneToTHUGFiles(bpy.types.Operator): #, ExportHelper):
     generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
 
 #    filepath = StringProperty()
-    skybox_name = StringProperty(name="Skybox name", default="THUG_Sky")
+    skybox_name = StringProperty(name="Skybox name", default="THUG_sky")
     export_scale = FloatProperty(name="Export scale", default=1)
     
     max_texture_size = IntProperty(name="Max Texture Size"
@@ -1312,7 +1312,7 @@ class SceneToTHUG2Files(bpy.types.Operator): #, ExportHelper):
     generate_sky = BoolProperty(name="Generate skybox", default=True,description="Check to export a skybox with this scene.")
     generate_scripts_files = BoolProperty(name="Generate scripts", default=True)
 
-    skybox_name = StringProperty(name="Skybox name", default="THUG2_Sky")
+    skybox_name = StringProperty(name="Skybox name", default="THUG2_sky")
     export_scale = FloatProperty(name="Export scale", default=1)
     
     max_texture_size = IntProperty(name="Max Texture Size"
