@@ -563,6 +563,7 @@ def import_texlib_th2(filename, directory, context, operator):
             tex_index = struct.unpack("<I", r.read(4))[0]
             tex_width = struct.unpack("<H", r.read(2))[0]
             tex_height = struct.unpack("<H", r.read(2))[0]
+            tex_height_is_odd = tex_height % 2 != 0
             p("tex index: {}, palette: {}, tex dimensions: {} {}", tex_index, tex_palsize, tex_width, tex_height)
             tex_hashes[i] = tex_names[i] #tex_hash
             TEXPSX_DATA["texinfo"].append({
@@ -576,10 +577,14 @@ def import_texlib_th2(filename, directory, context, operator):
             # Now read the raw texture data
             raw_texdata = []
             if tex_palsize == 16:
-                padwidth = (tex_width+0x3)&~0x3;
-                padwidth >>= 1;
-                reallen = (padwidth*tex_height)
-                pal_indices = r.read(reallen) # Just read for now
+                pad_width = (tex_width+0x3)&~0x3
+                pad_width >>= 1
+                if(tex_height_is_odd):
+                    extra_padding = 2 if pad_width % 4 != 0 else 0
+                else:
+                    extra_padding = 0
+                real_len = (pad_width*tex_height) + extra_padding
+                pal_indices = r.read(real_len) # Just read for now
                 # Find the palette and build the image
                 for pal in palette_4bit:
                     if pal["texid"] == tex_hash:
@@ -589,7 +594,7 @@ def import_texlib_th2(filename, directory, context, operator):
                         pixels = [None] * (tex_width * tex_height)
                         for y in range(tex_height):
                             for x in range(tex_width):
-                                v = (pal_indices[y*padwidth+(x>>1)]>>((x&0x1)*4))&0xF
+                                v = (pal_indices[y*pad_width+(x>>1)]>>((x&0x1)*4))&0xF
                                 c = pal["colordata"][v]
                                 px = ps1_to_32bpp(c)
                                 pixels[y*tex_width-x] = px
@@ -610,9 +615,13 @@ def import_texlib_th2(filename, directory, context, operator):
                         break
                         
             elif tex_palsize == 256:
-                padwidth = (tex_width+0x1)&~0x1;
-                reallen = (padwidth*tex_height)
-                pal_indices = r.read(reallen) # Just read for now
+                pad_width = (tex_width+0x1)&~0x1
+                if(tex_height_is_odd):
+                    extra_padding = 2 if pad_width % 4 != 0 else 0
+                else:
+                    extra_padding = 0
+                real_len = (pad_width*tex_height) + extra_padding
+                pal_indices = r.read(real_len) # Just read for now
                 # Find the palette and build the image
                 for pal in palette_8bit:
                     if pal["texid"] == tex_hash:
@@ -622,7 +631,7 @@ def import_texlib_th2(filename, directory, context, operator):
                         pixels = [None] * (tex_width * tex_height)
                         for y in range(tex_height):
                             for x in range(tex_width):
-                                v = (pal_indices[y*padwidth+x])&0xFF
+                                v = (pal_indices[y*pad_width+x])&0xFF
                                 c = pal["colordata"][v]
                                 px = ps1_to_32bpp(c)
                                 pixels[y*tex_width-x] = px
