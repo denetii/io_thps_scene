@@ -524,7 +524,6 @@ def export_tex(filename, directory, target_game, operator=None):
                 if operator:
                     operator.report({"WARNING"}, "Image \"{}\" has {} channels. Expected 4. Skipping export.".format(image.name, image.channels))
                 continue
-            start_time = time.clock()
             LOG.debug("exporting texture: {}".format(image.name))
 
             # Names formatted as hex are the original checksums from a tex file import, so we should
@@ -629,7 +628,6 @@ def export_tex(filename, directory, target_game, operator=None):
                 else:
                     w(str(len(out_pixels)) + "I", *out_pixels)
             del mipmaps[:]
-            #LOG.debug("time taken: {}{}".format(time.clock() - start_time, "sec"))
 
         outp.seek(4)
         w("I", exported_images_count)

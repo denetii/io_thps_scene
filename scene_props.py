@@ -1196,8 +1196,6 @@ def register_props():
     
 #----------------------------------------------------------------------------------
 def unregister_props():
-    bgl.glDeleteLists(draw_stuff_display_list_id, 1)
-
     global draw_handle
     if draw_handle:
         bpy.types.SpaceView3D.draw_handler_remove(draw_handle, 'WINDOW')
@@ -1205,8 +1203,8 @@ def unregister_props():
 
     if update_collision_flag_ui_properties in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.remove(update_collision_flag_ui_properties)
-    if draw_stuff_post_update in bpy.app.handlers.scene_update_post:
-        bpy.app.handlers.scene_update_post.remove(draw_stuff_post_update)
+    if draw_stuff_post_update in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(draw_stuff_post_update)
     if update_pathnode_ui_properties in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.remove(update_pathnode_ui_properties)
 

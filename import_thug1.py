@@ -14,7 +14,7 @@ from . material import *
 #############################################
 def import_scn_ug1(filename, directory, context, operator):
     p = Printer()
-    p.on = False
+    p.on = True
     input_file = os.path.join(directory, filename)
     with open(input_file, "rb") as inp:
         r = Reader(inp.read())
@@ -223,6 +223,8 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
                 raise Exception("Bad number of lod levels!")
             # num_tc_sets = p("    number of texcoord sets: {}", num_passes) # MATERIAL_PASSES[mat_checksum])
 
+            vert_indices = None
+
             for k in range(num_lod_levels):
                 num_indices_for_this_lod_level = r.u32()
                 p("    {}", "num indices for lod level #{}: {}".format(k, num_indices_for_this_lod_level))
@@ -235,7 +237,9 @@ def read_sectors_ug1(reader, printer, num_sectors, context, operator=None, outpu
 
                 #r.read("14x") # padding?
 
-    
+            if not vert_indices:
+                continue
+
             # bm.verts.ensure_lookup_table()
             inds = vert_indices
             for l in range(2, len(inds)):

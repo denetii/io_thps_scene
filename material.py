@@ -134,7 +134,6 @@ def update_node_tree(self, context, material = None):
                 node_tree.links.new(nodes_blend[i].inputs[1], nodes_blend[i-1].outputs[0]) # Blend i-1 -> Mix[i]
             
     if i == -1:
-        print("Material has no passes: {}".format(mat.name))
         return
         
     is_additive = False
@@ -1404,7 +1403,10 @@ class THUG_UL_MaterialPassUIList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(factor=0.1)
         if item.texture != None:
-            split.template_icon(item.texture.preview.icon_id)
+            if item.texture.preview != None:
+                split.template_icon(item.texture.preview.icon_id)
+            else:
+                split.template_icon(0)
             split.prop(item.texture, 'name', text='', emboss=False, translate=False)
         else:
             split.template_icon(0)
