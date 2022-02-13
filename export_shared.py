@@ -937,7 +937,7 @@ class SceneToTHPSLevel(bpy.types.Operator):
     generate_col_file: BoolProperty(name="Generate a .col file", default=True)
     generate_scripts_files: BoolProperty(name="Generate scripts", default=True)
 
-    skybox_name: StringProperty(name="Skybox name", default="THUG_Sky")
+    skybox_name: StringProperty(name="Skybox name", default="THUG_sky")
     export_scale: FloatProperty(name="Export scale", default=1)
     
     max_texture_size: IntProperty(name="Max Texture Size"
