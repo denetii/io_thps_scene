@@ -219,10 +219,10 @@ def do_export(operator, context, target_game):
             skypath = j(directory, "Levels", filename + "_sky")
             md(skypath)
             shutil.copy(
-                get_asset_path("default_sky", DEFAULT_SKY_SCN),
+                get_asset_path("sky", DEFAULT_SKY_SCN),
                 j(skypath, filename + "_sky" + ext_scn))
             shutil.copy(
-                get_asset_path("default_sky", DEFAULT_SKY_TEX),
+                get_asset_path("sky", DEFAULT_SKY_TEX),
                 j(skypath, filename + "_sky" + ext_tex))
 
         compilation_successful = None
