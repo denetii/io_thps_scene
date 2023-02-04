@@ -991,7 +991,7 @@ def _material_settings_draw(self, context):
     row = self.layout.row()
     row.prop(mps, "specular_color")
     gps = mps.grass_props
-    self.layout.row().prop(gps, "grassify", toggle=True, icon="HAIR")
+    self.layout.row().prop(gps, "grassify", toggle=True)
     if gps.grassify:
         box = self.layout.box()
         row = box.row()
@@ -1425,6 +1425,9 @@ class THUG_PT_MaterialPassSettings(bpy.types.Panel):
     def draw(self, context):
         ob = context.object
         mat = ob.active_material
+        if mat is None:
+            return
+            
         mps = mat.thug_material_props
         
         row = self.layout.row()
