@@ -529,13 +529,15 @@ def addPresetNodes():
     global preset_node_list
     for node in preset_node_list:
         op_name = 'object.add_custom_' + node['name'].lower()
-        nc = type(  'DynOp_' + node['name'],
-                    (THUG_OP_AddNode, ),
-                    {'bl_idname': op_name,
-                    'bl_label': node['title'],
-                    'bl_description': node['desc'],
-                    'node_type': node['name']
-                })
+        nc = type('DynOp_' + node['name'],
+                    (THUG_OP_AddNode, ), {
+                        'bl_idname': op_name,
+                        'bl_label': node['title'],
+                        'bl_description': node['desc'],
+                        "__annotations__": {
+                            'node_type': bpy.props.StringProperty(default=node['name'])
+                        }
+                    })
         preset_nodes.append(nc)
         bpy.utils.register_class(nc)
 
@@ -546,30 +548,32 @@ def addPresetMesh():
             preset_mesh[template["name"]] = {}
             mesh_categories[template["name"]] = []
             
-            new_submenu = type(  'DynMenu_' + template["name"],
-                        (THUG_MT_MeshSubMenu, ),
-                        {'bl_idname': THUG_MT_MeshSubMenu.bl_idname + '_' + template["name"],
-                        'bl_label': template["title"],
-                        'template_name': template["name"]
-                    })
+            new_submenu = type('DynMenu_' + template["name"],
+                            (THUG_MT_MeshSubMenu, ), {
+                                'bl_idname': THUG_MT_MeshSubMenu.bl_idname + '_' + template["name"],
+                                'bl_label': template["title"],
+                                'template_name': template["name"]
+                            })
             bpy.utils.register_class(new_submenu)
             mesh_submenus.append(new_submenu)
             
         for cat_name, category in template["list"].items():
+            cat_name_clean = "".join(filter(str.isalnum, cat_name))
+
             # Create the submenu for the category if it doesn't exist
             if not cat_name in preset_mesh:
-                preset_mesh[template["name"]][cat_name] = []
-                new_submenu = type(  'DynMenu_' + template["name"] + '_' + cat_name,
-                        (THUG_MT_MeshSubSubMenu, ),
-                        {'bl_idname': THUG_MT_MeshSubSubMenu.bl_idname + '_' + template["name"] + '_' + cat_name,
-                        'bl_label': cat_name,
-                        'template_name': template["name"],
-                        'category_name': cat_name,
-                    })
+                preset_mesh[template["name"]][cat_name_clean] = []
+                new_submenu = type('DynMenu_' + template["name"] + '_' + cat_name_clean,
+                                (THUG_MT_MeshSubSubMenu, ), {
+                                    'bl_idname': THUG_MT_MeshSubSubMenu.bl_idname + '_' + template["name"] + '_' + cat_name_clean,
+                                    'bl_label': cat_name,
+                                    'template_name': template["name"],
+                                    'category_name': cat_name_clean,
+                                })
                 bpy.utils.register_class(new_submenu)
                 mesh_submenus.append(new_submenu)
                 
-            mesh_categories[template["name"]].append(cat_name) 
+            mesh_categories[template["name"]].append(cat_name_clean) 
             for ob in category:
                 # Single object definitions don't use "single" for the mesh name
                 if "single" in ob:
@@ -579,16 +583,18 @@ def addPresetMesh():
                     if "text_name" in ob:
                         op_label = ob["text_name"]
                     
-                    nc = type(  'DynOp_' + template["name"] + '_' + cat_name + '_' + ob["single"],
-                                (THUG_OP_AddMesh, ),
-                                {'bl_idname': op_name,
-                                'bl_label': op_label,
-                                'bl_description': 'Add this piece to the scene.',
-                                'template_name': template["name"],
-                                'piece_name': ob["single"]
-                            })
+                    nc = type('DynOp_' + template["name"] + '_' + cat_name_clean + '_' + ob["single"],
+                                (THUG_OP_AddMesh, ), {
+                                    'bl_idname': op_name,
+                                    'bl_label': op_label,
+                                    'bl_description': 'Add this piece to the scene.',
+                                    "__annotations__": {
+                                        'template_name': bpy.props.StringProperty(default=template["name"]),
+                                        'piece_name': bpy.props.StringProperty(default=ob["single"]) 
+                                    }
+                                })
                     
-                    preset_mesh[template["name"]][cat_name].append(nc)
+                    preset_mesh[template["name"]][cat_name_clean].append(nc)
                     bpy.utils.register_class(nc)
 
 def clearPresetNodes():
@@ -655,7 +661,6 @@ class THUG_MT_MeshSubSubMenu(bpy.types.Menu):
     category_name: bpy.props.StringProperty()
     
     def draw(self, context):
-        print("drawing mesh menu")
         layout = self.layout
         if self.template_name in preset_mesh:
             if self.category_name in preset_mesh[self.template_name]:
@@ -669,7 +674,6 @@ class THUG_MT_MeshSubMenu(bpy.types.Menu):
     template_name: bpy.props.StringProperty()
     
     def draw(self, context):
-        print("drawing mesh menu")
         layout = self.layout
         if self.template_name in mesh_categories:
             for category_name in mesh_categories[self.template_name]:
@@ -682,7 +686,6 @@ class THUG_MT_MeshMenu(bpy.types.Menu):
     bl_idname = 'THUG_MT_preset_pieces'
 
     def draw(self, context):
-        print("drawing mesh menu")
         layout = self.layout
         for template_name in preset_mesh:
             for category in template_name:
