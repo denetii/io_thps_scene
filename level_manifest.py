@@ -58,7 +58,9 @@ def export_level_manifest_json(filename, directory, operator, level_info):
         outp.write("\t\"FLAG_DISABLE_GOALATTACK\": {},\n".format(("true" if level_info.level_flag_nogoalattack else "false")))
         outp.write("\t\"FLAG_NO_PRX\": {},\n".format(("true" if level_info.level_flag_noprx else "false")))
         outp.write("\t\"FLAG_IS_BIG_LEVEL\": {},\n".format(("true" if level_info.level_flag_biglevel else "false")))
-
+        outp.write("\t\"FLAG_IS_TALL_LEVEL\": {},\n".format(("true" if level_info.level_flag_tall else "false")))
+        outp.write("\t\"FLAG_HAS_CLASSIC_GOALS\": {},\n".format(("true" if level_info.level_flag_classicgoals else "false")))
+        
         outp.write("}\n")
 
 
@@ -180,6 +182,7 @@ class THUG_PT_SceneSettings(bpy.types.Panel):
         box = self.layout.box().column(align=True)
         box.row().prop(scene.thug_level_props, "level_flag_offline")
         box.row().prop(scene.thug_level_props, "level_flag_biglevel")
+        box.row().prop(scene.thug_level_props, "level_flag_tall")
         box.row().prop(scene.thug_level_props, "level_flag_noprx")
         box.row().prop(scene.thug_level_props, "level_flag_indoor")
         box.row().prop(scene.thug_level_props, "level_flag_nosun")
@@ -187,5 +190,6 @@ class THUG_PT_SceneSettings(bpy.types.Panel):
         box.row().prop(scene.thug_level_props, "level_flag_wallridehack")
         box.row().prop(scene.thug_level_props, "level_flag_nobackfacehack")
         box.row().prop(scene.thug_level_props, "level_flag_modelsinprx")
+        box.row().prop(scene.thug_level_props, "level_flag_classicgoals")
         box.row().prop(scene.thug_level_props, "level_flag_nogoaleditor")
         box.row().prop(scene.thug_level_props, "level_flag_nogoalattack")
