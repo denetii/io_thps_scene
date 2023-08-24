@@ -985,16 +985,18 @@ class THUGLevelProps(bpy.types.PropertyGroup):
     level_light1_headpitch: FloatVectorProperty(name="Heading/Pitch", size=2, soft_min=0, soft_max=360, default=(0, 0))
     
     level_flag_offline: BoolProperty(name="Offline Only", description="This level is not enabled for online play", default=False)
-    level_flag_indoor: BoolProperty(name="Indoor", description="(THUG PRO only) This level is indoor", default=False)
-    level_flag_nosun: BoolProperty(name="No Sun", description="(THUG PRO only) Don't display the dynamic sun in this level", default=False)
-    level_flag_defaultsky: BoolProperty(name="Default Sky", description="(THUG PRO only) Use the default skybox", default=False)
-    level_flag_wallridehack: BoolProperty(name="Wallride Hack", description="(THUG PRO only) Automatically makes all walls wallridable", default=False)
-    level_flag_nobackfacehack: BoolProperty(name="No Backface Hack", description="(THUG PRO only)", default=False)
-    level_flag_modelsinprx: BoolProperty(name="Models in scripts .prx", description="(THUG PRO only)", default=False)
-    level_flag_nogoaleditor: BoolProperty(name="Disable goal editor", description="(THUG PRO only)", default=False)
-    level_flag_nogoalattack: BoolProperty(name="Disable goal attack", description="(THUG PRO only)", default=False)
-    level_flag_noprx: BoolProperty(name="Don't use prx files", description="(THUG PRO only) This level uses uncompressed files, not packed in .prx files", default=False)
-    level_flag_biglevel: BoolProperty(name="Big Level", description="(THUG PRO only) Use extended online position broadcast limits", default=False)
+    level_flag_indoor: BoolProperty(name="Indoor", description="(THUG PRO) This level is indoor", default=False)
+    level_flag_nosun: BoolProperty(name="No Sun", description="(THUG PRO) Don't display the dynamic sun in this level", default=False)
+    level_flag_defaultsky: BoolProperty(name="Default Sky", description="(THUG PRO) Use the default skybox", default=False)
+    level_flag_wallridehack: BoolProperty(name="Wallride Hack", description="(THUG PRO) Automatically makes all walls wallridable", default=False)
+    level_flag_nobackfacehack: BoolProperty(name="No Backface Hack", description="(THUG PRO)", default=False)
+    level_flag_modelsinprx: BoolProperty(name="Models in scripts .prx", description="(THUG PRO)", default=False)
+    level_flag_nogoaleditor: BoolProperty(name="Disable Goal Editor", description="(THUG PRO)", default=False)
+    level_flag_nogoalattack: BoolProperty(name="Disable Goal Attack", description="(THUG PRO)", default=False)
+    level_flag_noprx: BoolProperty(name="Don't use prx files", description="(THUG PRO) This level uses uncompressed files, not packed in .prx files", default=False)
+    level_flag_biglevel: BoolProperty(name="Big Level", description="(THUG PRO) Use extended horizontal position limits for online broadcast, reduces accuracy", default=False)
+    level_flag_tall: BoolProperty(name="Tall Level", description="(THUG PRO) Use extended vertical position limits for online broadcast, reduces accuracy", default=False)
+    level_flag_classicgoals: BoolProperty(name="Classic Goals", description="(THUG PRO) This level has classic goals", default=False)
     
 # METHODS
 #############################################
